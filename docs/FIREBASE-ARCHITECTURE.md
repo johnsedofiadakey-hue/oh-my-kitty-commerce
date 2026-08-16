@@ -123,6 +123,8 @@ src/components/pos
 
 Exact structure can change, but the boundaries must remain clear.
 
+Current Phase 1 implementation keeps business rules in `src/lib/commerce/operations.ts` and persistence behind `CommerceRepository`. Tests use `MemoryCommerceRepository`; Firebase-backed runtime code can use `FirestoreCommerceRepository` through `getCommerceServerContext()` once Firebase credentials/project settings are provided.
+
 ## Environment Variables
 
 Use `.env.example` as the placeholder map.

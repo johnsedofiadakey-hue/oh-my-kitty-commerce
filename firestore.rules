@@ -53,6 +53,16 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /promotions/{promotionId} {
+      allow read: if resource.data.active == true || isStaff();
+      allow create, update, delete: if false;
+    }
+
+    match /deliveryRules/{deliveryRuleId} {
+      allow read: if resource.data.active == true || isStaff();
+      allow create, update, delete: if false;
+    }
+
     match /users/{userId} {
       allow read: if isAdmin() || (signedIn() && request.auth.uid == userId);
       allow create, update, delete: if false;

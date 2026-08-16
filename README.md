@@ -6,9 +6,9 @@ This repository currently contains the Phase 0 Codex project pack. It is designe
 
 ## Current Status
 
-- Repository state: Phase 0 foundation scaffold.
+- Repository state: Phase 1 commerce core scaffold.
 - Firebase details: intentionally not added yet.
-- Implementation: Next.js shell app with Firebase-ready boundaries, route shells, rules, emulator config, domain types, RBAC helpers, and starter tests.
+- Implementation: Next.js shell app with Firebase-ready boundaries, route shells, rules, emulator config, Firestore repository adapter, domain types, validation schemas, RBAC helpers, inventory ledger operations, order/POS sale operations, seed data, and starter tests.
 - Credentials: no real credentials should be committed.
 
 ## Product Surfaces
@@ -111,7 +111,7 @@ Local routes:
 When implementation begins, give Codex this task:
 
 ```text
-Read AGENTS.md and all docs. Review the existing Phase 0 scaffold, then begin Phase 1 only after confirming Phase 0 checks. Keep Firebase credentials out of git. Preserve the shared Firestore inventory/order model and RBAC boundaries.
+Read AGENTS.md and all docs. Review the existing Phase 0 and Phase 1 scaffold, then begin Phase 2 admin portal only after confirming current checks. Keep Firebase credentials out of git. Preserve the shared Firestore inventory/order model, RBAC boundaries, and server-side commerce operations.
 ```
 
 ## Important Product Rule

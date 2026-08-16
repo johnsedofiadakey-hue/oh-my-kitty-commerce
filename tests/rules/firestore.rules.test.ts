@@ -28,6 +28,14 @@ describe("firestore rules", () => {
         channel: "POS",
         status: "PAID"
       });
+      await setDoc(doc(context.firestore(), "promotions/promo-1"), {
+        code: "WELCOME10",
+        active: true
+      });
+      await setDoc(doc(context.firestore(), "deliveryRules/delivery-1"), {
+        name: "Pickup",
+        active: true
+      });
     });
   });
 
@@ -49,5 +57,11 @@ describe("firestore rules", () => {
     const db = testEnv.authenticatedContext("admin", { isAdmin: true }).firestore();
     await expect(assertFails(setDoc(doc(db, "products/active-product"), { status: "ACTIVE" })))
       .resolves;
+  });
+
+  it("allows public reads for active promotions and delivery rules", async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
+    await assertSucceeds(getDoc(doc(db, "promotions/promo-1")));
+    await assertSucceeds(getDoc(doc(db, "deliveryRules/delivery-1")));
   });
 });

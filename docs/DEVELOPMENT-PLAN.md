@@ -47,6 +47,8 @@ Boundaries:
 
 Goal: implement shared data and business rules used by storefront, admin, and POS.
 
+Status: baseline commerce core implemented. The repo now includes validation schemas, expanded commerce types, memory and Firestore repository adapters, server-side commerce operations, inventory ledger handling, order draft and sale completion operations, POS sale permission checks, idempotency handling, emulator seed data, and unit tests. Firestore rules tests remain configured but require JDK 21 or newer locally because of the current Firebase CLI.
+
 Tasks:
 
 - product model

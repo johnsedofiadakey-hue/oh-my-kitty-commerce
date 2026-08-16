@@ -45,6 +45,8 @@ Commerce core is acceptable when:
 - security rules block unsafe public writes
 - audit logs are created for privileged operations
 
+Current local note: commerce unit tests cover product/variant creation, inventory adjustment, POS sale completion, online sale completion, idempotency, discount permission failure, draft order behavior, channel/status separation, and audit logging. Firestore rules tests are still blocked locally by the JDK 21 requirement for Firebase CLI emulators.
+
 ## Phase 2 Acceptance
 
 Admin is acceptable when:
