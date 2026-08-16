@@ -3,9 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { CommerceError } from "@/lib/commerce/errors";
 import {
+  adjustInventory,
   createProduct,
   createVariant,
-  updateProduct
+  updateProduct,
+  updateVariant
 } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getRequiredAdminActor } from "@/lib/auth/server";
@@ -94,6 +96,45 @@ export async function updateProductStatusAction(formData: FormData): Promise<voi
     status: formProductStatus(formData, "status")
   });
 
+  revalidatePath("/admin/products");
+}
+
+export async function quickEditCatalogueItemAction(formData: FormData): Promise<void> {
+  const context = requireCommerceContext();
+  const actor = await getRequiredAdminActor();
+  const productId = formString(formData, "productId");
+  const variantId = formString(formData, "variantId");
+  const categoryId = formOptionalString(formData, "categoryId");
+  const stockDelta = formInteger(formData, "stockDelta", 0);
+
+  await updateProduct(context, actor, {
+    id: productId,
+    title: formString(formData, "title"),
+    shortCopy: formOptionalString(formData, "shortCopy"),
+    status: formProductStatus(formData, "status"),
+    categoryIds: categoryId ? [categoryId] : []
+  });
+
+  await updateVariant(context, actor, {
+    productId,
+    id: variantId,
+    title: formString(formData, "variantTitle"),
+    price: formMoneyMinorUnit(formData, "price"),
+    lowStockThreshold: formInteger(formData, "lowStockThreshold", 5)
+  });
+
+  if (stockDelta !== 0) {
+    await adjustInventory(context, actor, {
+      productId,
+      variantId,
+      type: "MANUAL_ADJUSTMENT",
+      quantityDelta: stockDelta,
+      reason: "Admin quick edit"
+    });
+  }
+
+  revalidatePath("/");
+  revalidatePath("/shop");
   revalidatePath("/admin/products");
 }
 

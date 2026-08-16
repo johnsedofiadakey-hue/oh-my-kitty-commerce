@@ -18,6 +18,30 @@ type DepthShopProps = {
 export function DepthShop({ products, sourceMessage }: DepthShopProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [category, setCategory] = useState("all");
+  const [query, setQuery] = useState("");
+  const categories = useMemo(
+    () =>
+      Array.from(new Set(products.flatMap((product) => product.categoryLabels))).sort((a, b) =>
+        a.localeCompare(b)
+      ),
+    [products]
+  );
+  const filteredProducts = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    return products.filter((product) => {
+      const matchesCategory = category === "all" || product.categoryLabels.includes(category);
+      const matchesQuery =
+        !normalizedQuery ||
+        [product.title, product.shortCopy, product.sku, product.variantTitle, ...product.categoryLabels]
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedQuery);
+
+      return matchesCategory && matchesQuery;
+    });
+  }, [category, products, query]);
   const selectedProduct = useMemo(
     () => products.find((product) => product.variantId === selectedId) ?? null,
     [products, selectedId]
@@ -124,9 +148,39 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
         </div>
       </section>
 
-      {products.length > 0 ? (
+      <section className="shop-filter-bar" aria-label="Shop filters">
+        <label className="shop-search">
+          <span>Search</span>
+          <input
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search product or category"
+            value={query}
+          />
+        </label>
+        <div className="shop-category-tabs" aria-label="Categories">
+          <button
+            className={category === "all" ? "active" : ""}
+            onClick={() => setCategory("all")}
+            type="button"
+          >
+            All
+          </button>
+          {categories.map((entry) => (
+            <button
+              className={category === entry ? "active" : ""}
+              key={entry}
+              onClick={() => setCategory(entry)}
+              type="button"
+            >
+              {entry}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {filteredProducts.length > 0 ? (
         <section className="depth-shop-grid" aria-label="Products">
-          {products.map((product) => (
+          {filteredProducts.map((product) => (
             <button
               className={`depth-product-card ${product.tone}`}
               key={product.variantId}
@@ -145,7 +199,7 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
         </section>
       ) : (
         <section className="shop-empty">
-          <h2>No products are published yet.</h2>
+          <h2>No products match this view.</h2>
         </section>
       )}
 

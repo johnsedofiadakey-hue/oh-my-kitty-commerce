@@ -7,8 +7,9 @@ import {
 import { ProductManagementForms } from "@/components/admin/product-management-forms";
 import {
   createProductWithDefaultVariantAction,
-  updateProductStatusAction,
-  createVariantAction
+  createVariantAction,
+  quickEditCatalogueItemAction,
+  updateProductStatusAction
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +39,115 @@ export default async function AdminProductsPage() {
         }))}
         source={catalogue.source}
       />
+      <section className="admin-panel">
+        <div className="panel-header">
+          <h2>Quick edit</h2>
+          <span>Prices, category, status, and stock</span>
+        </div>
+        <div className="quick-edit-list">
+          {catalogue.rows.map(({ product, variant }) => {
+            const selectedCategoryId = product?.categoryIds[0] ?? "";
+
+            return (
+              <form action={quickEditCatalogueItemAction} className="quick-edit-row" key={variant.id}>
+                <input name="productId" type="hidden" value={product?.id ?? ""} />
+                <input name="variantId" type="hidden" value={variant.id} />
+                <label className="admin-field">
+                  <span>Product</span>
+                  <input
+                    defaultValue={product?.title ?? "Unknown product"}
+                    disabled={!product || catalogue.source !== "live"}
+                    name="title"
+                    required
+                  />
+                </label>
+                <label className="admin-field">
+                  <span>Short copy</span>
+                  <input
+                    defaultValue={product?.shortCopy ?? ""}
+                    disabled={!product || catalogue.source !== "live"}
+                    name="shortCopy"
+                  />
+                </label>
+                <label className="admin-field">
+                  <span>Category</span>
+                  <select
+                    defaultValue={selectedCategoryId}
+                    disabled={!product || catalogue.source !== "live"}
+                    name="categoryId"
+                  >
+                    <option value="">Uncategorized</option>
+                    {catalogue.categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="admin-field">
+                  <span>Status</span>
+                  <select
+                    defaultValue={product?.status ?? "DRAFT"}
+                    disabled={!product || catalogue.source !== "live"}
+                    name="status"
+                  >
+                    <option value="DRAFT">Draft</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="ARCHIVED">Archived</option>
+                  </select>
+                </label>
+                <label className="admin-field">
+                  <span>Variant</span>
+                  <input
+                    defaultValue={variant.title}
+                    disabled={!product || catalogue.source !== "live"}
+                    name="variantTitle"
+                    required
+                  />
+                </label>
+                <label className="admin-field">
+                  <span>Price GHS</span>
+                  <input
+                    defaultValue={(variant.price / 100).toFixed(2)}
+                    disabled={!product || catalogue.source !== "live"}
+                    inputMode="decimal"
+                    min="0"
+                    name="price"
+                    required
+                  />
+                </label>
+                <label className="admin-field">
+                  <span>Low stock</span>
+                  <input
+                    defaultValue={variant.lowStockThreshold}
+                    disabled={!product || catalogue.source !== "live"}
+                    inputMode="numeric"
+                    min="0"
+                    name="lowStockThreshold"
+                    required
+                  />
+                </label>
+                <label className="admin-field">
+                  <span>Stock +/-</span>
+                  <input
+                    defaultValue="0"
+                    disabled={!product || catalogue.source !== "live"}
+                    inputMode="numeric"
+                    name="stockDelta"
+                  />
+                </label>
+                <button
+                  className="admin-action"
+                  disabled={!product || catalogue.source !== "live"}
+                  type="submit"
+                >
+                  Save
+                </button>
+              </form>
+            );
+          })}
+        </div>
+      </section>
       <section className="admin-panel">
         <div className="panel-header">
           <h2>Catalogue</h2>
