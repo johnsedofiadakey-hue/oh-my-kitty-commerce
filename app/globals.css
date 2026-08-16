@@ -1135,34 +1135,49 @@ button {
 }
 
 .footer-socials {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .footer-social-button {
-  display: flex;
-  min-height: 62px;
+  display: grid;
+  width: 58px;
+  height: 58px;
   align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
+  justify-content: center;
   border: 1px solid rgb(255 255 255 / 14%);
   border-radius: var(--radius-small);
-  padding: 0 14px;
   color: var(--color-white-pure);
   background: rgb(255 255 255 / 7%);
-  font-weight: 900;
-  text-align: left;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
 }
 
-.footer-social-button span {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border-radius: 999px;
-  color: var(--color-near-black);
+.footer-social-button:hover {
+  border-color: rgb(246 184 174 / 58%);
   background: var(--color-peach);
+  transform: translateY(-3px);
+}
+
+.footer-social-button svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+}
+
+.footer-social-button:hover svg {
+  color: var(--color-near-black);
+}
+
+.footer-social-button svg path:first-child {
+  fill: none;
 }
 
 .footer-bottom {
@@ -2428,13 +2443,12 @@ button {
   }
 
   .footer-socials {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .footer-social-button {
-    min-height: 58px;
-    padding: 0 10px;
-    font-size: 0.9rem;
+    width: 54px;
+    height: 54px;
   }
 
   .footer-bottom {
