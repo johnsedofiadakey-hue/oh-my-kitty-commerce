@@ -19,6 +19,19 @@ export type StorefrontCatalogue = {
   cards: StorefrontProductCard[];
 };
 
+export type StorefrontProductView = {
+  id: string;
+  title: string;
+  shortCopy: string;
+  variantId: string;
+  variantTitle: string;
+  sku: string;
+  price: number;
+  formattedPrice: string;
+  stockAvailable: number;
+  tone: "peach" | "green" | "ivory";
+};
+
 export async function getStorefrontCatalogue(): Promise<StorefrontCatalogue> {
   const context = getCommerceServerContext();
   if (!context) {
@@ -73,4 +86,21 @@ function createCards(products: Product[], variants: ProductVariant[]) {
 
 export function formatStorefrontMoney(amount: number) {
   return formatMoney(amount);
+}
+
+export function toStorefrontProductViews(catalogue: StorefrontCatalogue): StorefrontProductView[] {
+  const tones: StorefrontProductView["tone"][] = ["peach", "green", "ivory"];
+
+  return catalogue.cards.map(({ product, variant }, index) => ({
+    id: product.id,
+    title: product.title,
+    shortCopy: product.shortCopy ?? "Soft daily care.",
+    variantId: variant.id,
+    variantTitle: variant.title,
+    sku: variant.sku,
+    price: variant.price,
+    formattedPrice: formatStorefrontMoney(variant.price),
+    stockAvailable: variant.stockAvailable,
+    tone: tones[index % tones.length] ?? "peach"
+  }));
 }

@@ -19,10 +19,16 @@ let cachedCartRaw: string | null = null;
 let cachedCartLines: CartLine[] = emptyCartLines;
 
 type AddToBagButtonProps = {
+  className?: string;
+  label?: string;
   line: CartLine;
 };
 
-export function AddToBagButton({ line }: AddToBagButtonProps) {
+export function AddToBagButton({
+  className = "product-add-button",
+  label = "Add to bag",
+  line
+}: AddToBagButtonProps) {
   const [added, setAdded] = useState(false);
 
   function handleClick() {
@@ -32,8 +38,8 @@ export function AddToBagButton({ line }: AddToBagButtonProps) {
   }
 
   return (
-    <button className="product-add-button" onClick={handleClick} type="button">
-      {added ? "Added" : "Add to bag"}
+    <button className={className} onClick={handleClick} type="button">
+      {added ? "Added" : label}
     </button>
   );
 }
