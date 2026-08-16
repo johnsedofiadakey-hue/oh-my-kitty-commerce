@@ -2,13 +2,13 @@
 
 Firebase-first commerce platform for Oh My Kitty, a feminine hygiene and wellness brand.
 
-This repository currently contains the Phase 0 Codex project pack. It is designed so Codex can start implementation without re-interpreting the product, design, POS, admin, permissions, Firebase, and security direction from chat history.
+This repository contains the Codex project pack plus the current implementation baseline. It is designed so Codex can continue implementation without re-interpreting the product, design, POS, admin, permissions, Firebase, and security direction from chat history.
 
 ## Current Status
 
-- Repository state: Phase 2 admin portal product workflow baseline.
+- Repository state: Phase 2 admin portal product workflow baseline with working local storefront shop/cart preview.
 - Firebase details: real values belong in local env files or deployment secrets, not git.
-- Implementation: Next.js shell app with Firebase-ready boundaries, route shells, brand logo asset, admin portal data views, admin sign-in/session bridge, owner bootstrap script, product/variant create actions, rules, emulator config, Firestore repository adapter, domain types, validation schemas, RBAC helpers, inventory ledger operations, order/POS sale operations, seed data, and starter tests.
+- Implementation: Next.js app with Firebase-ready boundaries, storefront shop/cart, brand logo asset, admin portal data views, admin sign-in/session bridge, owner bootstrap script, product/variant create actions, rules, emulator config, Firestore repository adapter, domain types, validation schemas, RBAC helpers, inventory ledger operations, order/POS sale operations, seed data, and starter tests.
 - Credentials: no real credentials should be committed.
 
 ## Product Surfaces
@@ -98,6 +98,14 @@ Seed the Firestore emulator after it is running:
 npm run seed:emulator
 ```
 
+Seed the configured Firebase project with the starter catalogue:
+
+```bash
+SEED_FIRESTORE_CATALOG=true npm run seed:catalog
+```
+
+Only run this against a development Firebase project. It writes starter products, variants, categories, collections, promotions, delivery rules, public site settings, and a seed audit log to the Firestore project configured by your local environment.
+
 One-time owner bootstrap:
 
 ```bash
@@ -115,8 +123,8 @@ The owner password is not stored in this repository or in env files. It is used 
 Local routes:
 
 - `/` storefront shell
-- `/shop` storefront shop shell
-- `/cart` storefront cart shell
+- `/shop` storefront shop using live Firestore data when available
+- `/cart` local cart preview
 - `/admin` admin shell
 - `/admin/login`
 - `/admin/products`

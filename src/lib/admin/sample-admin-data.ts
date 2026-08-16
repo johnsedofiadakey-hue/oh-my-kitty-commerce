@@ -16,6 +16,7 @@ import {
   sampleVariants
 } from "@/lib/commerce/sample-data";
 import type { Order, Product, ProductVariant } from "@/lib/commerce/types";
+import { formatMoney as formatCommerceMoney } from "@/lib/commerce/format";
 
 export const adminData = {
   products: sampleProducts,
@@ -98,10 +99,7 @@ export function getInventoryRows() {
 }
 
 export function formatMoney(amount: number) {
-  return `GHS ${(amount / 100).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })}`;
+  return formatCommerceMoney(amount);
 }
 
 export function getProductTitle(product: Product | null) {

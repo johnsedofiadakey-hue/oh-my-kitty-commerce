@@ -7,7 +7,12 @@ export const metadata: Metadata = {
     template: "%s | Oh My Kitty"
   },
   description: "Mobile-first feminine wellness commerce for Oh My Kitty.",
-  applicationName: "Oh My Kitty Commerce"
+  applicationName: "Oh My Kitty Commerce",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/brand/oh-my-kitty-logo.jpeg"
+  }
 };
 
 export const viewport: Viewport = {

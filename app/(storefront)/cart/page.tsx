@@ -1,10 +1,18 @@
+import Link from "next/link";
+import { CartClient } from "@/components/storefront/cart-client";
+
 export default function CartPage() {
   return (
-    <main className="scene-band">
-      <div className="scene-inner">
-        <span className="scene-kicker">Bag</span>
-        <h1 className="scene-title">Your bag is empty.</h1>
-      </div>
+    <main className="cart-page">
+      <header className="shop-header">
+        <Link className="brand-mark" href="/">
+          Oh My Kitty
+        </Link>
+        <Link className="portal-link" href="/shop">
+          Continue shopping
+        </Link>
+      </header>
+      <CartClient />
     </main>
   );
 }

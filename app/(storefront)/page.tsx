@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CartCount } from "@/components/storefront/cart-count";
 
 export default function StorefrontHomePage() {
   return (
@@ -56,7 +57,9 @@ export default function StorefrontHomePage() {
       <div className="shop-control" aria-label="Quick shopping controls">
         <Link href="/shop">Shop</Link>
         <span className="dot" aria-hidden="true" />
-        <Link href="/cart">Bag 0</Link>
+        <Link href="/cart">
+          <CartCount />
+        </Link>
       </div>
     </>
   );

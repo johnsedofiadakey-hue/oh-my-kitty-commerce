@@ -32,7 +32,10 @@ export default async function AdminProductsPage() {
       <ProductManagementForms
         createProductAction={createProductWithDefaultVariantAction}
         createVariantAction={createVariantAction}
-        products={catalogue.products}
+        products={catalogue.products.map((product) => ({
+          id: product.id,
+          title: product.title
+        }))}
         source={catalogue.source}
       />
       <section className="admin-panel">

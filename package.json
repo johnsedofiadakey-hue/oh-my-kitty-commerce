@@ -14,6 +14,7 @@
     "test:watch": "vitest",
     "test:rules": "firebase emulators:exec --only firestore \"vitest run --config vitest.rules.config.ts\"",
     "seed:emulator": "tsx scripts/seed-emulator.ts",
+    "seed:catalog": "tsx scripts/seed-catalog.ts",
     "bootstrap:owner": "tsx scripts/bootstrap-owner.ts",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build"
   },

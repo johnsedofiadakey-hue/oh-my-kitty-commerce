@@ -6,12 +6,16 @@ import {
   initialAdminActionState,
   type AdminActionState
 } from "@/lib/admin/product-form";
-import type { Product } from "@/lib/commerce/types";
+
+type ProductOption = {
+  id: string;
+  title: string;
+};
 
 type ProductManagementFormsProps = {
   createProductAction: AdminFormAction;
   createVariantAction: AdminFormAction;
-  products: Product[];
+  products: ProductOption[];
   source: "live" | "sample";
 };
 
@@ -119,7 +123,7 @@ function CreateVariantForm({
 }: {
   action: AdminFormAction;
   disabled: boolean;
-  products: Product[];
+  products: ProductOption[];
 }) {
   const [state, formAction, pending] = useActionState(action, initialAdminActionState);
 
