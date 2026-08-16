@@ -1,6 +1,11 @@
-import { adminData, formatDate } from "@/lib/admin/sample-admin-data";
+import { getAdminOperationsData } from "@/lib/admin/operations-data";
+import { formatDate } from "@/lib/admin/sample-admin-data";
 
-export default function AdminAuditPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminAuditPage() {
+  const data = await getAdminOperationsData();
+
   return (
     <>
       <div className="page-heading">
@@ -9,10 +14,15 @@ export default function AdminAuditPage() {
           <p className="app-subtitle">Privileged product, order, inventory, user, role, and POS activity.</p>
         </div>
       </div>
+      {data.sourceMessage ? (
+        <div className="admin-alert" role="status">
+          {data.sourceMessage}
+        </div>
+      ) : null}
       <section className="admin-panel">
         <div className="panel-header">
           <h2>Audit log</h2>
-          <span>{adminData.auditLogs.length} events</span>
+          <span>{data.auditLogs.length} events</span>
         </div>
         <div className="admin-table">
           <div className="admin-table-row header">
@@ -22,7 +32,7 @@ export default function AdminAuditPage() {
             <span>Summary</span>
             <span>Time</span>
           </div>
-          {adminData.auditLogs.map((log) => (
+          {data.auditLogs.map((log) => (
             <div className="admin-table-row" key={log.id}>
               <strong>{log.action}</strong>
               <span>{log.actorId}</span>

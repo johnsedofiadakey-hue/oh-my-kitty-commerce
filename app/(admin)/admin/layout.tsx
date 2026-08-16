@@ -1,7 +1,9 @@
 import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AdminSignOutButton } from "@/components/auth/admin-sign-out-button";
+import { getRequiredAdminActor } from "@/lib/auth/server";
 
 const adminNavItems = [
   { label: "Dashboard", href: "/admin" },
@@ -18,11 +20,17 @@ const adminNavItems = [
   { label: "Audit", href: "/admin/audit" }
 ] as const;
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  try {
+    await getRequiredAdminActor();
+  } catch {
+    redirect("/admin/login");
+  }
+
   return (
     <div className="app-shell">
       <aside className="app-sidebar">

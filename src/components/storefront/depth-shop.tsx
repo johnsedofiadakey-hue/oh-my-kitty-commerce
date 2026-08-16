@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import type { Route } from "next";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AddToBagButton,
@@ -242,6 +243,12 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
                 label="Add to bag"
                 line={toCartLine(selectedProduct)}
               />
+              <Link
+                className="sheet-detail-link"
+                href={`/products/${selectedProduct.slug}` as Route}
+              >
+                View full details
+              </Link>
               <Link className="sheet-cart-link" href="/cart">
                 View bag
               </Link>

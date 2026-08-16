@@ -93,6 +93,10 @@ export class MemoryCommerceRepository implements CommerceRepository {
     return this.customers.get(id) ?? null;
   }
 
+  async listCustomers() {
+    return [...this.customers.values()];
+  }
+
   async saveOrder(order: Order) {
     this.orders.set(order.id, order);
   }
@@ -101,12 +105,20 @@ export class MemoryCommerceRepository implements CommerceRepository {
     return this.orders.get(id) ?? null;
   }
 
+  async listOrders() {
+    return [...this.orders.values()];
+  }
+
   async findOrderByIdempotencyKey(idempotencyKey: string) {
     return [...this.orders.values()].find((order) => order.idempotencyKey === idempotencyKey) ?? null;
   }
 
   async savePayment(payment: Payment) {
     this.payments.set(payment.id, payment);
+  }
+
+  async listPayments() {
+    return [...this.payments.values()];
   }
 
   async saveInventoryMovement(movement: InventoryMovement) {
@@ -123,8 +135,16 @@ export class MemoryCommerceRepository implements CommerceRepository {
     this.promotions.set(promotion.id, promotion);
   }
 
+  async listPromotions() {
+    return [...this.promotions.values()];
+  }
+
   async saveDeliveryRule(deliveryRule: DeliveryRule) {
     this.deliveryRules.set(deliveryRule.id, deliveryRule);
+  }
+
+  async listDeliveryRules() {
+    return [...this.deliveryRules.values()].sort((first, second) => first.sortOrder - second.sortOrder);
   }
 
   async savePosShift(shift: PosShift) {
@@ -133,6 +153,10 @@ export class MemoryCommerceRepository implements CommerceRepository {
 
   async getPosShift(id: string) {
     return this.posShifts.get(id) ?? null;
+  }
+
+  async listPosShifts() {
+    return [...this.posShifts.values()];
   }
 
   async saveRole(role: Role) {

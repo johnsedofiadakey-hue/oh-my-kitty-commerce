@@ -1,11 +1,14 @@
 import {
   formatMoney,
+  getAdminOperationsData,
   getOrderCustomerName,
-  getOrderRows
-} from "@/lib/admin/sample-admin-data";
+} from "@/lib/admin/operations-data";
 
-export default function AdminOrdersPage() {
-  const rows = getOrderRows();
+export const dynamic = "force-dynamic";
+
+export default async function AdminOrdersPage() {
+  const data = await getAdminOperationsData();
+  const rows = data.orderRows;
 
   return (
     <>
@@ -18,6 +21,11 @@ export default function AdminOrdersPage() {
           Create order
         </button>
       </div>
+      {data.sourceMessage ? (
+        <div className="admin-alert" role="status">
+          {data.sourceMessage}
+        </div>
+      ) : null}
       <section className="admin-panel">
         <div className="panel-header">
           <h2>Order queue</h2>

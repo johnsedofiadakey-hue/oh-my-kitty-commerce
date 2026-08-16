@@ -1,12 +1,15 @@
 import {
   formatDate,
-  getInventoryRows,
+  getAdminOperationsData,
   getProductTitle,
   getVariantLabel
-} from "@/lib/admin/sample-admin-data";
+} from "@/lib/admin/operations-data";
 
-export default function AdminInventoryPage() {
-  const rows = getInventoryRows();
+export const dynamic = "force-dynamic";
+
+export default async function AdminInventoryPage() {
+  const data = await getAdminOperationsData();
+  const rows = data.inventoryRows;
 
   return (
     <>
@@ -19,6 +22,11 @@ export default function AdminInventoryPage() {
           Adjust stock
         </button>
       </div>
+      {data.sourceMessage ? (
+        <div className="admin-alert" role="status">
+          {data.sourceMessage}
+        </div>
+      ) : null}
       <section className="admin-panel">
         <div className="panel-header">
           <h2>Stock by variant</h2>

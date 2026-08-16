@@ -301,6 +301,84 @@ export async function createDeliveryRule(
   return deliveryRule;
 }
 
+export async function openPosShift(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: { openingCash?: number } = {}
+) {
+  await assertCan(context, actor, "pos.shift.open");
+  const openingCash = parseMoneyMinorUnit(input.openingCash, "openingCash");
+  const existingOpenShift = (await context.repo.listPosShifts()).find(
+    (shift) => shift.staffId === actor.uid && shift.status === "OPEN"
+  );
+
+  if (existingOpenShift) {
+    return existingOpenShift;
+  }
+
+  const shift = {
+    id: createId(context, "shift"),
+    staffId: actor.uid,
+    status: "OPEN" as const,
+    openedAt: getNow(context),
+    openingCash
+  };
+
+  await context.repo.savePosShift(shift);
+  await writeAuditLog(context, actor, {
+    action: "pos.shift.open",
+    entityType: "posShift",
+    entityId: shift.id,
+    summary: "Opened POS shift"
+  });
+
+  return shift;
+}
+
+export async function closePosShift(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: { id: string; closingCash?: number; notes?: string }
+) {
+  await assertCan(context, actor, "pos.shift.close");
+  const shift = await context.repo.getPosShift(input.id);
+  if (!shift || shift.status !== "OPEN") {
+    throw new CommerceError("INVALID_STATE", "Only an open POS shift can be closed.");
+  }
+
+  const closingCash = parseMoneyMinorUnit(input.closingCash, "closingCash");
+  const [orders, payments] = await Promise.all([
+    context.repo.listOrders(),
+    context.repo.listPayments()
+  ]);
+  const shiftOrderIds = new Set(
+    orders.filter((order) => order.posShiftId === shift.id).map((order) => order.id)
+  );
+  const cashSales = payments
+    .filter((payment) => payment.method === "cash" && shiftOrderIds.has(payment.orderId))
+    .reduce((total, payment) => total + payment.amount, 0);
+  const expectedCash = shift.openingCash + cashSales;
+  const closedShift = {
+    ...shift,
+    closedAt: getNow(context),
+    closingCash,
+    difference: closingCash - expectedCash,
+    expectedCash,
+    notes: input.notes,
+    status: "CLOSED" as const
+  };
+
+  await context.repo.savePosShift(closedShift);
+  await writeAuditLog(context, actor, {
+    action: "pos.shift.close",
+    entityType: "posShift",
+    entityId: shift.id,
+    summary: "Closed POS shift"
+  });
+
+  return closedShift;
+}
+
 export async function createOrderDraft(
   context: CommerceContext,
   actor: CommerceActor,
@@ -658,6 +736,18 @@ function createId(context: CommerceContext, prefix: string) {
 
 function createSlugId(prefix: string, value: string) {
   return `${prefix}-${value.replace(/[^a-z0-9-]/g, "-")}`;
+}
+
+function parseMoneyMinorUnit(value: unknown, key: string) {
+  if (value === undefined) {
+    return 0;
+  }
+
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    throw new CommerceError("VALIDATION_ERROR", `${key} must be a positive amount.`);
+  }
+
+  return value;
 }
 
 function withTransaction<T>(context: CommerceContext, operation: () => Promise<T>) {

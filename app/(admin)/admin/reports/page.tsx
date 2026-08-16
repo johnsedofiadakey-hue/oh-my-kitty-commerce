@@ -1,16 +1,13 @@
 import {
-  adminData,
   formatMoney,
-  getChannelTotals,
-  getInventoryRows
-} from "@/lib/admin/sample-admin-data";
+  getAdminOperationsData
+} from "@/lib/admin/operations-data";
 
-export default function AdminReportsPage() {
-  const channelTotals = getChannelTotals();
-  const lowStockRows = getInventoryRows().filter((row) => row.lowStock);
-  const cashSales = adminData.payments
-    .filter((payment) => payment.method === "cash")
-    .reduce((total, payment) => total + payment.amount, 0);
+export const dynamic = "force-dynamic";
+
+export default async function AdminReportsPage() {
+  const data = await getAdminOperationsData();
+  const lowStockRows = data.inventoryRows.filter((row) => row.lowStock);
 
   return (
     <>
@@ -23,14 +20,19 @@ export default function AdminReportsPage() {
           Export
         </button>
       </div>
+      {data.sourceMessage ? (
+        <div className="admin-alert" role="status">
+          {data.sourceMessage}
+        </div>
+      ) : null}
       <section className="metric-grid">
         <article className="metric">
           <span>Cash sales</span>
-          <strong>{formatMoney(cashSales)}</strong>
+          <strong>{formatMoney(data.metrics.cashSales)}</strong>
         </article>
         <article className="metric">
           <span>Active shifts</span>
-          <strong>{adminData.posShifts.filter((shift) => shift.status === "OPEN").length}</strong>
+          <strong>{data.metrics.activeShifts}</strong>
         </article>
         <article className="metric">
           <span>Low stock</span>
@@ -38,7 +40,7 @@ export default function AdminReportsPage() {
         </article>
         <article className="metric">
           <span>Discount usage</span>
-          <strong>{adminData.promotions.reduce((total, promo) => total + promo.usedCount, 0)}</strong>
+          <strong>{data.metrics.discountUsage}</strong>
         </article>
       </section>
       <section className="admin-panel">
@@ -52,7 +54,7 @@ export default function AdminReportsPage() {
             <span>Orders</span>
             <span>Revenue</span>
           </div>
-          {channelTotals.map((row) => (
+          {data.channelTotals.map((row) => (
             <div className="admin-table-row" key={row.channel}>
               <strong>{row.channel.replace("_", " ")}</strong>
               <span>{row.orders}</span>

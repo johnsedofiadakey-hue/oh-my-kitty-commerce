@@ -25,8 +25,10 @@ export type StorefrontCatalogue = {
 
 export type StorefrontProductView = {
   id: string;
+  slug: string;
   title: string;
   shortCopy: string;
+  description?: string;
   variantId: string;
   variantTitle: string;
   sku: string;
@@ -36,8 +38,17 @@ export type StorefrontProductView = {
   imageUrl?: string;
   imageAlt?: string;
   primaryCategory: string;
+  primaryCategorySlug: string;
   categoryLabels: string[];
+  categorySlugs: string[];
+  care?: StorefrontProductCare;
   tone: "peach" | "green" | "ivory";
+};
+
+export type StorefrontProductCare = {
+  usage?: string;
+  ingredients?: string;
+  warnings?: string;
 };
 
 export async function getStorefrontCatalogue(): Promise<StorefrontCatalogue> {
@@ -132,8 +143,10 @@ export function toStorefrontProductViews(catalogue: StorefrontCatalogue): Storef
 
   return catalogue.cards.map(({ product, variant, media, categories }, index) => ({
     id: product.id,
+    slug: product.slug,
     title: product.title,
     shortCopy: product.shortCopy ?? "Soft daily care.",
+    description: product.description,
     variantId: variant.id,
     variantTitle: variant.title,
     sku: variant.sku,
@@ -143,7 +156,10 @@ export function toStorefrontProductViews(catalogue: StorefrontCatalogue): Storef
     imageUrl: media?.url,
     imageAlt: media?.alt,
     primaryCategory: categories[0]?.title ?? "Care",
+    primaryCategorySlug: categories[0]?.slug ?? "care",
     categoryLabels: categories.map((category) => category.title),
+    categorySlugs: categories.map((category) => category.slug),
+    care: product.care,
     tone: tones[index % tones.length] ?? "peach"
   }));
 }

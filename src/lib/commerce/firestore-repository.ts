@@ -95,6 +95,11 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     return readDoc<Customer>(await this.db.collection("customers").doc(id).get());
   }
 
+  async listCustomers() {
+    const snapshot = await this.db.collection("customers").get();
+    return snapshot.docs.map((doc) => readDoc<Customer>(doc)).filter(isDefined);
+  }
+
   async saveOrder(order: Order) {
     await this.db.collection("orders").doc(order.id).set(cleanFirestoreData(order), {
       merge: true
@@ -103,6 +108,11 @@ export class FirestoreCommerceRepository implements CommerceRepository {
 
   async getOrder(id: string) {
     return readDoc<Order>(await this.db.collection("orders").doc(id).get());
+  }
+
+  async listOrders() {
+    const snapshot = await this.db.collection("orders").get();
+    return snapshot.docs.map((doc) => readDoc<Order>(doc)).filter(isDefined);
   }
 
   async findOrderByIdempotencyKey(idempotencyKey: string) {
@@ -119,6 +129,11 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     await this.db.collection("payments").doc(payment.id).set(cleanFirestoreData(payment), {
       merge: true
     });
+  }
+
+  async listPayments() {
+    const snapshot = await this.db.collection("payments").get();
+    return snapshot.docs.map((doc) => readDoc<Payment>(doc)).filter(isDefined);
   }
 
   async saveInventoryMovement(movement: InventoryMovement) {
@@ -143,11 +158,21 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     });
   }
 
+  async listPromotions() {
+    const snapshot = await this.db.collection("promotions").get();
+    return snapshot.docs.map((doc) => readDoc<Promotion>(doc)).filter(isDefined);
+  }
+
   async saveDeliveryRule(deliveryRule: DeliveryRule) {
     await this.db
       .collection("deliveryRules")
       .doc(deliveryRule.id)
       .set(cleanFirestoreData(deliveryRule), { merge: true });
+  }
+
+  async listDeliveryRules() {
+    const snapshot = await this.db.collection("deliveryRules").orderBy("sortOrder").get();
+    return snapshot.docs.map((doc) => readDoc<DeliveryRule>(doc)).filter(isDefined);
   }
 
   async savePosShift(shift: PosShift) {
@@ -158,6 +183,11 @@ export class FirestoreCommerceRepository implements CommerceRepository {
 
   async getPosShift(id: string) {
     return readDoc<PosShift>(await this.db.collection("posShifts").doc(id).get());
+  }
+
+  async listPosShifts() {
+    const snapshot = await this.db.collection("posShifts").get();
+    return snapshot.docs.map((doc) => readDoc<PosShift>(doc)).filter(isDefined);
   }
 
   async saveRole(role: Role) {

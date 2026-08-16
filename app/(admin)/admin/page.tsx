@@ -1,20 +1,20 @@
 import {
   formatMoney,
-  getAdminMetrics,
-  getChannelTotals,
-  getOrderRows
-} from "@/lib/admin/sample-admin-data";
+  getAdminOperationsData
+} from "@/lib/admin/operations-data";
 
-const metrics = [
-  ["Revenue", formatMoney(getAdminMetrics().revenue)],
-  ["Online orders", String(getAdminMetrics().onlineOrders)],
-  ["POS sales", String(getAdminMetrics().posOrders)],
-  ["Low stock", String(getAdminMetrics().lowStock)]
-] as const;
+export const dynamic = "force-dynamic";
 
-export default function AdminDashboardPage() {
-  const recentOrders = getOrderRows().slice(0, 5);
-  const channelTotals = getChannelTotals();
+export default async function AdminDashboardPage() {
+  const data = await getAdminOperationsData();
+  const recentOrders = data.orderRows.slice(0, 5);
+  const metrics = [
+    ["Revenue", formatMoney(data.metrics.revenue)],
+    ["Online orders", String(data.metrics.onlineOrders)],
+    ["POS sales", String(data.metrics.posOrders)],
+    ["Low stock", String(data.metrics.lowStock)]
+  ] as const;
+
 
   return (
     <>
@@ -22,6 +22,11 @@ export default function AdminDashboardPage() {
       <p className="app-subtitle">
         Today&apos;s store activity, order flow, channel totals, and inventory alerts.
       </p>
+      {data.sourceMessage ? (
+        <div className="admin-alert" role="status">
+          {data.sourceMessage}
+        </div>
+      ) : null}
       <section className="metric-grid" aria-label="Admin metrics">
         {metrics.map(([label, value]) => (
           <article className="metric" key={label}>
@@ -37,7 +42,7 @@ export default function AdminDashboardPage() {
             <span>Orders and revenue</span>
           </div>
           <div className="stack-list">
-            {channelTotals.map((row) => (
+            {data.channelTotals.map((row) => (
               <div className="stack-row" key={row.channel}>
                 <strong>{row.channel.replace("_", " ")}</strong>
                 <span>

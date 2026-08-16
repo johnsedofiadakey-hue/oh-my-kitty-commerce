@@ -15,11 +15,20 @@ type PosLine = StorefrontProductView & {
 };
 
 type PosReceipt = {
+  changeDue: number;
   orderNumber: string;
   total: number;
 };
 
 type PaymentMethod = "cash" | "mobile_money" | "manual_transfer";
+
+type PosShiftState = {
+  id: string;
+  openingCash: number;
+  status: "OPEN" | "CLOSED";
+  expectedCash?: number;
+  difference?: number;
+};
 
 export function PosSaleClient({ products, source, sourceMessage }: PosSaleClientProps) {
   const [query, setQuery] = useState("");
@@ -31,7 +40,12 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [receipt, setReceipt] = useState<PosReceipt | null>(null);
-  const canSell = source === "live";
+  const [openingCash, setOpeningCash] = useState("");
+  const [closingCash, setClosingCash] = useState("");
+  const [shiftBusy, setShiftBusy] = useState(false);
+  const [shift, setShift] = useState<PosShiftState | null>(null);
+  const [shiftSales, setShiftSales] = useState({ count: 0, revenue: 0, cash: 0 });
+  const canSell = source === "live" && shift?.status === "OPEN";
   const normalizedQuery = query.trim().toLowerCase();
   const visibleProducts = useMemo(
     () =>
@@ -51,6 +65,88 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
   );
   const subtotal = cart.reduce((total, line) => total + line.price * line.quantity, 0);
   const amountReceived = paymentMethod === "cash" ? parseMoneyInput(cashReceived) : undefined;
+  const cashReceivedMinor = amountReceived ?? 0;
+  const changeDue =
+    paymentMethod === "cash" && cashReceivedMinor > subtotal ? cashReceivedMinor - subtotal : 0;
+
+  async function openShift() {
+    setShiftBusy(true);
+    setErrorMessage("");
+
+    try {
+      const response = await fetch("/api/pos/shift", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          openingCash: parseMoneyInput(openingCash) ?? 0
+        })
+      });
+      const payload = (await response.json()) as {
+        id?: string;
+        message?: string;
+        openingCash?: number;
+        status?: PosShiftState["status"];
+      };
+
+      if (!response.ok || !payload.id || payload.status !== "OPEN") {
+        throw new Error(payload.message ?? "Could not open shift.");
+      }
+
+      setShift({
+        id: payload.id,
+        openingCash: payload.openingCash ?? 0,
+        status: "OPEN"
+      });
+      setShiftSales({ count: 0, revenue: 0, cash: 0 });
+      setOpeningCash("");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not open shift.");
+    } finally {
+      setShiftBusy(false);
+    }
+  }
+
+  async function closeShift() {
+    if (!shift) {
+      return;
+    }
+
+    setShiftBusy(true);
+    setErrorMessage("");
+
+    try {
+      const response = await fetch("/api/pos/shift", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          closingCash: parseMoneyInput(closingCash) ?? 0,
+          id: shift.id
+        })
+      });
+      const payload = (await response.json()) as {
+        difference?: number;
+        expectedCash?: number;
+        message?: string;
+        status?: PosShiftState["status"];
+      };
+
+      if (!response.ok || payload.status !== "CLOSED") {
+        throw new Error(payload.message ?? "Could not close shift.");
+      }
+
+      setShift({
+        ...shift,
+        difference: payload.difference,
+        expectedCash: payload.expectedCash,
+        status: "CLOSED"
+      });
+      setClosingCash("");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not close shift.");
+    } finally {
+      setShiftBusy(false);
+    }
+  }
 
   function addProduct(product: StorefrontProductView) {
     setReceipt(null);
@@ -96,7 +192,8 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
             variantId: line.variantId,
             quantity: line.quantity
           })),
-          paymentMethod
+          paymentMethod,
+          posShiftId: shift?.id
         })
       });
       const payload = (await response.json()) as { message?: string; orderNumber?: string; total?: number };
@@ -105,7 +202,13 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
         throw new Error(payload.message ?? "POS sale failed.");
       }
 
-      setReceipt({ orderNumber: payload.orderNumber, total: payload.total });
+      const orderTotal = payload.total;
+      setReceipt({ changeDue, orderNumber: payload.orderNumber, total: orderTotal });
+      setShiftSales((current) => ({
+        cash: current.cash + (paymentMethod === "cash" ? orderTotal : 0),
+        count: current.count + 1,
+        revenue: current.revenue + orderTotal
+      }));
       setCart([]);
       setCashReceived("");
       setCustomerName("");
@@ -156,11 +259,77 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
       </main>
       <aside className="pos-cart" aria-label="POS cart">
         <h2 className="app-title">Cart</h2>
+        <section className="pos-shift-panel" aria-label="POS shift">
+          <div className="pos-shift-heading">
+            <strong>{shift?.status === "OPEN" ? "Shift open" : "Open shift"}</strong>
+            <span>{shift?.id ?? "Required before sale"}</span>
+          </div>
+          {shift?.status === "OPEN" ? (
+            <>
+              <div className="pos-shift-stats">
+                <span>
+                  Sales <strong>{shiftSales.count}</strong>
+                </span>
+                <span>
+                  Revenue <strong>{formatMoney(shiftSales.revenue)}</strong>
+                </span>
+                <span>
+                  Cash <strong>{formatMoney(shift.openingCash + shiftSales.cash)}</strong>
+                </span>
+              </div>
+              <label className="admin-field">
+                <span>Closing cash GHS</span>
+                <input
+                  inputMode="decimal"
+                  onChange={(event) => setClosingCash(event.target.value)}
+                  placeholder={((shift.openingCash + shiftSales.cash) / 100).toFixed(2)}
+                  value={closingCash}
+                />
+              </label>
+              <button
+                className="pos-secondary-button"
+                disabled={shiftBusy}
+                onClick={closeShift}
+                type="button"
+              >
+                {shiftBusy ? "Closing" : "Close shift"}
+              </button>
+            </>
+          ) : (
+            <>
+              {shift?.status === "CLOSED" ? (
+                <div className="pos-receipt compact" role="status">
+                  <span>Shift closed</span>
+                  <strong>Expected {formatMoney(shift.expectedCash ?? 0)}</strong>
+                  <small>Difference {formatMoney(shift.difference ?? 0)}</small>
+                </div>
+              ) : null}
+              <label className="admin-field">
+                <span>Opening cash GHS</span>
+                <input
+                  inputMode="decimal"
+                  onChange={(event) => setOpeningCash(event.target.value)}
+                  placeholder="0.00"
+                  value={openingCash}
+                />
+              </label>
+              <button
+                className="pos-secondary-button"
+                disabled={source !== "live" || shiftBusy}
+                onClick={openShift}
+                type="button"
+              >
+                {shiftBusy ? "Opening" : "Open shift"}
+              </button>
+            </>
+          )}
+        </section>
         {receipt ? (
           <div className="pos-receipt" role="status">
             <span>Receipt</span>
             <strong>{receipt.orderNumber}</strong>
             <small>{formatMoney(receipt.total)}</small>
+            {receipt.changeDue > 0 ? <small>Change {formatMoney(receipt.changeDue)}</small> : null}
           </div>
         ) : null}
         <div className="pos-cart-lines">
@@ -245,7 +414,14 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
             <strong>{formatMoney(subtotal)}</strong>
           </div>
           {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
-          <button className="checkout-button" disabled={!canSell || submitting || cart.length === 0} type="submit">
+          {source === "live" && !canSell ? (
+            <p className="pos-hint">Open a shift before completing POS sales.</p>
+          ) : null}
+          <button
+            className="checkout-button"
+            disabled={!canSell || submitting || cart.length === 0}
+            type="submit"
+          >
             {submitting ? "Completing sale" : "Complete sale"}
           </button>
         </form>

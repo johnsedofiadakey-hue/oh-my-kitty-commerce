@@ -1,6 +1,10 @@
-import { adminData } from "@/lib/admin/sample-admin-data";
+import { getAdminOperationsData } from "@/lib/admin/operations-data";
 
-export default function AdminPromotionsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminPromotionsPage() {
+  const data = await getAdminOperationsData();
+
   return (
     <>
       <div className="page-heading">
@@ -12,10 +16,15 @@ export default function AdminPromotionsPage() {
           New promotion
         </button>
       </div>
+      {data.sourceMessage ? (
+        <div className="admin-alert" role="status">
+          {data.sourceMessage}
+        </div>
+      ) : null}
       <section className="admin-panel">
         <div className="panel-header">
           <h2>Discount codes</h2>
-          <span>{adminData.promotions.length} active rule</span>
+          <span>{data.promotions.length} active rule</span>
         </div>
         <div className="admin-table">
           <div className="admin-table-row header">
@@ -25,7 +34,7 @@ export default function AdminPromotionsPage() {
             <span>Channels</span>
             <span>Approval</span>
           </div>
-          {adminData.promotions.map((promotion) => (
+          {data.promotions.map((promotion) => (
             <div className="admin-table-row" key={promotion.id}>
               <strong>{promotion.code}</strong>
               <span>{promotion.type}</span>

@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { getRequiredAdminActor } from "@/lib/auth/server";
+import { getRequiredPosActor } from "@/lib/auth/pos-server";
 import { CommerceError } from "@/lib/commerce/errors";
-import { completePosSale, type CommerceActor } from "@/lib/commerce/operations";
+import { completePosSale } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
-import { isProductionAppEnv } from "@/lib/env/server";
 
 type PosLineInput = {
   productId?: unknown;
@@ -20,6 +19,7 @@ type PosSaleRequestBody = {
   idempotencyKey?: unknown;
   items?: unknown;
   paymentMethod?: unknown;
+  posShiftId?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
     const [body, actor] = await Promise.all([
       request.json() as Promise<PosSaleRequestBody>,
-      getPosActor()
+      getRequiredPosActor()
     ]);
     const paymentMethod = parsePaymentMethod(body.paymentMethod);
     const sale = await completePosSale(context, actor, {
@@ -48,6 +48,7 @@ export async function POST(request: Request) {
       items: parsePosLines(body.items),
       paymentMethod,
       paymentProvider: paymentMethod === "cash" ? "CASH" : "MANUAL",
+      posShiftId: normalizeOptionalString(body.posShiftId),
       taxTotal: 0
     });
 
@@ -62,21 +63,6 @@ export async function POST(request: Request) {
       { message: getRouteErrorMessage(error) },
       { status: error instanceof CommerceError ? 400 : 500 }
     );
-  }
-}
-
-async function getPosActor(): Promise<CommerceActor> {
-  try {
-    return await getRequiredAdminActor();
-  } catch (error) {
-    if (isProductionAppEnv()) {
-      throw error;
-    }
-
-    return {
-      uid: "local-pos-staff",
-      roleIds: ["role-sales-staff"]
-    };
   }
 }
 

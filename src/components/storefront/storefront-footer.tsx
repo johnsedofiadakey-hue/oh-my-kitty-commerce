@@ -58,6 +58,10 @@ export function StorefrontFooter() {
 
         <div className="footer-bottom">
           <div className="footer-legal-links">
+            <a href="/faq">FAQ</a>
+            <a href="/contact">Contact</a>
+            <a href="/delivery">Delivery</a>
+            <a href="/returns">Returns</a>
             <a href="/privacy">Privacy</a>
             <a href="/terms">Terms & Conditions</a>
           </div>

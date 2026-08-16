@@ -1,6 +1,10 @@
-import { adminData, formatMoney } from "@/lib/admin/sample-admin-data";
+import { formatMoney, getAdminOperationsData } from "@/lib/admin/operations-data";
 
-export default function AdminCustomersPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminCustomersPage() {
+  const data = await getAdminOperationsData();
+
   return (
     <>
       <div className="page-heading">
@@ -12,10 +16,15 @@ export default function AdminCustomersPage() {
           New customer
         </button>
       </div>
+      {data.sourceMessage ? (
+        <div className="admin-alert" role="status">
+          {data.sourceMessage}
+        </div>
+      ) : null}
       <section className="admin-panel">
         <div className="panel-header">
           <h2>Customer list</h2>
-          <span>{adminData.customers.length} customers</span>
+          <span>{data.customers.length} customers</span>
         </div>
         <div className="admin-table">
           <div className="admin-table-row header">
@@ -25,8 +34,8 @@ export default function AdminCustomersPage() {
             <span>Source</span>
             <span>Orders</span>
           </div>
-          {adminData.customers.map((customer) => {
-            const orders = adminData.orders.filter((order) => order.customerId === customer.id);
+          {data.customers.map((customer) => {
+            const orders = data.orders.filter((order) => order.customerId === customer.id);
             const total = orders.reduce((sum, order) => sum + order.total, 0);
 
             return (

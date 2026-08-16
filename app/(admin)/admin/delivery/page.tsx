@@ -1,6 +1,10 @@
-import { adminData, formatMoney } from "@/lib/admin/sample-admin-data";
+import { formatMoney, getAdminOperationsData } from "@/lib/admin/operations-data";
 
-export default function AdminDeliveryPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminDeliveryPage() {
+  const data = await getAdminOperationsData();
+
   return (
     <>
       <div className="page-heading">
@@ -12,10 +16,15 @@ export default function AdminDeliveryPage() {
           New rule
         </button>
       </div>
+      {data.sourceMessage ? (
+        <div className="admin-alert" role="status">
+          {data.sourceMessage}
+        </div>
+      ) : null}
       <section className="admin-panel">
         <div className="panel-header">
           <h2>Delivery rules</h2>
-          <span>{adminData.deliveryRules.length} options</span>
+          <span>{data.deliveryRules.length} options</span>
         </div>
         <div className="admin-table">
           <div className="admin-table-row header">
@@ -25,7 +34,7 @@ export default function AdminDeliveryPage() {
             <span>Fee</span>
             <span>Estimate</span>
           </div>
-          {adminData.deliveryRules.map((rule) => (
+          {data.deliveryRules.map((rule) => (
             <div className="admin-table-row" key={rule.id}>
               <strong>{rule.name}</strong>
               <span>{rule.type.replaceAll("_", " ")}</span>

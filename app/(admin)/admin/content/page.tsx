@@ -1,7 +1,11 @@
 import Image from "next/image";
-import { adminData } from "@/lib/admin/sample-admin-data";
+import { getAdminOperationsData } from "@/lib/admin/operations-data";
 
-export default function AdminContentPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminContentPage() {
+  const data = await getAdminOperationsData();
+
   return (
     <>
       <div className="page-heading">
@@ -13,6 +17,11 @@ export default function AdminContentPage() {
           Upload media
         </button>
       </div>
+      {data.sourceMessage ? (
+        <div className="admin-alert" role="status">
+          {data.sourceMessage}
+        </div>
+      ) : null}
       <section className="admin-grid two">
         <div className="admin-panel">
           <div className="panel-header">
@@ -31,10 +40,10 @@ export default function AdminContentPage() {
         <div className="admin-panel">
           <div className="panel-header">
             <h2>Media library</h2>
-            <span>{adminData.media.length} asset</span>
+            <span>{data.media.length} asset</span>
           </div>
           <div className="stack-list">
-            {adminData.media.map((media) => (
+            {data.media.map((media) => (
               <div className="stack-row" key={media.id}>
                 <strong>{media.title ?? media.id}</strong>
                 <span>
