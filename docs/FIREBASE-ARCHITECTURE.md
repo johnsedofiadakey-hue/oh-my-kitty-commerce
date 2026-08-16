@@ -153,6 +153,14 @@ Initial owner bootstrap:
 - never store the owner password in git, docs, or env files
 - the script writes `users/{uid}`, default `roles`, an audit log, and custom claims `{ isAdmin, isStaff, roleIds, permissionsVersion }`
 
+Admin session flow:
+
+- admin signs in with Firebase Auth on `/admin/login`
+- client sends the Firebase ID token to `/api/auth/session`
+- server verifies the ID token and `isAdmin` claim with Firebase Admin
+- server creates an HTTP-only session cookie
+- privileged server actions verify that session cookie before writing product, variant, inventory, order, promotion, user, or settings changes
+
 Public app config:
 
 ```text

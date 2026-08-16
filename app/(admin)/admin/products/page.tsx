@@ -1,13 +1,20 @@
 import {
-  adminData,
-  formatMoney,
-  getProductTitle,
-  getProductVariantRows,
-  getVariantLabel
-} from "@/lib/admin/sample-admin-data";
+  formatAdminMoney,
+  formatAdminProductTitle,
+  formatAdminVariantLabel,
+  getAdminCatalogueData
+} from "@/lib/admin/catalogue";
+import { ProductManagementForms } from "@/components/admin/product-management-forms";
+import {
+  createProductWithDefaultVariantAction,
+  updateProductStatusAction,
+  createVariantAction
+} from "./actions";
 
-export default function AdminProductsPage() {
-  const rows = getProductVariantRows();
+export const dynamic = "force-dynamic";
+
+export default async function AdminProductsPage() {
+  const catalogue = await getAdminCatalogueData();
 
   return (
     <>
@@ -16,14 +23,22 @@ export default function AdminProductsPage() {
           <h1 className="app-title">Products</h1>
           <p className="app-subtitle">Catalogue, variants, prices, media, and publishing state.</p>
         </div>
-        <button className="admin-action" type="button">
-          New product
-        </button>
       </div>
+      {catalogue.sourceMessage ? (
+        <div className="admin-alert" role="status">
+          {catalogue.sourceMessage}
+        </div>
+      ) : null}
+      <ProductManagementForms
+        createProductAction={createProductWithDefaultVariantAction}
+        createVariantAction={createVariantAction}
+        products={catalogue.products}
+        source={catalogue.source}
+      />
       <section className="admin-panel">
         <div className="panel-header">
           <h2>Catalogue</h2>
-          <span>{adminData.products.length} products</span>
+          <span>{catalogue.products.length} products</span>
         </div>
         <div className="admin-table">
           <div className="admin-table-row header">
@@ -33,13 +48,32 @@ export default function AdminProductsPage() {
             <span>Stock</span>
             <span>Status</span>
           </div>
-          {rows.map(({ product, variant, lowStock }) => (
+          {catalogue.rows.map(({ product, variant, lowStock }) => (
             <div className="admin-table-row" key={variant.id}>
-              <strong>{getProductTitle(product)}</strong>
-              <span>{getVariantLabel(variant)}</span>
-              <span>{formatMoney(variant.price)}</span>
+              <strong>{formatAdminProductTitle(product)}</strong>
+              <span>{formatAdminVariantLabel(variant)}</span>
+              <span>{formatAdminMoney(variant.price)}</span>
               <span className={lowStock ? "status danger" : "status"}>{variant.stockAvailable}</span>
-              <span>{product?.status ?? "Unknown"}</span>
+              {product ? (
+                <form action={updateProductStatusAction} className="inline-status-form">
+                  <input name="productId" type="hidden" value={product.id} />
+                  <select
+                    aria-label={`Status for ${product.title}`}
+                    defaultValue={product.status}
+                    disabled={catalogue.source !== "live"}
+                    name="status"
+                  >
+                    <option value="DRAFT">DRAFT</option>
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="ARCHIVED">ARCHIVED</option>
+                  </select>
+                  <button disabled={catalogue.source !== "live"} type="submit">
+                    Save
+                  </button>
+                </form>
+              ) : (
+                <span>Unknown</span>
+              )}
             </div>
           ))}
         </div>
@@ -48,10 +82,10 @@ export default function AdminProductsPage() {
         <div className="admin-panel">
           <div className="panel-header">
             <h2>Collections</h2>
-            <span>{adminData.collections.length} active groups</span>
+            <span>{catalogue.collections.length} active groups</span>
           </div>
           <div className="stack-list">
-            {adminData.collections.map((collection) => (
+            {catalogue.collections.map((collection) => (
               <div className="stack-row" key={collection.id}>
                 <strong>{collection.title}</strong>
                 <span>{collection.productIds.length} products</span>
@@ -62,10 +96,10 @@ export default function AdminProductsPage() {
         <div className="admin-panel">
           <div className="panel-header">
             <h2>Categories</h2>
-            <span>{adminData.categories.length} categories</span>
+            <span>{catalogue.categories.length} categories</span>
           </div>
           <div className="stack-list">
-            {adminData.categories.map((category) => (
+            {catalogue.categories.map((category) => (
               <div className="stack-row" key={category.id}>
                 <strong>{category.title}</strong>
                 <span>{category.active ? "Active" : "Inactive"}</span>

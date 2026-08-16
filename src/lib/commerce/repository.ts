@@ -16,6 +16,7 @@ import type {
 } from "@/lib/commerce/types";
 
 export type CommerceRepository = {
+  listProducts(): Promise<Product[]>;
   getProduct(id: string): Promise<Product | null>;
   saveProduct(product: Product): Promise<void>;
   getVariant(productId: string, variantId: string): Promise<ProductVariant | null>;

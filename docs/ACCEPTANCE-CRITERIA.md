@@ -66,7 +66,7 @@ Admin is acceptable when:
 - reports show at least revenue, order count, channel split, low stock, and POS totals
 - audit logs record privileged actions
 
-Current local note: baseline admin views exist for all required sections and render from the shared commerce sample data. The repo also has a Firebase Auth admin sign-in screen and owner bootstrap script. Phase 2 is not fully accepted until authenticated create/edit/save workflows are wired to Firebase-backed server operations.
+Current local note: baseline admin views exist for all required sections and render from shared commerce data. The repo also has a Firebase Auth admin sign-in screen, server session bridge, owner bootstrap script, and authenticated product/variant create actions. Phase 2 is not fully accepted until remaining edit/save workflows are wired to Firebase-backed server operations.
 
 ## Phase 3 Acceptance
 

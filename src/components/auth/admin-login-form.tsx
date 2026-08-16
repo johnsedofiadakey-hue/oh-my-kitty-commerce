@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { FirebaseError } from "firebase/app";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { getClientAuth } from "@/lib/firebase/client";
 
 type LoginState = "idle" | "submitting" | "success" | "error";
@@ -28,7 +28,22 @@ export function AdminLoginForm() {
     }
 
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const idToken = await credential.user.getIdToken();
+      const sessionResponse = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ idToken })
+      });
+
+      if (!sessionResponse.ok) {
+        await signOut(auth);
+        const body = (await sessionResponse.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? "Admin session could not be created.");
+      }
+
       setState("success");
       setMessage("Signed in. Opening admin.");
       router.replace("/admin");
@@ -89,6 +104,10 @@ function getLoginErrorMessage(error: unknown) {
     if (error.code === "auth/too-many-requests") {
       return "Too many attempts. Try again later.";
     }
+  }
+
+  if (error instanceof Error) {
+    return error.message;
   }
 
   return "Sign in failed. Check the account and try again.";

@@ -32,6 +32,12 @@ export class MemoryCommerceRepository implements CommerceRepository {
   roles = new Map<string, Role>();
   auditLogs = new Map<string, AuditLog>();
 
+  async listProducts() {
+    return [...this.products.values()].sort((first, second) =>
+      first.title.localeCompare(second.title)
+    );
+  }
+
   async getProduct(id: string) {
     return this.products.get(id) ?? null;
   }

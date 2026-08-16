@@ -1,6 +1,7 @@
 import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { AdminSignOutButton } from "@/components/auth/admin-sign-out-button";
 
 const adminNavItems = [
   { label: "Dashboard", href: "/admin" },
@@ -41,6 +42,7 @@ export default function AdminLayout({
               {item.label}
             </Link>
           ))}
+          <AdminSignOutButton />
         </nav>
       </aside>
       <main className="app-main">{children}</main>

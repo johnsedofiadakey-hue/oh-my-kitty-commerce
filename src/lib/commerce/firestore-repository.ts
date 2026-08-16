@@ -20,6 +20,11 @@ import type {
 export class FirestoreCommerceRepository implements CommerceRepository {
   constructor(private readonly db: Firestore) {}
 
+  async listProducts() {
+    const snapshot = await this.db.collection("products").orderBy("title").get();
+    return snapshot.docs.map((doc) => readDoc<Product>(doc)).filter(isDefined);
+  }
+
   async getProduct(id: string) {
     return readDoc<Product>(await this.db.collection("products").doc(id).get());
   }

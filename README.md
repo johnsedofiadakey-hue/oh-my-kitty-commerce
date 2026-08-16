@@ -6,9 +6,9 @@ This repository currently contains the Phase 0 Codex project pack. It is designe
 
 ## Current Status
 
-- Repository state: Phase 2 admin portal baseline.
+- Repository state: Phase 2 admin portal product workflow baseline.
 - Firebase details: real values belong in local env files or deployment secrets, not git.
-- Implementation: Next.js shell app with Firebase-ready boundaries, route shells, brand logo asset, admin portal data views, admin sign-in screen, owner bootstrap script, rules, emulator config, Firestore repository adapter, domain types, validation schemas, RBAC helpers, inventory ledger operations, order/POS sale operations, seed data, and starter tests.
+- Implementation: Next.js shell app with Firebase-ready boundaries, route shells, brand logo asset, admin portal data views, admin sign-in/session bridge, owner bootstrap script, product/variant create actions, rules, emulator config, Firestore repository adapter, domain types, validation schemas, RBAC helpers, inventory ledger operations, order/POS sale operations, seed data, and starter tests.
 - Credentials: no real credentials should be committed.
 
 ## Product Surfaces
@@ -147,7 +147,7 @@ It is currently used as a small brand mark in the storefront and admin shells. B
 When implementation begins, give Codex this task:
 
 ```text
-Read AGENTS.md and all docs. Review the existing Phase 0, Phase 1, and Phase 2 admin baseline. Continue Phase 2 by wiring authenticated admin create/edit workflows to Firebase-backed server operations. Keep Firebase credentials and passwords out of git. Preserve the shared Firestore inventory/order model, RBAC boundaries, owner bootstrap flow, and server-side commerce operations.
+Read AGENTS.md and all docs. Review the existing Phase 0, Phase 1, and Phase 2 admin baseline. Continue Phase 2 by expanding authenticated admin workflows beyond product/variant creation into edit/archive, media upload, order fulfilment, inventory adjustment, promotions, delivery, and user/role management. Keep Firebase credentials and passwords out of git. Preserve the shared Firestore inventory/order model, RBAC boundaries, owner bootstrap flow, and server-side commerce operations.
 ```
 
 ## Important Product Rule

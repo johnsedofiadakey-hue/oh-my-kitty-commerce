@@ -24,6 +24,8 @@ Use:
 
 The initial owner is bootstrapped with a server-side script using Firebase Admin. The script reads only the owner UID and email from environment variables, writes the owner Firestore user record and default roles, and sets custom claims. The owner password must never be written to source, docs, seed data, or environment files.
 
+Admin browser sessions use an HTTP-only Firebase session cookie created by `/api/auth/session` after Firebase client sign-in. Server actions must verify that cookie and the admin claim before making privileged writes.
+
 ## Authentication
 
 Use Firebase Authentication for:

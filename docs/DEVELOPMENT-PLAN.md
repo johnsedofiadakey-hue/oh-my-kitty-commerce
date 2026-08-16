@@ -81,7 +81,7 @@ Required backend/server operations:
 
 Goal: let the client run store operations.
 
-Status: baseline admin portal implemented. The repo now has admin routes for dashboard, products, orders, inventory, customers, promotions, content/media, delivery, reports, users/roles, settings, and audit logs, currently backed by sample commerce data. It also has a Firebase Auth admin sign-in screen at `/admin/login` and a one-time owner bootstrap script that writes the owner profile, default roles, audit log, and custom claims through Firebase Admin. Live create/edit/save workflows still require authenticated Firebase-backed server operations and should be completed before Phase 2 is considered fully accepted.
+Status: admin portal baseline in progress. The repo now has admin routes for dashboard, products, orders, inventory, customers, promotions, content/media, delivery, reports, users/roles, settings, and audit logs. It also has a Firebase Auth admin sign-in screen at `/admin/login`, a server session-cookie bridge, a one-time owner bootstrap script, live-or-sample product catalogue loading, and authenticated product/variant create actions that use Firebase-backed server operations. Remaining create/edit/save workflows must be wired before Phase 2 is fully accepted.
 
 Tasks:
 
@@ -110,6 +110,8 @@ Verification:
 - order channel and fulfilment status are separate
 - role changes are permission-checked
 - initial owner custom claims and Firestore user are set only through server-side bootstrap
+
+Current local note: product and variant creation now have admin forms and server actions, but save actions require Cloud Firestore, Firebase Auth Email/Password, owner bootstrap, and a signed-in admin session.
 
 ## Phase 3 - Staff POS
 
