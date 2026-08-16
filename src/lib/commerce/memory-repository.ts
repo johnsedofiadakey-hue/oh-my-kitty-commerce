@@ -59,8 +59,18 @@ export class MemoryCommerceRepository implements CommerceRepository {
     return [...this.variants.values()].filter((variant) => variant.productId === productId);
   }
 
+  async listCategories() {
+    return [...this.categories.values()].sort((first, second) => first.sortOrder - second.sortOrder);
+  }
+
   async saveCategory(category: Category) {
     this.categories.set(category.id, category);
+  }
+
+  async listCollections() {
+    return [...this.collections.values()].sort(
+      (first, second) => first.sortOrder - second.sortOrder
+    );
   }
 
   async saveCollection(collection: Collection) {

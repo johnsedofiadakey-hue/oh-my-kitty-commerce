@@ -52,10 +52,20 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     return snapshot.docs.map((doc) => readDoc<ProductVariant>(doc)).filter(isDefined);
   }
 
+  async listCategories() {
+    const snapshot = await this.db.collection("categories").orderBy("sortOrder").get();
+    return snapshot.docs.map((doc) => readDoc<Category>(doc)).filter(isDefined);
+  }
+
   async saveCategory(category: Category) {
     await this.db.collection("categories").doc(category.id).set(cleanFirestoreData(category), {
       merge: true
     });
+  }
+
+  async listCollections() {
+    const snapshot = await this.db.collection("collections").orderBy("sortOrder").get();
+    return snapshot.docs.map((doc) => readDoc<Collection>(doc)).filter(isDefined);
   }
 
   async saveCollection(collection: Collection) {

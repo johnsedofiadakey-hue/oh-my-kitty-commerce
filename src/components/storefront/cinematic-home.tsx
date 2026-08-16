@@ -202,7 +202,7 @@ export function CinematicHome({ products }: CinematicHomeProps) {
               <Link className={`showcase-card ${product.tone}`} href="/shop" key={product.variantId}>
                 <ProductFigure product={product} position="panel" />
                 <div>
-                  <span>{product.variantTitle}</span>
+                  <span>{product.primaryCategory}</span>
                   <h3>{product.title}</h3>
                   <p>{product.shortCopy}</p>
                   <strong>{product.formattedPrice}</strong>
@@ -218,7 +218,7 @@ export function CinematicHome({ products }: CinematicHomeProps) {
               <article className={`spatial-panel ${product.tone}`} key={product.variantId}>
                 <ProductFigure product={product} position="panel" />
                 <div>
-                  <span>{product.variantTitle}</span>
+                  <span>{product.primaryCategory}</span>
                   <h2>{product.title}</h2>
                   <p>{product.shortCopy}</p>
                   <strong>{product.formattedPrice}</strong>

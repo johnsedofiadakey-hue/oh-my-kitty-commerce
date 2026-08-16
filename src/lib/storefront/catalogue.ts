@@ -1,10 +1,11 @@
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import {
+  sampleCategories,
   sampleMedia,
   sampleProducts,
   sampleVariants
 } from "@/lib/commerce/sample-data";
-import type { MediaAsset, Product, ProductVariant } from "@/lib/commerce/types";
+import type { Category, MediaAsset, Product, ProductVariant } from "@/lib/commerce/types";
 import { formatMoney } from "@/lib/commerce/format";
 
 export type StorefrontCatalogueSource = "live" | "sample";
@@ -13,6 +14,7 @@ export type StorefrontProductCard = {
   product: Product;
   variant: ProductVariant;
   media: MediaAsset | null;
+  categories: Category[];
 };
 
 export type StorefrontCatalogue = {
@@ -33,6 +35,8 @@ export type StorefrontProductView = {
   stockAvailable: number;
   imageUrl?: string;
   imageAlt?: string;
+  primaryCategory: string;
+  categoryLabels: string[];
   tone: "peach" | "green" | "ivory";
 };
 
@@ -52,8 +56,11 @@ export async function getStorefrontCatalogue(): Promise<StorefrontCatalogue> {
       .flat()
       .filter((variant) => variant.active);
 
-    const media = await context.repo.listMedia();
-    const cards = createCards(products, variants, media);
+    const [media, categories] = await Promise.all([
+      context.repo.listMedia(),
+      context.repo.listCategories()
+    ]);
+    const cards = createCards(products, variants, media, categories);
     if (cards.length === 0) {
       return sampleStorefrontCatalogue(
         "No live products are published yet. Showing starter catalogue."
@@ -76,20 +83,34 @@ function sampleStorefrontCatalogue(sourceMessage: string): StorefrontCatalogue {
     cards: createCards(
       sampleProducts.filter((product) => product.status === "ACTIVE"),
       sampleVariants.filter((variant) => variant.active),
-      sampleMedia.filter((media) => media.visibility === "PUBLIC")
+      sampleMedia.filter((media) => media.visibility === "PUBLIC"),
+      sampleCategories.filter((category) => category.active)
     )
   };
 }
 
-function createCards(products: Product[], variants: ProductVariant[], media: MediaAsset[]) {
+function createCards(
+  products: Product[],
+  variants: ProductVariant[],
+  media: MediaAsset[],
+  categories: Category[]
+) {
   const mediaById = new Map(media.map((asset) => [asset.id, asset]));
+  const categoriesById = new Map(categories.map((category) => [category.id, category]));
 
   return variants
     .map((variant) => {
       const product = products.find((entry) => entry.id === variant.productId);
       const mediaId = variant.mediaIds[0] ?? product?.mediaIds[0];
       return product
-        ? { product, variant, media: mediaId ? (mediaById.get(mediaId) ?? null) : null }
+        ? {
+            product,
+            variant,
+            media: mediaId ? (mediaById.get(mediaId) ?? null) : null,
+            categories: product.categoryIds
+              .map((categoryId) => categoriesById.get(categoryId))
+              .filter((category): category is Category => category !== undefined)
+          }
         : null;
     })
     .filter((entry): entry is StorefrontProductCard => entry !== null)
@@ -109,7 +130,7 @@ export function formatStorefrontMoney(amount: number) {
 export function toStorefrontProductViews(catalogue: StorefrontCatalogue): StorefrontProductView[] {
   const tones: StorefrontProductView["tone"][] = ["peach", "green", "ivory"];
 
-  return catalogue.cards.map(({ product, variant, media }, index) => ({
+  return catalogue.cards.map(({ product, variant, media, categories }, index) => ({
     id: product.id,
     title: product.title,
     shortCopy: product.shortCopy ?? "Soft daily care.",
@@ -121,6 +142,8 @@ export function toStorefrontProductViews(catalogue: StorefrontCatalogue): Storef
     stockAvailable: variant.stockAvailable,
     imageUrl: media?.url,
     imageAlt: media?.alt,
+    primaryCategory: categories[0]?.title ?? "Care",
+    categoryLabels: categories.map((category) => category.title),
     tone: tones[index % tones.length] ?? "peach"
   }));
 }

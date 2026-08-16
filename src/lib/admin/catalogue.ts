@@ -5,7 +5,7 @@ import {
   getVariantLabel
 } from "@/lib/admin/sample-admin-data";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
-import type { Product, ProductVariant } from "@/lib/commerce/types";
+import type { Category, Collection, Product, ProductVariant } from "@/lib/commerce/types";
 
 export type AdminCatalogueSource = "live" | "sample";
 
@@ -21,8 +21,8 @@ export type AdminCatalogueData = {
   products: Product[];
   variants: ProductVariant[];
   rows: AdminProductRow[];
-  categories: typeof adminData.categories;
-  collections: typeof adminData.collections;
+  categories: Category[];
+  collections: Collection[];
 };
 
 export async function getAdminCatalogueData(): Promise<AdminCatalogueData> {
@@ -37,13 +37,17 @@ export async function getAdminCatalogueData(): Promise<AdminCatalogueData> {
       products.map((product) => context.repo.listVariants(product.id))
     );
     const variants = variantGroups.flat();
+    const [categories, collections] = await Promise.all([
+      context.repo.listCategories(),
+      context.repo.listCollections()
+    ]);
     return {
       source: "live",
       products,
       variants,
       rows: createRows(products, variants),
-      categories: adminData.categories,
-      collections: adminData.collections
+      categories,
+      collections
     };
   } catch {
     return sampleCatalogue(

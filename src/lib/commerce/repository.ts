@@ -22,7 +22,9 @@ export type CommerceRepository = {
   getVariant(productId: string, variantId: string): Promise<ProductVariant | null>;
   saveVariant(variant: ProductVariant): Promise<void>;
   listVariants(productId: string): Promise<ProductVariant[]>;
+  listCategories(): Promise<Category[]>;
   saveCategory(category: Category): Promise<void>;
+  listCollections(): Promise<Collection[]>;
   saveCollection(collection: Collection): Promise<void>;
   listMedia(): Promise<MediaAsset[]>;
   saveMedia(media: MediaAsset): Promise<void>;

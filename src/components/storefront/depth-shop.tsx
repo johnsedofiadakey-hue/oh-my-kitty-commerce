@@ -136,7 +136,7 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
               <div className="depth-product-stage" aria-hidden="true">
                 <ProductPackshot product={product} />
               </div>
-              <span>{product.variantTitle}</span>
+              <span>{product.primaryCategory}</span>
               <h2>{product.title}</h2>
               <p>{product.shortCopy}</p>
               <strong>{product.formattedPrice}</strong>
@@ -174,7 +174,9 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
               <ProductPackshot product={selectedProduct} />
             </div>
             <div className="sheet-copy">
-              <span>{selectedProduct.variantTitle}</span>
+              <span>
+                {selectedProduct.primaryCategory} / {selectedProduct.variantTitle}
+              </span>
               <h2 id="product-sheet-title">{selectedProduct.title}</h2>
               <p>{selectedProduct.shortCopy}</p>
               <div className="sheet-meta">
