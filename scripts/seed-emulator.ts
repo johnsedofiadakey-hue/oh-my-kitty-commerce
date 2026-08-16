@@ -1,7 +1,7 @@
 import { getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
-import { defaultRoles } from "../src/lib/permissions/permissions";
 import {
+  sampleAuditLogs,
   sampleCategories,
   sampleCollections,
   sampleCustomers,
@@ -13,6 +13,8 @@ import {
   samplePosShifts,
   sampleProducts,
   samplePromotions,
+  sampleRoles,
+  sampleUsers,
   sampleVariants
 } from "../src/lib/commerce/sample-data";
 
@@ -132,7 +134,7 @@ async function seed() {
     });
   }
 
-  for (const role of defaultRoles) {
+  for (const role of sampleRoles) {
     batch.set(db.collection("roles").doc(role.id), {
       ...role,
       createdAt: now,
@@ -148,30 +150,13 @@ async function seed() {
     updatedAt: now
   });
 
-  batch.set(db.collection("users").doc("owner-1"), {
-    uid: "owner-1",
-    displayName: "Owner",
-    email: "owner@example.local",
-    status: "ACTIVE",
-    roleIds: ["role-owner"],
-    type: "ADMIN_OR_STAFF",
-    posEnabled: true,
-    createdAt: now,
-    updatedAt: now
-  });
-
-  batch.set(db.collection("users").doc("staff-1"), {
-    uid: "staff-1",
-    displayName: "Sales Staff",
-    email: "staff@example.local",
-    status: "ACTIVE",
-    roleIds: ["role-sales-staff"],
-    type: "ADMIN_OR_STAFF",
-    posEnabled: true,
-    createdBy: "owner-1",
-    createdAt: now,
-    updatedAt: now
-  });
+  for (const user of sampleUsers) {
+    batch.set(db.collection("users").doc(user.uid), {
+      ...user,
+      createdAt: now,
+      updatedAt: now
+    });
+  }
 
   batch.set(db.collection("auditLogs").doc("audit-seed"), {
     actorId: "system:seed",
@@ -181,6 +166,13 @@ async function seed() {
     summary: "Seeded Phase 1 emulator data",
     createdAt: now
   });
+
+  for (const log of sampleAuditLogs) {
+    batch.set(db.collection("auditLogs").doc(log.id), {
+      ...log,
+      createdAt: Timestamp.fromDate(log.createdAt)
+    });
+  }
 
   await batch.commit();
   console.log(`Seeded ${projectId} emulator data.`);

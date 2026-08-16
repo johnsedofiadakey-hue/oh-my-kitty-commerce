@@ -93,6 +93,10 @@ Preferred asset types:
 
 The environment around products can be cinematic. The products themselves must remain faithful.
 
+## Logo Asset
+
+The supplied square logo is stored at `public/brand/oh-my-kitty-logo.jpeg`. It can be used as a small brand mark in operational surfaces and temporary storefront navigation. For the final premium storefront, request a transparent PNG/SVG version and avoid letting the slogan-heavy square image dominate the cinematic hero.
+
 ## Frames And Spatial Containers
 
 Use:

@@ -1,4 +1,5 @@
 import type {
+  AuditLog,
   Category,
   Collection,
   Customer,
@@ -12,6 +13,7 @@ import type {
   ProductVariant,
   Promotion
 } from "@/lib/commerce/types";
+import { defaultRoles } from "@/lib/permissions/permissions";
 
 export const sampleCategories: Category[] = [
   {
@@ -322,3 +324,48 @@ export const samplePosShifts: PosShift[] = [
     openingCash: 50000
   }
 ];
+
+export const sampleAuditLogs: AuditLog[] = [
+  {
+    id: "audit-seed-product",
+    actorId: "owner-1",
+    action: "products.create",
+    entityType: "product",
+    entityId: "product-slippery-elm",
+    summary: "Created Slippery Elm product",
+    createdAt: new Date("2026-01-01T08:15:00.000Z")
+  },
+  {
+    id: "audit-seed-pos-sale",
+    actorId: "staff-1",
+    action: "orders.complete_sale",
+    entityType: "order",
+    entityId: "order-pos-example",
+    summary: "Completed POS sale",
+    createdAt: new Date("2026-01-01T09:30:00.000Z")
+  }
+];
+
+export const sampleUsers = [
+  {
+    uid: "owner-1",
+    displayName: "Owner",
+    email: "owner@example.local",
+    status: "ACTIVE",
+    roleIds: ["role-owner"],
+    type: "ADMIN_OR_STAFF",
+    posEnabled: true
+  },
+  {
+    uid: "staff-1",
+    displayName: "Sales Staff",
+    email: "staff@example.local",
+    status: "ACTIVE",
+    roleIds: ["role-sales-staff"],
+    type: "ADMIN_OR_STAFF",
+    posEnabled: true,
+    createdBy: "owner-1"
+  }
+];
+
+export const sampleRoles = defaultRoles;

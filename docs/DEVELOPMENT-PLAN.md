@@ -81,6 +81,8 @@ Required backend/server operations:
 
 Goal: let the client run store operations.
 
+Status: baseline admin portal implemented. The repo now has admin routes for dashboard, products, orders, inventory, customers, promotions, content/media, delivery, reports, users/roles, settings, and audit logs, currently backed by sample commerce data. Live create/edit/save workflows still require authenticated Firebase-backed server operations and should be completed before Phase 2 is considered fully accepted.
+
 Tasks:
 
 - admin dashboard

@@ -1,11 +1,19 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export default function StorefrontHomePage() {
   return (
     <>
       <nav className="storefront-nav" aria-label="Storefront">
-        <Link className="brand-mark" href="/">
-          Oh My Kitty
+        <Link className="store-brand" href="/">
+          <Image
+            src="/brand/oh-my-kitty-logo.jpeg"
+            alt="Oh My Kitty logo"
+            width={38}
+            height={38}
+            priority
+          />
+          <span>Oh My Kitty</span>
         </Link>
         <button className="icon-button" type="button" aria-label="Open menu">
           Menu

@@ -6,9 +6,9 @@ This repository currently contains the Phase 0 Codex project pack. It is designe
 
 ## Current Status
 
-- Repository state: Phase 1 commerce core scaffold.
+- Repository state: Phase 2 admin portal baseline.
 - Firebase details: intentionally not added yet.
-- Implementation: Next.js shell app with Firebase-ready boundaries, route shells, rules, emulator config, Firestore repository adapter, domain types, validation schemas, RBAC helpers, inventory ledger operations, order/POS sale operations, seed data, and starter tests.
+- Implementation: Next.js shell app with Firebase-ready boundaries, route shells, brand logo asset, admin portal data views, rules, emulator config, Firestore repository adapter, domain types, validation schemas, RBAC helpers, inventory ledger operations, order/POS sale operations, seed data, and starter tests.
 - Credentials: no real credentials should be committed.
 
 ## Product Surfaces
@@ -104,14 +104,35 @@ Local routes:
 - `/shop` storefront shop shell
 - `/cart` storefront cart shell
 - `/admin` admin shell
+- `/admin/products`
+- `/admin/orders`
+- `/admin/inventory`
+- `/admin/customers`
+- `/admin/promotions`
+- `/admin/content`
+- `/admin/delivery`
+- `/admin/reports`
+- `/admin/users`
+- `/admin/settings`
+- `/admin/audit`
 - `/pos` POS shell
+
+## Brand Assets
+
+The supplied square logo is stored at:
+
+```text
+public/brand/oh-my-kitty-logo.jpeg
+```
+
+It is currently used as a small brand mark in the storefront and admin shells. Before final launch, a transparent PNG/SVG logo and product cutouts are still recommended for the premium storefront motion work.
 
 ## Next Instruction For Codex
 
 When implementation begins, give Codex this task:
 
 ```text
-Read AGENTS.md and all docs. Review the existing Phase 0 and Phase 1 scaffold, then begin Phase 2 admin portal only after confirming current checks. Keep Firebase credentials out of git. Preserve the shared Firestore inventory/order model, RBAC boundaries, and server-side commerce operations.
+Read AGENTS.md and all docs. Review the existing Phase 0, Phase 1, and Phase 2 admin baseline. Continue Phase 2 by wiring authenticated admin create/edit workflows to Firebase-backed server operations. Keep Firebase credentials out of git. Preserve the shared Firestore inventory/order model, RBAC boundaries, and server-side commerce operations.
 ```
 
 ## Important Product Rule

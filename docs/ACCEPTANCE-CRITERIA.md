@@ -65,6 +65,8 @@ Admin is acceptable when:
 - reports show at least revenue, order count, channel split, low stock, and POS totals
 - audit logs record privileged actions
 
+Current local note: baseline admin views exist for all required sections and render from the shared commerce sample data. Phase 2 is not fully accepted until authenticated create/edit/save workflows are wired to Firebase-backed server operations.
+
 ## Phase 3 Acceptance
 
 POS is acceptable when:

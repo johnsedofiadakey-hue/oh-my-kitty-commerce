@@ -1,11 +1,21 @@
+import {
+  formatMoney,
+  getAdminMetrics,
+  getChannelTotals,
+  getOrderRows
+} from "@/lib/admin/sample-admin-data";
+
 const metrics = [
-  ["Revenue", "GHS 0"],
-  ["Online orders", "0"],
-  ["POS sales", "0"],
-  ["Low stock", "0"]
-];
+  ["Revenue", formatMoney(getAdminMetrics().revenue)],
+  ["Online orders", String(getAdminMetrics().onlineOrders)],
+  ["POS sales", String(getAdminMetrics().posOrders)],
+  ["Low stock", String(getAdminMetrics().lowStock)]
+] as const;
 
 export default function AdminDashboardPage() {
+  const recentOrders = getOrderRows().slice(0, 5);
+  const channelTotals = getChannelTotals();
+
   return (
     <>
       <h1 className="app-title">Store operations</h1>
@@ -19,6 +29,40 @@ export default function AdminDashboardPage() {
             <strong>{value}</strong>
           </article>
         ))}
+      </section>
+      <section className="admin-grid two" aria-label="Operational summary">
+        <div className="admin-panel">
+          <div className="panel-header">
+            <h2>Channel totals</h2>
+            <span>Orders and revenue</span>
+          </div>
+          <div className="stack-list">
+            {channelTotals.map((row) => (
+              <div className="stack-row" key={row.channel}>
+                <strong>{row.channel.replace("_", " ")}</strong>
+                <span>
+                  {row.orders} orders / {formatMoney(row.revenue)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="admin-panel">
+          <div className="panel-header">
+            <h2>Recent orders</h2>
+            <span>Latest activity</span>
+          </div>
+          <div className="stack-list">
+            {recentOrders.map(({ order }) => (
+              <div className="stack-row" key={order.id}>
+                <strong>{order.orderNumber}</strong>
+                <span>
+                  {order.channel} / {order.paymentStatus} / {formatMoney(order.total)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
     </>
   );
