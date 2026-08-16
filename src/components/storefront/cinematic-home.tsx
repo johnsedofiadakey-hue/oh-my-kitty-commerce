@@ -105,6 +105,19 @@ export function CinematicHome({ products }: CinematicHomeProps) {
           });
         }
 
+        gsap.from(".showcase-card", {
+          y: 54,
+          opacity: 0,
+          rotateX: 8,
+          stagger: 0.1,
+          duration: 0.9,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: ".front-product-showcase",
+            start: "top 72%"
+          }
+        });
+
         gsap.fromTo(
           ".portal-window",
           { clipPath: "circle(14% at 50% 50%)" },
@@ -174,6 +187,26 @@ export function CinematicHome({ products }: CinematicHomeProps) {
               <span>Shop care</span>
               <i aria-hidden="true" />
             </Link>
+          </div>
+        </section>
+
+        <section className="front-product-showcase" aria-labelledby="front-products-title">
+          <div className="front-product-intro">
+            <span className="scene-kicker">Live products</span>
+            <h2 id="front-products-title">Her hero products, already staged.</h2>
+          </div>
+          <div className="showcase-grid">
+            {products.map((product) => (
+              <Link className={`showcase-card ${product.tone}`} href="/shop" key={product.variantId}>
+                <ProductFigure product={product} position="panel" />
+                <div>
+                  <span>{product.variantTitle}</span>
+                  <h3>{product.title}</h3>
+                  <p>{product.shortCopy}</p>
+                  <strong>{product.formattedPrice}</strong>
+                </div>
+              </Link>
+            ))}
           </div>
         </section>
 
@@ -254,6 +287,7 @@ function ProductFigure({
           aria-hidden="true"
         />
         <span>{product?.title ?? "Oh My Kitty"}</span>
+        {product?.formattedPrice ? <strong>{product.formattedPrice}</strong> : null}
       </div>
       <div className="product-shadow" />
     </div>
