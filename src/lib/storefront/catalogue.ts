@@ -1,9 +1,10 @@
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import {
+  sampleMedia,
   sampleProducts,
   sampleVariants
 } from "@/lib/commerce/sample-data";
-import type { Product, ProductVariant } from "@/lib/commerce/types";
+import type { MediaAsset, Product, ProductVariant } from "@/lib/commerce/types";
 import { formatMoney } from "@/lib/commerce/format";
 
 export type StorefrontCatalogueSource = "live" | "sample";
@@ -11,6 +12,7 @@ export type StorefrontCatalogueSource = "live" | "sample";
 export type StorefrontProductCard = {
   product: Product;
   variant: ProductVariant;
+  media: MediaAsset | null;
 };
 
 export type StorefrontCatalogue = {
@@ -29,6 +31,8 @@ export type StorefrontProductView = {
   price: number;
   formattedPrice: string;
   stockAvailable: number;
+  imageUrl?: string;
+  imageAlt?: string;
   tone: "peach" | "green" | "ivory";
 };
 
@@ -48,7 +52,8 @@ export async function getStorefrontCatalogue(): Promise<StorefrontCatalogue> {
       .flat()
       .filter((variant) => variant.active);
 
-    const cards = createCards(products, variants);
+    const media = await context.repo.listMedia();
+    const cards = createCards(products, variants, media);
     if (cards.length === 0) {
       return sampleStorefrontCatalogue(
         "No live products are published yet. Showing starter catalogue."
@@ -70,18 +75,31 @@ function sampleStorefrontCatalogue(sourceMessage: string): StorefrontCatalogue {
     sourceMessage,
     cards: createCards(
       sampleProducts.filter((product) => product.status === "ACTIVE"),
-      sampleVariants.filter((variant) => variant.active)
+      sampleVariants.filter((variant) => variant.active),
+      sampleMedia.filter((media) => media.visibility === "PUBLIC")
     )
   };
 }
 
-function createCards(products: Product[], variants: ProductVariant[]) {
+function createCards(products: Product[], variants: ProductVariant[], media: MediaAsset[]) {
+  const mediaById = new Map(media.map((asset) => [asset.id, asset]));
+
   return variants
     .map((variant) => {
       const product = products.find((entry) => entry.id === variant.productId);
-      return product ? { product, variant } : null;
+      const mediaId = variant.mediaIds[0] ?? product?.mediaIds[0];
+      return product
+        ? { product, variant, media: mediaId ? (mediaById.get(mediaId) ?? null) : null }
+        : null;
     })
-    .filter((entry): entry is StorefrontProductCard => entry !== null);
+    .filter((entry): entry is StorefrontProductCard => entry !== null)
+    .sort((first, second) => {
+      const priorityDelta =
+        (first.product.homepagePriority ?? Number.MAX_SAFE_INTEGER) -
+        (second.product.homepagePriority ?? Number.MAX_SAFE_INTEGER);
+
+      return priorityDelta || first.product.title.localeCompare(second.product.title);
+    });
 }
 
 export function formatStorefrontMoney(amount: number) {
@@ -91,7 +109,7 @@ export function formatStorefrontMoney(amount: number) {
 export function toStorefrontProductViews(catalogue: StorefrontCatalogue): StorefrontProductView[] {
   const tones: StorefrontProductView["tone"][] = ["peach", "green", "ivory"];
 
-  return catalogue.cards.map(({ product, variant }, index) => ({
+  return catalogue.cards.map(({ product, variant, media }, index) => ({
     id: product.id,
     title: product.title,
     shortCopy: product.shortCopy ?? "Soft daily care.",
@@ -101,6 +119,8 @@ export function toStorefrontProductViews(catalogue: StorefrontCatalogue): Storef
     price: variant.price,
     formattedPrice: formatStorefrontMoney(variant.price),
     stockAvailable: variant.stockAvailable,
+    imageUrl: media?.url,
+    imageAlt: media?.alt,
     tone: tones[index % tones.length] ?? "peach"
   }));
 }

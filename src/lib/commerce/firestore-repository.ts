@@ -64,6 +64,11 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     });
   }
 
+  async listMedia() {
+    const snapshot = await this.db.collection("media").get();
+    return snapshot.docs.map((doc) => readDoc<MediaAsset>(doc)).filter(isDefined);
+  }
+
   async saveMedia(media: MediaAsset) {
     await this.db.collection("media").doc(media.id).set(cleanFirestoreData(media), {
       merge: true

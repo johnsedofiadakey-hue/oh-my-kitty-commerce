@@ -273,6 +273,11 @@ button {
   height: 388px;
 }
 
+.hero-product.primary .product-photo-bottle {
+  width: 280px;
+  height: 380px;
+}
+
 .product-bottle img,
 .product-packshot img {
   width: 86px;
@@ -280,6 +285,59 @@ button {
   border: 1px solid var(--color-line);
   border-radius: 999px;
   object-fit: cover;
+}
+
+.product-bottle.product-photo-bottle,
+.product-packshot.photo-packshot {
+  padding: 0;
+  border-radius: var(--radius-small);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 92%), rgb(255 250 247 / 72%)),
+    var(--color-peach-mist);
+  overflow: hidden;
+}
+
+.product-photo-bottle > img,
+.photo-packshot > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: inherit;
+  object-fit: contain;
+  object-position: center;
+}
+
+.product-photo-label {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgb(255 255 255 / 72%);
+  border-radius: var(--radius-small);
+  padding: 10px;
+  background: rgb(255 255 255 / 76%);
+  box-shadow: 0 14px 38px rgb(17 17 17 / 10%);
+  backdrop-filter: blur(12px);
+}
+
+.product-bottle .product-photo-label span,
+.product-bottle .product-photo-label strong {
+  align-self: auto;
+  max-width: none;
+  text-align: left;
+}
+
+.product-bottle .product-photo-label span {
+  font-size: 0.78rem;
+}
+
+.product-bottle .product-photo-label strong {
+  color: var(--color-green);
+  font-size: 0.82rem;
 }
 
 .product-bottle span,
@@ -825,6 +883,12 @@ button {
   height: 324px;
 }
 
+.depth-product-stage .product-packshot.photo-packshot {
+  width: calc(100% - 32px);
+  height: 332px;
+  box-shadow: 0 24px 64px rgb(17 17 17 / 12%);
+}
+
 .depth-product-card h2,
 .depth-product-card p {
   margin: 0;
@@ -904,6 +968,11 @@ button {
 .sheet-stage .product-packshot {
   width: 216px;
   height: 380px;
+}
+
+.sheet-stage .product-packshot.photo-packshot {
+  width: min(100%, 560px);
+  height: 430px;
 }
 
 .sheet-copy {
@@ -1942,6 +2011,18 @@ button {
     height: 326px;
   }
 
+  .hero-product.primary .product-photo-bottle {
+    width: 190px;
+    height: 286px;
+  }
+
+  .product-photo-label {
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    padding: 8px;
+  }
+
   .hero-copy {
     left: 22px;
     right: 22px;
@@ -1984,6 +2065,11 @@ button {
     height: 266px;
   }
 
+  .showcase-card .product-photo-bottle {
+    width: min(100%, 284px);
+    height: 240px;
+  }
+
   .showcase-card h3 {
     max-width: 11ch;
     font-size: clamp(2.35rem, 12vw, 3.35rem);
@@ -2008,6 +2094,11 @@ button {
   .spatial-panel .product-bottle {
     width: 166px;
     height: 300px;
+  }
+
+  .spatial-panel .product-photo-bottle {
+    width: min(100%, 284px);
+    height: 320px;
   }
 
   .portal-scene {
@@ -2054,6 +2145,10 @@ button {
     min-height: 318px;
   }
 
+  .depth-product-stage .product-packshot.photo-packshot {
+    height: 292px;
+  }
+
   .product-sheet {
     max-height: 90svh;
     grid-template-columns: 1fr;
@@ -2069,6 +2164,11 @@ button {
   .sheet-stage .product-packshot {
     width: 140px;
     height: 250px;
+  }
+
+  .sheet-stage .product-packshot.photo-packshot {
+    width: 100%;
+    height: 240px;
   }
 
   .sheet-copy {

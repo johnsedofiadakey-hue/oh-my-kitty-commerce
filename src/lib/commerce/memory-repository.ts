@@ -67,6 +67,10 @@ export class MemoryCommerceRepository implements CommerceRepository {
     this.collections.set(collection.id, collection);
   }
 
+  async listMedia() {
+    return [...this.media.values()];
+  }
+
   async saveMedia(media: MediaAsset) {
     this.media.set(media.id, media);
   }

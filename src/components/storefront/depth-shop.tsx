@@ -198,6 +198,20 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
 }
 
 function ProductPackshot({ product }: { product: StorefrontProductView }) {
+  if (product.imageUrl) {
+    return (
+      <div className="product-packshot photo-packshot">
+        <Image
+          src={product.imageUrl}
+          alt=""
+          fill
+          sizes="(max-width: 820px) calc(100vw - 80px), 430px"
+          aria-hidden="true"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="product-packshot">
       <Image

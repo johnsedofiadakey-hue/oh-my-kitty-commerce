@@ -24,6 +24,7 @@ export type CommerceRepository = {
   listVariants(productId: string): Promise<ProductVariant[]>;
   saveCategory(category: Category): Promise<void>;
   saveCollection(collection: Collection): Promise<void>;
+  listMedia(): Promise<MediaAsset[]>;
   saveMedia(media: MediaAsset): Promise<void>;
   saveCustomer(customer: Customer): Promise<void>;
   getCustomer(id: string): Promise<Customer | null>;

@@ -12,6 +12,8 @@ type CinematicHomeProps = {
 
 export function CinematicHome({ products }: CinematicHomeProps) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const showcaseProducts = products.slice(0, 8);
+  const galleryProducts = products.slice(0, 10);
   const heroProducts = products.slice(0, 3);
   const featuredProduct = heroProducts[0];
 
@@ -196,7 +198,7 @@ export function CinematicHome({ products }: CinematicHomeProps) {
             <h2 id="front-products-title">Her hero products, already staged.</h2>
           </div>
           <div className="showcase-grid">
-            {products.map((product) => (
+            {showcaseProducts.map((product) => (
               <Link className={`showcase-card ${product.tone}`} href="/shop" key={product.variantId}>
                 <ProductFigure product={product} position="panel" />
                 <div>
@@ -212,7 +214,7 @@ export function CinematicHome({ products }: CinematicHomeProps) {
 
         <section className="spatial-gallery" aria-label="Featured products">
           <div className="spatial-track">
-            {products.map((product) => (
+            {galleryProducts.map((product) => (
               <article className={`spatial-panel ${product.tone}`} key={product.variantId}>
                 <ProductFigure product={product} position="panel" />
                 <div>
@@ -276,6 +278,27 @@ function ProductFigure({
   position: "left" | "primary" | "right" | "panel";
   product?: StorefrontProductView;
 }) {
+  if (product?.imageUrl) {
+    return (
+      <div className={`hero-product ${position} with-photo`}>
+        <div className="product-bottle product-photo-bottle">
+          <Image
+            src={product.imageUrl}
+            alt=""
+            fill
+            sizes={position === "primary" ? "280px" : "240px"}
+            aria-hidden="true"
+          />
+          <div className="product-photo-label">
+            <span>{product.title}</span>
+            <strong>{product.formattedPrice}</strong>
+          </div>
+        </div>
+        <div className="product-shadow" />
+      </div>
+    );
+  }
+
   return (
     <div className={`hero-product ${position}`}>
       <div className="product-bottle">
