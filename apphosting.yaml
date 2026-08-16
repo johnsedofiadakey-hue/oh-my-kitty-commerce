@@ -1,0 +1,17 @@
+runConfig:
+  minInstances: 0
+
+env:
+  - variable: NEXT_PUBLIC_SITE_NAME
+    value: Oh My Kitty
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: APP_ENV
+    value: production
+    availability:
+      - BUILD
+      - RUNTIME
+
+# Add Firebase web config and private provider secrets in Firebase/App Hosting secrets later.
+# Do not commit service-account JSON, payment secrets, or webhook secrets.

@@ -40,3 +40,4 @@ playwright-report/
 test-results/
 .turbo/
 .cache/
+*.tsbuildinfo

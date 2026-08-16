@@ -30,6 +30,8 @@ Phase 0 is complete only when:
 - local commands are documented
 - tests/typecheck/lint/build pass if configured
 
+Current local note: lint, typecheck, unit tests, and production build pass in the scaffold. Firestore rules tests are configured through `npm run test:rules`, but the local machine must have JDK 21 or newer for the current Firebase CLI emulator.
+
 ## Phase 1 Acceptance
 
 Commerce core is acceptable when:

@@ -16,6 +16,8 @@ The order is deliberate:
 
 Goal: create a working, Firebase-ready app foundation without real Firebase credentials.
 
+Status: baseline scaffold implemented. The repo now includes a Next.js App Router shell, Firebase placeholder initialization, route groups for storefront/admin/POS, Firebase emulator config, starter Firestore/Storage rules, local seed data, RBAC helpers, commerce domain types, and unit tests. Firestore rules tests are configured but require JDK 21 or newer because the current Firebase CLI no longer supports older Java runtimes.
+
 Tasks:
 
 - scaffold Next.js App Router with TypeScript

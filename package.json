@@ -1,0 +1,47 @@
+{
+  "name": "oh-my-kitty-commerce",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Firebase-first commerce platform for Oh My Kitty.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:rules": "firebase emulators:exec --only firestore \"vitest run --config vitest.rules.config.ts\"",
+    "seed:emulator": "tsx scripts/seed-emulator.ts",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "dependencies": {
+    "firebase": "^12.17.1",
+    "firebase-admin": "^14.2.0",
+    "next": "^16.3.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.1",
+    "firebase-tools": "^15.27.0",
+    "jsdom": "^30.0.1",
+    "prettier": "^3.9.6",
+    "tsx": "^4.23.12",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

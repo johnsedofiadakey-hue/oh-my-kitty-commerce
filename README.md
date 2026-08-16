@@ -6,9 +6,9 @@ This repository currently contains the Phase 0 Codex project pack. It is designe
 
 ## Current Status
 
-- Repository state: Phase 0 documentation pack.
+- Repository state: Phase 0 foundation scaffold.
 - Firebase details: intentionally not added yet.
-- Implementation: not scaffolded yet.
+- Implementation: Next.js shell app with Firebase-ready boundaries, route shells, rules, emulator config, domain types, RBAC helpers, and starter tests.
 - Credentials: no real credentials should be committed.
 
 ## Product Surfaces
@@ -61,12 +61,57 @@ Never commit:
 - webhook signing secrets
 - private API keys
 
-## Phase 0 Instruction For Codex
+## Local Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the app:
+
+```bash
+npm run dev
+```
+
+Core checks:
+
+```bash
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+```
+
+Firebase emulator/rules check:
+
+```bash
+npm run test:rules
+```
+
+The current Firebase CLI requires JDK 21 or newer for emulator tests. If the local machine has an older Java runtime, install a newer JDK before running `npm run test:rules`.
+
+Seed the Firestore emulator after it is running:
+
+```bash
+npm run seed:emulator
+```
+
+Local routes:
+
+- `/` storefront shell
+- `/shop` storefront shop shell
+- `/cart` storefront cart shell
+- `/admin` admin shell
+- `/pos` POS shell
+
+## Next Instruction For Codex
 
 When implementation begins, give Codex this task:
 
 ```text
-Read AGENTS.md and all docs. Implement Phase 0 only from docs/DEVELOPMENT-PLAN.md. Set up the app skeleton, Firebase-ready boundaries, UI foundations, test tooling, and local emulator workflow using placeholders only. Do not add Firebase credentials. Do not start Phase 1 until Phase 0 acceptance criteria pass.
+Read AGENTS.md and all docs. Review the existing Phase 0 scaffold, then begin Phase 1 only after confirming Phase 0 checks. Keep Firebase credentials out of git. Preserve the shared Firestore inventory/order model and RBAC boundaries.
 ```
 
 ## Important Product Rule
