@@ -36,13 +36,13 @@ Discovery can use scroll-scrub, horizontal/spatial transitions, portals, masks, 
 
 Status: Accepted
 
-The platform should be Firebase-first: Firebase App Hosting, Authentication, Firestore, Storage, and Cloud Functions/server logic. Firebase details will be added later through environment variables/secrets.
+The platform should be Firebase-first: Firebase App Hosting, Authentication, Firestore, Storage, and Cloud Functions/server logic. Firebase details must be supplied through local environment files or deployed secrets, never hardcoded into source.
 
 ## ADR-007 - No Credentials In Git
 
 Status: Accepted
 
-Firebase credentials, service-account keys, payment secrets, webhook secrets, and private API keys must not be committed.
+Firebase credentials, service-account keys, payment secrets, webhook secrets, private API keys, and account passwords must not be committed.
 
 ## ADR-008 - Firestore Is The Single Source Of Truth
 

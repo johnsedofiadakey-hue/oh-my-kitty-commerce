@@ -22,6 +22,8 @@ Use:
 - Firebase/App Hosting secrets or Google Cloud Secret Manager for deployed secrets
 - Google Application Default Credentials in deployed Google/Firebase environments when possible
 
+The initial owner is bootstrapped with a server-side script using Firebase Admin. The script reads only the owner UID and email from environment variables, writes the owner Firestore user record and default roles, and sets custom claims. The owner password must never be written to source, docs, seed data, or environment files.
+
 ## Authentication
 
 Use Firebase Authentication for:

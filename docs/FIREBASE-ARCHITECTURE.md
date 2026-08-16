@@ -141,6 +141,18 @@ NEXT_PUBLIC_FIREBASE_APP_ID
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 ```
 
+These values are client-visible Firebase app identifiers, but they should still be environment-specific and must not be hardcoded into source.
+
+Initial owner bootstrap:
+
+- enable Email/Password sign-in in Firebase Authentication
+- enable Cloud Firestore for the Firebase project
+- create the first owner account in Firebase Auth
+- place `BOOTSTRAP_OWNER_UID`, `BOOTSTRAP_OWNER_EMAIL`, and optional `BOOTSTRAP_OWNER_DISPLAY_NAME` in `.env.local` or deployment setup environment
+- run `npm run bootstrap:owner` from a machine with Firebase Admin credentials or emulator access
+- never store the owner password in git, docs, or env files
+- the script writes `users/{uid}`, default `roles`, an audit log, and custom claims `{ isAdmin, isStaff, roleIds, permissionsVersion }`
+
 Public app config:
 
 ```text

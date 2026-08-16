@@ -62,10 +62,11 @@ Admin is acceptable when:
 - admin can manage promotions and delivery settings
 - admin can create/deactivate staff users through backend logic
 - admin can assign roles/permissions
+- initial owner account can be bootstrapped through Firebase Admin without storing a password
 - reports show at least revenue, order count, channel split, low stock, and POS totals
 - audit logs record privileged actions
 
-Current local note: baseline admin views exist for all required sections and render from the shared commerce sample data. Phase 2 is not fully accepted until authenticated create/edit/save workflows are wired to Firebase-backed server operations.
+Current local note: baseline admin views exist for all required sections and render from the shared commerce sample data. The repo also has a Firebase Auth admin sign-in screen and owner bootstrap script. Phase 2 is not fully accepted until authenticated create/edit/save workflows are wired to Firebase-backed server operations.
 
 ## Phase 3 Acceptance
 

@@ -7,8 +7,8 @@ This repository currently contains the Phase 0 Codex project pack. It is designe
 ## Current Status
 
 - Repository state: Phase 2 admin portal baseline.
-- Firebase details: intentionally not added yet.
-- Implementation: Next.js shell app with Firebase-ready boundaries, route shells, brand logo asset, admin portal data views, rules, emulator config, Firestore repository adapter, domain types, validation schemas, RBAC helpers, inventory ledger operations, order/POS sale operations, seed data, and starter tests.
+- Firebase details: real values belong in local env files or deployment secrets, not git.
+- Implementation: Next.js shell app with Firebase-ready boundaries, route shells, brand logo asset, admin portal data views, admin sign-in screen, owner bootstrap script, rules, emulator config, Firestore repository adapter, domain types, validation schemas, RBAC helpers, inventory ledger operations, order/POS sale operations, seed data, and starter tests.
 - Credentials: no real credentials should be committed.
 
 ## Product Surfaces
@@ -98,12 +98,27 @@ Seed the Firestore emulator after it is running:
 npm run seed:emulator
 ```
 
+One-time owner bootstrap:
+
+```bash
+npm run bootstrap:owner
+```
+
+Before running it, enable Cloud Firestore, enable Email/Password in Firebase Authentication, create the owner user in Firebase Auth, and add these values to `.env.local` or your shell environment:
+
+- `BOOTSTRAP_OWNER_UID`
+- `BOOTSTRAP_OWNER_EMAIL`
+- `BOOTSTRAP_OWNER_DISPLAY_NAME`
+
+The owner password is not stored in this repository or in env files. It is used only through Firebase Authentication at `/admin/login`.
+
 Local routes:
 
 - `/` storefront shell
 - `/shop` storefront shop shell
 - `/cart` storefront cart shell
 - `/admin` admin shell
+- `/admin/login`
 - `/admin/products`
 - `/admin/orders`
 - `/admin/inventory`
@@ -132,7 +147,7 @@ It is currently used as a small brand mark in the storefront and admin shells. B
 When implementation begins, give Codex this task:
 
 ```text
-Read AGENTS.md and all docs. Review the existing Phase 0, Phase 1, and Phase 2 admin baseline. Continue Phase 2 by wiring authenticated admin create/edit workflows to Firebase-backed server operations. Keep Firebase credentials out of git. Preserve the shared Firestore inventory/order model, RBAC boundaries, and server-side commerce operations.
+Read AGENTS.md and all docs. Review the existing Phase 0, Phase 1, and Phase 2 admin baseline. Continue Phase 2 by wiring authenticated admin create/edit workflows to Firebase-backed server operations. Keep Firebase credentials and passwords out of git. Preserve the shared Firestore inventory/order model, RBAC boundaries, owner bootstrap flow, and server-side commerce operations.
 ```
 
 ## Important Product Rule

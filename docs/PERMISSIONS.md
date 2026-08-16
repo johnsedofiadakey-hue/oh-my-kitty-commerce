@@ -187,6 +187,8 @@ Use Firebase custom claims sparingly for coarse access:
 
 Do not put large permission maps in custom claims if they risk token size or stale access. Use Firestore role documents for detailed permission evaluation and refresh claims when needed.
 
+The first owner account must receive these claims through the server-side owner bootstrap script. Later staff/admin users must receive claims through backend user-management logic, never from client-side role assignment.
+
 ## Enforcement Layers
 
 UI:
