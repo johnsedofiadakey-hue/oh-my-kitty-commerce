@@ -1,10 +1,17 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { CommerceError } from "@/lib/commerce/errors";
 import type { CommerceActor } from "@/lib/commerce/operations";
 import { getAdminAuth } from "@/lib/firebase/server";
+import { defaultRoles, hasPermission, type Permission } from "@/lib/permissions/permissions";
 import { adminSessionCookieName } from "@/lib/auth/session";
 
-export async function getRequiredAdminActor(): Promise<CommerceActor> {
+/**
+ * Cached per-request: the admin layout and every admin/POS page call this,
+ * and each call would otherwise re-verify the session cookie against Firebase.
+ */
+export const getRequiredAdminActor = cache(async (): Promise<CommerceActor> => {
   const auth = getAdminAuth();
   if (!auth) {
     throw new CommerceError("INVALID_STATE", "Firebase Admin is not available yet.");
@@ -13,24 +20,42 @@ export async function getRequiredAdminActor(): Promise<CommerceActor> {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get(adminSessionCookieName)?.value;
   if (!sessionCookie) {
-    throw new CommerceError("FORBIDDEN", "Sign in to admin before saving changes.");
+    throw new CommerceError("FORBIDDEN", "Sign in before saving changes.");
   }
 
   const decoded = await auth.verifySessionCookie(sessionCookie, true);
-  if (decoded.isAdmin !== true) {
-    throw new CommerceError("FORBIDDEN", "This account does not have admin access.");
+  if (decoded.isStaff !== true) {
+    throw new CommerceError("FORBIDDEN", "This account does not have staff access.");
   }
 
   return {
     uid: decoded.uid,
     roleIds: parseRoleIds(decoded.roleIds)
   };
+});
+
+/**
+ * Defense in depth for a specific admin page: `admin.access`/`pos.access` gate
+ * the layout shell, but a direct URL visit must still be blocked per-section
+ * even if the sidebar already hid the link. Redirects rather than throwing,
+ * since a page component rendering this has no error boundary of its own.
+ */
+export async function requireAdminPermission(permission: Permission): Promise<CommerceActor> {
+  const actor = await getRequiredAdminActor();
+  if (!hasPermission(defaultRoles, actor, permission)) {
+    redirect("/admin");
+  }
+
+  return actor;
 }
 
 function parseRoleIds(value: unknown) {
-  if (Array.isArray(value) && value.every((entry) => typeof entry === "string")) {
+  if (Array.isArray(value) && value.length > 0 && value.every((entry) => typeof entry === "string")) {
     return value;
   }
 
-  return ["role-owner"];
+  // No safe default here: a missing/malformed roleIds claim must grant
+  // nothing, not fall back to the owner role, now that any staff account
+  // (not just the bootstrapped owner) can obtain a session.
+  return [];
 }

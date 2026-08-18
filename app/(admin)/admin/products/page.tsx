@@ -5,6 +5,7 @@ import {
   getAdminCatalogueData
 } from "@/lib/admin/catalogue";
 import { ProductManagementForms } from "@/components/admin/product-management-forms";
+import { requireAdminPermission } from "@/lib/auth/server";
 import {
   createProductWithDefaultVariantAction,
   createVariantAction,
@@ -15,6 +16,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function AdminProductsPage() {
+  await requireAdminPermission("products.view");
   const catalogue = await getAdminCatalogueData();
 
   return (
@@ -97,6 +99,51 @@ export default async function AdminProductsPage() {
                   </select>
                 </label>
                 <label className="admin-field">
+                  <span>Concerns / needs</span>
+                  <select
+                    defaultValue={product?.concernIds ?? []}
+                    disabled={!product || catalogue.source !== "live"}
+                    multiple
+                    name="concernIds"
+                  >
+                    {catalogue.concerns.map((concern) => (
+                      <option key={concern.id} value={concern.id}>
+                        {concern.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="admin-field">
+                  <span>Product type</span>
+                  <select
+                    defaultValue={product?.productTypeIds ?? []}
+                    disabled={!product || catalogue.source !== "live"}
+                    multiple
+                    name="productTypeIds"
+                  >
+                    {catalogue.productTypes.map((productType) => (
+                      <option key={productType.id} value={productType.id}>
+                        {productType.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="admin-field">
+                  <span>Routine</span>
+                  <select
+                    defaultValue={product?.routineIds ?? []}
+                    disabled={!product || catalogue.source !== "live"}
+                    multiple
+                    name="routineIds"
+                  >
+                    {catalogue.routines.map((routine) => (
+                      <option key={routine.id} value={routine.id}>
+                        {routine.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="admin-field">
                   <span>Variant</span>
                   <input
                     defaultValue={variant.title}
@@ -135,6 +182,15 @@ export default async function AdminProductsPage() {
                     inputMode="numeric"
                     name="stockDelta"
                   />
+                </label>
+                <label className="admin-field checkbox">
+                  <input
+                    defaultChecked={product?.bestSeller ?? false}
+                    disabled={!product || catalogue.source !== "live"}
+                    name="bestSeller"
+                    type="checkbox"
+                  />
+                  <span>Best seller</span>
                 </label>
                 <button
                   className="admin-action"

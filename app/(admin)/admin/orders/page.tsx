@@ -3,10 +3,12 @@ import {
   getAdminOperationsData,
   getOrderCustomerName,
 } from "@/lib/admin/operations-data";
+import { requireAdminPermission } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminOrdersPage() {
+  await requireAdminPermission("orders.view");
   const data = await getAdminOperationsData();
   const rows = data.orderRows;
 

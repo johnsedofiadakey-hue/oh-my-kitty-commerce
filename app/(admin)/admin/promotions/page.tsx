@@ -1,8 +1,10 @@
 import { getAdminOperationsData } from "@/lib/admin/operations-data";
+import { requireAdminPermission } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPromotionsPage() {
+  await requireAdminPermission("promotions.view");
   const data = await getAdminOperationsData();
 
   return (

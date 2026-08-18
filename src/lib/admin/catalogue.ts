@@ -5,7 +5,15 @@ import {
   getVariantLabel
 } from "@/lib/admin/sample-admin-data";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
-import type { Category, Collection, Product, ProductVariant } from "@/lib/commerce/types";
+import type {
+  Category,
+  Collection,
+  Concern,
+  Product,
+  ProductType,
+  ProductVariant,
+  Routine
+} from "@/lib/commerce/types";
 
 export type AdminCatalogueSource = "live" | "sample";
 
@@ -23,6 +31,9 @@ export type AdminCatalogueData = {
   rows: AdminProductRow[];
   categories: Category[];
   collections: Collection[];
+  concerns: Concern[];
+  productTypes: ProductType[];
+  routines: Routine[];
 };
 
 export async function getAdminCatalogueData(): Promise<AdminCatalogueData> {
@@ -37,9 +48,12 @@ export async function getAdminCatalogueData(): Promise<AdminCatalogueData> {
       products.map((product) => context.repo.listVariants(product.id))
     );
     const variants = variantGroups.flat();
-    const [categories, collections] = await Promise.all([
+    const [categories, collections, concerns, productTypes, routines] = await Promise.all([
       context.repo.listCategories(),
-      context.repo.listCollections()
+      context.repo.listCollections(),
+      context.repo.listConcerns(),
+      context.repo.listProductTypes(),
+      context.repo.listRoutines()
     ]);
     return {
       source: "live",
@@ -47,7 +61,10 @@ export async function getAdminCatalogueData(): Promise<AdminCatalogueData> {
       variants,
       rows: createRows(products, variants),
       categories,
-      collections
+      collections,
+      concerns,
+      productTypes,
+      routines
     };
   } catch {
     return sampleCatalogue(
@@ -76,7 +93,10 @@ function sampleCatalogue(sourceMessage: string): AdminCatalogueData {
     variants: adminData.variants,
     rows: createRows(adminData.products, adminData.variants),
     categories: adminData.categories,
-    collections: adminData.collections
+    collections: adminData.collections,
+    concerns: adminData.concerns,
+    productTypes: adminData.productTypes,
+    routines: adminData.routines
   };
 }
 

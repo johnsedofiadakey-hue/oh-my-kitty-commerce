@@ -99,9 +99,13 @@ Fields:
   "status": "ACTIVE",
   "categoryIds": ["cat-wellness"],
   "collectionIds": ["collection-best-sellers"],
+  "concernIds": ["concern-wellness-support"],
+  "productTypeIds": ["type-herbal-products"],
+  "routineIds": ["routine-wellness-support"],
   "tags": ["botanical"],
   "mediaIds": ["media-1"],
   "featured": true,
+  "bestSeller": true,
   "homepagePriority": 10,
   "seo": {
     "title": "string",
@@ -174,6 +178,25 @@ Fields:
     "title": "string",
     "description": "string"
   }
+}
+```
+
+## Taxonomy (Concerns / Product Types / Routines)
+
+Collections: `concerns`, `productTypes`, `routines`
+
+Admin-managed browse-by-need, browse-by-product-form, and browse-by-routine taxonomies. All three share the same shape and are referenced by `Product.concernIds` / `Product.productTypeIds` / `Product.routineIds`. Assignment is opt-in per product — an unmapped product simply doesn't surface under that discovery mode.
+
+Fields (identical across all three collections):
+
+```json
+{
+  "id": "concern-daily-intimate-care",
+  "title": "Daily intimate care",
+  "slug": "daily-intimate-care",
+  "description": "string",
+  "sortOrder": 1,
+  "active": true
 }
 ```
 

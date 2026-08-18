@@ -30,11 +30,12 @@ The storefront is intentionally expressive. The admin and POS are intentionally 
 Before implementation work, read:
 
 1. `README.md`
-2. `docs/PRODUCT-SPEC.md`
-3. `docs/DECISIONS.md`
-4. `docs/DEVELOPMENT-PLAN.md`
-5. The spec file for the surface being changed
-6. `docs/FIREBASE-ARCHITECTURE.md`, `docs/DATA-MODEL.md`, `docs/PERMISSIONS.md`, and `docs/SECURITY.md` before data/auth work
+2. `docs/OMK-DESIGN-BIBLE.md` — authoritative visual/motion/interaction spec; read before touching any storefront UI
+3. `docs/PRODUCT-SPEC.md`
+4. `docs/DECISIONS.md`
+5. `docs/DEVELOPMENT-PLAN.md`
+6. The spec file for the surface being changed
+7. `docs/FIREBASE-ARCHITECTURE.md`, `docs/DATA-MODEL.md`, `docs/PERMISSIONS.md`, and `docs/SECURITY.md` before data/auth work
 
 ## Build Discipline
 

@@ -2,6 +2,7 @@ import {
   sampleAuditLogs,
   sampleCategories,
   sampleCollections,
+  sampleConcerns,
   sampleCustomers,
   sampleDeliveryRules,
   sampleInventoryMovements,
@@ -10,8 +11,10 @@ import {
   samplePayments,
   samplePosShifts,
   sampleProducts,
+  sampleProductTypes,
   samplePromotions,
   sampleRoles,
+  sampleRoutines,
   sampleUsers,
   sampleVariants
 } from "@/lib/commerce/sample-data";
@@ -23,6 +26,9 @@ export const adminData = {
   variants: sampleVariants,
   categories: sampleCategories,
   collections: sampleCollections,
+  concerns: sampleConcerns,
+  productTypes: sampleProductTypes,
+  routines: sampleRoutines,
   media: sampleMedia,
   customers: sampleCustomers,
   orders: sampleOrders,

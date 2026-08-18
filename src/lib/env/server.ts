@@ -10,9 +10,7 @@ const serverEnvSchema = z.object({
   BOOTSTRAP_OWNER_UID: z.string().optional(),
   BOOTSTRAP_OWNER_EMAIL: z.string().optional(),
   BOOTSTRAP_OWNER_DISPLAY_NAME: z.string().optional(),
-  PAYMENT_PROVIDER: z.string().optional(),
-  PAYMENT_SECRET_KEY: z.string().optional(),
-  PAYMENT_WEBHOOK_SECRET: z.string().optional()
+  PAYSTACK_SECRET_KEY: z.string().optional()
 });
 
 export const serverEnv = serverEnvSchema.parse({
@@ -25,9 +23,7 @@ export const serverEnv = serverEnvSchema.parse({
   BOOTSTRAP_OWNER_UID: process.env.BOOTSTRAP_OWNER_UID,
   BOOTSTRAP_OWNER_EMAIL: process.env.BOOTSTRAP_OWNER_EMAIL,
   BOOTSTRAP_OWNER_DISPLAY_NAME: process.env.BOOTSTRAP_OWNER_DISPLAY_NAME,
-  PAYMENT_PROVIDER: process.env.PAYMENT_PROVIDER,
-  PAYMENT_SECRET_KEY: process.env.PAYMENT_SECRET_KEY,
-  PAYMENT_WEBHOOK_SECRET: process.env.PAYMENT_WEBHOOK_SECRET
+  PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY
 });
 
 export function isProductionAppEnv(env = serverEnv) {

@@ -5,6 +5,7 @@ import type {
   AuditLog,
   Category,
   Collection,
+  Concern,
   Customer,
   DeliveryRule,
   InventoryMovement,
@@ -13,8 +14,12 @@ import type {
   Payment,
   PosShift,
   Product,
+  ProductType,
   ProductVariant,
-  Promotion
+  Promotion,
+  Routine,
+  StaffUser,
+  StoreSettings
 } from "@/lib/commerce/types";
 
 export class FirestoreCommerceRepository implements CommerceRepository {
@@ -70,6 +75,40 @@ export class FirestoreCommerceRepository implements CommerceRepository {
 
   async saveCollection(collection: Collection) {
     await this.db.collection("collections").doc(collection.id).set(cleanFirestoreData(collection), {
+      merge: true
+    });
+  }
+
+  async listConcerns() {
+    const snapshot = await this.db.collection("concerns").orderBy("sortOrder").get();
+    return snapshot.docs.map((doc) => readDoc<Concern>(doc)).filter(isDefined);
+  }
+
+  async saveConcern(concern: Concern) {
+    await this.db.collection("concerns").doc(concern.id).set(cleanFirestoreData(concern), {
+      merge: true
+    });
+  }
+
+  async listProductTypes() {
+    const snapshot = await this.db.collection("productTypes").orderBy("sortOrder").get();
+    return snapshot.docs.map((doc) => readDoc<ProductType>(doc)).filter(isDefined);
+  }
+
+  async saveProductType(productType: ProductType) {
+    await this.db
+      .collection("productTypes")
+      .doc(productType.id)
+      .set(cleanFirestoreData(productType), { merge: true });
+  }
+
+  async listRoutines() {
+    const snapshot = await this.db.collection("routines").orderBy("sortOrder").get();
+    return snapshot.docs.map((doc) => readDoc<Routine>(doc)).filter(isDefined);
+  }
+
+  async saveRoutine(routine: Routine) {
+    await this.db.collection("routines").doc(routine.id).set(cleanFirestoreData(routine), {
       merge: true
     });
   }
@@ -198,6 +237,36 @@ export class FirestoreCommerceRepository implements CommerceRepository {
 
   async getRole(id: string) {
     return readDoc<Role>(await this.db.collection("roles").doc(id).get());
+  }
+
+  async listRoles() {
+    const snapshot = await this.db.collection("roles").get();
+    return snapshot.docs.map((doc) => readDoc<Role>(doc)).filter(isDefined);
+  }
+
+  async saveStaffUser(user: StaffUser) {
+    await this.db.collection("users").doc(user.id).set(cleanFirestoreData(user), {
+      merge: true
+    });
+  }
+
+  async getStaffUser(id: string) {
+    return readDoc<StaffUser>(await this.db.collection("users").doc(id).get());
+  }
+
+  async listStaffUsers() {
+    const snapshot = await this.db.collection("users").get();
+    return snapshot.docs.map((doc) => readDoc<StaffUser>(doc)).filter(isDefined);
+  }
+
+  async getStoreSettings() {
+    return readDoc<StoreSettings>(await this.db.collection("settings").doc("store").get());
+  }
+
+  async saveStoreSettings(settings: StoreSettings) {
+    await this.db.collection("settings").doc("store").set(cleanFirestoreData(settings), {
+      merge: true
+    });
   }
 
   async saveAuditLog(log: AuditLog) {

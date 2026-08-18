@@ -41,7 +41,7 @@ export type InventoryMovementType =
   | "LOSS"
   | "MANUAL_ADJUSTMENT";
 
-export type PaymentProvider = "CASH" | "MANUAL" | "TBD";
+export type PaymentProvider = "CASH" | "MANUAL" | "PAYSTACK" | "TBD";
 export type PaymentMethod = "cash" | "mobile_money" | "card" | "manual_transfer" | "other";
 
 export type FulfilmentStatus =
@@ -61,9 +61,13 @@ export type Product = {
   status: ProductStatus;
   categoryIds: string[];
   collectionIds: string[];
+  concernIds: string[];
+  productTypeIds: string[];
+  routineIds: string[];
   tags: string[];
   mediaIds: string[];
   featured: boolean;
+  bestSeller: boolean;
   homepagePriority?: number;
   seo?: SeoFields;
   care?: ProductCare;
@@ -99,6 +103,33 @@ export type Category = {
   sortOrder: number;
   active: boolean;
   seo?: SeoFields;
+};
+
+export type Concern = {
+  id: string;
+  title: string;
+  slug: string;
+  description?: string;
+  sortOrder: number;
+  active: boolean;
+};
+
+export type ProductType = {
+  id: string;
+  title: string;
+  slug: string;
+  description?: string;
+  sortOrder: number;
+  active: boolean;
+};
+
+export type Routine = {
+  id: string;
+  title: string;
+  slug: string;
+  description?: string;
+  sortOrder: number;
+  active: boolean;
 };
 
 export type Collection = {
@@ -171,6 +202,8 @@ export type CustomerSnapshot = {
   name?: string;
   email?: string | null;
   phone?: string | null;
+  address?: string | null;
+  notes?: string | null;
 };
 
 export type Payment = {
@@ -250,6 +283,29 @@ export type ManagerApproval = {
   approvedBy?: string | null;
   requiredPermission: Permission;
   reason: string;
+};
+
+export type StoreSettings = {
+  id: "store";
+  storeName: string;
+  receiptFooter?: string;
+  updatedBy?: string;
+  updatedAt?: Date;
+};
+
+export type StaffUser = {
+  id: string;
+  uid: string;
+  displayName: string;
+  email: string;
+  status: "ACTIVE" | "DEACTIVATED";
+  roleIds: string[];
+  type: "ADMIN_OR_STAFF";
+  posEnabled: boolean;
+  permissionOverrides?: Permission[];
+  createdBy?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export type AuditLog = {

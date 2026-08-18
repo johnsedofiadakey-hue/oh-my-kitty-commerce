@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
   }
 
   const decoded = await auth.verifyIdToken(body.idToken);
-  if (decoded.isAdmin !== true) {
-    return NextResponse.json({ error: "This account is not an admin." }, { status: 403 });
+  if (decoded.isStaff !== true) {
+    return NextResponse.json({ error: "This account does not have staff access." }, { status: 403 });
   }
 
   const sessionCookie = await auth.createSessionCookie(body.idToken, {

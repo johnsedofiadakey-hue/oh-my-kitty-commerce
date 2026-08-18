@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 900" fill="none">
+  <path
+    d="M320 12
+       C 460 12 566 118 566 268
+       L 566 820
+       C 566 856 538 884 502 884
+       L 138 884
+       C 102 884 74 856 74 820
+       L 74 268
+       C 74 118 180 12 320 12 Z"
+    fill="url(#omk-portal-fill)"
+    stroke="url(#omk-portal-stroke)"
+    stroke-width="2"
+  />
+  <defs>
+    <linearGradient id="omk-portal-fill" x1="320" y1="12" x2="320" y2="884" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FAD8D0" stop-opacity="0.55" />
+      <stop offset="55%" stop-color="#FDEBE6" stop-opacity="0.32" />
+      <stop offset="100%" stop-color="#FFF9F6" stop-opacity="0.1" />
+    </linearGradient>
+    <linearGradient id="omk-portal-stroke" x1="320" y1="12" x2="320" y2="884" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#F3A99D" stop-opacity="0.35" />
+    </linearGradient>
+  </defs>
+</svg>

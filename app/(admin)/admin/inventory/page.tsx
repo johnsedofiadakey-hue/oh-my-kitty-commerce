@@ -4,10 +4,12 @@ import {
   getProductTitle,
   getVariantLabel
 } from "@/lib/admin/operations-data";
+import { requireAdminPermission } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminInventoryPage() {
+  await requireAdminPermission("inventory.view");
   const data = await getAdminOperationsData();
   const rows = data.inventoryRows;
 

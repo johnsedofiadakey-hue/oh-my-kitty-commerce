@@ -40,7 +40,8 @@ export async function createProductWithDefaultVariantAction(
       collectionIds: [],
       tags: [],
       mediaIds: [],
-      featured: false
+      featured: false,
+      bestSeller: formData.get("bestSeller") === "on"
     });
 
     await createVariant(context, actor, {
@@ -112,7 +113,11 @@ export async function quickEditCatalogueItemAction(formData: FormData): Promise<
     title: formString(formData, "title"),
     shortCopy: formOptionalString(formData, "shortCopy"),
     status: formProductStatus(formData, "status"),
-    categoryIds: categoryId ? [categoryId] : []
+    categoryIds: categoryId ? [categoryId] : [],
+    concernIds: formData.getAll("concernIds").map(String),
+    productTypeIds: formData.getAll("productTypeIds").map(String),
+    routineIds: formData.getAll("routineIds").map(String),
+    bestSeller: formData.get("bestSeller") === "on"
   });
 
   await updateVariant(context, actor, {

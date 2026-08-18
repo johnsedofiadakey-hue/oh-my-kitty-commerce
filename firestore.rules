@@ -38,6 +38,21 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /concerns/{concernId} {
+      allow read: if resource.data.active == true || isStaff();
+      allow create, update, delete: if false;
+    }
+
+    match /productTypes/{productTypeId} {
+      allow read: if resource.data.active == true || isStaff();
+      allow create, update, delete: if false;
+    }
+
+    match /routines/{routineId} {
+      allow read: if resource.data.active == true || isStaff();
+      allow create, update, delete: if false;
+    }
+
     match /contentPages/{pageId} {
       allow read: if resource.data.status == "PUBLISHED" || isStaff();
       allow create, update, delete: if false;

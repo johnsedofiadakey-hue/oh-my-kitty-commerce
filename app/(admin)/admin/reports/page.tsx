@@ -2,10 +2,12 @@ import {
   formatMoney,
   getAdminOperationsData
 } from "@/lib/admin/operations-data";
+import { requireAdminPermission } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminReportsPage() {
+  await requireAdminPermission("reports.view");
   const data = await getAdminOperationsData();
   const lowStockRows = data.inventoryRows.filter((row) => row.lowStock);
 

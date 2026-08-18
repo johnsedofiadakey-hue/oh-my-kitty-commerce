@@ -1,8 +1,15 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { formatMoney } from "@/lib/commerce/format";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
+import {
+  enqueueSale,
+  listPendingSales,
+  onQueueChanged,
+  replayPendingSales,
+  type PendingAction
+} from "@/lib/pos/offline-queue";
 
 type PosSaleClientProps = {
   products: StorefrontProductView[];
@@ -16,8 +23,9 @@ type PosLine = StorefrontProductView & {
 
 type PosReceipt = {
   changeDue: number;
-  orderNumber: string;
+  orderNumber: string | null;
   total: number;
+  pending: boolean;
 };
 
 type PaymentMethod = "cash" | "mobile_money" | "manual_transfer";
@@ -45,7 +53,58 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
   const [shiftBusy, setShiftBusy] = useState(false);
   const [shift, setShift] = useState<PosShiftState | null>(null);
   const [shiftSales, setShiftSales] = useState({ count: 0, revenue: 0, cash: 0 });
+  const [pendingSales, setPendingSales] = useState<PendingAction[]>([]);
+  const [isOnline, setIsOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine);
   const canSell = source === "live" && shift?.status === "OPEN";
+  const pendingCount = pendingSales.filter((sale) => sale.status === "pending").length;
+  const failedSales = pendingSales.filter((sale) => sale.status === "failed");
+
+  const refreshPendingSales = useCallback(() => {
+    listPendingSales().then(setPendingSales).catch(() => undefined);
+  }, []);
+
+  const attemptSync = useCallback(async () => {
+    // Queued sales are already counted in shiftSales optimistically (see
+    // completeSale) — a successful replay just confirms that total was
+    // right. A permanently failed one (e.g. sold out by the time it synced)
+    // is surfaced in the "Sync issues" list below for staff to reconcile by
+    // hand rather than silently rewriting the running cash total.
+    const result = await replayPendingSales();
+    refreshPendingSales();
+    return result;
+  }, [refreshPendingSales]);
+
+  useEffect(() => {
+    refreshPendingSales();
+    void attemptSync();
+
+    function handleOnline() {
+      setIsOnline(true);
+      void attemptSync();
+    }
+
+    function handleOffline() {
+      setIsOnline(false);
+    }
+
+    function handleVisibility() {
+      if (document.visibilityState === "visible") {
+        void attemptSync();
+      }
+    }
+
+    const unsubscribeQueue = onQueueChanged(refreshPendingSales);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      unsubscribeQueue();
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [attemptSync, refreshPendingSales]);
   const normalizedQuery = query.trim().toLowerCase();
   const visibleProducts = useMemo(
     () =>
@@ -174,47 +233,71 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
 
   async function completeSale(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!shift) {
+      return;
+    }
+
     setSubmitting(true);
     setErrorMessage("");
 
-    try {
-      const response = await fetch("/api/pos/sale", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amountReceived,
-          customer: {
-            name: customerName,
-            phone: customerPhone
-          },
-          items: cart.map((line) => ({
-            productId: line.id,
-            variantId: line.variantId,
-            quantity: line.quantity
-          })),
-          paymentMethod,
-          posShiftId: shift?.id
-        })
-      });
-      const payload = (await response.json()) as { message?: string; orderNumber?: string; total?: number };
+    const saleId = crypto.randomUUID();
+    const saleRequest = {
+      amountReceived,
+      customer: {
+        name: customerName,
+        phone: customerPhone
+      },
+      items: cart.map((line) => ({
+        productId: line.id,
+        variantId: line.variantId,
+        quantity: line.quantity
+      })),
+      paymentMethod,
+      posShiftId: shift.id
+    };
+    const estimatedTotal = subtotal;
 
-      if (!response.ok || !payload.orderNumber || typeof payload.total !== "number") {
-        throw new Error(payload.message ?? "POS sale failed.");
-      }
-
-      const orderTotal = payload.total;
-      setReceipt({ changeDue, orderNumber: payload.orderNumber, total: orderTotal });
+    function settleLocally(orderNumber: string | null, total: number, pending: boolean) {
+      setReceipt({ changeDue, orderNumber, total, pending });
       setShiftSales((current) => ({
-        cash: current.cash + (paymentMethod === "cash" ? orderTotal : 0),
+        cash: current.cash + (paymentMethod === "cash" ? total : 0),
         count: current.count + 1,
-        revenue: current.revenue + orderTotal
+        revenue: current.revenue + total
       }));
       setCart([]);
       setCashReceived("");
       setCustomerName("");
       setCustomerPhone("");
+    }
+
+    try {
+      const response = await fetch("/api/pos/sale", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...saleRequest, idempotencyKey: saleId })
+      });
+      const payload = (await response.json()) as { message?: string; orderNumber?: string; total?: number };
+
+      if (!response.ok || !payload.orderNumber || typeof payload.total !== "number") {
+        // The server saw the request and rejected it (bad input, out of
+        // stock, shift closed) — retrying the identical request offline
+        // would just fail the same way, so this is a real error, not an
+        // offline condition.
+        throw new Error(payload.message ?? "POS sale failed.");
+      }
+
+      settleLocally(payload.orderNumber, payload.total, false);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "POS sale failed.");
+      if (error instanceof TypeError) {
+        // fetch() itself threw — a network-level failure, not a server
+        // response, which is the signal that we're actually offline.
+        await enqueueSale(saleId, saleRequest);
+        refreshPendingSales();
+        settleLocally(null, estimatedTotal, true);
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : "POS sale failed.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -258,7 +341,28 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
         </section>
       </main>
       <aside className="pos-cart" aria-label="POS cart">
-        <h2 className="app-title">Cart</h2>
+        <div className="pos-cart-heading">
+          <h2 className="app-title">Cart</h2>
+          <div className="pos-connection-status">
+            <span className={isOnline ? "status-pill online" : "status-pill offline"}>
+              {isOnline ? "Online" : "Offline"}
+            </span>
+            {pendingCount > 0 ? (
+              <span className="status-pill pending">{pendingCount} pending sync</span>
+            ) : null}
+          </div>
+        </div>
+        {failedSales.length > 0 ? (
+          <div className="admin-alert danger" role="alert">
+            <strong>{failedSales.length} sale{failedSales.length === 1 ? "" : "s"} couldn&apos;t sync</strong>
+            <ul>
+              {failedSales.map((sale) => (
+                <li key={sale.id}>{sale.lastError ?? "Sync failed"}</li>
+              ))}
+            </ul>
+            <span>These were made offline but the server rejected them once reconnected — reconcile manually.</span>
+          </div>
+        ) : null}
         <section className="pos-shift-panel" aria-label="POS shift">
           <div className="pos-shift-heading">
             <strong>{shift?.status === "OPEN" ? "Shift open" : "Open shift"}</strong>
@@ -325,9 +429,9 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
           )}
         </section>
         {receipt ? (
-          <div className="pos-receipt" role="status">
-            <span>Receipt</span>
-            <strong>{receipt.orderNumber}</strong>
+          <div className={receipt.pending ? "pos-receipt pending" : "pos-receipt"} role="status">
+            <span>{receipt.pending ? "Saved offline" : "Receipt"}</span>
+            <strong>{receipt.pending ? "Will sync when back online" : receipt.orderNumber}</strong>
             <small>{formatMoney(receipt.total)}</small>
             {receipt.changeDue > 0 ? <small>Change {formatMoney(receipt.changeDue)}</small> : null}
           </div>

@@ -4,6 +4,7 @@ import type {
   AuditLog,
   Category,
   Collection,
+  Concern,
   Customer,
   DeliveryRule,
   InventoryMovement,
@@ -12,8 +13,12 @@ import type {
   Payment,
   PosShift,
   Product,
+  ProductType,
   ProductVariant,
-  Promotion
+  Promotion,
+  Routine,
+  StaffUser,
+  StoreSettings
 } from "@/lib/commerce/types";
 
 export class MemoryCommerceRepository implements CommerceRepository {
@@ -21,6 +26,9 @@ export class MemoryCommerceRepository implements CommerceRepository {
   variants = new Map<string, ProductVariant>();
   categories = new Map<string, Category>();
   collections = new Map<string, Collection>();
+  concerns = new Map<string, Concern>();
+  productTypes = new Map<string, ProductType>();
+  routines = new Map<string, Routine>();
   media = new Map<string, MediaAsset>();
   customers = new Map<string, Customer>();
   orders = new Map<string, Order>();
@@ -30,6 +38,8 @@ export class MemoryCommerceRepository implements CommerceRepository {
   deliveryRules = new Map<string, DeliveryRule>();
   posShifts = new Map<string, PosShift>();
   roles = new Map<string, Role>();
+  staffUsers = new Map<string, StaffUser>();
+  storeSettings: StoreSettings | null = null;
   auditLogs = new Map<string, AuditLog>();
 
   async listProducts() {
@@ -75,6 +85,32 @@ export class MemoryCommerceRepository implements CommerceRepository {
 
   async saveCollection(collection: Collection) {
     this.collections.set(collection.id, collection);
+  }
+
+  async listConcerns() {
+    return [...this.concerns.values()].sort((first, second) => first.sortOrder - second.sortOrder);
+  }
+
+  async saveConcern(concern: Concern) {
+    this.concerns.set(concern.id, concern);
+  }
+
+  async listProductTypes() {
+    return [...this.productTypes.values()].sort(
+      (first, second) => first.sortOrder - second.sortOrder
+    );
+  }
+
+  async saveProductType(productType: ProductType) {
+    this.productTypes.set(productType.id, productType);
+  }
+
+  async listRoutines() {
+    return [...this.routines.values()].sort((first, second) => first.sortOrder - second.sortOrder);
+  }
+
+  async saveRoutine(routine: Routine) {
+    this.routines.set(routine.id, routine);
   }
 
   async listMedia() {
@@ -165,6 +201,30 @@ export class MemoryCommerceRepository implements CommerceRepository {
 
   async getRole(id: string) {
     return this.roles.get(id) ?? null;
+  }
+
+  async listRoles() {
+    return [...this.roles.values()];
+  }
+
+  async saveStaffUser(user: StaffUser) {
+    this.staffUsers.set(user.id, user);
+  }
+
+  async getStaffUser(id: string) {
+    return this.staffUsers.get(id) ?? null;
+  }
+
+  async listStaffUsers() {
+    return [...this.staffUsers.values()];
+  }
+
+  async getStoreSettings() {
+    return this.storeSettings;
+  }
+
+  async saveStoreSettings(settings: StoreSettings) {
+    this.storeSettings = settings;
   }
 
   async saveAuditLog(log: AuditLog) {

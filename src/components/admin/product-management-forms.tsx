@@ -106,6 +106,10 @@ function CreateProductForm({
               />
             </label>
           </div>
+          <label className="admin-field checkbox">
+            <input name="bestSeller" type="checkbox" />
+            <span>Best seller (shows in Live Products on the home page)</span>
+          </label>
           <button className="admin-action" type="submit">
             {pending ? "Creating" : "Create product"}
           </button>

@@ -2,6 +2,7 @@ import type {
   AuditLog,
   Category,
   Collection,
+  Concern,
   Customer,
   DeliveryRule,
   InventoryMovement,
@@ -10,8 +11,11 @@ import type {
   Payment,
   PosShift,
   Product,
+  ProductType,
   ProductVariant,
-  Promotion
+  Promotion,
+  Routine,
+  StaffUser
 } from "@/lib/commerce/types";
 import { defaultRoles } from "@/lib/permissions/permissions";
 
@@ -102,6 +106,106 @@ export const sampleCategories: Category[] = [
   }
 ];
 
+export const sampleConcerns: Concern[] = [
+  { id: "concern-daily-intimate-care", title: "Daily intimate care", slug: "daily-intimate-care", sortOrder: 1, active: true },
+  { id: "concern-freshness-odour-care", title: "Freshness & odour care", slug: "freshness-odour-care", sortOrder: 2, active: true },
+  { id: "concern-dryness-comfort", title: "Dryness & comfort", slug: "dryness-comfort", sortOrder: 3, active: true },
+  { id: "concern-razor-bumps-ingrown-hair", title: "Razor bumps & ingrown hair", slug: "razor-bumps-ingrown-hair", sortOrder: 4, active: true },
+  { id: "concern-wellness-support", title: "Wellness support", slug: "wellness-support", sortOrder: 5, active: true },
+  { id: "concern-herbal-support", title: "Herbal support", slug: "herbal-support", sortOrder: 6, active: true },
+  { id: "concern-after-shave-care", title: "After-shave care", slug: "after-shave-care", sortOrder: 7, active: true },
+  { id: "concern-body-care", title: "Body care", slug: "body-care", sortOrder: 8, active: true }
+];
+
+export const sampleProductTypes: ProductType[] = [
+  { id: "type-oils", title: "Oils", slug: "oils", sortOrder: 1, active: true },
+  { id: "type-washes", title: "Washes", slug: "washes", sortOrder: 2, active: true },
+  { id: "type-serums", title: "Serums", slug: "serums", sortOrder: 3, active: true },
+  { id: "type-supplements", title: "Supplements", slug: "supplements", sortOrder: 4, active: true },
+  { id: "type-herbal-products", title: "Herbal products", slug: "herbal-products", sortOrder: 5, active: true },
+  { id: "type-scrubs", title: "Scrubs", slug: "scrubs", sortOrder: 6, active: true },
+  { id: "type-creams", title: "Creams", slug: "creams", sortOrder: 7, active: true },
+  { id: "type-mists", title: "Mists", slug: "mists", sortOrder: 8, active: true }
+];
+
+export const sampleRoutines: Routine[] = [
+  { id: "routine-daily-care", title: "Daily care", slug: "daily-care", sortOrder: 1, active: true },
+  { id: "routine-after-shaving", title: "After shaving", slug: "after-shaving", sortOrder: 2, active: true },
+  { id: "routine-night-routine", title: "Night routine", slug: "night-routine", sortOrder: 3, active: true },
+  { id: "routine-wellness-support", title: "Wellness support", slug: "wellness-support", sortOrder: 4, active: true }
+];
+
+/**
+ * Conservative, rule-based mapping from a product's free-form tags/categories to the
+ * admin-managed taxonomy above. Only maps tags with an honest, non-diagnostic fit —
+ * clinical-adjacent tags (infection-care, boric-acid, wart-care, etc.) are deliberately
+ * left unmapped rather than forced into a "need" that implies a treatment/cure claim.
+ */
+function deriveTaxonomyIds(tags: string[]) {
+  const has = (tag: string) => tags.includes(tag);
+  const productTypeIds: string[] = [];
+  const concernIds: string[] = [];
+  const routineIds: string[] = [];
+
+  const typeTagMap: Record<string, string> = {
+    oil: "type-oils",
+    wash: "type-washes",
+    serum: "type-serums",
+    supplement: "type-supplements",
+    herbs: "type-herbal-products",
+    scrub: "type-scrubs",
+    cream: "type-creams",
+    mist: "type-mists"
+  };
+
+  for (const [tag, id] of Object.entries(typeTagMap)) {
+    if (has(tag)) {
+      productTypeIds.push(id);
+    }
+  }
+
+  if (has("daily-care")) {
+    concernIds.push("concern-daily-intimate-care");
+    routineIds.push("routine-daily-care");
+  }
+  if (has("freshness")) {
+    concernIds.push("concern-freshness-odour-care");
+  }
+  if (has("tone-care")) {
+    concernIds.push("concern-body-care");
+  }
+  if (has("shaving-care")) {
+    concernIds.push("concern-razor-bumps-ingrown-hair", "concern-after-shave-care");
+    routineIds.push("routine-after-shaving");
+  }
+  if (has("libido")) {
+    concernIds.push("concern-wellness-support");
+    routineIds.push("routine-wellness-support");
+  }
+  if (has("botanical") || has("herbs")) {
+    concernIds.push("concern-herbal-support");
+    routineIds.push("routine-wellness-support");
+  }
+  if (has("wetness")) {
+    concernIds.push("concern-dryness-comfort");
+  }
+
+  return {
+    concernIds: [...new Set(concernIds)],
+    productTypeIds: [...new Set(productTypeIds)],
+    routineIds: [...new Set(routineIds)]
+  };
+}
+
+type VariantSeed = {
+  id?: string;
+  variantTitle: string;
+  sku: string;
+  optionValues: Record<string, string>;
+  price: number;
+  stock: number;
+};
+
 type ProductSeed = {
   id: string;
   title: string;
@@ -117,7 +221,10 @@ type ProductSeed = {
   price: number;
   stock: number;
   featured?: boolean;
+  bestSeller?: boolean;
   homepagePriority?: number;
+  /** Additional sizes/packs of the same product, beyond the default variant above. */
+  variants?: VariantSeed[];
 };
 
 const productSeeds: ProductSeed[] = [
@@ -135,6 +242,7 @@ const productSeeds: ProductSeed[] = [
     price: 44000,
     stock: 12,
     featured: true,
+    bestSeller: true,
     homepagePriority: 1
   },
   {
@@ -151,6 +259,7 @@ const productSeeds: ProductSeed[] = [
     price: 40000,
     stock: 10,
     featured: true,
+    bestSeller: true,
     homepagePriority: 2
   },
   {
@@ -167,6 +276,7 @@ const productSeeds: ProductSeed[] = [
     price: 30000,
     stock: 14,
     featured: true,
+    bestSeller: true,
     homepagePriority: 3
   },
   {
@@ -183,6 +293,7 @@ const productSeeds: ProductSeed[] = [
     price: 10000,
     stock: 24,
     featured: true,
+    bestSeller: true,
     homepagePriority: 4
   },
   {
@@ -199,6 +310,7 @@ const productSeeds: ProductSeed[] = [
     price: 9000,
     stock: 26,
     featured: true,
+    bestSeller: true,
     homepagePriority: 5
   },
   {
@@ -216,6 +328,7 @@ const productSeeds: ProductSeed[] = [
     price: 7000,
     stock: 30,
     featured: true,
+    bestSeller: true,
     homepagePriority: 6
   },
   {
@@ -232,6 +345,7 @@ const productSeeds: ProductSeed[] = [
     price: 8000,
     stock: 20,
     featured: true,
+    bestSeller: true,
     homepagePriority: 7
   },
   {
@@ -249,6 +363,7 @@ const productSeeds: ProductSeed[] = [
     price: 20000,
     stock: 22,
     featured: true,
+    bestSeller: true,
     homepagePriority: 8
   },
   {
@@ -294,38 +409,37 @@ const productSeeds: ProductSeed[] = [
     stock: 12
   },
   {
-    id: "product-small-boric-acid",
-    title: "Small Boric Acid",
-    slug: "small-boric-acid",
-    shortCopy: "Starter boric acid pack with dripping pills and delivery.",
+    // TODO(admin): no dedicated boric-acid product photo exists yet in public/products;
+    // using the closest starter-bundle image until a real pack photo is uploaded.
+    id: "product-boric-acid",
+    title: "Boric Acid",
+    slug: "boric-acid",
+    shortCopy: "Boric acid support pack, available in small and big sizes.",
     categoryIds: ["cat-boric-dripping-care"],
     tags: ["boric-acid"],
-    image: "after-period-care-set.jpeg",
+    image: "normal-infection-set.jpeg",
     variantTitle: "Small Pack",
     sku: "OMK-BORIC-ACID-SMALL",
     optionValues: { pack: "Small" },
     price: 15000,
-    stock: 18
+    stock: 18,
+    variants: [
+      {
+        variantTitle: "Big Pack",
+        sku: "OMK-BORIC-ACID-BIG",
+        optionValues: { pack: "Big" },
+        price: 29000,
+        stock: 14
+      }
+    ]
   },
   {
-    id: "product-big-boric-acid",
-    title: "Big Boric Acid",
-    slug: "big-boric-acid",
-    shortCopy: "Large boric acid pack with honey and delivery.",
-    categoryIds: ["cat-boric-dripping-care"],
-    tags: ["boric-acid"],
-    image: "normal-infection-set.jpeg",
-    variantTitle: "Big Pack",
-    sku: "OMK-BORIC-ACID-BIG",
-    optionValues: { pack: "Big" },
-    price: 29000,
-    stock: 14
-  },
-  {
-    id: "product-small-dripping-pills",
-    title: "Small Dripping Pills",
-    slug: "small-dripping-pills",
-    shortCopy: "Starter dripping pills pack with honey and delivery.",
+    // TODO(admin): no dedicated dripping-pills product photo exists yet in public/products;
+    // using the closest starter-bundle image until a real pack photo is uploaded.
+    id: "product-dripping-pills",
+    title: "Dripping Pills",
+    slug: "dripping-pills",
+    shortCopy: "Dripping pills support pack, available in small and big sizes.",
     categoryIds: ["cat-boric-dripping-care"],
     tags: ["dripping-pills"],
     image: "normal-infection-set.jpeg",
@@ -333,21 +447,16 @@ const productSeeds: ProductSeed[] = [
     sku: "OMK-DRIPPING-PILLS-SMALL",
     optionValues: { pack: "Small" },
     price: 15000,
-    stock: 18
-  },
-  {
-    id: "product-big-dripping-pills",
-    title: "Big Dripping Pills",
-    slug: "big-dripping-pills",
-    shortCopy: "Large dripping pills pack with honey and delivery.",
-    categoryIds: ["cat-boric-dripping-care"],
-    tags: ["dripping-pills"],
-    image: "normal-infection-set.jpeg",
-    variantTitle: "Big Pack",
-    sku: "OMK-DRIPPING-PILLS-BIG",
-    optionValues: { pack: "Big" },
-    price: 29000,
-    stock: 14
+    stock: 18,
+    variants: [
+      {
+        variantTitle: "Big Pack",
+        sku: "OMK-DRIPPING-PILLS-BIG",
+        optionValues: { pack: "Big" },
+        price: 29000,
+        stock: 14
+      }
+    ]
   },
   {
     id: "product-genital-warts-burn-off-set",
@@ -601,27 +710,49 @@ export const sampleProducts: Product[] = productSeeds.map((product) => ({
     ...(product.featured ? ["collection-hero"] : []),
     ...(product.tags.includes("set") ? ["collection-sets"] : [])
   ],
+  ...deriveTaxonomyIds(product.tags),
   tags: product.tags,
   mediaIds: [mediaIdForProduct(product.id)],
   featured: product.featured ?? false,
+  bestSeller: product.bestSeller ?? false,
   ...(product.homepagePriority !== undefined ? { homepagePriority: product.homepagePriority } : {})
 }));
 
-export const sampleVariants: ProductVariant[] = productSeeds.map((product) => ({
-  id: product.variantId ?? `variant-${product.slug}`,
-  productId: product.id,
-  title: product.variantTitle,
-  sku: product.sku,
-  optionValues: product.optionValues,
-  price: product.price,
-  currency: "GHS",
-  mediaIds: [mediaIdForProduct(product.id)],
-  trackInventory: true,
-  stockOnHand: product.stock,
-  stockAvailable: product.stock,
-  lowStockThreshold: 5,
-  active: true
-}));
+export const sampleVariants: ProductVariant[] = productSeeds.flatMap((product) => {
+  const defaultVariant: ProductVariant = {
+    id: product.variantId ?? `variant-${product.slug}`,
+    productId: product.id,
+    title: product.variantTitle,
+    sku: product.sku,
+    optionValues: product.optionValues,
+    price: product.price,
+    currency: "GHS",
+    mediaIds: [mediaIdForProduct(product.id)],
+    trackInventory: true,
+    stockOnHand: product.stock,
+    stockAvailable: product.stock,
+    lowStockThreshold: 5,
+    active: true
+  };
+
+  const extraVariants: ProductVariant[] = (product.variants ?? []).map((variant, index) => ({
+    id: variant.id ?? `variant-${product.slug}-${index + 2}`,
+    productId: product.id,
+    title: variant.variantTitle,
+    sku: variant.sku,
+    optionValues: variant.optionValues,
+    price: variant.price,
+    currency: "GHS",
+    mediaIds: [mediaIdForProduct(product.id)],
+    trackInventory: true,
+    stockOnHand: variant.stock,
+    stockAvailable: variant.stock,
+    lowStockThreshold: 5,
+    active: true
+  }));
+
+  return [defaultVariant, ...extraVariants];
+});
 
 export const sampleCollections: Collection[] = [
   {
@@ -853,6 +984,17 @@ export const sampleDeliveryRules: DeliveryRule[] = [
     freeAbove: null,
     estimate: "Same or next day",
     sortOrder: 2
+  },
+  {
+    id: "delivery-nationwide",
+    name: "Nationwide Delivery",
+    type: "NATIONWIDE_DELIVERY",
+    active: true,
+    regions: [],
+    fee: 5000,
+    freeAbove: null,
+    estimate: "3-5 days",
+    sortOrder: 3
   }
 ];
 
@@ -887,8 +1029,9 @@ export const sampleAuditLogs: AuditLog[] = [
   }
 ];
 
-export const sampleUsers = [
+export const sampleUsers: StaffUser[] = [
   {
+    id: "owner-1",
     uid: "owner-1",
     displayName: "Owner",
     email: "owner@example.local",
@@ -898,6 +1041,7 @@ export const sampleUsers = [
     posEnabled: true
   },
   {
+    id: "staff-1",
     uid: "staff-1",
     displayName: "Sales Staff",
     email: "staff@example.local",

@@ -1,9 +1,11 @@
 import { getAdminOperationsData } from "@/lib/admin/operations-data";
 import { formatDate } from "@/lib/admin/sample-admin-data";
+import { requireAdminPermission } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminAuditPage() {
+  await requireAdminPermission("audit.view");
   const data = await getAdminOperationsData();
 
   return (

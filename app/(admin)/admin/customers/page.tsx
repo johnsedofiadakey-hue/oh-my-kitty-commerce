@@ -1,8 +1,10 @@
 import { formatMoney, getAdminOperationsData } from "@/lib/admin/operations-data";
+import { requireAdminPermission } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminCustomersPage() {
+  await requireAdminPermission("customers.view");
   const data = await getAdminOperationsData();
 
   return (

@@ -1,4 +1,4 @@
-import { StorefrontFooter } from "@/components/storefront/storefront-footer";
+import { FooterGate } from "@/components/storefront/footer-gate";
 
 export default function StorefrontLayout({
   children
@@ -8,7 +8,7 @@ export default function StorefrontLayout({
   return (
     <div className="storefront-shell">
       {children}
-      <StorefrontFooter />
+      <FooterGate />
     </div>
   );
 }

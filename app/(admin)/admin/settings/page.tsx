@@ -1,12 +1,22 @@
 import { adminData } from "@/lib/admin/sample-admin-data";
+import { getCommerceServerContext } from "@/lib/commerce/server-context";
+import { isPaystackConfigured } from "@/lib/payments/paystack";
+import { requireAdminPermission } from "@/lib/auth/server";
+import { updateStoreSettingsAction } from "./actions";
 
-export default function AdminSettingsPage() {
-  const settings = [
-    ["Store name", "Oh My Kitty"],
+export default async function AdminSettingsPage() {
+  await requireAdminPermission("settings.view");
+  const context = getCommerceServerContext();
+  const firebaseConfigured = Boolean(context);
+  const paystackConfigured = isPaystackConfigured();
+  const storeSettings = context ? await context.repo.getStoreSettings().catch(() => null) : null;
+  const statusRows = [
     ["Currency", "GHS"],
-    ["Firebase", "Pending project details"],
-    ["Payment provider", "TBD"],
-    ["Receipt footer", "Editable before launch"],
+    ["Firebase", firebaseConfigured ? "Connected" : "Pending project details"],
+    [
+      "Payment provider",
+      paystackConfigured ? "Paystack (live keys set)" : "Paystack (awaiting API keys)"
+    ],
     ["Inventory policy", "Ledgered stock movement"]
   ];
 
@@ -17,17 +27,42 @@ export default function AdminSettingsPage() {
           <h1 className="app-title">Settings</h1>
           <p className="app-subtitle">Store identity, operational defaults, payment placeholders, and receipts.</p>
         </div>
-        <button className="admin-action" type="button">
-          Save changes
-        </button>
       </div>
       <section className="admin-panel">
         <div className="panel-header">
           <h2>Store settings</h2>
           <span>No secrets stored here</span>
         </div>
+        <form action={updateStoreSettingsAction} className="admin-form">
+          <fieldset disabled={!firebaseConfigured}>
+            <div className="admin-form-grid">
+              <label className="admin-field">
+                <span>Store name</span>
+                <input
+                  defaultValue={storeSettings?.storeName ?? "Oh My Kitty"}
+                  name="storeName"
+                  required
+                />
+              </label>
+              <label className="admin-field">
+                <span>Receipt footer</span>
+                <input
+                  defaultValue={storeSettings?.receiptFooter ?? ""}
+                  name="receiptFooter"
+                  placeholder="Thank you for shopping with us"
+                />
+              </label>
+            </div>
+            <button className="admin-action" type="submit">
+              Save changes
+            </button>
+          </fieldset>
+          {!firebaseConfigured ? (
+            <p className="admin-help">Enable Firestore and sign in to save settings.</p>
+          ) : null}
+        </form>
         <div className="admin-table two">
-          {settings.map(([label, value]) => (
+          {statusRows.map(([label, value]) => (
             <div className="admin-table-row" key={label}>
               <strong>{label}</strong>
               <span>{value}</span>

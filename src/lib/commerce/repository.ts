@@ -3,6 +3,7 @@ import type {
   AuditLog,
   Category,
   Collection,
+  Concern,
   Customer,
   DeliveryRule,
   InventoryMovement,
@@ -11,8 +12,12 @@ import type {
   Payment,
   PosShift,
   Product,
+  ProductType,
   ProductVariant,
-  Promotion
+  Promotion,
+  Routine,
+  StaffUser,
+  StoreSettings
 } from "@/lib/commerce/types";
 
 export type CommerceRepository = {
@@ -26,6 +31,12 @@ export type CommerceRepository = {
   saveCategory(category: Category): Promise<void>;
   listCollections(): Promise<Collection[]>;
   saveCollection(collection: Collection): Promise<void>;
+  listConcerns(): Promise<Concern[]>;
+  saveConcern(concern: Concern): Promise<void>;
+  listProductTypes(): Promise<ProductType[]>;
+  saveProductType(productType: ProductType): Promise<void>;
+  listRoutines(): Promise<Routine[]>;
+  saveRoutine(routine: Routine): Promise<void>;
   listMedia(): Promise<MediaAsset[]>;
   saveMedia(media: MediaAsset): Promise<void>;
   saveCustomer(customer: Customer): Promise<void>;
@@ -48,6 +59,12 @@ export type CommerceRepository = {
   listPosShifts(): Promise<PosShift[]>;
   saveRole(role: Role): Promise<void>;
   getRole(id: string): Promise<Role | null>;
+  listRoles(): Promise<Role[]>;
+  saveStaffUser(user: StaffUser): Promise<void>;
+  getStaffUser(id: string): Promise<StaffUser | null>;
+  listStaffUsers(): Promise<StaffUser[]>;
+  getStoreSettings(): Promise<StoreSettings | null>;
+  saveStoreSettings(settings: StoreSettings): Promise<void>;
   saveAuditLog(log: AuditLog): Promise<void>;
   listAuditLogs(): Promise<AuditLog[]>;
 };

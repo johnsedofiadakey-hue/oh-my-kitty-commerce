@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 export type CartLine = {
   productId: string;
@@ -10,6 +10,7 @@ export type CartLine = {
   sku: string;
   unitPrice: number;
   quantity: number;
+  imageUrl?: string;
 };
 
 const cartStorageKey = "oh-my-kitty-cart-v1";
@@ -20,7 +21,7 @@ let cachedCartLines: CartLine[] = emptyCartLines;
 
 type AddToBagButtonProps = {
   className?: string;
-  label?: string;
+  label?: ReactNode;
   line: CartLine;
 };
 
@@ -86,7 +87,7 @@ export function onCartChanged(listener: () => void) {
   };
 }
 
-function addLineToCart(nextLine: CartLine) {
+export function addLineToCart(nextLine: CartLine) {
   const lines = readCartLines();
   const existing = lines.find((line) => line.variantId === nextLine.variantId);
 

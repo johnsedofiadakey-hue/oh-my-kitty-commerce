@@ -1,9 +1,11 @@
 import Image from "next/image";
 import { getAdminOperationsData } from "@/lib/admin/operations-data";
+import { requireAdminPermission } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminContentPage() {
+  await requireAdminPermission("content.view");
   const data = await getAdminOperationsData();
 
   return (

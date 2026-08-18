@@ -39,9 +39,13 @@ export const createProductInputSchema = z.object({
   status: productStatusSchema.default("DRAFT"),
   categoryIds: z.array(z.string().min(1)).default([]),
   collectionIds: z.array(z.string().min(1)).default([]),
+  concernIds: z.array(z.string().min(1)).default([]),
+  productTypeIds: z.array(z.string().min(1)).default([]),
+  routineIds: z.array(z.string().min(1)).default([]),
   tags: z.array(z.string().min(1)).default([]),
   mediaIds: z.array(z.string().min(1)).default([]),
   featured: z.boolean().default(false),
+  bestSeller: z.boolean().default(false),
   homepagePriority: z.number().int().min(0).optional(),
   seo: seoSchema.optional(),
   care: productCareSchema.optional()
@@ -84,7 +88,9 @@ export const orderItemInputSchema = z.object({
 export const customerSnapshotSchema = z.object({
   name: z.string().optional(),
   email: z.string().email().nullable().optional(),
-  phone: z.string().nullable().optional()
+  phone: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
+  notes: z.string().nullable().optional()
 });
 
 export const createOrderDraftInputSchema = z.object({
@@ -102,7 +108,7 @@ export const createOrderDraftInputSchema = z.object({
 
 export const completeSaleInputSchema = createOrderDraftInputSchema.extend({
   paymentMethod: paymentMethodSchema,
-  paymentProvider: z.enum(["CASH", "MANUAL", "TBD"]).default("TBD"),
+  paymentProvider: z.enum(["CASH", "MANUAL", "PAYSTACK", "TBD"]).default("TBD"),
   amountReceived: moneySchema.optional(),
   paymentReference: z.string().nullable().optional()
 });
@@ -135,6 +141,42 @@ export const createPromotionInputSchema = z.object({
   requiresManagerApproval: z.boolean().default(false)
 });
 
+export const createConcernInputSchema = z.object({
+  title: z.string().min(2),
+  slug: slugSchema,
+  description: z.string().optional(),
+  sortOrder: z.number().int().min(0).default(0),
+  active: z.boolean().default(true)
+});
+
+export const updateConcernInputSchema = createConcernInputSchema.partial().extend({
+  id: z.string().min(1)
+});
+
+export const createProductTypeInputSchema = z.object({
+  title: z.string().min(2),
+  slug: slugSchema,
+  description: z.string().optional(),
+  sortOrder: z.number().int().min(0).default(0),
+  active: z.boolean().default(true)
+});
+
+export const updateProductTypeInputSchema = createProductTypeInputSchema.partial().extend({
+  id: z.string().min(1)
+});
+
+export const createRoutineInputSchema = z.object({
+  title: z.string().min(2),
+  slug: slugSchema,
+  description: z.string().optional(),
+  sortOrder: z.number().int().min(0).default(0),
+  active: z.boolean().default(true)
+});
+
+export const updateRoutineInputSchema = createRoutineInputSchema.partial().extend({
+  id: z.string().min(1)
+});
+
 export const createDeliveryRuleInputSchema = z.object({
   name: z.string().min(2),
   type: z.enum(["PICKUP", "LOCAL_DELIVERY", "NATIONWIDE_DELIVERY"]),
@@ -146,12 +188,49 @@ export const createDeliveryRuleInputSchema = z.object({
   sortOrder: z.number().int().min(0).default(0)
 });
 
+export const updateDeliveryRuleInputSchema = createDeliveryRuleInputSchema.partial().extend({
+  id: z.string().min(1)
+});
+
+export const createStaffUserInputSchema = z.object({
+  id: z.string().min(1),
+  uid: z.string().min(1),
+  displayName: z.string().min(2),
+  email: z.string().email(),
+  status: z.enum(["ACTIVE", "DEACTIVATED"]).default("ACTIVE"),
+  roleIds: z.array(z.string().min(1)).min(1, "Choose at least one role."),
+  type: z.literal("ADMIN_OR_STAFF").default("ADMIN_OR_STAFF"),
+  posEnabled: z.boolean().default(false),
+  permissionOverrides: z.array(z.string()).default([])
+});
+
+export const updateStaffUserInputSchema = createStaffUserInputSchema
+  .omit({ uid: true, type: true })
+  .partial()
+  .extend({
+    id: z.string().min(1)
+  });
+
+export const updateStoreSettingsInputSchema = z.object({
+  storeName: z.string().min(1),
+  receiptFooter: z.string().optional()
+});
+
 export type CreateProductInput = z.input<typeof createProductInputSchema>;
 export type UpdateProductInput = z.input<typeof updateProductInputSchema>;
+export type CreateConcernInput = z.input<typeof createConcernInputSchema>;
+export type UpdateConcernInput = z.input<typeof updateConcernInputSchema>;
+export type CreateProductTypeInput = z.input<typeof createProductTypeInputSchema>;
+export type UpdateProductTypeInput = z.input<typeof updateProductTypeInputSchema>;
+export type CreateRoutineInput = z.input<typeof createRoutineInputSchema>;
+export type UpdateRoutineInput = z.input<typeof updateRoutineInputSchema>;
 export type CreateVariantInput = z.input<typeof createVariantInputSchema>;
 export type UpdateVariantInput = z.input<typeof updateVariantInputSchema>;
 export type CreateOrderDraftInput = z.input<typeof createOrderDraftInputSchema>;
 export type CompleteSaleInput = z.input<typeof completeSaleInputSchema>;
+export type CreateStaffUserInput = z.input<typeof createStaffUserInputSchema>;
+export type UpdateStaffUserInput = z.input<typeof updateStaffUserInputSchema>;
+export type UpdateStoreSettingsInput = z.input<typeof updateStoreSettingsInputSchema>;
 export type AdjustInventoryInput = z.input<typeof adjustInventoryInputSchema>;
 export type CreateCustomerInput = z.input<typeof createCustomerInputSchema>;
 export type ParsedCreateOrderDraftInput = z.output<typeof createOrderDraftInputSchema>;

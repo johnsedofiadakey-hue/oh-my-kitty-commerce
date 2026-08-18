@@ -14,8 +14,10 @@ type CheckoutRequestBody = {
     name?: unknown;
     email?: unknown;
     phone?: unknown;
+    address?: unknown;
+    notes?: unknown;
   };
-  deliveryTotal?: unknown;
+  deliveryRuleId?: unknown;
   idempotencyKey?: unknown;
   items?: unknown;
   paymentMethod?: unknown;
@@ -30,15 +32,18 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as CheckoutRequestBody;
     const items = parseCheckoutLines(body.items);
+    const deliveryTotal = await resolveDeliveryFee(context, body.deliveryRuleId);
 
     const sale = await completeOnlineOrder(context, {
       channel: "ONLINE",
       customerSnapshot: {
         name: normalizeOptionalString(body.customer?.name),
         email: normalizeOptionalString(body.customer?.email) ?? null,
-        phone: normalizeOptionalString(body.customer?.phone) ?? null
+        phone: normalizeOptionalString(body.customer?.phone) ?? null,
+        address: normalizeOptionalString(body.customer?.address) ?? null,
+        notes: normalizeOptionalString(body.customer?.notes) ?? null
       },
-      deliveryTotal: parseMoneyMinorUnit(body.deliveryTotal),
+      deliveryTotal,
       taxTotal: 0,
       idempotencyKey:
         normalizeOptionalString(body.idempotencyKey) ??
@@ -83,8 +88,22 @@ function parsePaymentMethod(value: unknown) {
     : "manual_transfer";
 }
 
-function parseMoneyMinorUnit(value: unknown) {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : 0;
+async function resolveDeliveryFee(
+  context: NonNullable<ReturnType<typeof getCommerceServerContext>>,
+  deliveryRuleId: unknown
+) {
+  const id = normalizeOptionalString(deliveryRuleId);
+  if (!id) {
+    throw new CommerceError("VALIDATION_ERROR", "Choose a delivery or pickup option.");
+  }
+
+  const rules = await context.repo.listDeliveryRules();
+  const rule = rules.find((entry) => entry.id === id && entry.active);
+  if (!rule) {
+    throw new CommerceError("VALIDATION_ERROR", "That delivery option is no longer available.");
+  }
+
+  return rule.fee;
 }
 
 function parsePositiveInteger(value: unknown) {

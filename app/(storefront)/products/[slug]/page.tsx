@@ -2,16 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import { notFound } from "next/navigation";
-import {
-  AddToBagButton,
-  type CartLine
-} from "@/components/storefront/add-to-bag-button";
-import { CartCount } from "@/components/storefront/cart-count";
-import {
-  getStorefrontCatalogue,
-  toStorefrontProductViews,
-  type StorefrontProductView
-} from "@/lib/storefront/catalogue";
+import { ProductDetailHero } from "@/components/storefront/product-detail-hero";
+import { StorefrontNav } from "@/components/storefront/storefront-nav";
+import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefront/catalogue";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +16,8 @@ export default async function ProductDetailPage({
   const { slug } = await params;
   const catalogue = await getStorefrontCatalogue();
   const products = toStorefrontProductViews(catalogue);
-  const product = products.find((entry) => entry.slug === slug);
+  const variants = products.filter((entry) => entry.slug === slug);
+  const product = variants[0];
 
   if (!product) {
     notFound();
@@ -32,67 +26,17 @@ export default async function ProductDetailPage({
   const relatedProducts = products
     .filter(
       (entry) =>
-        entry.variantId !== product.variantId &&
+        entry.slug !== product.slug &&
         entry.categorySlugs.some((categorySlug) => product.categorySlugs.includes(categorySlug))
     )
+    .filter((entry, index, all) => all.findIndex((other) => other.slug === entry.slug) === index)
     .slice(0, 4);
 
   return (
     <main className="product-detail-page">
-      <header className="shop-header cinematic">
-        <Link className="brand-mark" href="/">
-          Oh My Kitty
-        </Link>
-        <Link className="bag-pill" href="/cart">
-          <CartCount />
-        </Link>
-      </header>
+      <StorefrontNav />
 
-      <section className={`product-detail-hero ${product.tone}`}>
-        <div className="product-detail-stage" aria-hidden="true">
-          {product.imageUrl ? (
-            <Image
-              alt=""
-              fill
-              priority
-              sizes="(max-width: 820px) 92vw, 520px"
-              src={product.imageUrl}
-            />
-          ) : (
-            <Image
-              alt=""
-              height={160}
-              priority
-              src="/brand/oh-my-kitty-logo.jpeg"
-              width={160}
-            />
-          )}
-        </div>
-        <div className="product-detail-copy">
-          <Link
-            className="scene-kicker"
-            href={`/categories/${product.primaryCategorySlug}` as Route}
-          >
-            {product.primaryCategory}
-          </Link>
-          <h1>{product.title}</h1>
-          <p>{product.description ?? product.shortCopy}</p>
-          <div className="product-detail-price">
-            <strong>{product.formattedPrice}</strong>
-            <span>{product.stockAvailable} available</span>
-          </div>
-          <div className="product-detail-actions">
-            <AddToBagButton
-              className="sheet-add-button"
-              label="Add to bag"
-              line={toCartLine(product)}
-            />
-            <Link className="sheet-cart-link" href="/cart">
-              View bag
-            </Link>
-          </div>
-        </div>
-      </section>
+      <ProductDetailHero variants={variants} />
 
       <section className="product-detail-info" aria-label="Product details">
         <article>
@@ -156,16 +100,4 @@ export default async function ProductDetailPage({
       ) : null}
     </main>
   );
-}
-
-function toCartLine(product: StorefrontProductView): CartLine {
-  return {
-    productId: product.id,
-    productTitle: product.title,
-    quantity: 1,
-    sku: product.sku,
-    unitPrice: product.price,
-    variantId: product.variantId,
-    variantTitle: product.variantTitle
-  };
 }

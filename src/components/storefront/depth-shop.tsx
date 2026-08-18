@@ -6,9 +6,10 @@ import type { Route } from "next";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AddToBagButton,
+  addLineToCart,
   type CartLine
 } from "@/components/storefront/add-to-bag-button";
-import { CartCount } from "@/components/storefront/cart-count";
+import { StorefrontNav } from "@/components/storefront/storefront-nav";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 
 type DepthShopProps = {
@@ -16,37 +17,114 @@ type DepthShopProps = {
   sourceMessage?: string;
 };
 
+type DiscoveryMode = "need" | "product" | "routine";
+
+type DiscoveryOption = {
+  slug: string;
+  label: string;
+};
+
+const DISCOVERY_MODES: { id: DiscoveryMode; label: string }[] = [
+  { id: "need", label: "By need" },
+  { id: "product", label: "By product" },
+  { id: "routine", label: "By routine" }
+];
+
+const TILE_CYCLE_LENGTH = 7;
+
+function tileTypeForIndex(index: number): "standard" | "featured" | "tall" | "feature" {
+  const position = index % TILE_CYCLE_LENGTH;
+  if (position === 2) return "featured";
+  if (position === 5) return "tall";
+  if (position === 6) return "feature";
+  return "standard";
+}
+
 export function DepthShop({ products, sourceMessage }: DepthShopProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [category, setCategory] = useState("all");
+  const [mode, setMode] = useState<DiscoveryMode>("need");
+  const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
-  const categories = useMemo(
-    () =>
-      Array.from(new Set(products.flatMap((product) => product.categoryLabels))).sort((a, b) =>
-        a.localeCompare(b)
-      ),
-    [products]
-  );
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const optionsByMode = useMemo<Record<DiscoveryMode, DiscoveryOption[]>>(() => {
+    const collect = (
+      slugsKey: "concernSlugs" | "productTypeSlugs" | "routineSlugs",
+      labelsKey: "concernLabels" | "productTypeLabels" | "routineLabels"
+    ) => {
+      const bySlug = new Map<string, string>();
+      for (const product of products) {
+        product[slugsKey].forEach((slug, index) => {
+          if (!bySlug.has(slug)) {
+            bySlug.set(slug, product[labelsKey][index] ?? slug);
+          }
+        });
+      }
+      return Array.from(bySlug, ([slug, label]) => ({ slug, label }));
+    };
+
+    return {
+      need: collect("concernSlugs", "concernLabels"),
+      product: collect("productTypeSlugs", "productTypeLabels"),
+      routine: collect("routineSlugs", "routineLabels")
+    };
+  }, [products]);
+
+  const options = optionsByMode[mode];
+
+  function selectMode(nextMode: DiscoveryMode) {
+    setMode(nextMode);
+    setFilter("all");
+  }
+
   const filteredProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
+    const slugsKey =
+      mode === "need" ? "concernSlugs" : mode === "product" ? "productTypeSlugs" : "routineSlugs";
 
     return products.filter((product) => {
-      const matchesCategory = category === "all" || product.categoryLabels.includes(category);
+      const matchesFilter = filter === "all" || product[slugsKey].includes(filter);
       const matchesQuery =
         !normalizedQuery ||
-        [product.title, product.shortCopy, product.sku, product.variantTitle, ...product.categoryLabels]
+        [
+          product.title,
+          product.shortCopy,
+          product.sku,
+          product.variantTitle,
+          ...product.categoryLabels,
+          ...product.concernLabels,
+          ...product.productTypeLabels,
+          ...product.routineLabels,
+          ...product.tags
+        ]
           .join(" ")
           .toLowerCase()
           .includes(normalizedQuery);
 
-      return matchesCategory && matchesQuery;
+      return matchesFilter && matchesQuery;
     });
-  }, [category, products, query]);
+  }, [filter, mode, products, query]);
+
   const selectedProduct = useMemo(
     () => products.find((product) => product.variantId === selectedId) ?? null,
     [products, selectedId]
   );
+
+  const siblingVariants = useMemo(() => {
+    if (!selectedProduct) {
+      return [];
+    }
+    return products.filter((product) => product.id === selectedProduct.id);
+  }, [products, selectedProduct]);
+
+  const variantCountByProductId = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const product of products) {
+      counts.set(product.id, (counts.get(product.id) ?? 0) + 1);
+    }
+    return counts;
+  }, [products]);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -81,9 +159,9 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
           }
         });
 
-        gsap.to(".shop-portal-mask", {
-          scale: 1.16,
-          rotate: 4,
+        gsap.to(".shop-hero-figure.center", {
+          scale: 1.08,
+          rotate: 2,
           ease: "none",
           scrollTrigger: {
             trigger: ".depth-shop-hero",
@@ -123,84 +201,88 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
 
   return (
     <div className="depth-shop" ref={rootRef}>
-      <header className="shop-header cinematic">
-        <Link className="brand-mark" href="/">
-          Oh My Kitty
-        </Link>
-        <Link className="bag-pill" href="/cart">
-          <CartCount />
-        </Link>
-      </header>
+      <StorefrontNav />
 
       <section className="depth-shop-hero">
-        <div className="shop-portal-mask" aria-hidden="true">
-          <Image
-            src="/brand/oh-my-kitty-logo.jpeg"
-            alt=""
-            width={190}
-            height={190}
-            priority
-          />
+        <div className="shop-hero-stage" aria-hidden="true">
+          <ShopHeroFigure position="left" product={products[2]} />
+          <ShopHeroFigure position="center" product={products[0]} />
+          <ShopHeroFigure position="right" product={products[1]} />
         </div>
         <div className="depth-shop-copy">
           <span className="scene-kicker">Shop</span>
-          <h1>Care, close up.</h1>
+          <h1>Shop your ritual.</h1>
           {sourceMessage ? <p>{sourceMessage}</p> : null}
         </div>
       </section>
 
       <section className="shop-filter-bar" aria-label="Shop filters">
-        <label className="shop-search">
-          <span>Search</span>
+        <label className={`shop-search ${searchOpen ? "open" : ""}`}>
+          <span aria-hidden="true">⌕</span>
           <input
+            onBlur={() => setSearchOpen(false)}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search product or category"
+            onFocus={() => setSearchOpen(true)}
+            placeholder="What are you looking for?"
             value={query}
           />
         </label>
-        <div className="shop-category-tabs" aria-label="Categories">
-          <button
-            className={category === "all" ? "active" : ""}
-            onClick={() => setCategory("all")}
-            type="button"
-          >
-            All
-          </button>
-          {categories.map((entry) => (
+
+        <div className="discovery-mode-switch" role="tablist" aria-label="Discovery mode">
+          {DISCOVERY_MODES.map((entry) => (
             <button
-              className={category === entry ? "active" : ""}
-              key={entry}
-              onClick={() => setCategory(entry)}
+              aria-selected={mode === entry.id}
+              className={mode === entry.id ? "active" : ""}
+              key={entry.id}
+              onClick={() => selectMode(entry.id)}
+              role="tab"
               type="button"
             >
-              {entry}
+              {entry.label}
             </button>
           ))}
         </div>
+
+        <FilterChips filter={filter} onSelect={setFilter} options={options} />
       </section>
 
       {filteredProducts.length > 0 ? (
         <section className="depth-shop-grid" aria-label="Products">
-          {filteredProducts.map((product) => (
-            <button
-              className={`depth-product-card ${product.tone}`}
-              key={product.variantId}
-              onClick={() => setSelectedId(product.variantId)}
-              type="button"
-            >
-              <div className="depth-product-stage" aria-hidden="true">
-                <ProductPackshot product={product} />
-              </div>
-              <span>{product.primaryCategory}</span>
-              <h2>{product.title}</h2>
-              <p>{product.shortCopy}</p>
-              <strong>{product.formattedPrice}</strong>
-            </button>
-          ))}
+          {filteredProducts.map((product, index) => {
+            const hasMultipleVariants = (variantCountByProductId.get(product.id) ?? 1) > 1;
+
+            return (
+              <ProductTile
+                hasMultipleVariants={hasMultipleVariants}
+                key={product.variantId}
+                onQuickAdd={() =>
+                  hasMultipleVariants
+                    ? setSelectedId(product.variantId)
+                    : addLineToCart(toCartLine(product))
+                }
+                onSelect={() => setSelectedId(product.variantId)}
+                product={product}
+                tileType={tileTypeForIndex(index)}
+                tone={product.tone}
+              />
+            );
+          })}
         </section>
       ) : (
         <section className="shop-empty">
-          <h2>No products match this view.</h2>
+          <h2>Nothing matched that yet.</h2>
+          <p>Try clearing filters, or explore by need instead.</p>
+          <button
+            className="portal-cta"
+            onClick={() => {
+              setFilter("all");
+              setQuery("");
+            }}
+            type="button"
+          >
+            <span>Show everything</span>
+            <i aria-hidden="true" />
+          </button>
         </section>
       )}
 
@@ -225,7 +307,7 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
             >
               <span aria-hidden="true">x</span>
             </button>
-            <div className={`sheet-stage ${selectedProduct.tone}`} aria-hidden="true">
+            <div className={`sheet-stage podium-surface ${selectedProduct.tone}`} aria-hidden="true">
               <ProductPackshot product={selectedProduct} />
             </div>
             <div className="sheet-copy">
@@ -238,8 +320,23 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
                 <strong>{selectedProduct.formattedPrice}</strong>
                 <small>{selectedProduct.stockAvailable} available</small>
               </div>
+              {siblingVariants.length > 1 ? (
+                <div className="size-pill-row">
+                  <span className="size-pill-label">Size</span>
+                  {siblingVariants.map((variant) => (
+                    <button
+                      className={`size-pill ${variant.variantId === selectedProduct.variantId ? "active" : ""}`}
+                      key={variant.variantId}
+                      onClick={() => setSelectedId(variant.variantId)}
+                      type="button"
+                    >
+                      {variant.variantTitle}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
               <AddToBagButton
-                className="sheet-add-button"
+                className="pdp-add-button"
                 label="Add to bag"
                 line={toCartLine(selectedProduct)}
               />
@@ -247,7 +344,7 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
                 className="sheet-detail-link"
                 href={`/products/${selectedProduct.slug}` as Route}
               >
-                View full details
+                Explore product →
               </Link>
               <Link className="sheet-cart-link" href="/cart">
                 View bag
@@ -256,6 +353,140 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
           </aside>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function FilterChips({
+  filter,
+  onSelect,
+  options
+}: {
+  filter: string;
+  onSelect: (value: string) => void;
+  options: DiscoveryOption[];
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [glide, setGlide] = useState<{ left: number; width: number } | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+
+    const active = container.querySelector<HTMLElement>('[data-active="true"]');
+    if (!active) {
+      setGlide(null);
+      return;
+    }
+
+    setGlide({ left: active.offsetLeft, width: active.offsetWidth });
+  }, [filter, options]);
+
+  return (
+    <div className="filter-chip-row" ref={containerRef}>
+      {glide ? (
+        <span
+          aria-hidden="true"
+          className="filter-chip-glide"
+          style={{ transform: `translateX(${glide.left}px)`, width: glide.width }}
+        />
+      ) : null}
+      <button
+        className="filter-chip"
+        data-active={filter === "all"}
+        onClick={() => onSelect("all")}
+        type="button"
+      >
+        All
+      </button>
+      {options.map((option) => (
+        <button
+          className="filter-chip"
+          data-active={filter === option.slug}
+          key={option.slug}
+          onClick={() => onSelect(option.slug)}
+          type="button"
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ProductTile({
+  hasMultipleVariants,
+  onQuickAdd,
+  onSelect,
+  product,
+  tileType,
+  tone
+}: {
+  hasMultipleVariants: boolean;
+  onQuickAdd: () => void;
+  onSelect: () => void;
+  product: StorefrontProductView;
+  tileType: "standard" | "featured" | "tall" | "feature";
+  tone: StorefrontProductView["tone"];
+}) {
+  const [added, setAdded] = useState(false);
+  const isFeatureMoment = tileType === "feature";
+
+  return (
+    <article className={`depth-product-card tile-${tileType} ${isFeatureMoment ? tone : ""}`}>
+      <button className="depth-product-card-hit" onClick={onSelect} type="button">
+        <div className="depth-product-stage" aria-hidden="true">
+          <ProductPackshot product={product} />
+        </div>
+        <span>{product.primaryCategory}</span>
+        <h2>{product.title}</h2>
+        <strong>{product.formattedPrice}</strong>
+      </button>
+      <button
+        aria-label={
+          hasMultipleVariants
+            ? `Choose a size for ${product.title}`
+            : `Quick add ${product.title} to bag`
+        }
+        className={`quick-add-button ${added ? "added" : ""}`}
+        onClick={(event) => {
+          event.stopPropagation();
+          onQuickAdd();
+          if (!hasMultipleVariants) {
+            setAdded(true);
+            window.setTimeout(() => setAdded(false), 1300);
+          }
+        }}
+        type="button"
+      >
+        {added ? "✓" : hasMultipleVariants ? "···" : "+"}
+      </button>
+    </article>
+  );
+}
+
+function ShopHeroFigure({
+  position,
+  product
+}: {
+  position: "left" | "center" | "right";
+  product?: StorefrontProductView;
+}) {
+  if (!product?.imageUrl) {
+    return null;
+  }
+
+  return (
+    <div className={`shop-hero-figure ${position}`}>
+      <Image
+        alt=""
+        aria-hidden="true"
+        fill
+        sizes="230px"
+        src={product.imageUrl}
+      />
     </div>
   );
 }
@@ -297,6 +528,7 @@ function toCartLine(product: StorefrontProductView): CartLine {
     sku: product.sku,
     unitPrice: product.price,
     variantId: product.variantId,
-    variantTitle: product.variantTitle
+    variantTitle: product.variantTitle,
+    imageUrl: product.imageUrl
   };
 }

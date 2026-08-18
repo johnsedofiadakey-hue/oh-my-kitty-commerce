@@ -5,13 +5,23 @@ import { createNoopTransaction } from "@/lib/commerce/repository";
 import {
   adjustInventoryInputSchema,
   completeSaleInputSchema,
+  createConcernInputSchema,
   createCustomerInputSchema,
   createDeliveryRuleInputSchema,
+  updateDeliveryRuleInputSchema,
+  createStaffUserInputSchema,
+  updateStaffUserInputSchema,
+  updateStoreSettingsInputSchema,
   createOrderDraftInputSchema,
   createProductInputSchema,
+  createProductTypeInputSchema,
   createPromotionInputSchema,
+  createRoutineInputSchema,
   createVariantInputSchema,
+  updateConcernInputSchema,
   updateProductInputSchema,
+  updateProductTypeInputSchema,
+  updateRoutineInputSchema,
   updateVariantInputSchema,
   type AdjustInventoryInput,
   type CompleteSaleInput,
@@ -26,6 +36,7 @@ import {
 } from "@/lib/commerce/schemas";
 import type {
   AuditLog,
+  Concern,
   Customer,
   DeliveryRule,
   InventoryMovement,
@@ -34,9 +45,13 @@ import type {
   OrderItem,
   Payment,
   Product,
+  ProductType,
   ProductVariant,
   Promotion,
-  SalesChannel
+  Routine,
+  SalesChannel,
+  StaffUser,
+  StoreSettings
 } from "@/lib/commerce/types";
 
 export type CommerceActor = UserAccess & {
@@ -278,6 +293,113 @@ export async function createPromotion(
   return promotion;
 }
 
+export async function createConcern(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "products.update");
+  const parsed = createConcernInputSchema.parse(input);
+  const concern: Concern = { ...parsed, id: createSlugId("concern", parsed.slug) };
+
+  await context.repo.saveConcern(concern);
+  await writeAuditLog(context, actor, {
+    action: "concerns.create",
+    entityType: "concern",
+    entityId: concern.id,
+    summary: `Created concern ${concern.title}`
+  });
+
+  return concern;
+}
+
+export async function updateConcern(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "products.update");
+  const parsed = updateConcernInputSchema.parse(input);
+  const existing = await requiredEntity(await context.repo.listConcerns(), parsed.id, "Concern");
+  const concern: Concern = { ...existing, ...parsed, id: existing.id };
+
+  await context.repo.saveConcern(concern);
+  await writeAuditLog(context, actor, {
+    action: "concerns.update",
+    entityType: "concern",
+    entityId: concern.id,
+    summary: `Updated concern ${concern.title}`
+  });
+
+  return concern;
+}
+
+export async function createProductType(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: unknown
+) {
+  await assertCan(context, actor, "products.update");
+  const parsed = createProductTypeInputSchema.parse(input);
+  const productType: ProductType = { ...parsed, id: createSlugId("type", parsed.slug) };
+
+  await context.repo.saveProductType(productType);
+  await writeAuditLog(context, actor, {
+    action: "productTypes.create",
+    entityType: "productType",
+    entityId: productType.id,
+    summary: `Created product type ${productType.title}`
+  });
+
+  return productType;
+}
+
+export async function updateProductType(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: unknown
+) {
+  await assertCan(context, actor, "products.update");
+  const parsed = updateProductTypeInputSchema.parse(input);
+  const existing = await requiredEntity(await context.repo.listProductTypes(), parsed.id, "Product type");
+  const productType: ProductType = { ...existing, ...parsed, id: existing.id };
+
+  await context.repo.saveProductType(productType);
+  await writeAuditLog(context, actor, {
+    action: "productTypes.update",
+    entityType: "productType",
+    entityId: productType.id,
+    summary: `Updated product type ${productType.title}`
+  });
+
+  return productType;
+}
+
+export async function createRoutine(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "products.update");
+  const parsed = createRoutineInputSchema.parse(input);
+  const routine: Routine = { ...parsed, id: createSlugId("routine", parsed.slug) };
+
+  await context.repo.saveRoutine(routine);
+  await writeAuditLog(context, actor, {
+    action: "routines.create",
+    entityType: "routine",
+    entityId: routine.id,
+    summary: `Created routine ${routine.title}`
+  });
+
+  return routine;
+}
+
+export async function updateRoutine(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "products.update");
+  const parsed = updateRoutineInputSchema.parse(input);
+  const existing = await requiredEntity(await context.repo.listRoutines(), parsed.id, "Routine");
+  const routine: Routine = { ...existing, ...parsed, id: existing.id };
+
+  await context.repo.saveRoutine(routine);
+  await writeAuditLog(context, actor, {
+    action: "routines.update",
+    entityType: "routine",
+    entityId: routine.id,
+    summary: `Updated routine ${routine.title}`
+  });
+
+  return routine;
+}
+
 export async function createDeliveryRule(
   context: CommerceContext,
   actor: CommerceActor,
@@ -299,6 +421,115 @@ export async function createDeliveryRule(
   });
 
   return deliveryRule;
+}
+
+export async function updateDeliveryRule(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: unknown
+) {
+  await assertCan(context, actor, "settings.update");
+  const parsed = updateDeliveryRuleInputSchema.parse(input);
+  const existing = await requiredEntity(await context.repo.listDeliveryRules(), parsed.id, "Delivery rule");
+  const deliveryRule: DeliveryRule = { ...existing, ...parsed, id: existing.id };
+
+  await context.repo.saveDeliveryRule(deliveryRule);
+  await writeAuditLog(context, actor, {
+    action: "deliveryRules.update",
+    entityType: "deliveryRule",
+    entityId: deliveryRule.id,
+    summary: `Updated delivery rule ${deliveryRule.name}`
+  });
+
+  return deliveryRule;
+}
+
+/**
+ * Persists the Firestore side of a staff account. The Firebase Auth user and
+ * its custom claims are created by the caller (route/action layer, which
+ * talks to firebase-admin/auth directly) — this only records the resulting
+ * uid so admin.access/roleIds stay in sync between Auth claims and Firestore.
+ */
+export async function createStaffUser(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: unknown
+) {
+  await assertCan(context, actor, "users.create");
+  const parsed = createStaffUserInputSchema.parse(input);
+  const staffUser: StaffUser = {
+    ...parsed,
+    permissionOverrides: parsed.permissionOverrides as Permission[],
+    createdBy: actor.uid
+  };
+
+  await context.repo.saveStaffUser(staffUser);
+  await writeAuditLog(context, actor, {
+    action: "users.create",
+    entityType: "user",
+    entityId: staffUser.id,
+    summary: `Invited staff account ${staffUser.email}`
+  });
+
+  return staffUser;
+}
+
+export async function updateStaffUser(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: unknown
+) {
+  await assertCan(context, actor, "users.update");
+  const parsed = updateStaffUserInputSchema.parse(input);
+  const existing = await context.repo.getStaffUser(parsed.id);
+  if (!existing) {
+    throw new CommerceError("NOT_FOUND", "Staff account not found.");
+  }
+
+  const staffUser: StaffUser = {
+    ...existing,
+    ...parsed,
+    permissionOverrides: (parsed.permissionOverrides ?? existing.permissionOverrides) as
+      | Permission[]
+      | undefined,
+    id: existing.id
+  };
+
+  await context.repo.saveStaffUser(staffUser);
+  await writeAuditLog(context, actor, {
+    action: "users.update",
+    entityType: "user",
+    entityId: staffUser.id,
+    summary: `Updated staff account ${staffUser.email}`
+  });
+
+  return staffUser;
+}
+
+export async function updateStoreSettings(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: unknown
+) {
+  await assertCan(context, actor, "settings.update");
+  const parsed = updateStoreSettingsInputSchema.parse(input);
+  const settings: StoreSettings = {
+    id: "store",
+    storeName: parsed.storeName,
+    receiptFooter: parsed.receiptFooter,
+    updatedBy: actor.uid,
+    updatedAt: getNow(context)
+  };
+
+  await context.repo.saveStoreSettings(settings);
+  await writeAuditLog(context, actor, {
+    action: "settings.update",
+    entityType: "settings",
+    entityId: "store",
+    summary: "Updated store settings"
+  });
+
+  return settings;
 }
 
 export async function openPosShift(
@@ -443,6 +674,111 @@ export async function completeOnlineOrder(context: CommerceContext, input: Compl
   });
 
   return completeSale(context, systemActor("online-checkout"), parsed);
+}
+
+/**
+ * Starts an online order awaiting Paystack confirmation. Unlike completeSale,
+ * this does NOT mark the order paid and does NOT touch inventory — those only
+ * happen once confirmPaystackPayment verifies the transaction succeeded.
+ */
+export async function createPendingOnlineOrder(
+  context: CommerceContext,
+  input: Omit<CreateOrderDraftInput, "channel"> & { paymentMethod: CompleteSaleInput["paymentMethod"] }
+) {
+  const parsed = createOrderDraftInputSchema.parse({ ...input, channel: "ONLINE" });
+  const actor = systemActor("online-checkout-paystack");
+
+  return withTransaction(context, async () => {
+    const existingOrder = await context.repo.findOrderByIdempotencyKey(parsed.idempotencyKey);
+    if (existingOrder) {
+      const existingPayment = (await context.repo.listPayments()).find(
+        (payment) => payment.orderId === existingOrder.id
+      );
+      return { order: existingOrder, payment: existingPayment ?? null, idempotent: true };
+    }
+
+    const order = await buildOrder(context, parsed, {
+      status: "PENDING_PAYMENT",
+      paymentStatus: "PENDING"
+    });
+
+    const payment: Payment = {
+      id: createId(context, "payment"),
+      orderId: order.id,
+      provider: "PAYSTACK",
+      method: input.paymentMethod,
+      status: "PENDING",
+      amount: order.total,
+      currency: order.currency,
+      providerReference: null,
+      idempotencyKey: parsed.idempotencyKey,
+      createdAt: getNow(context),
+      updatedAt: getNow(context)
+    };
+
+    await context.repo.saveOrder(order);
+    await context.repo.savePayment(payment);
+    await writeAuditLog(context, actor, {
+      action: "orders.create_pending_payment",
+      entityType: "order",
+      entityId: order.id,
+      summary: `Created pending Paystack order ${order.orderNumber}`
+    });
+
+    return { order, payment, idempotent: false };
+  });
+}
+
+/**
+ * Confirms a Paystack-verified payment: flips the order/payment to PAID and
+ * commits inventory. The caller (webhook handler / callback page) is
+ * responsible for having already verified the transaction directly with
+ * Paystack's API — this function trusts that verification happened and just
+ * records the confirmed state. Safe to call more than once for the same
+ * order (idempotent no-op if already PAID).
+ */
+export async function confirmPaystackPayment(
+  context: CommerceContext,
+  input: { orderId: string; providerReference: string }
+) {
+  const actor = systemActor("paystack-webhook");
+
+  return withTransaction(context, async () => {
+    const order = await context.repo.getOrder(input.orderId);
+    if (!order) {
+      throw new CommerceError("NOT_FOUND", `Order not found: ${input.orderId}`);
+    }
+
+    const payments = await context.repo.listPayments();
+    const payment = payments.find((entry) => entry.orderId === order.id);
+    if (!payment) {
+      throw new CommerceError("NOT_FOUND", `No payment record for order: ${order.id}`);
+    }
+
+    if (order.paymentStatus === "PAID") {
+      return { order, payment, inventoryMovements: [], alreadyConfirmed: true };
+    }
+
+    const updatedOrder: Order = { ...order, status: "PAID", paymentStatus: "PAID" };
+    const movements = await decrementInventoryForOrder(context, actor, updatedOrder);
+    const updatedPayment: Payment = {
+      ...payment,
+      status: "PAID",
+      providerReference: input.providerReference,
+      updatedAt: getNow(context)
+    };
+
+    await context.repo.saveOrder(updatedOrder);
+    await context.repo.savePayment(updatedPayment);
+    await writeAuditLog(context, actor, {
+      action: "orders.confirm_paystack_payment",
+      entityType: "order",
+      entityId: order.id,
+      summary: `Confirmed Paystack payment for ${order.orderNumber}`
+    });
+
+    return { order: updatedOrder, payment: updatedPayment, inventoryMovements: movements, alreadyConfirmed: false };
+  });
 }
 
 export async function completeAdminCreatedSale(
@@ -700,6 +1036,15 @@ async function requiredVariant(context: CommerceContext, productId: string, vari
   }
 
   return variant;
+}
+
+function requiredEntity<T extends { id: string }>(entities: T[], id: string, label: string) {
+  const entity = entities.find((item) => item.id === id);
+  if (!entity) {
+    throw new CommerceError("NOT_FOUND", `${label} not found: ${id}`);
+  }
+
+  return entity;
 }
 
 function movementTypeForChannel(channel: SalesChannel): InventoryMovementType {
