@@ -1,0 +1,57 @@
+# Cloud Run deploy — bypasses Firebase App Hosting's Next.js buildpack,
+# which only supports Next.js 12-15 and fails on this project's Next 16.
+# Built via `gcloud run deploy --source .`, which runs this Dockerfile
+# through Cloud Build directly (no framework-detection buildpack involved).
+
+FROM node:22-slim AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+FROM node:22-slim AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# NEXT_PUBLIC_* values are inlined into the client bundle at build time, so
+# they must be present as build args here — these are public Firebase web
+# config values (safe to commit; not secrets), matching apphosting.yaml.
+ARG NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyATqFdRUcQQ80vhG7qgF22bCH6eHlXNEXY
+ARG NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=ohmyk1tty.firebaseapp.com
+ARG NEXT_PUBLIC_FIREBASE_PROJECT_ID=ohmyk1tty
+ARG NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=ohmyk1tty.firebasestorage.app
+ARG NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=570285616938
+ARG NEXT_PUBLIC_FIREBASE_APP_ID=1:570285616938:web:a9a1781c4c08814b61f853
+ARG NEXT_PUBLIC_SITE_URL=https://ohmyk1tty.web.app
+ARG NEXT_PUBLIC_SITE_NAME="Oh My Kitty"
+ARG NEXT_PUBLIC_USE_FIREBASE_EMULATORS=false
+ARG APP_ENV=production
+ENV NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY \
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN \
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID=$NEXT_PUBLIC_FIREBASE_PROJECT_ID \
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=$NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET \
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=$NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID \
+    NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID \
+    NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
+    NEXT_PUBLIC_SITE_NAME=$NEXT_PUBLIC_SITE_NAME \
+    NEXT_PUBLIC_USE_FIREBASE_EMULATORS=$NEXT_PUBLIC_USE_FIREBASE_EMULATORS \
+    APP_ENV=$APP_ENV \
+    NODE_ENV=production
+
+RUN npm run build
+
+FROM node:22-slim AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+RUN groupadd --system nodejs && useradd --system --gid nodejs nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+EXPOSE 8080
+ENV PORT=8080 \
+    HOSTNAME=0.0.0.0
+
+CMD ["node", "server.js"]
