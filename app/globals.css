@@ -3198,6 +3198,21 @@ button {
   color: #9c2437;
 }
 
+.auth-link {
+  justify-self: center;
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.auth-link:hover {
+  color: var(--color-near-black);
+}
+
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

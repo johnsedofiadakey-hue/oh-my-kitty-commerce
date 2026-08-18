@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { FirebaseError } from "firebase/app";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { getClientAuth } from "@/lib/firebase/client";
 
 type LoginState = "idle" | "submitting" | "success" | "error";
+type ResetState = "idle" | "submitting" | "sent" | "error";
 
 export function AdminLoginForm() {
   const router = useRouter();
@@ -14,6 +15,9 @@ export function AdminLoginForm() {
   const [password, setPassword] = useState("");
   const [state, setState] = useState<LoginState>("idle");
   const [message, setMessage] = useState("");
+  const [showReset, setShowReset] = useState(false);
+  const [resetState, setResetState] = useState<ResetState>("idle");
+  const [resetMessage, setResetMessage] = useState("");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,6 +57,71 @@ export function AdminLoginForm() {
     }
   }
 
+  async function handleReset(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setResetState("submitting");
+    setResetMessage("");
+
+    const auth = getClientAuth();
+    if (!auth) {
+      setResetState("error");
+      setResetMessage("Firebase is not configured for this environment yet.");
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+    } catch (error) {
+      if (!(error instanceof FirebaseError) || error.code !== "auth/user-not-found") {
+        setResetState("error");
+        setResetMessage(getLoginErrorMessage(error));
+        return;
+      }
+      // Don't reveal whether the email has an account — same message either way.
+    }
+
+    setResetState("sent");
+    setResetMessage("If that email has an admin account, a reset link is on its way.");
+  }
+
+  if (showReset) {
+    return (
+      <form className="auth-form" onSubmit={handleReset}>
+        <label className="form-field">
+          <span>Email</span>
+          <input
+            autoComplete="email"
+            inputMode="email"
+            name="email"
+            onChange={(event) => setEmail(event.target.value)}
+            required
+            type="email"
+            value={email}
+          />
+        </label>
+        <button className="auth-submit" disabled={resetState === "submitting"} type="submit">
+          {resetState === "submitting" ? "Sending" : "Send reset link"}
+        </button>
+        {resetMessage ? (
+          <p className={`auth-message ${resetState === "error" ? "error" : ""}`} role="status">
+            {resetMessage}
+          </p>
+        ) : null}
+        <button
+          className="auth-link"
+          onClick={() => {
+            setShowReset(false);
+            setResetState("idle");
+            setResetMessage("");
+          }}
+          type="button"
+        >
+          Back to sign in
+        </button>
+      </form>
+    );
+  }
+
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
       <label className="form-field">
@@ -87,6 +156,9 @@ export function AdminLoginForm() {
           {message}
         </p>
       ) : null}
+      <button className="auth-link" onClick={() => setShowReset(true)} type="button">
+        Forgot password?
+      </button>
     </form>
   );
 }
