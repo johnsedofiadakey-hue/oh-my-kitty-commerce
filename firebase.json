@@ -6,6 +6,23 @@
   "storage": {
     "rules": "storage.rules"
   },
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "oh-my-kitty",
+          "region": "us-central1"
+        }
+      }
+    ]
+  },
   "emulators": {
     "auth": {
       "port": 9099
