@@ -42,7 +42,23 @@ RUN npm run build
 
 FROM node:22-slim AS runner
 WORKDIR /app
-ENV NODE_ENV=production
+# These are inlined into the client bundle at build time above, but some
+# server-side code (e.g. the Paystack callback URL builder) also reads them
+# from process.env at request time — so the runtime container needs them
+# set too, not just the build stage. APP_ENV in particular gates secure-
+# cookie flags, Admin SDK init error handling, and disables POS's local-dev
+# fake-actor fallback.
+ENV NODE_ENV=production \
+    APP_ENV=production \
+    NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyATqFdRUcQQ80vhG7qgF22bCH6eHlXNEXY \
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=ohmyk1tty.firebaseapp.com \
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID=ohmyk1tty \
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=ohmyk1tty.firebasestorage.app \
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=570285616938 \
+    NEXT_PUBLIC_FIREBASE_APP_ID=1:570285616938:web:a9a1781c4c08814b61f853 \
+    NEXT_PUBLIC_SITE_URL=https://ohmyk1tty.web.app \
+    NEXT_PUBLIC_SITE_NAME="Oh My Kitty" \
+    NEXT_PUBLIC_USE_FIREBASE_EMULATORS=false
 RUN groupadd --system nodejs && useradd --system --gid nodejs nextjs
 
 COPY --from=builder /app/public ./public
