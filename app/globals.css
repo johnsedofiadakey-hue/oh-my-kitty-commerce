@@ -3009,7 +3009,9 @@ button {
 
 .app-title {
   margin: 0;
+  font-family: var(--font-serif);
   font-size: 1.65rem;
+  font-weight: 400;
 }
 
 .app-subtitle {
@@ -3067,6 +3069,11 @@ button {
   object-fit: cover;
 }
 
+.admin-mobile-bar,
+.admin-nav-backdrop {
+  display: none;
+}
+
 .auth-page {
   display: grid;
   min-height: 100svh;
@@ -3081,10 +3088,12 @@ button {
 .auth-card {
   width: 100%;
   max-width: 420px;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-small);
-  padding: 26px;
-  background: rgb(255 255 255 / 92%);
+  border: 1px solid rgb(17 17 17 / 6%);
+  border-radius: var(--radius-large);
+  padding: 30px 26px;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 96%), rgb(255 255 255 / 88%)),
+    linear-gradient(150deg, var(--color-peach-mist), var(--color-white-pure) 65%);
   box-shadow: var(--shadow-soft);
 }
 
@@ -3123,7 +3132,9 @@ button {
 
 .auth-copy h1 {
   margin: 0;
+  font-family: var(--font-serif);
   font-size: clamp(2rem, 6vw, 2.8rem);
+  font-weight: 400;
   line-height: 0.95;
 }
 
@@ -3207,8 +3218,8 @@ button {
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: var(--radius-small);
-  padding: 0 16px;
+  border-radius: 999px;
+  padding: 0 18px;
   color: var(--color-white-pure);
   background: var(--color-near-black);
   font-weight: 800;
@@ -3256,10 +3267,13 @@ button {
 }
 
 .admin-panel {
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-small);
+  border: 1px solid rgb(17 17 17 / 6%);
+  border-radius: var(--radius-large);
   margin-top: 22px;
-  background: var(--color-white-pure);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 96%), rgb(255 255 255 / 88%)),
+    linear-gradient(150deg, var(--color-peach-mist), var(--color-white-pure) 65%);
+  box-shadow: var(--shadow-soft);
   overflow: hidden;
 }
 
@@ -3269,12 +3283,14 @@ button {
   align-items: baseline;
   justify-content: space-between;
   border-bottom: 1px solid var(--color-line);
-  padding: 16px;
+  padding: 18px 20px;
 }
 
 .panel-header h2 {
   margin: 0;
-  font-size: 1.05rem;
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  font-weight: 400;
 }
 
 .panel-header span {
@@ -3396,10 +3412,11 @@ button {
   width: 100%;
   min-height: 44px;
   border: 1px solid var(--color-line);
-  border-radius: var(--radius-small);
+  border-radius: 14px;
   padding: 0 12px;
   color: var(--color-near-black);
   background: var(--color-white-pure);
+  transition: border-color 200ms ease;
 }
 
 .admin-field textarea {
@@ -3547,10 +3564,13 @@ button {
 
 .metric {
   min-height: 118px;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-small);
+  border: 1px solid rgb(17 17 17 / 6%);
+  border-radius: var(--radius-medium);
   padding: 16px;
-  background: var(--color-white-pure);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 96%), rgb(255 255 255 / 88%)),
+    linear-gradient(150deg, var(--color-peach-mist), var(--color-white-pure) 65%);
+  box-shadow: var(--shadow-soft);
 }
 
 .metric span {
@@ -3768,6 +3788,11 @@ button {
   background: rgb(230 165 45 / 16%);
 }
 
+.pos-cart-summary-bar,
+.pos-cart-backdrop {
+  display: none;
+}
+
 .pos-payment-form {
   display: grid;
   gap: 12px;
@@ -3832,27 +3857,165 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .app-sidebar,
+  /* The cart becomes a bottom sheet on mobile instead of a full-width block
+     stacked below the entire product catalogue — staff need it reachable
+     without scrolling past every product. Collapsed state shows only the
+     summary bar (item count + total); tapping it (or "View bag") reveals
+     the full cart, matching the storefront's floating shop-control pill. */
+  .pos-products {
+    padding-bottom: 84px;
+  }
+
+  .pos-cart-summary-bar {
+    position: fixed;
+    z-index: 41;
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    display: flex;
+    min-height: 56px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border: 0;
+    border-radius: 999px;
+    padding: 0 10px 0 18px;
+    color: var(--color-white-pure);
+    background: var(--color-near-black);
+    box-shadow: 0 16px 42px rgb(17 17 17 / 22%);
+    font-weight: 800;
+  }
+
+  .pos-cart-summary-bar span:first-child {
+    overflow: hidden;
+    color: rgb(255 255 255 / 78%);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pos-cart-summary-chevron {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0 14px;
+    background: rgb(255 255 255 / 16%);
+    font-size: 0.78rem;
+  }
+
+  .pos-cart-backdrop {
+    z-index: 40;
+  }
+
   .pos-cart {
-    border-right: 0;
-    border-left: 0;
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 41;
+    max-height: 86svh;
+    border-top: 1px solid var(--color-line);
+    border-radius: 22px 22px 0 0;
+    overflow-y: auto;
+    box-shadow: 0 -20px 50px rgb(17 17 17 / 18%);
+    transform: translateY(100%);
+    visibility: hidden;
+    transition: transform 260ms ease, visibility 260ms;
+  }
+
+  .pos-cart.open {
+    transform: translateY(0);
+    visibility: visible;
+  }
+
+  /* Admin sidebar becomes a real off-canvas drawer on mobile instead of
+     reflowing into a button grid above the content — opened via the
+     hamburger bar below, closed by the backdrop, a nav tap, or re-toggling. */
+  .admin-mobile-bar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     border-bottom: 1px solid var(--color-line);
+    padding: 12px 16px;
+    background: rgb(255 255 255 / 92%);
+    backdrop-filter: blur(12px);
+  }
+
+  .admin-mobile-bar .admin-brand {
+    grid-template-columns: 36px minmax(0, 1fr);
+    font-size: 0.7rem;
+  }
+
+  .admin-mobile-bar .admin-brand img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .admin-nav-toggle {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    gap: 5px;
+    place-items: center;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    background: var(--color-white-pure);
+  }
+
+  .admin-nav-toggle span {
+    width: 16px;
+    height: 2px;
+    background: var(--color-near-black);
+    border-radius: 999px;
+  }
+
+  .admin-nav-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    display: block;
+    border: 0;
+    background: rgb(17 17 17 / 42%);
   }
 
   .app-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 40;
+    width: min(82vw, 320px);
+    height: 100vh;
+    height: 100dvh;
     padding: 20px;
+    overflow-y: auto;
+    background: var(--color-white-pure);
+    box-shadow: 0 24px 60px rgb(17 17 17 / 18%);
+    transform: translateX(-100%);
+    transition: transform 260ms ease;
+  }
+
+  .app-sidebar.open {
+    transform: translateX(0);
   }
 
   .nav-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
     margin-top: 18px;
   }
 
   .nav-item {
-    min-height: 36px;
-    padding: 0 10px;
-    font-size: 0.88rem;
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 0.92rem;
+  }
+
+  .app-main {
+    padding: 20px;
   }
 
   .metric-grid,
@@ -3874,8 +4037,51 @@ button {
     width: 100%;
   }
 
-  .admin-table-row {
-    min-width: 680px;
+  /* Stack the fixed-column tables into labeled cards instead of forcing
+     horizontal scroll — the worst offender was .quick-edit-row (9 columns,
+     min-width 1280px). Its children already carry visible <span> labels via
+     .admin-field, so stacking them to one column gives a fully labeled card
+     for free. .admin-table-row's cells are unlabeled (desktop relies on the
+     header row), so the header is hidden on mobile and the existing
+     bold-first-cell convention carries the "what am I looking at" context. */
+  .admin-table,
+  .quick-edit-list {
+    overflow-x: visible;
+  }
+
+  .admin-table-row,
+  .admin-table.two .admin-table-row,
+  .admin-table.three .admin-table-row,
+  .admin-table.four .admin-table-row,
+  .admin-table.six .admin-table-row {
+    min-width: 0;
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 14px;
+  }
+
+  .admin-table-row.header {
+    display: none;
+  }
+
+  .quick-edit-row {
+    min-width: 0;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    align-items: stretch;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-small);
+    margin-top: 12px;
+    padding: 16px;
+    background: var(--color-white-pure);
+  }
+
+  .quick-edit-row:first-child {
+    margin-top: 0;
+  }
+
+  .quick-edit-row .admin-action {
+    width: 100%;
   }
 
   .cart-page {

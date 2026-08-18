@@ -1,8 +1,5 @@
-import type { Route } from "next";
-import Image from "next/image";
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AdminSignOutButton } from "@/components/auth/admin-sign-out-button";
+import { AdminNav } from "@/components/admin/admin-nav";
 import { getRequiredAdminActor } from "@/lib/auth/server";
 import { canAccessAdmin, canAccessPos, defaultRoles, hasPermission, type Permission } from "@/lib/permissions/permissions";
 import type { CommerceActor } from "@/lib/commerce/operations";
@@ -62,26 +59,7 @@ export default async function AdminLayout({
 
   return (
     <div className="app-shell">
-      <aside className="app-sidebar">
-        <Link className="admin-brand" href="/admin">
-          <Image
-            src="/brand/oh-my-kitty-logo.jpeg"
-            alt="Oh My Kitty logo"
-            width={54}
-            height={54}
-            priority
-          />
-          <span>Oh My Kitty Admin</span>
-        </Link>
-        <nav className="nav-list" aria-label="Admin">
-          {visibleNavItems.map((item) => (
-            <Link className="nav-item" href={item.href as Route} key={item.href}>
-              {item.label}
-            </Link>
-          ))}
-          <AdminSignOutButton />
-        </nav>
-      </aside>
+      <AdminNav items={visibleNavItems} />
       <main className="app-main">{children}</main>
     </div>
   );

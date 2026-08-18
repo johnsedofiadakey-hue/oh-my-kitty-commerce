@@ -55,6 +55,7 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
   const [shiftSales, setShiftSales] = useState({ count: 0, revenue: 0, cash: 0 });
   const [pendingSales, setPendingSales] = useState<PendingAction[]>([]);
   const [isOnline, setIsOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine);
+  const [cartSheetOpen, setCartSheetOpen] = useState(false);
   const canSell = source === "live" && shift?.status === "OPEN";
   const pendingCount = pendingSales.filter((sale) => sale.status === "pending").length;
   const failedSales = pendingSales.filter((sale) => sale.status === "failed");
@@ -340,7 +341,33 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
           ))}
         </section>
       </main>
-      <aside className="pos-cart" aria-label="POS cart">
+      <button
+        aria-expanded={cartSheetOpen}
+        className="pos-cart-summary-bar"
+        onClick={() => setCartSheetOpen((current) => !current)}
+        type="button"
+      >
+        <span>
+          {cart.length} item{cart.length === 1 ? "" : "s"}
+          {pendingCount > 0 ? ` · ${pendingCount} pending sync` : ""}
+        </span>
+        <strong>{formatMoney(subtotal)}</strong>
+        <span aria-hidden="true" className="pos-cart-summary-chevron">
+          {cartSheetOpen ? "Close" : "View bag"}
+        </span>
+      </button>
+      {cartSheetOpen ? (
+        <button
+          aria-label="Close cart"
+          className="admin-nav-backdrop pos-cart-backdrop"
+          onClick={() => setCartSheetOpen(false)}
+          type="button"
+        />
+      ) : null}
+      <aside
+        aria-label="POS cart"
+        className={cartSheetOpen ? "pos-cart open" : "pos-cart"}
+      >
         <div className="pos-cart-heading">
           <h2 className="app-title">Cart</h2>
           <div className="pos-connection-status">
