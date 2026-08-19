@@ -22,6 +22,9 @@ import {
   updateCustomerInputSchema,
   updatePromotionInputSchema,
   updateOrderFulfilmentInputSchema,
+  updateContentBlockInputSchema,
+  createMediaAssetInputSchema,
+  attachProductImageInputSchema,
   posReversalInputSchema,
   createOrderDraftInputSchema,
   createProductInputSchema,
@@ -44,6 +47,9 @@ import {
   type ParsedCreateOrderDraftInput,
   type UpdateCustomerInput,
   type UpdateOrderFulfilmentInput,
+  type UpdateContentBlockInput,
+  type CreateMediaAssetInput,
+  type AttachProductImageInput,
   type UpdatePromotionInput,
   type UpdateProductInput,
   type UpdateVariantInput,
@@ -52,10 +58,12 @@ import {
 import type {
   AuditLog,
   Concern,
+  ContentBlock,
   Customer,
   DeliveryRule,
   InventoryMovement,
   InventoryMovementType,
+  MediaAsset,
   Order,
   OrderItem,
   Payment,
@@ -68,6 +76,7 @@ import type {
   StaffUser,
   StoreSettings
 } from "@/lib/commerce/types";
+import { notifyOrderEvent } from "@/lib/notifications/order-notifications";
 
 export type CommerceActor = UserAccess & {
   system?: boolean;
@@ -595,6 +604,98 @@ export async function updateStoreSettings(
   return settings;
 }
 
+export async function updateContentBlock(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: UpdateContentBlockInput
+) {
+  await assertCan(context, actor, "content.update");
+  const parsed = updateContentBlockInputSchema.parse(input);
+  const block: ContentBlock = {
+    id: parsed.key,
+    key: parsed.key,
+    value: parsed.value,
+    updatedBy: actor.uid,
+    updatedAt: getNow(context)
+  };
+
+  await context.repo.saveContentBlock(block);
+  await writeAuditLog(context, actor, {
+    action: "content.update",
+    entityType: "contentBlock",
+    entityId: block.key,
+    summary: `Updated content block ${block.key}`
+  });
+
+  return block;
+}
+
+export async function createMediaAsset(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: CreateMediaAssetInput
+) {
+  await assertCan(context, actor, "media.upload");
+  const parsed = createMediaAssetInputSchema.parse(input);
+  const asset: MediaAsset = {
+    id: createId(context, "media"),
+    storagePath: parsed.storagePath,
+    url: parsed.url,
+    type: "IMAGE",
+    visibility: "PUBLIC",
+    alt: parsed.alt,
+    title: parsed.title,
+    tags: [],
+    usage: parsed.usage,
+    uploadedBy: actor.uid
+  };
+
+  await context.repo.saveMedia(asset);
+  await writeAuditLog(context, actor, {
+    action: "media.upload",
+    entityType: "media",
+    entityId: asset.id,
+    summary: `Uploaded media ${asset.id}`
+  });
+
+  return asset;
+}
+
+/**
+ * Uploads a photo and makes it the given variant's primary image in one
+ * step — the storefront and every admin list only ever reads
+ * `variant.mediaIds[0]`, so "attach an image" means "replace the first
+ * slot", not append to a gallery no UI can browse yet.
+ */
+export async function attachProductImage(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: AttachProductImageInput
+) {
+  await assertCan(context, actor, "media.upload");
+  await assertCan(context, actor, "products.update");
+  const parsed = attachProductImageInputSchema.parse(input);
+
+  const variant = await requiredVariant(context, parsed.productId, parsed.variantId);
+  const asset = await createMediaAsset(context, actor, {
+    storagePath: parsed.storagePath,
+    url: parsed.url,
+    alt: parsed.alt,
+    usage: ["product"]
+  });
+
+  const updatedVariant: ProductVariant = { ...variant, mediaIds: [asset.id] };
+  await context.repo.saveVariant(updatedVariant);
+  await writeAuditLog(context, actor, {
+    action: "products.attach_image",
+    entityType: "productVariant",
+    entityId: variant.id,
+    summary: `Set image for ${variant.sku}`
+  });
+
+  return { asset, variant: updatedVariant };
+}
+
 export async function openPosShift(
   context: CommerceContext,
   actor: CommerceActor,
@@ -806,7 +907,7 @@ export async function confirmPaystackPayment(
 ) {
   const actor = systemActor("paystack-webhook");
 
-  return withTransaction(context, async () => {
+  const result = await withTransaction(context, async () => {
     const order = await context.repo.getOrder(input.orderId);
     if (!order) {
       throw new CommerceError("NOT_FOUND", `Order not found: ${input.orderId}`);
@@ -842,6 +943,12 @@ export async function confirmPaystackPayment(
 
     return { order: updatedOrder, payment: updatedPayment, inventoryMovements: movements, alreadyConfirmed: false };
   });
+
+  if (!result.alreadyConfirmed) {
+    void notifyOrderEvent(result.order, "CONFIRMED");
+  }
+
+  return result;
 }
 
 export async function completeAdminCreatedSale(
@@ -1026,6 +1133,7 @@ export async function updateOrderFulfilment(
     throw new CommerceError("NOT_FOUND", `Order not found: ${parsed.id}`);
   }
 
+  const statusChanged = order.fulfilmentStatus !== parsed.fulfilmentStatus;
   const updatedOrder: Order = { ...order, fulfilmentStatus: parsed.fulfilmentStatus };
 
   await context.repo.saveOrder(updatedOrder);
@@ -1036,7 +1144,60 @@ export async function updateOrderFulfilment(
     summary: `Set ${order.orderNumber} fulfilment to ${parsed.fulfilmentStatus}`
   });
 
+  if (statusChanged && parsed.fulfilmentStatus === "READY_FOR_PICKUP") {
+    void notifyOrderEvent(updatedOrder, "READY_FOR_PICKUP");
+  } else if (statusChanged && parsed.fulfilmentStatus === "OUT_FOR_DELIVERY") {
+    void notifyOrderEvent(updatedOrder, "OUT_FOR_DELIVERY");
+  }
+
   return updatedOrder;
+}
+
+/** Order/receipt lookup for POS — find a past sale by order number, customer name, or phone. */
+export async function searchOrders(context: CommerceContext, actor: CommerceActor, query: string) {
+  await assertCan(context, actor, "pos.receipts.view");
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) {
+    return [];
+  }
+
+  const orders = await context.repo.listOrders();
+  return orders
+    .filter((order) => {
+      const haystack = [order.orderNumber, order.customerSnapshot?.name, order.customerSnapshot?.phone]
+        .filter((value): value is string => Boolean(value))
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(normalized);
+    })
+    .slice(0, 15);
+}
+
+/**
+ * Public order tracking — no actor, no permission check, because customers
+ * aren't authenticated. Safety comes from requiring both the order number
+ * AND the phone on file to match, so knowing (or guessing) an order number
+ * alone can't leak another customer's order details.
+ */
+/**
+ * Looks up an order by order number alone. The order number is the
+ * capability: it's a random ~41-bit token (see createOrderNumber) that only
+ * reaches the customer via a private channel (their own SMS, or the printed
+ * POS receipt), so knowing it is treated as proof of ownership — the same
+ * trust model most courier tracking numbers use. There is deliberately no
+ * rate limiting yet; see SECURITY.md for the current stance on that gap.
+ */
+export async function trackOrder(context: CommerceContext, orderNumber: string) {
+  const normalizedOrderNumber = orderNumber.trim().toUpperCase();
+  if (!normalizedOrderNumber) {
+    return null;
+  }
+
+  const orders = await context.repo.listOrders();
+  const order = orders.find((entry) => entry.orderNumber.toUpperCase() === normalizedOrderNumber);
+
+  return order ?? null;
 }
 
 export async function writeAuditLog(
@@ -1062,7 +1223,7 @@ async function completeSale(
 ): Promise<CompletedSale> {
   const parsed = completeSaleInputSchema.parse(input);
 
-  return withTransaction(context, async () => {
+  const result = await withTransaction(context, async () => {
     const existingOrder = await context.repo.findOrderByIdempotencyKey(parsed.idempotencyKey);
     if (existingOrder) {
       return {
@@ -1113,6 +1274,12 @@ async function completeSale(
       idempotent: false
     };
   });
+
+  if (!result.idempotent) {
+    void notifyOrderEvent(result.order, "CONFIRMED");
+  }
+
+  return result;
 }
 
 async function buildOrder(
@@ -1158,6 +1325,12 @@ async function buildOrderItems(
   items: ParsedCreateOrderDraftInput["items"]
 ): Promise<OrderItem[]> {
   const result: OrderItem[] = [];
+  // Resolved and snapshotted onto the order at creation time — same reason
+  // productTitle/variantTitle/sku are snapshots rather than live joins: a
+  // later product edit, media swap, or deletion must not change what a past
+  // order shows.
+  const media = await context.repo.listMedia();
+  const mediaById = new Map(media.map((asset) => [asset.id, asset]));
 
   for (const item of items) {
     const product = await requiredProduct(context, item.productId);
@@ -1168,6 +1341,9 @@ async function buildOrderItems(
       throw new CommerceError("VALIDATION_ERROR", "Line discount cannot exceed line total.");
     }
 
+    const mediaId = (variant.mediaIds ?? [])[0] ?? (product.mediaIds ?? [])[0];
+    const mediaUrl = mediaId ? mediaById.get(mediaId)?.url : undefined;
+
     result.push({
       productId: product.id,
       variantId: variant.id,
@@ -1177,7 +1353,8 @@ async function buildOrderItems(
       quantity: item.quantity,
       unitPrice: variant.price,
       discountTotal: item.discountTotal,
-      lineTotal: grossLineTotal - item.discountTotal
+      lineTotal: grossLineTotal - item.discountTotal,
+      mediaUrl
     });
   }
 

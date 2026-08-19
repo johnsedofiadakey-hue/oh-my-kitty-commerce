@@ -37,7 +37,7 @@ export function ProductManagementForms({
   );
 }
 
-function CreateProductForm({
+export function CreateProductForm({
   action,
   disabled
 }: {
@@ -120,7 +120,7 @@ function CreateProductForm({
   );
 }
 
-function CreateVariantForm({
+export function CreateVariantForm({
   action,
   disabled,
   products

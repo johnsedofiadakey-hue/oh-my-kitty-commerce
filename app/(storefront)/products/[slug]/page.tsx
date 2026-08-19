@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductDetailHero } from "@/components/storefront/product-detail-hero";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
@@ -8,11 +9,32 @@ import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefro
 
 export const dynamic = "force-dynamic";
 
-export default async function ProductDetailPage({
-  params
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+type ProductPageParams = { params: Promise<{ slug: string }> };
+
+export async function generateMetadata({ params }: ProductPageParams): Promise<Metadata> {
+  const { slug } = await params;
+  const catalogue = await getStorefrontCatalogue();
+  const product = toStorefrontProductViews(catalogue).find((entry) => entry.slug === slug);
+
+  if (!product) {
+    return { title: "Product not found" };
+  }
+
+  const description = product.shortCopy || product.description || `${product.title} — ${product.formattedPrice}.`;
+
+  return {
+    title: product.title,
+    description,
+    alternates: { canonical: `/products/${product.slug}` },
+    openGraph: {
+      title: product.title,
+      description,
+      images: product.imageUrl ? [{ url: product.imageUrl }] : undefined
+    }
+  };
+}
+
+export default async function ProductDetailPage({ params }: ProductPageParams) {
   const { slug } = await params;
   const catalogue = await getStorefrontCatalogue();
   const products = toStorefrontProductViews(catalogue);
@@ -64,7 +86,7 @@ export default async function ProductDetailPage({
       <section className="product-support-band">
         <div>
           <span className="scene-kicker">Delivery</span>
-          <h2>Pickup, Accra delivery, and nationwide delivery can be selected at checkout.</h2>
+          <h2>Pickup, Urgent Delivery, and Free Delivery can be selected at checkout.</h2>
         </div>
         <Link className="portal-link inverted" href={"/delivery" as Route}>
           Delivery info

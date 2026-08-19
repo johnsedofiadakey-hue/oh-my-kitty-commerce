@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { CommerceError } from "@/lib/commerce/errors";
 import {
   adjustInventory,
+  attachProductImage,
   createProduct,
   createVariant,
   updateProduct,
@@ -88,17 +89,6 @@ export async function createVariantAction(
   });
 }
 
-export async function updateProductStatusAction(formData: FormData): Promise<void> {
-  const context = requireCommerceContext();
-  const actor = await getRequiredAdminActor();
-
-  await updateProduct(context, actor, {
-    id: formString(formData, "productId"),
-    status: formProductStatus(formData, "status")
-  });
-
-  revalidatePath("/admin/products");
-}
 
 export async function quickEditCatalogueItemAction(formData: FormData): Promise<void> {
   const context = requireCommerceContext();
@@ -141,6 +131,27 @@ export async function quickEditCatalogueItemAction(formData: FormData): Promise<
   revalidatePath("/");
   revalidatePath("/shop");
   revalidatePath("/admin/products");
+}
+
+export async function attachProductImageAction(input: {
+  productId: string;
+  variantId: string;
+  storagePath: string;
+  url: string;
+  alt: string;
+}): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+    await attachProductImage(context, actor, input);
+
+    revalidatePath("/");
+    revalidatePath("/shop");
+    revalidatePath("/admin/products");
+    return { status: "success", message: "Image updated." };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
 }
 
 async function runAdminProductAction(

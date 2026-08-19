@@ -154,6 +154,14 @@ export type MediaAsset = {
   uploadedBy: string;
 };
 
+export type ContentBlock = {
+  id: string;
+  key: string;
+  value: string;
+  updatedBy?: string;
+  updatedAt?: Date;
+};
+
 export type Customer = {
   id: string;
   authUid?: string | null;

@@ -1,24 +1,41 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { getStorefrontDeliveryOptions } from "@/lib/storefront/delivery";
+import { getContentBlocks } from "@/lib/storefront/content";
 
 export const dynamic = "force-dynamic";
 
-const DELIVERY_STEPS = [
-  { title: "Choose pickup or delivery", description: "Pick your option at checkout." },
-  { title: "We prepare your order", description: "Your items are packed with care once payment is confirmed." },
-  { title: "Collect or receive", description: "Pick up in Accra-Madina, or track your delivery via WhatsApp." }
-];
+export const metadata: Metadata = {
+  title: "Delivery & Pickup",
+  description: "Pickup in Accra-Madina, Urgent Delivery, and Free nationwide delivery — options, timing, and fees.",
+  alternates: { canonical: "/delivery" }
+};
 
-const FREE_DELIVERY_NOTES = [
-  "Riders collect orders on Tuesdays and deliver by Saturday at the latest.",
-  "If you'll be travelling after ordering, choose Urgent Delivery instead — Free Delivery can't be switched once it's on its way.",
-  "Volume, weather, and other factors can delay Free Delivery — thank you for your patience.",
-  "Not received by Saturday? Message WhatsApp 0241448231 that day to follow up."
-];
+function buildDeliverySteps(pickupLocation: string) {
+  return [
+    { title: "Choose pickup or delivery", description: "Pick your option at checkout." },
+    { title: "We prepare your order", description: "Your items are packed with care once payment is confirmed." },
+    { title: "Collect or receive", description: `Pick up in ${pickupLocation}, or track your delivery via WhatsApp.` }
+  ];
+}
+
+function buildFreeDeliveryNotes(whatsappNumber: string) {
+  return [
+    "Riders collect orders on Tuesdays and deliver by Saturday at the latest.",
+    "If you'll be travelling after ordering, choose Urgent Delivery instead — Free Delivery can't be switched once it's on its way.",
+    "Volume, weather, and other factors can delay Free Delivery — thank you for your patience.",
+    `Not received by Saturday? Message WhatsApp ${whatsappNumber} that day to follow up.`
+  ];
+}
 
 export default async function DeliveryPage() {
-  const deliveryOptions = await getStorefrontDeliveryOptions();
+  const [deliveryOptions, content] = await Promise.all([
+    getStorefrontDeliveryOptions(),
+    getContentBlocks()
+  ]);
+  const deliverySteps = buildDeliverySteps(content["pickup-location"]);
+  const freeDeliveryNotes = buildFreeDeliveryNotes(content["whatsapp-number"]);
 
   return (
     <main className="legal-page">
@@ -35,7 +52,7 @@ export default async function DeliveryPage() {
           <section data-section-number="01">
             <h2>How it works</h2>
             <div className="step-row">
-              {DELIVERY_STEPS.map((step, index) => (
+              {deliverySteps.map((step, index) => (
                 <div className="step-card" key={step.title}>
                   <strong className="step-number">{index + 1}</strong>
                   <div>
@@ -63,10 +80,16 @@ export default async function DeliveryPage() {
           <section data-section-number="03">
             <h2>Free Delivery — good to know</h2>
             <ul className="delivery-notice-list">
-              {FREE_DELIVERY_NOTES.map((note) => (
+              {freeDeliveryNotes.map((note) => (
                 <li key={note}>{note}</li>
               ))}
             </ul>
+          </section>
+          <section data-section-number="04">
+            <h2>Already ordered?</h2>
+            <p>
+              <Link href="/track">Track your order</Link> with your order number and phone number.
+            </p>
           </section>
         </div>
       </section>

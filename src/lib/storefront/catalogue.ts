@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import {
   sampleCategories,
@@ -82,7 +83,12 @@ export type StorefrontCategorySummary = {
   tone: StorefrontProductView["tone"];
 };
 
-export async function getStorefrontCatalogue(): Promise<StorefrontCatalogue> {
+/**
+ * Cached per-request: product pages call this from both generateMetadata
+ * and the page body — without `cache()` that's a duplicate Firestore fetch
+ * on every single product page load.
+ */
+export const getStorefrontCatalogue = cache(async (): Promise<StorefrontCatalogue> => {
   const context = getCommerceServerContext();
   if (!context) {
     return sampleStorefrontCatalogue("Firebase is not configured yet. Showing starter catalogue.");
@@ -119,7 +125,7 @@ export async function getStorefrontCatalogue(): Promise<StorefrontCatalogue> {
   } catch {
     return sampleStorefrontCatalogue("Firestore is not ready yet. Showing starter catalogue.");
   }
-}
+});
 
 function sampleStorefrontCatalogue(sourceMessage: string): StorefrontCatalogue {
   return {

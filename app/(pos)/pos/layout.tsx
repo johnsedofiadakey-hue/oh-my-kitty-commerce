@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getRequiredPosActor } from "@/lib/auth/pos-server";
 import { canAccessAdmin, canAccessPos, defaultRoles } from "@/lib/permissions/permissions";
 import type { CommerceActor } from "@/lib/commerce/operations";
 import { RegisterPosServiceWorker } from "@/components/pos/register-pos-service-worker";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false }
+};
 
 export default async function PosLayout({
   children

@@ -31,42 +31,24 @@ export default async function AdminInventoryPage() {
       <section className="admin-panel">
         <div className="panel-header">
           <h2>Stock by variant</h2>
-          <span>{rows.length} variants</span>
-        </div>
-        <div className="admin-table">
-          <div className="admin-table-row header">
-            <span>Product</span>
-            <span>Variant</span>
-            <span>Available</span>
-            <span>On hand</span>
-            <span>Alert</span>
-          </div>
-          {rows.map(({ product, variant, lowStock }) => (
-            <div className="admin-table-row" key={variant.id}>
-              <strong>{getProductTitle(product)}</strong>
-              <span>{getVariantLabel(variant)}</span>
-              <span>{variant.stockAvailable}</span>
-              <span>{variant.stockOnHand}</span>
-              <span className={lowStock ? "status danger" : "status"}>
-                {lowStock ? "Low" : "Healthy"}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-      <section className="admin-panel">
-        <div className="panel-header">
-          <h2>Adjust stock</h2>
-          <span>Ledgered movement</span>
+          <span>{rows.length} variants &middot; ledgered adjustment</span>
         </div>
         <div className="quick-edit-list">
-          {rows.map(({ product, variant }) => (
+          {rows.map(({ product, variant, lowStock }) => (
             <form action={adjustInventoryAction} className="quick-edit-row" key={variant.id}>
               <input name="productId" type="hidden" value={variant.productId} />
               <input name="variantId" type="hidden" value={variant.id} />
               <label className="admin-field">
                 <span>Variant</span>
                 <input disabled value={`${getProductTitle(product)} / ${getVariantLabel(variant)}`} />
+              </label>
+              <label className="admin-field">
+                <span>Available</span>
+                <input disabled value={variant.stockAvailable} />
+              </label>
+              <label className="admin-field">
+                <span>Alert</span>
+                <input disabled value={lowStock ? "Low" : "Healthy"} />
               </label>
               <label className="admin-field">
                 <span>Type</span>

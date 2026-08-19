@@ -1,29 +1,54 @@
 import Image from "next/image";
 import { getAdminOperationsData } from "@/lib/admin/operations-data";
 import { requireAdminPermission } from "@/lib/auth/server";
+import { CONTENT_REGISTRY, getContentBlocks, type ContentKey } from "@/lib/storefront/content";
+import { updateContentBlockAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminContentPage() {
   await requireAdminPermission("content.view");
-  const data = await getAdminOperationsData();
+  const [data, content] = await Promise.all([getAdminOperationsData(), getContentBlocks()]);
+  const disabled = data.source !== "live";
+  const keys = Object.keys(CONTENT_REGISTRY) as ContentKey[];
 
   return (
     <>
       <div className="page-heading">
         <div>
-          <h1 className="app-title">Content & Media</h1>
+          <h1 className="app-title">Content &amp; Media</h1>
           <p className="app-subtitle">Homepage media, product cutouts, public assets, and editable store content.</p>
         </div>
-        <button className="admin-action" type="button">
-          Upload media
-        </button>
       </div>
       {data.sourceMessage ? (
         <div className="admin-alert" role="status">
           {data.sourceMessage}
         </div>
       ) : null}
+      <section className="admin-panel">
+        <div className="panel-header">
+          <h2>Site content</h2>
+          <span>Changes appear on the storefront immediately</span>
+        </div>
+        <div className="quick-edit-list">
+          {keys.map((key) => (
+            <form action={updateContentBlockAction} className="quick-edit-row" key={key}>
+              <input name="key" type="hidden" value={key} />
+              <label className="admin-field">
+                <span>{CONTENT_REGISTRY[key].label}</span>
+                <input defaultValue={content[key]} disabled={disabled} name="value" required />
+              </label>
+              <label className="admin-field">
+                <span>Used on</span>
+                <input disabled value={CONTENT_REGISTRY[key].group} />
+              </label>
+              <button className="admin-action" disabled={disabled} type="submit">
+                Save
+              </button>
+            </form>
+          ))}
+        </div>
+      </section>
       <section className="admin-grid two">
         <div className="admin-panel">
           <div className="panel-header">
@@ -53,34 +78,12 @@ export default async function AdminContentPage() {
                 </span>
               </div>
             ))}
+            {data.media.length === 0 ? (
+              <p className="admin-help">
+                No media uploaded yet — upload from Firebase Storage isn&apos;t wired up here yet.
+              </p>
+            ) : null}
           </div>
-        </div>
-      </section>
-      <section className="admin-panel">
-        <div className="panel-header">
-          <h2>Editable content areas</h2>
-          <span>CMS map</span>
-        </div>
-        <div className="admin-table four">
-          <div className="admin-table-row header">
-            <span>Area</span>
-            <span>Owner</span>
-            <span>Status</span>
-            <span>Notes</span>
-          </div>
-          {[
-            ["Homepage microcopy", "Content", "Draft", "Minimal storefront copy"],
-            ["FAQ", "Support", "Draft", "Customer trust content"],
-            ["Delivery text", "Operations", "Draft", "Matches delivery rules"],
-            ["Policy pages", "Owner", "Draft", "Client-approved wording required"]
-          ].map(([area, owner, status, notes]) => (
-            <div className="admin-table-row" key={area}>
-              <strong>{area}</strong>
-              <span>{owner}</span>
-              <span>{status}</span>
-              <span>{notes}</span>
-            </div>
-          ))}
         </div>
       </section>
     </>

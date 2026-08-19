@@ -16,7 +16,7 @@ The order is deliberate:
 
 Goal: create a working, Firebase-ready app foundation without real Firebase credentials.
 
-Status: baseline scaffold implemented. The repo now includes a Next.js App Router shell, Firebase placeholder initialization, route groups for storefront/admin/POS, Firebase emulator config, starter Firestore/Storage rules, local seed data, RBAC helpers, commerce domain types, and unit tests. Firestore rules tests are configured but require JDK 21 or newer because the current Firebase CLI no longer supports older Java runtimes.
+Status: baseline scaffold implemented. The repo now includes a Next.js App Router shell, Firebase placeholder initialization, route groups for storefront/admin/POS, Firebase emulator config, starter Firestore/Storage rules, local seed data, RBAC helpers, commerce domain types, and unit tests. Firestore rules tests run via `npm run test:rules` and require JDK 21+ (the Firebase CLI's emulator no longer supports older Java runtimes) — install with `brew install openjdk@21` and point `JAVA_HOME` at it for that command if your default `java` is older.
 
 Tasks:
 
@@ -47,7 +47,7 @@ Boundaries:
 
 Goal: implement shared data and business rules used by storefront, admin, and POS.
 
-Status: baseline commerce core implemented. The repo now includes validation schemas, expanded commerce types, memory and Firestore repository adapters, server-side commerce operations, inventory ledger handling, order draft and sale completion operations, POS sale permission checks, idempotency handling, emulator seed data, and unit tests. Firestore rules tests remain configured but require JDK 21 or newer locally because of the current Firebase CLI.
+Status: baseline commerce core implemented. The repo now includes validation schemas, expanded commerce types, memory and Firestore repository adapters, server-side commerce operations, inventory ledger handling, order draft and sale completion operations, POS sale permission checks, idempotency handling, emulator seed data, and unit tests. Firestore rules tests pass locally with JDK 21+ available.
 
 Tasks:
 
@@ -213,6 +213,12 @@ Tasks:
 - analytics event plan
 - monitoring/error reporting setup
 
+Status: accessibility, SEO, rules/function tests, and error/loading/empty states
+are done — see [ACCEPTANCE-CRITERIA.md](ACCEPTANCE-CRITERIA.md) Phase 6 section
+for specifics. A full mobile-performance/Lighthouse audit and a dedicated
+analytics event plan were not run in this pass; Cloud Run logs currently serve
+as the monitoring/error-reporting mechanism rather than a third-party APM tool.
+
 ## Phase 7 - Production Readiness
 
 Goal: wire real services and prepare launch.
@@ -232,6 +238,16 @@ Tasks:
 - delivery rules
 - policy text
 - launch checklist
+
+Status: production config, Cloud Run deployment, backup/export strategy
+(automated daily Firestore backups), security review, owner seeding, and SMS
+notifications (Arkesel) are done. See [LAUNCH-CHECKLIST.md](LAUNCH-CHECKLIST.md)
+for the full breakdown. Custom domain was explicitly skipped for now (the
+Firebase-hosted URL is live). Payment provider (Paystack) is intentionally
+deferred by the store owner — checkout and webhook code exist and are wired,
+but live credentials haven't been supplied yet. Final catalogue upload,
+taxonomy, and policy-text review are store-owner content decisions, not
+engineering work.
 
 Boundaries:
 

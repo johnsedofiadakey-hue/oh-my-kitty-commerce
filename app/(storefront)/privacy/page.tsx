@@ -1,5 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description: "How Oh My Kitty collects, uses, and protects your information.",
+  alternates: { canonical: "/privacy" }
+};
 
 export default function PrivacyPage() {
   return (

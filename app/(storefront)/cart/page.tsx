@@ -1,6 +1,12 @@
 import Image from "next/image";
+import type { Metadata } from "next";
 import { CartContents } from "@/components/storefront/cart-contents";
 import { TransactionalHeader } from "@/components/storefront/transactional-header";
+
+export const metadata: Metadata = {
+  title: "Your Bag",
+  robots: { index: false, follow: false }
+};
 
 /**
  * Direct-navigation fallback (bookmarks, no-JS, "open in new tab" from the

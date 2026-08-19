@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ClearCartOnMount } from "@/components/storefront/clear-cart-on-mount";
 import { confirmPaystackPayment } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
@@ -7,6 +8,11 @@ import { verifyPaystackTransaction } from "@/lib/payments/paystack";
 import { formatMoney } from "@/lib/commerce/format";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Order Confirmation",
+  robots: { index: false, follow: false }
+};
 
 type PageProps = {
   searchParams: Promise<{ reference?: string; trxref?: string }>;

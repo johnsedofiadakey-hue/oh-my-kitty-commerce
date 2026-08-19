@@ -1,21 +1,31 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { FaqAccordion } from "@/components/storefront/faq-accordion";
+import { getContentValue } from "@/lib/storefront/content";
 
-const RETURN_STEPS = [
-  {
-    title: "Reach out within 48 hours",
-    description: "Message WhatsApp 0241448231 with your order number and a short note."
-  },
-  {
-    title: "We review your case",
-    description: "Unopened, hygiene-sealed items are reviewed for exchange or refund."
-  },
-  {
-    title: "Exchange or refund confirmed",
-    description: "We confirm next steps and timing directly with you over WhatsApp."
-  }
-];
+export const metadata: Metadata = {
+  title: "Returns & Support",
+  description: "How returns, exchanges, and refunds work at Oh My Kitty.",
+  alternates: { canonical: "/returns" }
+};
+
+function buildReturnSteps(whatsappNumber: string) {
+  return [
+    {
+      title: "Reach out within 48 hours",
+      description: `Message WhatsApp ${whatsappNumber} with your order number and a short note.`
+    },
+    {
+      title: "We review your case",
+      description: "Unopened, hygiene-sealed items are reviewed for exchange or refund."
+    },
+    {
+      title: "Exchange or refund confirmed",
+      description: "We confirm next steps and timing directly with you over WhatsApp."
+    }
+  ];
+}
 
 const RETURN_FAQS = [
   {
@@ -33,7 +43,11 @@ const RETURN_FAQS = [
   }
 ];
 
-export default function ReturnsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ReturnsPage() {
+  const whatsappNumber = await getContentValue("whatsapp-number");
+
   return (
     <main className="legal-page">
       <div className="legal-page-botanical" aria-hidden="true">
@@ -49,7 +63,7 @@ export default function ReturnsPage() {
           <section data-section-number="01">
             <h2>How returns work</h2>
             <div className="step-row">
-              {RETURN_STEPS.map((step, index) => (
+              {buildReturnSteps(whatsappNumber).map((step, index) => (
                 <div className="step-card" key={step.title}>
                   <strong className="step-number">{index + 1}</strong>
                   <div>

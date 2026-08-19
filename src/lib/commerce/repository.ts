@@ -4,6 +4,7 @@ import type {
   Category,
   Collection,
   Concern,
+  ContentBlock,
   Customer,
   DeliveryRule,
   InventoryMovement,
@@ -39,6 +40,8 @@ export type CommerceRepository = {
   saveRoutine(routine: Routine): Promise<void>;
   listMedia(): Promise<MediaAsset[]>;
   saveMedia(media: MediaAsset): Promise<void>;
+  listContentBlocks(): Promise<ContentBlock[]>;
+  saveContentBlock(block: ContentBlock): Promise<void>;
   saveCustomer(customer: Customer): Promise<void>;
   getCustomer(id: string): Promise<Customer | null>;
   listCustomers(): Promise<Customer[]>;

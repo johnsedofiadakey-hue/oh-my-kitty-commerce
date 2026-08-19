@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {
   formatMoney,
   getAdminOperationsData,
@@ -41,36 +42,20 @@ export default async function AdminOrdersPage() {
           <h2>Order queue</h2>
           <span>{rows.length} orders</span>
         </div>
-        <div className="admin-table six">
-          <div className="admin-table-row header">
-            <span>Order</span>
-            <span>Customer</span>
-            <span>Channel</span>
-            <span>Payment</span>
-            <span>Fulfilment</span>
-            <span>Total</span>
-          </div>
-          {rows.map(({ order }) => (
-            <div className="admin-table-row" key={order.id}>
-              <strong>{order.orderNumber}</strong>
-              <span>{getOrderCustomerName(order)}</span>
-              <span>{order.channel.replace("_", " ")}</span>
-              <span>{order.paymentStatus}</span>
-              <span>{order.fulfilmentStatus.replaceAll("_", " ")}</span>
-              <span>{formatMoney(order.total)}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-      <section className="admin-panel">
-        <div className="panel-header">
-          <h2>Update fulfilment</h2>
-          <span>{rows.length} orders</span>
-        </div>
         <div className="quick-edit-list">
           {rows.map(({ order }) => (
             <form action={updateOrderFulfilmentAction} className="quick-edit-row" key={order.id}>
               <input name="id" type="hidden" value={order.id} />
+              <div className="order-thumb" aria-hidden="true">
+                {order.items[0]?.mediaUrl ? (
+                  <Image alt="" fill sizes="48px" src={order.items[0].mediaUrl} />
+                ) : (
+                  <span className="order-thumb-empty" />
+                )}
+                {order.items.length > 1 ? (
+                  <span className="order-thumb-count">+{order.items.length - 1}</span>
+                ) : null}
+              </div>
               <label className="admin-field">
                 <span>Order</span>
                 <input disabled value={order.orderNumber} />
@@ -78,6 +63,14 @@ export default async function AdminOrdersPage() {
               <label className="admin-field">
                 <span>Customer</span>
                 <input disabled value={getOrderCustomerName(order)} />
+              </label>
+              <label className="admin-field">
+                <span>Channel</span>
+                <input disabled value={order.channel.replace("_", " ")} />
+              </label>
+              <label className="admin-field">
+                <span>Payment</span>
+                <input disabled value={order.paymentStatus} />
               </label>
               <label className="admin-field">
                 <span>Fulfilment status</span>
@@ -88,6 +81,10 @@ export default async function AdminOrdersPage() {
                     </option>
                   ))}
                 </select>
+              </label>
+              <label className="admin-field">
+                <span>Total</span>
+                <input disabled value={formatMoney(order.total)} />
               </label>
               <button className="admin-action" disabled={disabled} type="submit">
                 Save

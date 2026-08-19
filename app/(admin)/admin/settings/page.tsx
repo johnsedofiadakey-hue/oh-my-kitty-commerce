@@ -1,4 +1,4 @@
-import { adminData } from "@/lib/admin/sample-admin-data";
+import { formatMoney, getAdminOperationsData } from "@/lib/admin/operations-data";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { isPaystackConfigured } from "@/lib/payments/paystack";
 import { requireAdminPermission } from "@/lib/auth/server";
@@ -10,6 +10,7 @@ export default async function AdminSettingsPage() {
   const firebaseConfigured = Boolean(context);
   const paystackConfigured = isPaystackConfigured();
   const storeSettings = context ? await context.repo.getStoreSettings().catch(() => null) : null;
+  const data = await getAdminOperationsData();
   const statusRows = [
     ["Currency", "GHS"],
     ["Firebase", firebaseConfigured ? "Connected" : "Pending project details"],
@@ -73,17 +74,18 @@ export default async function AdminSettingsPage() {
       <section className="admin-panel">
         <div className="panel-header">
           <h2>POS shifts</h2>
-          <span>{adminData.posShifts.length} shift</span>
+          <span>{data.posShifts.length} shift{data.posShifts.length === 1 ? "" : "s"}</span>
         </div>
         <div className="stack-list">
-          {adminData.posShifts.map((shift) => (
+          {data.posShifts.map((shift) => (
             <div className="stack-row" key={shift.id}>
               <strong>{shift.staffId}</strong>
               <span>
-                {shift.status} / opening cash {shift.openingCash}
+                {shift.status} / opening cash {formatMoney(shift.openingCash)}
               </span>
             </div>
           ))}
+          {data.posShifts.length === 0 ? <p className="admin-help">No shifts yet.</p> : null}
         </div>
       </section>
     </>

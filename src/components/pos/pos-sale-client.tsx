@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
 import { formatMoney } from "@/lib/commerce/format";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 import {
@@ -11,6 +11,7 @@ import {
   type PendingAction
 } from "@/lib/pos/offline-queue";
 import { PosRecentSales, type RecentPosSale } from "@/components/pos/pos-reversal-panel";
+import { PosOrderLookup } from "@/components/pos/pos-order-lookup";
 
 type PosSaleClientProps = {
   products: StorefrontProductView[];
@@ -39,6 +40,26 @@ type PosShiftState = {
   difference?: number;
 };
 
+// useSyncExternalStore (not useState+useEffect) so the connectivity pill can
+// never disagree with the server-rendered HTML — there's no `navigator` to
+// read on the server, and the server snapshot below matches what SSR emits.
+function subscribeToOnlineStatus(callback: () => void) {
+  window.addEventListener("online", callback);
+  window.addEventListener("offline", callback);
+  return () => {
+    window.removeEventListener("online", callback);
+    window.removeEventListener("offline", callback);
+  };
+}
+
+function getOnlineSnapshot() {
+  return navigator.onLine;
+}
+
+function getServerOnlineSnapshot() {
+  return true;
+}
+
 export function PosSaleClient({ products, source, sourceMessage }: PosSaleClientProps) {
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<PosLine[]>([]);
@@ -56,7 +77,7 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
   const [shiftSales, setShiftSales] = useState({ count: 0, revenue: 0, cash: 0 });
   const [recentSales, setRecentSales] = useState<RecentPosSale[]>([]);
   const [pendingSales, setPendingSales] = useState<PendingAction[]>([]);
-  const [isOnline, setIsOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine);
+  const isOnline = useSyncExternalStore(subscribeToOnlineStatus, getOnlineSnapshot, getServerOnlineSnapshot);
   const [cartSheetOpen, setCartSheetOpen] = useState(false);
   const canSell = source === "live" && shift?.status === "OPEN";
   const pendingCount = pendingSales.filter((sale) => sale.status === "pending").length;
@@ -82,12 +103,7 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
     void attemptSync();
 
     function handleOnline() {
-      setIsOnline(true);
       void attemptSync();
-    }
-
-    function handleOffline() {
-      setIsOnline(false);
     }
 
     function handleVisibility() {
@@ -98,13 +114,11 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
 
     const unsubscribeQueue = onQueueChanged(refreshPendingSales);
     window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
     document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
       unsubscribeQueue();
       window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [attemptSync, refreshPendingSales]);
@@ -475,6 +489,7 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
           )}
         </section>
         <PosRecentSales onReversed={handleReversed} sales={recentSales} />
+        <PosOrderLookup />
         {receipt ? (
           <div className={receipt.pending ? "pos-receipt pending" : "pos-receipt"} role="status">
             <span>{receipt.pending ? "Saved offline" : "Receipt"}</span>

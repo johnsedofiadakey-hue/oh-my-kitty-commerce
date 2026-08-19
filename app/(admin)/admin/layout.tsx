@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdminNav, type AdminNavGroup } from "@/components/admin/admin-nav";
 import type { AdminIconName } from "@/components/admin/admin-icons";
@@ -5,6 +6,10 @@ import { getAdminOperationsData } from "@/lib/admin/operations-data";
 import { getRequiredAdminActor } from "@/lib/auth/server";
 import { canAccessAdmin, canAccessPos, defaultRoles, hasPermission, type Permission } from "@/lib/permissions/permissions";
 import type { CommerceActor } from "@/lib/commerce/operations";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false }
+};
 
 type NavConfigItem = {
   label: string;
@@ -136,12 +141,17 @@ export default async function AdminLayout({
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#admin-main">
+        Skip to content
+      </a>
       <AdminNav
         actorName={actor.displayName ?? actor.email ?? "Staff"}
         actorRole={actorRole}
         groups={groups}
       />
-      <main className="app-main">{children}</main>
+      <main className="app-main" id="admin-main">
+        {children}
+      </main>
     </div>
   );
 }

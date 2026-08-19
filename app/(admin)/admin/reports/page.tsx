@@ -18,9 +18,6 @@ export default async function AdminReportsPage() {
           <h1 className="app-title">Reports</h1>
           <p className="app-subtitle">Revenue, channel totals, POS cash, stock alerts, and staff activity.</p>
         </div>
-        <button className="admin-action" type="button">
-          Export
-        </button>
       </div>
       {data.sourceMessage ? (
         <div className="admin-alert" role="status">

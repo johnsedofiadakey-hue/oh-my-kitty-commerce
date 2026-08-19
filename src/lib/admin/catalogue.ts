@@ -9,6 +9,7 @@ import type {
   Category,
   Collection,
   Concern,
+  MediaAsset,
   Product,
   ProductType,
   ProductVariant,
@@ -34,6 +35,7 @@ export type AdminCatalogueData = {
   concerns: Concern[];
   productTypes: ProductType[];
   routines: Routine[];
+  media: MediaAsset[];
 };
 
 export async function getAdminCatalogueData(): Promise<AdminCatalogueData> {
@@ -48,12 +50,13 @@ export async function getAdminCatalogueData(): Promise<AdminCatalogueData> {
       products.map((product) => context.repo.listVariants(product.id))
     );
     const variants = variantGroups.flat();
-    const [categories, collections, concerns, productTypes, routines] = await Promise.all([
+    const [categories, collections, concerns, productTypes, routines, media] = await Promise.all([
       context.repo.listCategories(),
       context.repo.listCollections(),
       context.repo.listConcerns(),
       context.repo.listProductTypes(),
-      context.repo.listRoutines()
+      context.repo.listRoutines(),
+      context.repo.listMedia()
     ]);
     return {
       source: "live",
@@ -64,7 +67,8 @@ export async function getAdminCatalogueData(): Promise<AdminCatalogueData> {
       collections,
       concerns,
       productTypes,
-      routines
+      routines,
+      media
     };
   } catch {
     return sampleCatalogue(
@@ -96,7 +100,8 @@ function sampleCatalogue(sourceMessage: string): AdminCatalogueData {
     collections: adminData.collections,
     concerns: adminData.concerns,
     productTypes: adminData.productTypes,
-    routines: adminData.routines
+    routines: adminData.routines,
+    media: adminData.media
   };
 }
 

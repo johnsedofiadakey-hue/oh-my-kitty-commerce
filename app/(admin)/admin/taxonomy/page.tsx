@@ -1,4 +1,5 @@
 import { getAdminTaxonomyData } from "@/lib/admin/taxonomy";
+import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { TaxonomyManagementForms } from "@/components/admin/taxonomy-management-forms";
 import { requireAdminPermission } from "@/lib/auth/server";
 import type { Concern, ProductType, Routine } from "@/lib/commerce/types";
@@ -27,18 +28,20 @@ export default async function AdminTaxonomyPage() {
             Concerns, product types, and routines customers use to browse the shop.
           </p>
         </div>
+        <AdminDrawer title="New taxonomy entry" triggerLabel="New entry">
+          <TaxonomyManagementForms
+            createConcernAction={createConcernAction}
+            createProductTypeAction={createProductTypeAction}
+            createRoutineAction={createRoutineAction}
+            disabled={disabled}
+          />
+        </AdminDrawer>
       </div>
       {data.sourceMessage ? (
         <div className="admin-alert" role="status">
           {data.sourceMessage}
         </div>
       ) : null}
-      <TaxonomyManagementForms
-        createConcernAction={createConcernAction}
-        createProductTypeAction={createProductTypeAction}
-        createRoutineAction={createRoutineAction}
-        disabled={disabled}
-      />
       <TaxonomyTable
         action={quickEditConcernAction}
         disabled={disabled}

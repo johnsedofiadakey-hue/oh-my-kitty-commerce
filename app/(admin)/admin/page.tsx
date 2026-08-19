@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { AdminIcon } from "@/components/admin/admin-icons";
 import {
@@ -125,9 +126,18 @@ export default async function AdminDashboardPage() {
             </div>
             {recentOrders.map(({ order }) => (
               <div className="admin-table-row" key={order.id}>
-                <div>
-                  <strong>{order.orderNumber}</strong>
-                  <div className="table-subline">{order.createdAt ? formatDate(order.createdAt) : "Date not recorded"}</div>
+                <div className="table-cell-with-thumb">
+                  <div className="order-thumb small" aria-hidden="true">
+                    {order.items[0]?.mediaUrl ? (
+                      <Image alt="" fill sizes="32px" src={order.items[0].mediaUrl} />
+                    ) : (
+                      <span className="order-thumb-empty" />
+                    )}
+                  </div>
+                  <div>
+                    <strong>{order.orderNumber}</strong>
+                    <div className="table-subline">{order.createdAt ? formatDate(order.createdAt) : "Date not recorded"}</div>
+                  </div>
                 </div>
                 <span>{getOrderCustomerName(order)}</span>
                 <span className="status neutral">{order.channel.replace("_", " ")}</span>

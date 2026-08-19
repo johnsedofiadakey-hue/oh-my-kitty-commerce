@@ -1,7 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
+import { getContentBlocks, toWhatsAppLink } from "@/lib/storefront/content";
 
-export default function ContactPage() {
+export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Contact",
+  description: "Reach Oh My Kitty on WhatsApp for order support, product questions, and delivery updates.",
+  alternates: { canonical: "/contact" }
+};
+
+export default async function ContactPage() {
+  const content = await getContentBlocks();
+  const whatsappNumber = content["whatsapp-number"];
+  const whatsappLink = toWhatsAppLink(whatsappNumber);
+
   return (
     <main className="legal-page">
       <div className="legal-page-botanical" aria-hidden="true">
@@ -17,15 +31,15 @@ export default function ContactPage() {
           <section data-section-number="01">
             <h2>WhatsApp</h2>
             <p>
-              <a href="https://wa.me/233241448231" rel="noreferrer" target="_blank">
-                0241448231
+              <a href={whatsappLink} rel="noreferrer" target="_blank">
+                {whatsappNumber}
               </a>{" "}
               for order support, product questions, pickup, and delivery updates.
             </p>
           </section>
           <section data-section-number="02">
             <h2>Location</h2>
-            <p>Accra-Madina. Final map, directions, and opening hours can be added by admin.</p>
+            <p>{content["pickup-location"]}. Final map, directions, and opening hours can be added by admin.</p>
           </section>
           <section data-section-number="03">
             <h2>Social</h2>

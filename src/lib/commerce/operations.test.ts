@@ -3,6 +3,7 @@ import { CommerceError } from "@/lib/commerce/errors";
 import { MemoryCommerceRepository } from "@/lib/commerce/memory-repository";
 import {
   adjustInventory,
+  attachProductImage,
   completeOnlineOrder,
   completePosSale,
   createDeliveryRule,
@@ -10,6 +11,8 @@ import {
   createProduct,
   createVariant,
   refundPosSale,
+  searchOrders,
+  updateContentBlock,
   updateDeliveryRule,
   updateProduct,
   updateVariant,
@@ -395,6 +398,55 @@ describe("commerce operations", () => {
     await expect(
       voidPosSale(context, salesStaff, { orderId: sale.order.id, reason: "n/a" })
     ).rejects.toThrow(/pos.void/);
+  });
+
+  it("finds an order by order number or customer phone/name, and requires permission", async () => {
+    const context = createTestContext();
+    await seedProductAndVariant(context);
+    const sale = await sellTwoUnits(context, owner);
+
+    await expect(searchOrders(context, salesStaff, sale.order.orderNumber)).resolves.toEqual([
+      expect.objectContaining({ id: sale.order.id })
+    ]);
+    await expect(searchOrders(context, salesStaff, "no-such-order")).resolves.toEqual([]);
+    await expect(searchOrders(context, salesStaff, "")).resolves.toEqual([]);
+
+    const noPermission: CommerceActor = { uid: "nobody-1", roleIds: [] };
+    await expect(searchOrders(context, noPermission, sale.order.orderNumber)).rejects.toThrow(
+      /pos.receipts.view/
+    );
+  });
+
+  it("updates a content block and leaves other blocks untouched", async () => {
+    const context = createTestContext();
+
+    const first = await updateContentBlock(context, owner, {
+      key: "whatsapp-number",
+      value: "0200000000"
+    });
+    expect(first.value).toBe("0200000000");
+
+    await expect(context.repo.listContentBlocks()).resolves.toEqual([
+      expect.objectContaining({ key: "whatsapp-number", value: "0200000000" })
+    ]);
+  });
+
+  it("attaches an uploaded image as the variant's primary photo", async () => {
+    const context = createTestContext();
+    const { variant } = await seedProductAndVariant(context);
+
+    const result = await attachProductImage(context, owner, {
+      productId: variant.productId,
+      variantId: variant.id,
+      storagePath: `products/${variant.productId}/${variant.id}-1.jpg`,
+      url: "https://example.com/photo.jpg",
+      alt: "Slippery Elm"
+    });
+
+    expect(result.variant.mediaIds).toEqual([result.asset.id]);
+    await expect(context.repo.listMedia()).resolves.toEqual([
+      expect.objectContaining({ url: "https://example.com/photo.jpg", visibility: "PUBLIC" })
+    ]);
   });
 });
 

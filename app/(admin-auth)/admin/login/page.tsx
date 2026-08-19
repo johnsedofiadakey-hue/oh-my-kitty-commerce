@@ -4,7 +4,8 @@ import Link from "next/link";
 import { AdminLoginForm } from "@/components/auth/admin-login-form";
 
 export const metadata: Metadata = {
-  title: "Admin Sign In"
+  title: "Admin Sign In",
+  robots: { index: false, follow: false }
 };
 
 export default function AdminLoginPage() {

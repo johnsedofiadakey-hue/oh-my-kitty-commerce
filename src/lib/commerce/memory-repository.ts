@@ -5,6 +5,7 @@ import type {
   Category,
   Collection,
   Concern,
+  ContentBlock,
   Customer,
   DeliveryRule,
   InventoryMovement,
@@ -30,6 +31,7 @@ export class MemoryCommerceRepository implements CommerceRepository {
   productTypes = new Map<string, ProductType>();
   routines = new Map<string, Routine>();
   media = new Map<string, MediaAsset>();
+  contentBlocks = new Map<string, ContentBlock>();
   customers = new Map<string, Customer>();
   orders = new Map<string, Order>();
   payments = new Map<string, Payment>();
@@ -119,6 +121,14 @@ export class MemoryCommerceRepository implements CommerceRepository {
 
   async saveMedia(media: MediaAsset) {
     this.media.set(media.id, media);
+  }
+
+  async listContentBlocks() {
+    return [...this.contentBlocks.values()];
+  }
+
+  async saveContentBlock(block: ContentBlock) {
+    this.contentBlocks.set(block.key, block);
   }
 
   async saveCustomer(customer: Customer) {

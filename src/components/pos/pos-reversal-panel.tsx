@@ -17,10 +17,17 @@ type ReversalMode = "REFUND" | "VOID";
 
 export function PosRecentSales({
   sales,
-  onReversed
+  onReversed,
+  heading = "Recent sales",
+  subtitle = "Refund or void this shift's sales",
+  bare = false
 }: {
   sales: RecentPosSale[];
   onReversed: (orderId: string, mode: ReversalMode) => void;
+  heading?: string;
+  subtitle?: string;
+  /** Skip the outer panel chrome — for callers that already provide their own. */
+  bare?: boolean;
 }) {
   const [target, setTarget] = useState<{
     orderId: string;
@@ -32,12 +39,8 @@ export function PosRecentSales({
     return null;
   }
 
-  return (
-    <section className="pos-shift-panel" aria-label="Recent sales">
-      <div className="pos-shift-heading">
-        <strong>Recent sales</strong>
-        <span>Refund or void this shift&apos;s sales</span>
-      </div>
+  const body = (
+    <>
       <div className="stack-list">
         {sales.map((sale) => (
           <div className="stack-row pos-reversal-row" key={sale.orderId}>
@@ -84,6 +87,20 @@ export function PosRecentSales({
           orderNumber={target.orderNumber}
         />
       ) : null}
+    </>
+  );
+
+  if (bare) {
+    return body;
+  }
+
+  return (
+    <section className="pos-shift-panel" aria-label={heading}>
+      <div className="pos-shift-heading">
+        <strong>{heading}</strong>
+        <span>{subtitle}</span>
+      </div>
+      {body}
     </section>
   );
 }

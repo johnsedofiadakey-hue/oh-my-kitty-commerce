@@ -1,4 +1,5 @@
-import { formatMoney, getAdminOperationsData } from "@/lib/admin/operations-data";
+import { getAdminOperationsData } from "@/lib/admin/operations-data";
+import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { CreateDeliveryRuleForm } from "@/components/admin/delivery-rule-form";
 import { requireAdminPermission } from "@/lib/auth/server";
 import { createDeliveryRuleAction, quickEditDeliveryRuleAction } from "./actions";
@@ -17,13 +18,15 @@ export default async function AdminDeliveryPage() {
           <h1 className="app-title">Delivery</h1>
           <p className="app-subtitle">Pickup, local delivery, fees, regions, and customer-facing estimates.</p>
         </div>
+        <AdminDrawer title="New delivery rule" triggerLabel="New rule">
+          <CreateDeliveryRuleForm action={createDeliveryRuleAction} disabled={disabled} />
+        </AdminDrawer>
       </div>
       {data.sourceMessage ? (
         <div className="admin-alert" role="status">
           {data.sourceMessage}
         </div>
       ) : null}
-      <CreateDeliveryRuleForm action={createDeliveryRuleAction} disabled={disabled} />
       <section className="admin-panel">
         <div className="panel-header">
           <h2>Delivery rules</h2>
@@ -79,30 +82,7 @@ export default async function AdminDeliveryPage() {
               </button>
             </form>
           ))}
-        </div>
-      </section>
-      <section className="admin-panel">
-        <div className="panel-header">
-          <h2>Reference</h2>
-          <span>All fees shown</span>
-        </div>
-        <div className="admin-table">
-          <div className="admin-table-row header">
-            <span>Name</span>
-            <span>Type</span>
-            <span>Regions</span>
-            <span>Fee</span>
-            <span>Estimate</span>
-          </div>
-          {data.deliveryRules.map((rule) => (
-            <div className="admin-table-row" key={rule.id}>
-              <strong>{rule.name}</strong>
-              <span>{rule.type.replaceAll("_", " ")}</span>
-              <span>{rule.regions.join(", ") || "All"}</span>
-              <span>{formatMoney(rule.fee)}</span>
-              <span>{rule.estimate ?? "Not set"}</span>
-            </div>
-          ))}
+          {data.deliveryRules.length === 0 ? <p className="admin-help">Nothing here yet.</p> : null}
         </div>
       </section>
     </>

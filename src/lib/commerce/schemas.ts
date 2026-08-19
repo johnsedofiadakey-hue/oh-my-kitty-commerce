@@ -156,6 +156,22 @@ export const adjustInventoryInputSchema = z.object({
   reason: z.string().min(3)
 });
 
+export const createMediaAssetInputSchema = z.object({
+  storagePath: z.string().min(1),
+  url: z.string().min(1),
+  alt: z.string().min(1),
+  title: z.string().optional(),
+  usage: z.array(z.string()).default([])
+});
+
+export const attachProductImageInputSchema = z.object({
+  productId: z.string().min(1),
+  variantId: z.string().min(1),
+  storagePath: z.string().min(1),
+  url: z.string().min(1),
+  alt: z.string().min(1)
+});
+
 export const createCustomerInputSchema = z.object({
   authUid: z.string().nullable().optional(),
   name: z.string().optional(),
@@ -292,6 +308,11 @@ export const updateStaffUserInputSchema = staffUserFieldsSchema
     id: z.string().min(1)
   });
 
+export const updateContentBlockInputSchema = z.object({
+  key: z.string().min(1),
+  value: z.string()
+});
+
 export const updateStoreSettingsInputSchema = z.object({
   storeName: z.string().min(1),
   receiptFooter: z.string().optional()
@@ -319,5 +340,8 @@ export type CreatePromotionInput = z.input<typeof createPromotionInputSchema>;
 export type UpdatePromotionInput = z.input<typeof updatePromotionInputSchema>;
 export type UpdateOrderFulfilmentInput = z.input<typeof updateOrderFulfilmentInputSchema>;
 export type PosReversalInput = z.input<typeof posReversalInputSchema>;
+export type UpdateContentBlockInput = z.input<typeof updateContentBlockInputSchema>;
+export type CreateMediaAssetInput = z.input<typeof createMediaAssetInputSchema>;
+export type AttachProductImageInput = z.input<typeof attachProductImageInputSchema>;
 export type ParsedCreateOrderDraftInput = z.output<typeof createOrderDraftInputSchema>;
 export type ParsedCompleteSaleInput = z.output<typeof completeSaleInputSchema>;

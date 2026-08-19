@@ -203,22 +203,49 @@ Audit logs should be append-only and permission-restricted.
 
 ## Rate Limiting And Abuse Protection
 
-Plan for:
+Status:
 
-- Firebase App Check where appropriate
-- rate limiting on public forms and checkout endpoints
-- validation against repeated payment submissions
-- idempotency keys for order/payment creation
-- webhook replay detection
+- idempotency keys are used for order/payment creation (`findOrderByIdempotencyKey`)
+- payment webhook confirmation is replay-safe (`confirmPaystackPayment` short-circuits
+  once `order.paymentStatus === "PAID"`, so a duplicate webhook cannot double-decrement
+  inventory or re-charge)
+- baseline HTTP security headers are set app-wide (`next.config.ts`): `X-Frame-Options`,
+  `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, HSTS
+- **not yet implemented:** Firebase App Check, and IP/request-rate limiting on public
+  endpoints (`/api/track`, checkout). `/api/track` looks up an order by order number
+  alone (`trackOrder` in `operations.ts`) — a deliberate product decision so a texted
+  tracking link (`/track?order=...`) works with zero typing. The order number is the
+  capability: a random ~41-bit token (`createOrderNumber`, `Math.random` base36) that
+  only reaches the customer via a private channel (their own SMS, or a printed POS
+  receipt), the same trust model courier tracking numbers use. This is single-factor,
+  not defense-in-depth, and there is no request-rate ceiling on top of it — a sustained
+  automated guessing attempt isn't currently blocked. Revisit (rate limiting, and/or a
+  higher-entropy or non-`Math.random` token) if abuse is observed, or before order
+  volume/PII sensitivity grows.
 
 ## Backups And Recovery
 
-Before production:
+Firestore has an automated daily backup schedule (7-day retention) on the
+`(default)` database, created via:
 
-- define Firestore backup/export strategy
-- document restore procedure
-- avoid destructive migrations
-- keep audit logs for critical changes
+```bash
+gcloud firestore backups schedules create --database='(default)' --retention=7d --recurrence=daily --project=ohmyk1tty
+```
+
+To list current backups and restore from one:
+
+```bash
+gcloud firestore backups list --project=ohmyk1tty
+gcloud firestore databases restore --source-backup=<BACKUP_NAME> --destination-database=<NEW_DATABASE_ID> --project=ohmyk1tty
+```
+
+Restores create a *new* database rather than overwriting `(default)` in place — cut
+over the app to it deliberately rather than restoring blind onto live data.
+
+Other practices in place:
+
+- avoid destructive migrations; prefer additive schema changes
+- audit logs are kept for critical changes (`auditLogs` collection, admin-only read)
 
 ## Security Testing
 

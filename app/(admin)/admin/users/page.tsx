@@ -1,4 +1,5 @@
 import { getAdminStaffData } from "@/lib/admin/staff";
+import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { StaffManagementForms } from "@/components/admin/staff-management-forms";
 import { requireAdminPermission } from "@/lib/auth/server";
 import { inviteStaffAction, updateStaffAccessAction } from "./actions";
@@ -17,17 +18,19 @@ export default async function AdminUsersPage() {
           <h1 className="app-title">Users & Roles</h1>
           <p className="app-subtitle">Admin-created staff accounts, POS access, and RBAC permissions.</p>
         </div>
+        <AdminDrawer title="Invite staff" triggerLabel="Invite staff">
+          <StaffManagementForms
+            disabled={disabled}
+            inviteStaffAction={inviteStaffAction}
+            roles={data.roles.map((role) => ({ id: role.id, name: role.name }))}
+          />
+        </AdminDrawer>
       </div>
       {data.sourceMessage ? (
         <div className="admin-alert" role="status">
           {data.sourceMessage}
         </div>
       ) : null}
-      <StaffManagementForms
-        disabled={disabled}
-        inviteStaffAction={inviteStaffAction}
-        roles={data.roles.map((role) => ({ id: role.id, name: role.name }))}
-      />
       <section className="admin-panel">
         <div className="panel-header">
           <h2>Users</h2>

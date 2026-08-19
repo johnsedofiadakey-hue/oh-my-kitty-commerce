@@ -68,6 +68,11 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /contentBlocks/{blockKey} {
+      allow read: if true;
+      allow create, update, delete: if false;
+    }
+
     match /promotions/{promotionId} {
       allow read: if resource.data.active == true || isStaff();
       allow create, update, delete: if false;

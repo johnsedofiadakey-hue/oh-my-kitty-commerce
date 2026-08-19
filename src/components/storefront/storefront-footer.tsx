@@ -1,31 +1,33 @@
 import Image from "next/image";
 import Link from "next/link";
+import { toWhatsAppLink } from "@/lib/storefront/whatsapp";
 
 type StorefrontFooterProps = {
   variant?: "full" | "minimal";
+  whatsappNumber: string;
 };
 
-const socialButtons = [
-  {
-    href: "https://www.instagram.com/ohmykitty_30/",
-    icon: "instagram",
-    label: "Instagram"
-  },
-  {
-    href: "https://www.tiktok.com/@ohmykitty_30",
-    icon: "tiktok",
-    label: "TikTok"
-  },
-  {
-    href: "https://wa.me/233241448231",
-    icon: "whatsapp",
-    label: "WhatsApp"
-  }
-] as const;
+type SocialIcon = "instagram" | "tiktok" | "whatsapp";
 
-type SocialIcon = (typeof socialButtons)[number]["icon"];
+export function StorefrontFooter({ variant = "full", whatsappNumber }: StorefrontFooterProps) {
+  const socialButtons = [
+    {
+      href: "https://www.instagram.com/ohmykitty_30/",
+      icon: "instagram" as SocialIcon,
+      label: "Instagram"
+    },
+    {
+      href: "https://www.tiktok.com/@ohmykitty_30",
+      icon: "tiktok" as SocialIcon,
+      label: "TikTok"
+    },
+    {
+      href: toWhatsAppLink(whatsappNumber),
+      icon: "whatsapp" as SocialIcon,
+      label: "WhatsApp"
+    }
+  ];
 
-export function StorefrontFooter({ variant = "full" }: StorefrontFooterProps) {
   return (
     <footer className="storefront-footer">
       {/* Cinematic final brand scene — full-screen, product overlapping the
@@ -74,6 +76,7 @@ export function StorefrontFooter({ variant = "full" }: StorefrontFooterProps) {
             <a href="/contact">Contact</a>
             <a href="/delivery">Delivery</a>
             <a href="/returns">Returns</a>
+            <a href="/track">Track order</a>
             <a href="/privacy">Privacy</a>
             <a href="/terms">Terms</a>
           </nav>

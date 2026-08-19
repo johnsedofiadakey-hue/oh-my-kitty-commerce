@@ -30,7 +30,7 @@ Phase 0 is complete only when:
 - local commands are documented
 - tests/typecheck/lint/build pass if configured
 
-Current local note: lint, typecheck, unit tests, and production build pass in the scaffold. Firestore rules tests are configured through `npm run test:rules`, but the local machine must have JDK 21 or newer for the current Firebase CLI emulator.
+Current local note: lint, typecheck, unit tests, production build, and `npm run test:rules` all pass. The Firebase CLI's Firestore emulator requires JDK 21+; if `java -version` on your machine is older, install one (e.g. `brew install openjdk@21`) and run `test:rules` with `JAVA_HOME` pointed at it — you don't need to change your system default `java`.
 
 ## Phase 1 Acceptance
 
@@ -45,7 +45,7 @@ Commerce core is acceptable when:
 - security rules block unsafe public writes
 - audit logs are created for privileged operations
 
-Current local note: commerce unit tests cover product/variant creation, inventory adjustment, POS sale completion, online sale completion, idempotency, discount permission failure, draft order behavior, channel/status separation, and audit logging. Firestore rules tests are still blocked locally by the JDK 21 requirement for Firebase CLI emulators.
+Current local note: commerce unit tests cover product/variant creation, inventory adjustment, POS sale completion, online sale completion, idempotency, discount permission failure, draft order behavior, channel/status separation, and audit logging. Firestore rules tests (`npm run test:rules`, JDK 21+ required — see Phase 0 note) cover public vs. staff vs. admin read boundaries, PII protection on customers, and the default-deny catch-all for every modeled collection.
 
 ## Phase 2 Acceptance
 

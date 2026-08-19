@@ -6,6 +6,7 @@ import type {
   Category,
   Collection,
   Concern,
+  ContentBlock,
   Customer,
   DeliveryRule,
   InventoryMovement,
@@ -120,6 +121,17 @@ export class FirestoreCommerceRepository implements CommerceRepository {
 
   async saveMedia(media: MediaAsset) {
     await this.db.collection("media").doc(media.id).set(cleanFirestoreData(media), {
+      merge: true
+    });
+  }
+
+  async listContentBlocks() {
+    const snapshot = await this.db.collection("contentBlocks").get();
+    return snapshot.docs.map((doc) => readDoc<ContentBlock>(doc)).filter(isDefined);
+  }
+
+  async saveContentBlock(block: ContentBlock) {
+    await this.db.collection("contentBlocks").doc(block.key).set(cleanFirestoreData(block), {
       merge: true
     });
   }

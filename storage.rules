@@ -14,14 +14,18 @@ service firebase.storage {
       return signedIn() && (request.auth.token.isStaff == true || request.auth.token.isAdmin == true);
     }
 
+    function isReasonableImage() {
+      return request.resource.size < 10 * 1024 * 1024 && request.resource.contentType.matches("image/.*");
+    }
+
     match /public/{allPaths=**} {
       allow read: if true;
-      allow write: if isStaff();
+      allow write: if isStaff() && isReasonableImage();
     }
 
     match /products/{allPaths=**} {
       allow read: if true;
-      allow write: if isStaff();
+      allow write: if isStaff() && isReasonableImage();
     }
 
     match /admin/{allPaths=**} {

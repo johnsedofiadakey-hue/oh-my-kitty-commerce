@@ -9,6 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://ohmyk1tty.web.app"),
   title: {
     default: "Oh My Kitty",
     template: "%s | Oh My Kitty"
@@ -20,6 +21,10 @@ export const metadata: Metadata = {
     icon: "/favicon.png",
     shortcut: "/favicon.png",
     apple: "/icons/apple-touch-icon.png"
+  },
+  openGraph: {
+    siteName: "Oh My Kitty",
+    type: "website"
   }
 };
 
