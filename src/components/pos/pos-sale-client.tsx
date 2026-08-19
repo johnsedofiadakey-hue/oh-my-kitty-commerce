@@ -10,6 +10,7 @@ import {
   replayPendingSales,
   type PendingAction
 } from "@/lib/pos/offline-queue";
+import { PosRecentSales, type RecentPosSale } from "@/components/pos/pos-reversal-panel";
 
 type PosSaleClientProps = {
   products: StorefrontProductView[];
@@ -53,6 +54,7 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
   const [shiftBusy, setShiftBusy] = useState(false);
   const [shift, setShift] = useState<PosShiftState | null>(null);
   const [shiftSales, setShiftSales] = useState({ count: 0, revenue: 0, cash: 0 });
+  const [recentSales, setRecentSales] = useState<RecentPosSale[]>([]);
   const [pendingSales, setPendingSales] = useState<PendingAction[]>([]);
   const [isOnline, setIsOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine);
   const [cartSheetOpen, setCartSheetOpen] = useState(false);
@@ -158,6 +160,7 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
         status: "OPEN"
       });
       setShiftSales({ count: 0, revenue: 0, cash: 0 });
+      setRecentSales([]);
       setOpeningCash("");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not open shift.");
@@ -224,6 +227,12 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
     });
   }
 
+  function handleReversed(orderId: string, mode: "REFUND" | "VOID") {
+    setRecentSales((current) =>
+      current.map((sale) => (sale.orderId === orderId ? { ...sale, reversed: mode } : sale))
+    );
+  }
+
   function setQuantity(variantId: string, quantity: number) {
     setCart((current) =>
       current
@@ -259,13 +268,16 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
     };
     const estimatedTotal = subtotal;
 
-    function settleLocally(orderNumber: string | null, total: number, pending: boolean) {
+    function settleLocally(orderId: string | null, orderNumber: string | null, total: number, pending: boolean) {
       setReceipt({ changeDue, orderNumber, total, pending });
       setShiftSales((current) => ({
         cash: current.cash + (paymentMethod === "cash" ? total : 0),
         count: current.count + 1,
         revenue: current.revenue + total
       }));
+      if (orderId && orderNumber) {
+        setRecentSales((current) => [{ orderId, orderNumber, total }, ...current].slice(0, 8));
+      }
       setCart([]);
       setCashReceived("");
       setCustomerName("");
@@ -278,9 +290,14 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...saleRequest, idempotencyKey: saleId })
       });
-      const payload = (await response.json()) as { message?: string; orderNumber?: string; total?: number };
+      const payload = (await response.json()) as {
+        message?: string;
+        orderId?: string;
+        orderNumber?: string;
+        total?: number;
+      };
 
-      if (!response.ok || !payload.orderNumber || typeof payload.total !== "number") {
+      if (!response.ok || !payload.orderId || !payload.orderNumber || typeof payload.total !== "number") {
         // The server saw the request and rejected it (bad input, out of
         // stock, shift closed) — retrying the identical request offline
         // would just fail the same way, so this is a real error, not an
@@ -288,14 +305,16 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
         throw new Error(payload.message ?? "POS sale failed.");
       }
 
-      settleLocally(payload.orderNumber, payload.total, false);
+      settleLocally(payload.orderId, payload.orderNumber, payload.total, false);
     } catch (error) {
       if (error instanceof TypeError) {
         // fetch() itself threw — a network-level failure, not a server
         // response, which is the signal that we're actually offline.
+        // The order doesn't exist server-side yet, so it can't be
+        // refunded/voided from here until sync assigns it a real orderId.
         await enqueueSale(saleId, saleRequest);
         refreshPendingSales();
-        settleLocally(null, estimatedTotal, true);
+        settleLocally(null, null, estimatedTotal, true);
       } else {
         setErrorMessage(error instanceof Error ? error.message : "POS sale failed.");
       }
@@ -455,6 +474,7 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
             </>
           )}
         </section>
+        <PosRecentSales onReversed={handleReversed} sales={recentSales} />
         {receipt ? (
           <div className={receipt.pending ? "pos-receipt pending" : "pos-receipt"} role="status">
             <span>{receipt.pending ? "Saved offline" : "Receipt"}</span>

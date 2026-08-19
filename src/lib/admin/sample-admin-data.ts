@@ -126,15 +126,57 @@ export function getRoleNames(roleIds: string[]) {
     .join(", ");
 }
 
+/**
+ * Firestore Admin SDK reads timestamp fields back as `Timestamp` instances,
+ * not `Date` — they don't extend Date, have no `getTime()`, and coerce to a
+ * bogus number (their `valueOf()` is a sortable string encoding, not epoch
+ * ms), so `Intl.DateTimeFormat` silently formats the wrong date and any
+ * `.getTime()` sort throws. Every field typed `Date` in commerce/types.ts is
+ * really "Date | Timestamp" at runtime once it round-trips through
+ * Firestore — this duck-types either into a real Date.
+ */
+function toRealDate(value: unknown): Date | null {
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (
+    value &&
+    typeof value === "object" &&
+    "toDate" in value &&
+    typeof (value as { toDate: unknown }).toDate === "function"
+  ) {
+    return (value as { toDate: () => Date }).toDate();
+  }
+
+  return null;
+}
+
 export function formatDate(value: Date | undefined) {
-  if (!value) {
+  const date = toRealDate(value);
+  if (!date) {
     return "Not set";
   }
 
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
     timeStyle: "short"
-  }).format(value);
+  }).format(date);
+}
+
+/** Epoch ms for sorting by a possibly-missing, possibly-Timestamp date field. */
+export function toSortableMillis(value: Date | undefined) {
+  return toRealDate(value)?.getTime() ?? 0;
+}
+
+/** Whole days between `value` and now, or null when there's no date to compare. */
+export function daysSince(value: Date | undefined) {
+  const date = toRealDate(value);
+  if (!date) {
+    return null;
+  }
+
+  return Math.max(0, Math.floor((Date.now() - date.getTime()) / 86_400_000));
 }
 
 function findProduct(productId: string) {

@@ -5,6 +5,7 @@ import {
   getVariantLabel
 } from "@/lib/admin/operations-data";
 import { requireAdminPermission } from "@/lib/auth/server";
+import { adjustInventoryAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export default async function AdminInventoryPage() {
   await requireAdminPermission("inventory.view");
   const data = await getAdminOperationsData();
   const rows = data.inventoryRows;
+  const disabled = data.source !== "live";
 
   return (
     <>
@@ -20,9 +22,6 @@ export default async function AdminInventoryPage() {
           <h1 className="app-title">Inventory</h1>
           <p className="app-subtitle">Ledgered stock movements across online, POS, and admin activity.</p>
         </div>
-        <button className="admin-action" type="button">
-          Adjust stock
-        </button>
       </div>
       {data.sourceMessage ? (
         <div className="admin-alert" role="status">
@@ -53,6 +52,51 @@ export default async function AdminInventoryPage() {
               </span>
             </div>
           ))}
+        </div>
+      </section>
+      <section className="admin-panel">
+        <div className="panel-header">
+          <h2>Adjust stock</h2>
+          <span>Ledgered movement</span>
+        </div>
+        <div className="quick-edit-list">
+          {rows.map(({ product, variant }) => (
+            <form action={adjustInventoryAction} className="quick-edit-row" key={variant.id}>
+              <input name="productId" type="hidden" value={variant.productId} />
+              <input name="variantId" type="hidden" value={variant.id} />
+              <label className="admin-field">
+                <span>Variant</span>
+                <input disabled value={`${getProductTitle(product)} / ${getVariantLabel(variant)}`} />
+              </label>
+              <label className="admin-field">
+                <span>Type</span>
+                <select defaultValue="MANUAL_ADJUSTMENT" disabled={disabled} name="type">
+                  <option value="STOCK_RECEIVED">Stock received</option>
+                  <option value="MANUAL_ADJUSTMENT">Manual adjustment</option>
+                  <option value="DAMAGE">Damage</option>
+                  <option value="LOSS">Loss</option>
+                </select>
+              </label>
+              <label className="admin-field">
+                <span>Quantity delta</span>
+                <input
+                  disabled={disabled}
+                  name="quantityDelta"
+                  placeholder="e.g. 10 or -2"
+                  required
+                  type="number"
+                />
+              </label>
+              <label className="admin-field">
+                <span>Reason</span>
+                <input disabled={disabled} minLength={3} name="reason" placeholder="Restock delivery" required />
+              </label>
+              <button className="admin-action" disabled={disabled} type="submit">
+                Adjust
+              </button>
+            </form>
+          ))}
+          {rows.length === 0 ? <p className="admin-help">Nothing here yet.</p> : null}
         </div>
       </section>
       <section className="admin-panel">

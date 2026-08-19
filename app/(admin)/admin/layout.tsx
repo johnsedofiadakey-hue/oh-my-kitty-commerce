@@ -1,24 +1,79 @@
 import { redirect } from "next/navigation";
-import { AdminNav } from "@/components/admin/admin-nav";
+import { AdminNav, type AdminNavGroup } from "@/components/admin/admin-nav";
+import type { AdminIconName } from "@/components/admin/admin-icons";
+import { getAdminOperationsData } from "@/lib/admin/operations-data";
 import { getRequiredAdminActor } from "@/lib/auth/server";
 import { canAccessAdmin, canAccessPos, defaultRoles, hasPermission, type Permission } from "@/lib/permissions/permissions";
 import type { CommerceActor } from "@/lib/commerce/operations";
 
-const adminNavItems = [
-  { label: "Dashboard", href: "/admin", requiredPermission: "dashboard.view" },
-  { label: "Products", href: "/admin/products", requiredPermission: "products.view" },
-  { label: "Taxonomy", href: "/admin/taxonomy", requiredPermission: "products.view" },
-  { label: "Orders", href: "/admin/orders", requiredPermission: "orders.view" },
-  { label: "Inventory", href: "/admin/inventory", requiredPermission: "inventory.view" },
-  { label: "Customers", href: "/admin/customers", requiredPermission: "customers.view" },
-  { label: "Promotions", href: "/admin/promotions", requiredPermission: "promotions.view" },
-  { label: "Content & Media", href: "/admin/content", requiredPermission: "content.view" },
-  { label: "Delivery", href: "/admin/delivery", requiredPermission: "settings.view" },
-  { label: "Reports", href: "/admin/reports", requiredPermission: "reports.view" },
-  { label: "Users & Roles", href: "/admin/users", requiredPermission: "users.view" },
-  { label: "Settings", href: "/admin/settings", requiredPermission: "settings.view" },
-  { label: "Audit", href: "/admin/audit", requiredPermission: "audit.view" }
-] as const satisfies ReadonlyArray<{ label: string; href: string; requiredPermission: Permission }>;
+type NavConfigItem = {
+  label: string;
+  href: string;
+  icon: AdminIconName;
+  requiredPermission: Permission;
+  badgeKey?: "orders" | "inventory";
+};
+
+type NavConfigGroup = {
+  label: string | null;
+  items: NavConfigItem[];
+};
+
+const navConfig: NavConfigGroup[] = [
+  {
+    label: null,
+    items: [{ label: "Dashboard", href: "/admin", icon: "overview", requiredPermission: "dashboard.view" }]
+  },
+  {
+    label: "Catalog",
+    items: [
+      { label: "Products", href: "/admin/products", icon: "products", requiredPermission: "products.view" },
+      { label: "Taxonomy", href: "/admin/taxonomy", icon: "taxonomy", requiredPermission: "products.view" },
+      { label: "Content & Media", href: "/admin/content", icon: "content", requiredPermission: "content.view" }
+    ]
+  },
+  {
+    label: "Sales",
+    items: [
+      {
+        label: "Orders",
+        href: "/admin/orders",
+        icon: "orders",
+        requiredPermission: "orders.view",
+        badgeKey: "orders"
+      },
+      { label: "Customers", href: "/admin/customers", icon: "customers", requiredPermission: "customers.view" },
+      { label: "Promotions", href: "/admin/promotions", icon: "promotions", requiredPermission: "promotions.view" }
+    ]
+  },
+  {
+    label: "Operations",
+    items: [
+      {
+        label: "Inventory",
+        href: "/admin/inventory",
+        icon: "inventory",
+        requiredPermission: "inventory.view",
+        badgeKey: "inventory"
+      },
+      { label: "Delivery", href: "/admin/delivery", icon: "delivery", requiredPermission: "settings.view" }
+    ]
+  },
+  {
+    label: "Insights",
+    items: [
+      { label: "Reports", href: "/admin/reports", icon: "reports", requiredPermission: "reports.view" },
+      { label: "Audit log", href: "/admin/audit", icon: "audit", requiredPermission: "audit.view" }
+    ]
+  },
+  {
+    label: "Admin",
+    items: [
+      { label: "Users & roles", href: "/admin/users", icon: "users", requiredPermission: "users.view" },
+      { label: "Settings", href: "/admin/settings", icon: "settings", requiredPermission: "settings.view" }
+    ]
+  }
+];
 
 export default async function AdminLayout({
   children
@@ -53,13 +108,39 @@ export default async function AdminLayout({
     );
   }
 
-  const visibleNavItems = adminNavItems.filter((item) =>
-    hasPermission(defaultRoles, actor, item.requiredPermission)
-  );
+  const data = await getAdminOperationsData();
+  const badgeCounts = {
+    orders: data.orders.filter(
+      (order) =>
+        order.status !== "CANCELLED" &&
+        (order.fulfilmentStatus === "UNFULFILLED" || order.fulfilmentStatus === "PROCESSING")
+    ).length,
+    inventory: data.metrics.lowStock
+  };
+
+  const groups: AdminNavGroup[] = navConfig
+    .map((group) => ({
+      label: group.label,
+      items: group.items
+        .filter((item) => hasPermission(defaultRoles, actor, item.requiredPermission))
+        .map((item) => ({
+          label: item.label,
+          href: item.href,
+          icon: item.icon,
+          badge: item.badgeKey ? badgeCounts[item.badgeKey] || undefined : undefined
+        }))
+    }))
+    .filter((group) => group.items.length > 0);
+
+  const actorRole = defaultRoles.find((role) => actor.roleIds.includes(role.id))?.name ?? "Staff";
 
   return (
     <div className="app-shell">
-      <AdminNav items={visibleNavItems} />
+      <AdminNav
+        actorName={actor.displayName ?? actor.email ?? "Staff"}
+        actorRole={actorRole}
+        groups={groups}
+      />
       <main className="app-main">{children}</main>
     </div>
   );

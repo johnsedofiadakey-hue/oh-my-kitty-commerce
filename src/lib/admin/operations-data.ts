@@ -1,10 +1,13 @@
+import { cache } from "react";
 import {
   adminData,
+  daysSince,
   formatDate,
   formatMoney,
   getOrderCustomerName,
   getProductTitle,
-  getVariantLabel
+  getVariantLabel,
+  toSortableMillis
 } from "@/lib/admin/sample-admin-data";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import type {
@@ -70,7 +73,12 @@ export type AdminOperationsData = {
   };
 };
 
-export async function getAdminOperationsData(): Promise<AdminOperationsData> {
+/**
+ * Cached per-request: the admin layout reads this for nav badge counts and
+ * every admin page reads it again for its own view — without `cache()` that
+ * would be a duplicate Firestore fetch on every single page load.
+ */
+export const getAdminOperationsData = cache(async (): Promise<AdminOperationsData> => {
   const context = getCommerceServerContext();
   if (!context) {
     return sampleOperationsData("Firebase Admin is not configured yet. Showing sample operations.");
@@ -121,9 +129,9 @@ export async function getAdminOperationsData(): Promise<AdminOperationsData> {
   } catch {
     return sampleOperationsData("Firestore operations data is not ready. Showing sample operations.");
   }
-}
+});
 
-export { formatDate, formatMoney, getOrderCustomerName, getProductTitle, getVariantLabel };
+export { daysSince, formatDate, formatMoney, getOrderCustomerName, getProductTitle, getVariantLabel };
 
 function sampleOperationsData(sourceMessage: string): AdminOperationsData {
   return buildOperationsData({
@@ -169,13 +177,15 @@ function buildOperationsData(input: {
       movements: input.inventoryMovements.filter((movement) => movement.variantId === variant.id)
     };
   });
-  const orderRows = input.orders.map((order) => ({
-    order,
-    payment: input.payments.find((payment) => payment.orderId === order.id) ?? null,
-    customer: order.customerId
-      ? input.customers.find((customer) => customer.id === order.customerId) ?? null
-      : null
-  }));
+  const orderRows = [...input.orders]
+    .sort((a, b) => toSortableMillis(b.createdAt) - toSortableMillis(a.createdAt))
+    .map((order) => ({
+      order,
+      payment: input.payments.find((payment) => payment.orderId === order.id) ?? null,
+      customer: order.customerId
+        ? input.customers.find((customer) => customer.id === order.customerId) ?? null
+        : null
+    }));
   const channelTotals: AdminChannelTotal[] = (["ONLINE", "POS", "ADMIN_CREATED"] as const).map(
     (channel) => {
       const orders = input.orders.filter((order) => order.channel === channel);

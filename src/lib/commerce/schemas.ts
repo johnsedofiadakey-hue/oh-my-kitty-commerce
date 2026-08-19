@@ -31,11 +31,38 @@ export const productCareSchema = z.object({
   warnings: z.string().optional()
 });
 
-export const createProductInputSchema = z.object({
+/**
+ * Fields shared by create and update — deliberately WITHOUT `.default()`.
+ * Zod applies `.default()` to a field that's simply absent from the input,
+ * even through `.partial()` — so an update schema built by calling
+ * `.partial()` directly on a schema with defaults doesn't make those fields
+ * "leave unchanged if omitted", it makes them "silently reset to the
+ * default if omitted". `createProductInputSchema` layers defaults back on
+ * for creation; `updateProductInputSchema` partials these bare fields, so
+ * an update that only mentions `status` really does leave everything else
+ * untouched.
+ */
+const productFieldsSchema = z.object({
   title: z.string().min(2),
   slug: slugSchema,
   shortCopy: z.string().max(140).optional(),
   description: z.string().optional(),
+  status: productStatusSchema,
+  categoryIds: z.array(z.string().min(1)),
+  collectionIds: z.array(z.string().min(1)),
+  concernIds: z.array(z.string().min(1)),
+  productTypeIds: z.array(z.string().min(1)),
+  routineIds: z.array(z.string().min(1)),
+  tags: z.array(z.string().min(1)),
+  mediaIds: z.array(z.string().min(1)),
+  featured: z.boolean(),
+  bestSeller: z.boolean(),
+  homepagePriority: z.number().int().min(0).optional(),
+  seo: seoSchema.optional(),
+  care: productCareSchema.optional()
+});
+
+export const createProductInputSchema = productFieldsSchema.extend({
   status: productStatusSchema.default("DRAFT"),
   categoryIds: z.array(z.string().min(1)).default([]),
   collectionIds: z.array(z.string().min(1)).default([]),
@@ -45,26 +72,34 @@ export const createProductInputSchema = z.object({
   tags: z.array(z.string().min(1)).default([]),
   mediaIds: z.array(z.string().min(1)).default([]),
   featured: z.boolean().default(false),
-  bestSeller: z.boolean().default(false),
-  homepagePriority: z.number().int().min(0).optional(),
-  seo: seoSchema.optional(),
-  care: productCareSchema.optional()
+  bestSeller: z.boolean().default(false)
 });
 
-export const updateProductInputSchema = createProductInputSchema.partial().extend({
+export const updateProductInputSchema = productFieldsSchema.partial().extend({
   id: z.string().min(1)
 });
 
-export const createVariantInputSchema = z.object({
+const variantFieldsSchema = z.object({
   productId: z.string().min(1),
   title: z.string().min(1),
   sku: z.string().min(2),
   barcode: z.string().optional(),
-  optionValues: z.record(z.string(), z.string()).default({}),
+  optionValues: z.record(z.string(), z.string()),
   price: moneySchema,
-  currency: z.literal("GHS").default("GHS"),
+  currency: z.literal("GHS"),
   compareAtPrice: moneySchema.nullable().optional(),
   cost: moneySchema.nullable().optional(),
+  mediaIds: z.array(z.string().min(1)),
+  trackInventory: z.boolean(),
+  stockOnHand: z.number().int().min(0),
+  stockAvailable: z.number().int().min(0),
+  lowStockThreshold: z.number().int().min(0),
+  active: z.boolean()
+});
+
+export const createVariantInputSchema = variantFieldsSchema.extend({
+  optionValues: z.record(z.string(), z.string()).default({}),
+  currency: z.literal("GHS").default("GHS"),
   mediaIds: z.array(z.string().min(1)).default([]),
   trackInventory: z.boolean().default(true),
   stockOnHand: z.number().int().min(0).default(0),
@@ -73,7 +108,7 @@ export const createVariantInputSchema = z.object({
   active: z.boolean().default(true)
 });
 
-export const updateVariantInputSchema = createVariantInputSchema.partial().extend({
+export const updateVariantInputSchema = variantFieldsSchema.partial().extend({
   productId: z.string().min(1),
   id: z.string().min(1)
 });
@@ -129,82 +164,128 @@ export const createCustomerInputSchema = z.object({
   createdFrom: salesChannelSchema
 });
 
-export const createPromotionInputSchema = z.object({
+export const updateCustomerInputSchema = createCustomerInputSchema
+  .omit({ createdFrom: true })
+  .partial()
+  .extend({
+    id: z.string().min(1)
+  });
+
+const promotionFieldsSchema = z.object({
   code: z.string().min(2).transform((value) => value.toUpperCase()),
   type: z.enum(["PERCENT", "AMOUNT"]),
   value: z.number().positive(),
+  active: z.boolean(),
+  channelRestrictions: z.array(salesChannelSchema),
+  productRestrictions: z.array(z.string()),
+  categoryRestrictions: z.array(z.string()),
+  usageLimit: z.number().int().positive().nullable().optional(),
+  requiresManagerApproval: z.boolean()
+});
+
+export const createPromotionInputSchema = promotionFieldsSchema.extend({
   active: z.boolean().default(true),
   channelRestrictions: z.array(salesChannelSchema).default([]),
   productRestrictions: z.array(z.string()).default([]),
   categoryRestrictions: z.array(z.string()).default([]),
-  usageLimit: z.number().int().positive().nullable().optional(),
   requiresManagerApproval: z.boolean().default(false)
 });
 
-export const createConcernInputSchema = z.object({
+export const updatePromotionInputSchema = promotionFieldsSchema
+  .omit({ code: true })
+  .partial()
+  .extend({
+    id: z.string().min(1)
+  });
+
+export const posReversalInputSchema = z.object({
+  orderId: z.string().min(1),
+  reason: z.string().min(3),
+  restock: z.boolean().default(true)
+});
+
+export const updateOrderFulfilmentInputSchema = z.object({
+  id: z.string().min(1),
+  fulfilmentStatus: z.enum([
+    "UNFULFILLED",
+    "PROCESSING",
+    "READY_FOR_PICKUP",
+    "OUT_FOR_DELIVERY",
+    "FULFILLED",
+    "CANCELLED"
+  ])
+});
+
+const taxonomyEntryFieldsSchema = z.object({
   title: z.string().min(2),
   slug: slugSchema,
   description: z.string().optional(),
-  sortOrder: z.number().int().min(0).default(0),
-  active: z.boolean().default(true)
+  sortOrder: z.number().int().min(0),
+  active: z.boolean()
 });
 
-export const updateConcernInputSchema = createConcernInputSchema.partial().extend({
+const taxonomyEntryDefaults = { sortOrder: z.number().int().min(0).default(0), active: z.boolean().default(true) };
+
+export const createConcernInputSchema = taxonomyEntryFieldsSchema.extend(taxonomyEntryDefaults);
+
+export const updateConcernInputSchema = taxonomyEntryFieldsSchema.partial().extend({
   id: z.string().min(1)
 });
 
-export const createProductTypeInputSchema = z.object({
-  title: z.string().min(2),
-  slug: slugSchema,
-  description: z.string().optional(),
-  sortOrder: z.number().int().min(0).default(0),
-  active: z.boolean().default(true)
-});
+export const createProductTypeInputSchema = taxonomyEntryFieldsSchema.extend(taxonomyEntryDefaults);
 
-export const updateProductTypeInputSchema = createProductTypeInputSchema.partial().extend({
+export const updateProductTypeInputSchema = taxonomyEntryFieldsSchema.partial().extend({
   id: z.string().min(1)
 });
 
-export const createRoutineInputSchema = z.object({
-  title: z.string().min(2),
-  slug: slugSchema,
-  description: z.string().optional(),
-  sortOrder: z.number().int().min(0).default(0),
-  active: z.boolean().default(true)
-});
+export const createRoutineInputSchema = taxonomyEntryFieldsSchema.extend(taxonomyEntryDefaults);
 
-export const updateRoutineInputSchema = createRoutineInputSchema.partial().extend({
+export const updateRoutineInputSchema = taxonomyEntryFieldsSchema.partial().extend({
   id: z.string().min(1)
 });
 
-export const createDeliveryRuleInputSchema = z.object({
+const deliveryRuleFieldsSchema = z.object({
   name: z.string().min(2),
   type: z.enum(["PICKUP", "LOCAL_DELIVERY", "NATIONWIDE_DELIVERY"]),
+  active: z.boolean(),
+  regions: z.array(z.string()),
+  fee: moneySchema,
+  freeAbove: moneySchema.nullable().optional(),
+  estimate: z.string().optional(),
+  sortOrder: z.number().int().min(0)
+});
+
+export const createDeliveryRuleInputSchema = deliveryRuleFieldsSchema.extend({
   active: z.boolean().default(true),
   regions: z.array(z.string()).default([]),
   fee: moneySchema.default(0),
-  freeAbove: moneySchema.nullable().optional(),
-  estimate: z.string().optional(),
   sortOrder: z.number().int().min(0).default(0)
 });
 
-export const updateDeliveryRuleInputSchema = createDeliveryRuleInputSchema.partial().extend({
+export const updateDeliveryRuleInputSchema = deliveryRuleFieldsSchema.partial().extend({
   id: z.string().min(1)
 });
 
-export const createStaffUserInputSchema = z.object({
+const staffUserFieldsSchema = z.object({
   id: z.string().min(1),
   uid: z.string().min(1),
   displayName: z.string().min(2),
   email: z.string().email(),
-  status: z.enum(["ACTIVE", "DEACTIVATED"]).default("ACTIVE"),
+  status: z.enum(["ACTIVE", "DEACTIVATED"]),
   roleIds: z.array(z.string().min(1)).min(1, "Choose at least one role."),
+  type: z.literal("ADMIN_OR_STAFF"),
+  posEnabled: z.boolean(),
+  permissionOverrides: z.array(z.string())
+});
+
+export const createStaffUserInputSchema = staffUserFieldsSchema.extend({
+  status: z.enum(["ACTIVE", "DEACTIVATED"]).default("ACTIVE"),
   type: z.literal("ADMIN_OR_STAFF").default("ADMIN_OR_STAFF"),
   posEnabled: z.boolean().default(false),
   permissionOverrides: z.array(z.string()).default([])
 });
 
-export const updateStaffUserInputSchema = createStaffUserInputSchema
+export const updateStaffUserInputSchema = staffUserFieldsSchema
   .omit({ uid: true, type: true })
   .partial()
   .extend({
@@ -233,5 +314,10 @@ export type UpdateStaffUserInput = z.input<typeof updateStaffUserInputSchema>;
 export type UpdateStoreSettingsInput = z.input<typeof updateStoreSettingsInputSchema>;
 export type AdjustInventoryInput = z.input<typeof adjustInventoryInputSchema>;
 export type CreateCustomerInput = z.input<typeof createCustomerInputSchema>;
+export type UpdateCustomerInput = z.input<typeof updateCustomerInputSchema>;
+export type CreatePromotionInput = z.input<typeof createPromotionInputSchema>;
+export type UpdatePromotionInput = z.input<typeof updatePromotionInputSchema>;
+export type UpdateOrderFulfilmentInput = z.input<typeof updateOrderFulfilmentInputSchema>;
+export type PosReversalInput = z.input<typeof posReversalInputSchema>;
 export type ParsedCreateOrderDraftInput = z.output<typeof createOrderDraftInputSchema>;
 export type ParsedCompleteSaleInput = z.output<typeof completeSaleInputSchema>;

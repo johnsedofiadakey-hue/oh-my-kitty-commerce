@@ -4,14 +4,31 @@ import { useEffect, useState } from "react";
 import type { Route } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AdminSignOutButton } from "@/components/auth/admin-sign-out-button";
+import { AdminIcon, type AdminIconName } from "@/components/admin/admin-icons";
 
-type AdminNavProps = {
-  items: { label: string; href: string }[];
+export type AdminNavItem = {
+  label: string;
+  href: string;
+  icon: AdminIconName;
+  badge?: number;
 };
 
-export function AdminNav({ items }: AdminNavProps) {
+export type AdminNavGroup = {
+  label: string | null;
+  items: AdminNavItem[];
+};
+
+type AdminNavProps = {
+  groups: AdminNavGroup[];
+  actorName: string;
+  actorRole: string;
+};
+
+export function AdminNav({ groups, actorName, actorRole }: AdminNavProps) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     if (open) {
@@ -51,23 +68,61 @@ export function AdminNav({ items }: AdminNavProps) {
       ) : null}
       <aside className={open ? "app-sidebar open" : "app-sidebar"}>
         <Link className="admin-brand" href="/admin">
-          <Image alt="Oh My Kitty logo" height={54} priority src="/brand/oh-my-kitty-logo.jpeg" width={54} />
-          <span>Oh My Kitty Admin</span>
+          <Image alt="Oh My Kitty logo" height={40} priority src="/brand/oh-my-kitty-logo.jpeg" width={40} />
+          <span>
+            Oh My Kitty
+            <em>Admin</em>
+          </span>
         </Link>
-        <nav className="nav-list" aria-label="Admin">
-          {items.map((item) => (
-            <Link
-              className="nav-item"
-              href={item.href as Route}
-              key={item.href}
-              onClick={() => setOpen(false)}
-            >
-              {item.label}
-            </Link>
+        <div className="nav-groups">
+          {groups.map((group) => (
+            <nav aria-label={group.label ?? "Overview"} className="nav-group" key={group.label ?? "overview"}>
+              {group.label ? <div className="nav-group-label">{group.label}</div> : null}
+              {group.items.map((item) => {
+                const active =
+                  item.href === "/admin"
+                    ? pathname === "/admin"
+                    : pathname === item.href || pathname?.startsWith(`${item.href}/`);
+
+                return (
+                  <Link
+                    className={active ? "nav-item active" : "nav-item"}
+                    href={item.href as Route}
+                    key={item.href}
+                    onClick={() => setOpen(false)}
+                  >
+                    <AdminIcon name={item.icon} />
+                    <span>{item.label}</span>
+                    {item.badge ? <span className="nav-badge">{item.badge}</span> : null}
+                  </Link>
+                );
+              })}
+            </nav>
           ))}
+        </div>
+        <div className="nav-foot">
+          <div className="nav-user">
+            <span className="nav-avatar">{initials(actorName)}</span>
+            <span className="nav-user-copy">
+              <strong>{actorName}</strong>
+              <em>{actorRole}</em>
+            </span>
+          </div>
           <AdminSignOutButton />
-        </nav>
+        </div>
       </aside>
     </>
   );
+}
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return "?";
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
 }

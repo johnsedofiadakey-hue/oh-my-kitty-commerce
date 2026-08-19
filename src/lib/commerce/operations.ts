@@ -1,4 +1,11 @@
-import { defaultRoles, hasPermission, type Permission, type Role, type UserAccess } from "@/lib/permissions/permissions";
+import {
+  defaultRoles,
+  getHighestRoleLimit,
+  hasPermission,
+  type Permission,
+  type Role,
+  type UserAccess
+} from "@/lib/permissions/permissions";
 import { CommerceError } from "@/lib/commerce/errors";
 import type { CommerceRepository, CommerceTransaction } from "@/lib/commerce/repository";
 import { createNoopTransaction } from "@/lib/commerce/repository";
@@ -12,6 +19,10 @@ import {
   createStaffUserInputSchema,
   updateStaffUserInputSchema,
   updateStoreSettingsInputSchema,
+  updateCustomerInputSchema,
+  updatePromotionInputSchema,
+  updateOrderFulfilmentInputSchema,
+  posReversalInputSchema,
   createOrderDraftInputSchema,
   createProductInputSchema,
   createProductTypeInputSchema,
@@ -31,8 +42,12 @@ import {
   type CreateVariantInput,
   type ParsedCompleteSaleInput,
   type ParsedCreateOrderDraftInput,
+  type UpdateCustomerInput,
+  type UpdateOrderFulfilmentInput,
+  type UpdatePromotionInput,
   type UpdateProductInput,
-  type UpdateVariantInput
+  type UpdateVariantInput,
+  type PosReversalInput
 } from "@/lib/commerce/schemas";
 import type {
   AuditLog,
@@ -56,6 +71,8 @@ import type {
 
 export type CommerceActor = UserAccess & {
   system?: boolean;
+  displayName?: string;
+  email?: string;
 };
 
 export type CommerceContext = {
@@ -267,6 +284,31 @@ export async function createCustomer(
   return customer;
 }
 
+export async function updateCustomer(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: UpdateCustomerInput
+) {
+  await assertCan(context, actor, "customers.update");
+  const parsed = updateCustomerInputSchema.parse(input);
+  const existing = await context.repo.getCustomer(parsed.id);
+  if (!existing) {
+    throw new CommerceError("NOT_FOUND", `Customer not found: ${parsed.id}`);
+  }
+
+  const customer: Customer = { ...existing, ...parsed, id: existing.id };
+
+  await context.repo.saveCustomer(customer);
+  await writeAuditLog(context, actor, {
+    action: "customers.update",
+    entityType: "customer",
+    entityId: customer.id,
+    summary: "Updated customer"
+  });
+
+  return customer;
+}
+
 export async function createPromotion(
   context: CommerceContext,
   actor: CommerceActor,
@@ -288,6 +330,27 @@ export async function createPromotion(
     entityType: "promotion",
     entityId: promotion.id,
     summary: `Created promotion ${promotion.code}`
+  });
+
+  return promotion;
+}
+
+export async function updatePromotion(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: UpdatePromotionInput
+) {
+  await assertCan(context, actor, "promotions.update");
+  const parsed = updatePromotionInputSchema.parse(input);
+  const existing = await requiredEntity(await context.repo.listPromotions(), parsed.id, "Promotion");
+  const promotion: Promotion = { ...existing, ...parsed, id: existing.id };
+
+  await context.repo.savePromotion(promotion);
+  await writeAuditLog(context, actor, {
+    action: "promotions.update",
+    entityType: "promotion",
+    entityId: promotion.id,
+    summary: `Updated promotion ${promotion.code}`
   });
 
   return promotion;
@@ -795,6 +858,187 @@ export async function completeAdminCreatedSale(
   return completeSale(context, actor, parsed);
 }
 
+/**
+ * Refunds a completed POS sale: returns items to stock, marks the order/payment
+ * refunded, and requires manager approval when the actor's role-based refund
+ * limit doesn't cover the order total (ADR-013). `approverActor` must already
+ * be verified by the caller (e.g. a freshly checked manager ID token) — this
+ * function only checks that the approver's own role grants enough headroom.
+ */
+export async function refundPosSale(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: PosReversalInput,
+  approverActor?: CommerceActor
+) {
+  return reversePosSale(context, actor, input, approverActor, "REFUND");
+}
+
+/**
+ * Voids a completed POS sale: same reversal as a refund, but the order is
+ * marked CANCELLED rather than REFUNDED (the sale never should have counted).
+ * Subject to the same manager-approval rule as refunds.
+ */
+export async function voidPosSale(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: PosReversalInput,
+  approverActor?: CommerceActor
+) {
+  return reversePosSale(context, actor, input, approverActor, "VOID");
+}
+
+async function reversePosSale(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: PosReversalInput,
+  approverActor: CommerceActor | undefined,
+  mode: "REFUND" | "VOID"
+) {
+  const permission = mode === "REFUND" ? "pos.refund" : "pos.void";
+  await assertCan(context, actor, permission);
+  const parsed = posReversalInputSchema.parse(input);
+
+  return withTransaction(context, async () => {
+    const order = await context.repo.getOrder(parsed.orderId);
+    if (!order) {
+      throw new CommerceError("NOT_FOUND", `Order not found: ${parsed.orderId}`);
+    }
+
+    if (order.channel !== "POS") {
+      throw new CommerceError("INVALID_STATE", "Only POS sales can be refunded or voided here.");
+    }
+
+    if (order.paymentStatus === "REFUNDED") {
+      return { order, idempotent: true };
+    }
+
+    if (order.paymentStatus !== "PAID") {
+      throw new CommerceError("INVALID_STATE", "Only a paid sale can be refunded or voided.");
+    }
+
+    await requireReversalAuthorization(context, actor, approverActor, permission, order.total);
+
+    const movements: InventoryMovement[] = [];
+    for (const item of order.items) {
+      const variant = await context.repo.getVariant(item.productId, item.variantId);
+      if (!variant) {
+        continue;
+      }
+
+      const updatedVariant: ProductVariant = parsed.restock
+        ? {
+            ...variant,
+            stockOnHand: variant.stockOnHand + item.quantity,
+            stockAvailable: variant.stockAvailable + item.quantity
+          }
+        : variant;
+
+      const movement: InventoryMovement = {
+        id: createId(context, "movement"),
+        productId: item.productId,
+        variantId: item.variantId,
+        type: parsed.restock ? "RETURN_TO_STOCK" : "REFUND_NO_STOCK_RETURN",
+        quantityDelta: parsed.restock ? item.quantity : 0,
+        stockAfter: updatedVariant.stockAvailable,
+        orderId: order.id,
+        reason: parsed.reason,
+        actorId: actor.uid,
+        channel: order.channel,
+        createdAt: getNow(context)
+      };
+
+      if (parsed.restock) {
+        await context.repo.saveVariant(updatedVariant);
+      }
+      await context.repo.saveInventoryMovement(movement);
+      movements.push(movement);
+    }
+
+    const updatedOrder: Order = {
+      ...order,
+      status: mode === "REFUND" ? "REFUNDED" : "CANCELLED",
+      paymentStatus: "REFUNDED",
+      fulfilmentStatus: mode === "VOID" ? "CANCELLED" : order.fulfilmentStatus
+    };
+    await context.repo.saveOrder(updatedOrder);
+
+    const payments = await context.repo.listPayments();
+    const payment = payments.find((entry) => entry.orderId === order.id);
+    let updatedPayment: Payment | null = null;
+    if (payment) {
+      updatedPayment = { ...payment, status: "REFUNDED", updatedAt: getNow(context) };
+      await context.repo.savePayment(updatedPayment);
+    }
+
+    await writeAuditLog(context, actor, {
+      action: mode === "REFUND" ? "pos.refund" : "pos.void",
+      entityType: "order",
+      entityId: order.id,
+      summary: `${mode === "REFUND" ? "Refunded" : "Voided"} ${order.orderNumber}`,
+      reason: approverActor ? `${parsed.reason} — approved by ${approverActor.uid}` : parsed.reason
+    });
+
+    return { order: updatedOrder, payment: updatedPayment, inventoryMovements: movements, idempotent: false };
+  });
+}
+
+async function requireReversalAuthorization(
+  context: CommerceContext,
+  actor: CommerceActor,
+  approverActor: CommerceActor | undefined,
+  permission: Permission,
+  amount: number
+) {
+  const roles = await resolveRoles(context, actor.roleIds);
+  const actorLimit = getHighestRoleLimit(roles, actor, "maxRefundAmount");
+  if (amount <= actorLimit) {
+    return;
+  }
+
+  if (!approverActor) {
+    throw new CommerceError(
+      "FORBIDDEN",
+      "This amount is over your refund limit. A manager must approve it."
+    );
+  }
+
+  const approverRoles = await resolveRoles(context, approverActor.roleIds);
+  if (!hasPermission(approverRoles, approverActor, permission)) {
+    throw new CommerceError("FORBIDDEN", "The approving account cannot authorize this action.");
+  }
+
+  const approverLimit = getHighestRoleLimit(approverRoles, approverActor, "maxRefundAmount");
+  if (amount > approverLimit) {
+    throw new CommerceError("FORBIDDEN", "The approving account's refund limit is too low for this amount.");
+  }
+}
+
+export async function updateOrderFulfilment(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: UpdateOrderFulfilmentInput
+) {
+  await assertCan(context, actor, "fulfilment.update");
+  const parsed = updateOrderFulfilmentInputSchema.parse(input);
+  const order = await context.repo.getOrder(parsed.id);
+  if (!order) {
+    throw new CommerceError("NOT_FOUND", `Order not found: ${parsed.id}`);
+  }
+
+  const updatedOrder: Order = { ...order, fulfilmentStatus: parsed.fulfilmentStatus };
+
+  await context.repo.saveOrder(updatedOrder);
+  await writeAuditLog(context, actor, {
+    action: "orders.update_fulfilment",
+    entityType: "order",
+    entityId: order.id,
+    summary: `Set ${order.orderNumber} fulfilment to ${parsed.fulfilmentStatus}`
+  });
+
+  return updatedOrder;
+}
+
 export async function writeAuditLog(
   context: CommerceContext,
   actor: CommerceActor,
@@ -904,7 +1148,8 @@ async function buildOrder(
     createdBy: input.createdBy ?? null,
     staffId: input.staffId ?? null,
     posShiftId: input.posShiftId ?? null,
-    idempotencyKey: input.idempotencyKey
+    idempotencyKey: input.idempotencyKey,
+    createdAt: getNow(context)
   };
 }
 

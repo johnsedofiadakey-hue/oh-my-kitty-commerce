@@ -18,7 +18,7 @@ export function AdminSignOutButton() {
   }
 
   return (
-    <button className="nav-item nav-button" onClick={handleSignOut} type="button">
+    <button className="nav-signout" onClick={handleSignOut} type="button">
       Sign out
     </button>
   );

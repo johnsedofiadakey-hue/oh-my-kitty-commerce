@@ -196,6 +196,7 @@ export type Order = {
   staffId?: string | null;
   posShiftId?: string | null;
   idempotencyKey: string;
+  createdAt?: Date;
 };
 
 export type CustomerSnapshot = {
