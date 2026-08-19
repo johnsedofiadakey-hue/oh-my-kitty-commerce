@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ClearCartOnMount } from "@/components/storefront/clear-cart-on-mount";
 import { confirmPaystackPayment } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { verifyPaystackTransaction } from "@/lib/payments/paystack";
@@ -43,6 +44,7 @@ export default async function PaystackCallbackPage({ searchParams }: PageProps) 
       <section className="cart-surface">
         {result.state === "success" ? (
           <>
+            <ClearCartOnMount />
             <span className="scene-kicker">Order confirmed</span>
             <h1>{result.orderNumber}</h1>
             <p>Total: {formatMoney(result.total)}</p>

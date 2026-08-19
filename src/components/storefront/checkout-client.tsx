@@ -3,12 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
-import {
-  clearCartLines,
-  onCartChanged,
-  readCartLines,
-  type CartLine
-} from "@/components/storefront/add-to-bag-button";
+import { onCartChanged, readCartLines, type CartLine } from "@/components/storefront/add-to-bag-button";
 import { BagIcon } from "@/components/storefront/icons";
 import { formatMoney } from "@/lib/commerce/format";
 import type { StorefrontDeliveryOption } from "@/lib/storefront/delivery";
@@ -26,33 +21,6 @@ type CustomerState = {
   notes: string;
 };
 
-type SubmittedOrder = {
-  orderNumber: string;
-  total: number;
-};
-
-type PaymentMethod = "card" | "mobile_money" | "manual_transfer" | "cash";
-
-const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  card: "Card",
-  mobile_money: "Mobile money",
-  manual_transfer: "Bank transfer",
-  cash: "Cash"
-};
-
-function paymentMethodMeta(method: PaymentMethod, isPickup: boolean) {
-  switch (method) {
-    case "card":
-      return "Secured by Paystack";
-    case "mobile_money":
-      return "MTN, Telecel, AirtelTigo";
-    case "manual_transfer":
-      return "We'll send account details";
-    case "cash":
-      return isPickup ? "Pay when you collect" : "Pay the rider on delivery";
-  }
-}
-
 const serverCartSnapshot: CartLine[] = [];
 
 export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutClientProps) {
@@ -65,12 +33,8 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
     notes: ""
   });
   const [deliveryId, setDeliveryId] = useState(deliveryOptions[0]?.id ?? "");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
-    paystackEnabled ? "card" : "mobile_money"
-  );
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [submittedOrder, setSubmittedOrder] = useState<SubmittedOrder | null>(null);
 
   const subtotal = useMemo(
     () => lines.reduce((total, line) => total + line.unitPrice * line.quantity, 0),
@@ -85,22 +49,21 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
     event.preventDefault();
     setErrorMessage("");
 
-    if (paymentMethod === "card" && !customer.email.trim()) {
-      setErrorMessage("Add your email to receive the card payment receipt.");
+    if (!paystackEnabled) {
+      setErrorMessage("Payments aren't set up yet — check back shortly.");
       return;
     }
 
     setSubmitting(true);
 
     try {
-      const endpoint = paymentMethod === "card" ? "/api/checkout/paystack" : "/api/checkout";
-      const response = await fetch(endpoint, {
+      const response = await fetch("/api/checkout/paystack", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customer: {
             name: customer.name,
-            email: customer.email || undefined,
+            email: customer.email,
             phone: customer.phone,
             address: isPickup ? undefined : customer.address,
             notes: customer.notes || undefined
@@ -110,8 +73,7 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
             productId: line.productId,
             variantId: line.variantId,
             quantity: line.quantity
-          })),
-          paymentMethod
+          }))
         })
       });
       const payload = (await response.json()) as {
@@ -125,38 +87,17 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
         throw new Error(payload.message ?? "Checkout failed.");
       }
 
-      if (paymentMethod === "card") {
-        if (!payload.authorizationUrl) {
-          throw new Error("Could not start card payment.");
-        }
-        // Cart is intentionally left intact here — it only clears once
-        // Paystack confirms payment on the callback page, never before.
-        window.location.href = payload.authorizationUrl;
-        return;
+      if (!payload.authorizationUrl) {
+        throw new Error("Could not start payment.");
       }
 
-      setSubmittedOrder({ orderNumber: payload.orderNumber, total: payload.total });
-      clearCartLines();
+      // Cart is intentionally left intact here — it only clears once
+      // Paystack confirms payment on the callback page, never before.
+      window.location.href = payload.authorizationUrl;
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Checkout failed.");
-    } finally {
       setSubmitting(false);
     }
-  }
-
-  if (submittedOrder) {
-    return (
-      <section className="cart-surface">
-        <span className="scene-kicker">Order received</span>
-        <h1>{submittedOrder.orderNumber}</h1>
-        <p>Total: {formatMoney(submittedOrder.total)}</p>
-        <p>We&apos;ve got it — you&apos;ll hear from us shortly to confirm and arrange delivery.</p>
-        <Link className="portal-cta" href="/shop">
-          <span>Continue shopping</span>
-          <i aria-hidden="true" />
-        </Link>
-      </section>
-    );
   }
 
   if (lines.length === 0) {
@@ -232,36 +173,44 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
             />
           </label>
           <label>
-            <span>Email{paymentMethod === "card" ? "" : " (optional)"}</span>
+            <span>Email</span>
             <input
               autoComplete="email"
               inputMode="email"
               onChange={(event) =>
                 setCustomer((current) => ({ ...current, email: event.target.value }))
               }
-              placeholder={paymentMethod === "card" ? "For your receipt" : "Optional"}
-              required={paymentMethod === "card"}
+              placeholder="For your order confirmation"
+              required
               type="email"
               value={customer.email}
             />
           </label>
         </div>
 
-        <div className="delivery-option-list" role="radiogroup" aria-label="Delivery method">
-          {deliveryOptions.map((option) => (
-            <label className={`delivery-option ${deliveryId === option.id ? "active" : ""}`} key={option.id}>
-              <input
-                checked={deliveryId === option.id}
-                name="delivery"
-                onChange={() => setDeliveryId(option.id)}
-                type="radio"
-                value={option.id}
-              />
-              <span className="delivery-option-name">{option.name}</span>
-              <span className="delivery-option-meta">{option.estimate ?? ""}</span>
-              <strong>{option.fee === 0 ? "Free" : option.formattedFee}</strong>
-            </label>
-          ))}
+        <div>
+          <div className="checkout-section-head">
+            <span className="checkout-form-label">Delivery</span>
+            <Link className="checkout-terms-link" href="/delivery">
+              See delivery terms
+            </Link>
+          </div>
+          <div className="delivery-option-list" role="radiogroup" aria-label="Delivery method">
+            {deliveryOptions.map((option) => (
+              <label className={`delivery-option ${deliveryId === option.id ? "active" : ""}`} key={option.id}>
+                <input
+                  checked={deliveryId === option.id}
+                  name="delivery"
+                  onChange={() => setDeliveryId(option.id)}
+                  type="radio"
+                  value={option.id}
+                />
+                <span className="delivery-option-name">{option.name}</span>
+                <span className="delivery-option-meta">{option.estimate ?? ""}</span>
+                {option.fee > 0 ? <strong>{option.formattedFee}</strong> : null}
+              </label>
+            ))}
+          </div>
         </div>
 
         {!isPickup ? (
@@ -288,41 +237,6 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
           />
         </label>
 
-        <div>
-          <span className="checkout-form-label">Payment</span>
-          <div className="delivery-option-list" role="radiogroup" aria-label="Payment method">
-            {(
-              [
-                ...(paystackEnabled ? (["card"] as const) : []),
-                "mobile_money",
-                "manual_transfer",
-                "cash"
-              ] as PaymentMethod[]
-            ).map((method) => (
-              <label
-                className={`delivery-option ${paymentMethod === method ? "active" : ""}`}
-                key={method}
-              >
-                <input
-                  checked={paymentMethod === method}
-                  name="payment"
-                  onChange={() => setPaymentMethod(method)}
-                  type="radio"
-                  value={method}
-                />
-                <span className="delivery-option-name">{PAYMENT_METHOD_LABELS[method]}</span>
-                <span className="delivery-option-meta">{paymentMethodMeta(method, isPickup)}</span>
-              </label>
-            ))}
-          </div>
-          {!paystackEnabled ? (
-            <small className="delivery-option-meta">
-              Card payment isn&apos;t set up yet — mobile money and bank transfer are confirmed
-              manually for now.
-            </small>
-          ) : null}
-        </div>
-
         <div className="checkout-totals">
           <div>
             <span>Subtotal</span>
@@ -338,9 +252,17 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
           </div>
         </div>
 
+        {!paystackEnabled ? (
+          <p className="checkout-payment-note">
+            Payments aren&apos;t set up yet on this environment, so orders can&apos;t be placed here.
+          </p>
+        ) : (
+          <p className="checkout-payment-note">Pay securely by card or mobile money — handled by Paystack.</p>
+        )}
+
         {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
-        <button className="checkout-cta" disabled={submitting} type="submit">
-          <span>{submitting ? "Placing order" : "Place order"}</span>
+        <button className="checkout-cta" disabled={submitting || !paystackEnabled} type="submit">
+          <span>{submitting ? "Redirecting to payment" : "Pay and place order"}</span>
           <BagIcon className="cta-icon" />
         </button>
       </form>

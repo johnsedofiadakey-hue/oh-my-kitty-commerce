@@ -853,7 +853,8 @@ export const sampleOrders: Order[] = [
     createdBy: null,
     staffId: null,
     posShiftId: null,
-    idempotencyKey: "seed-online-order"
+    idempotencyKey: "seed-online-order",
+    createdAt: new Date("2026-01-01T08:15:00.000Z")
   },
   {
     id: "order-pos-example",
@@ -888,7 +889,8 @@ export const sampleOrders: Order[] = [
     createdBy: "staff-1",
     staffId: "staff-1",
     posShiftId: "shift-open-example",
-    idempotencyKey: "seed-pos-order"
+    idempotencyKey: "seed-pos-order",
+    createdAt: new Date("2026-01-01T09:30:00.000Z")
   }
 ];
 
@@ -971,29 +973,29 @@ export const sampleDeliveryRules: DeliveryRule[] = [
     regions: [],
     fee: 0,
     freeAbove: null,
-    estimate: "Ready when confirmed",
+    estimate: "Ready when confirmed · Accra-Madina",
     sortOrder: 1
   },
   {
-    id: "delivery-accra",
-    name: "Accra Delivery",
-    type: "LOCAL_DELIVERY",
-    active: true,
-    regions: ["Accra"],
-    fee: 2500,
-    freeAbove: null,
-    estimate: "Same or next day",
-    sortOrder: 2
-  },
-  {
-    id: "delivery-nationwide",
-    name: "Nationwide Delivery",
+    id: "delivery-urgent",
+    name: "Urgent Delivery",
     type: "NATIONWIDE_DELIVERY",
     active: true,
     regions: [],
-    fee: 5000,
+    fee: 0,
     freeAbove: null,
-    estimate: "3-5 days",
+    estimate: "2 days · delivery fee paid to the courier on arrival",
+    sortOrder: 2
+  },
+  {
+    id: "delivery-free",
+    name: "Free Delivery",
+    type: "NATIONWIDE_DELIVERY",
+    active: true,
+    regions: [],
+    fee: 0,
+    freeAbove: null,
+    estimate: "4-5 business days · nationwide, no charge",
     sortOrder: 3
   }
 ];

@@ -155,22 +155,26 @@ function createCards(
   return variants
     .map((variant) => {
       const product = products.find((entry) => entry.id === variant.productId);
-      const mediaId = variant.mediaIds[0] ?? product?.mediaIds[0];
+      // Firestore doesn't enforce the Product/ProductVariant types — documents
+      // written before a field existed (or via a path that skipped it) can be
+      // missing these arrays entirely at runtime, so every access here is
+      // defensive rather than trusting the TS type.
+      const mediaId = (variant.mediaIds ?? [])[0] ?? (product?.mediaIds ?? [])[0];
       return product
         ? {
             product,
             variant,
             media: mediaId ? (mediaById.get(mediaId) ?? null) : null,
-            categories: product.categoryIds
+            categories: (product.categoryIds ?? [])
               .map((categoryId) => categoriesById.get(categoryId))
               .filter((category): category is Category => category !== undefined),
-            concerns: product.concernIds
+            concerns: (product.concernIds ?? [])
               .map((concernId) => concernsById.get(concernId))
               .filter((concern): concern is Concern => concern !== undefined),
-            productTypes: product.productTypeIds
+            productTypes: (product.productTypeIds ?? [])
               .map((productTypeId) => productTypesById.get(productTypeId))
               .filter((productType): productType is ProductType => productType !== undefined),
-            routines: product.routineIds
+            routines: (product.routineIds ?? [])
               .map((routineId) => routinesById.get(routineId))
               .filter((routine): routine is Routine => routine !== undefined)
           }
@@ -218,7 +222,7 @@ export function toStorefrontProductViews(catalogue: StorefrontCatalogue): Storef
       productTypeSlugs: productTypes.map((productType) => productType.slug),
       routineLabels: routines.map((routine) => routine.title),
       routineSlugs: routines.map((routine) => routine.slug),
-      tags: product.tags,
+      tags: product.tags ?? [],
       bestSeller: product.bestSeller,
       care: product.care,
       tone: tones[index % tones.length] ?? "peach"

@@ -16,11 +16,12 @@ import { formatMoney } from "@/lib/commerce/format";
 
 const serverCartSnapshot: CartLine[] = [];
 
-type CartClientProps = {
-  estimatedDeliveryFee: number;
+type CartContentsProps = {
+  /** Called right before navigating to checkout — lets the drawer close itself. */
+  onNavigate?: () => void;
 };
 
-export function CartClient({ estimatedDeliveryFee }: CartClientProps) {
+export function CartContents({ onNavigate }: CartContentsProps) {
   const lines = useSyncExternalStore(subscribeToCart, readCartLines, getServerCartSnapshot);
   const subtotal = useMemo(
     () => lines.reduce((total, line) => total + line.unitPrice * line.quantity, 0),
@@ -39,13 +40,9 @@ export function CartClient({ estimatedDeliveryFee }: CartClientProps) {
     writeCartLines(lines.filter((line) => line.variantId !== variantId));
   }
 
-  function clearCart() {
-    clearCartLines();
-  }
-
   if (lines.length === 0) {
     return (
-      <section className="cart-surface cart-empty">
+      <div className="cart-surface cart-empty">
         <span className="scene-kicker">Bag</span>
         <h1>Your ritual is waiting.</h1>
         <p>Products added from the shop will appear here.</p>
@@ -53,18 +50,18 @@ export function CartClient({ estimatedDeliveryFee }: CartClientProps) {
           <span>Explore care</span>
           <i aria-hidden="true" />
         </Link>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section className="cart-surface">
+    <div className="cart-surface">
       <div className="cart-heading">
         <div>
           <span className="scene-kicker">Bag</span>
           <h1>Your care edit</h1>
         </div>
-        <button className="text-button" onClick={clearCart} type="button">
+        <button className="text-button" onClick={clearCartLines} type="button">
           Clear
         </button>
       </div>
@@ -119,17 +116,13 @@ export function CartClient({ estimatedDeliveryFee }: CartClientProps) {
           <span>Subtotal</span>
           <strong>{formatMoney(subtotal)}</strong>
         </div>
-        <p className="cart-delivery-note">
-          {estimatedDeliveryFee === 0
-            ? "Free delivery available — final cost confirmed at checkout."
-            : `Estimated total ${formatMoney(subtotal + estimatedDeliveryFee)} incl. delivery from ${formatMoney(estimatedDeliveryFee)}.`}
-        </p>
-        <Link className="checkout-cta" href={"/checkout" as Route}>
+        <p className="cart-delivery-note">Delivery fee confirmed at checkout — free option available.</p>
+        <Link className="checkout-cta" href={"/checkout" as Route} onClick={onNavigate}>
           <span>Proceed to checkout</span>
           <BagIcon className="cta-icon" />
         </Link>
       </div>
-    </section>
+    </div>
   );
 }
 

@@ -1,22 +1,20 @@
 import Image from "next/image";
-import { CartClient } from "@/components/storefront/cart-client";
+import { CartContents } from "@/components/storefront/cart-contents";
 import { TransactionalHeader } from "@/components/storefront/transactional-header";
-import { getStorefrontDeliveryOptions } from "@/lib/storefront/delivery";
 
-export const dynamic = "force-dynamic";
-
-export default async function CartPage() {
-  const deliveryOptions = await getStorefrontDeliveryOptions();
-  const cheapestDeliveryFee =
-    deliveryOptions.length > 0 ? Math.min(...deliveryOptions.map((option) => option.fee)) : 0;
-
+/**
+ * Direct-navigation fallback (bookmarks, no-JS, "open in new tab" from the
+ * bag icon) — day to day, CartTrigger opens the same content in the global
+ * CartDrawer instead of routing here.
+ */
+export default function CartPage() {
   return (
     <main className="cart-page">
       <div className="cart-page-botanical" aria-hidden="true">
         <Image alt="" fill sizes="260px" src="/hero/botanicals/leaf-midground-01.svg" />
       </div>
       <TransactionalHeader actionHref="/shop" actionLabel="Continue shopping" />
-      <CartClient estimatedDeliveryFee={cheapestDeliveryFee} />
+      <CartContents />
     </main>
   );
 }

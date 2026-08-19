@@ -9,6 +9,7 @@ import {
   addLineToCart,
   type CartLine
 } from "@/components/storefront/add-to-bag-button";
+import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 
@@ -346,9 +347,9 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
               >
                 Explore product →
               </Link>
-              <Link className="sheet-cart-link" href="/cart">
+              <CartTrigger className="sheet-cart-link" onBeforeOpen={() => setSelectedId(null)}>
                 View bag
-              </Link>
+              </CartTrigger>
             </div>
           </aside>
         </div>

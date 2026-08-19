@@ -6,6 +6,7 @@ import type { Route } from "next";
 import { useEffect, useRef } from "react";
 import { addLineToCart, type CartLine } from "@/components/storefront/add-to-bag-button";
 import { CartCount } from "@/components/storefront/cart-count";
+import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
 import type { StorefrontCategorySummary, StorefrontProductView } from "@/lib/storefront/catalogue";
 
@@ -640,9 +641,9 @@ export function CinematicHome({ categories, products }: CinematicHomeProps) {
       <div className="shop-control" aria-label="Quick shopping controls">
         <Link href="/shop">Shop</Link>
         <span className="dot" aria-hidden="true" />
-        <Link href="/cart">
+        <CartTrigger>
           <CartCount />
-        </Link>
+        </CartTrigger>
       </div>
     </div>
   );

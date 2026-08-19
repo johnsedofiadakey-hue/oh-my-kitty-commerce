@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CartCount } from "@/components/storefront/cart-count";
+import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { BagIcon } from "@/components/storefront/icons";
 
 export function StorefrontNav() {
@@ -23,10 +24,10 @@ export function StorefrontNav() {
         </span>
       </Link>
 
-      <Link aria-label="View bag" className="bag-pill icon" href="/cart">
+      <CartTrigger ariaLabel="View bag" className="bag-pill icon">
         <BagIcon />
         <CartCount variant="badge" />
-      </Link>
+      </CartTrigger>
     </nav>
   );
 }

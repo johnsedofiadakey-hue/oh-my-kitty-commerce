@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useMemo, useState } from "react";
 import { AddToBagButton, type CartLine } from "@/components/storefront/add-to-bag-button";
+import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { BagIcon } from "@/components/storefront/icons";
 import { formatMoney } from "@/lib/commerce/format";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
@@ -115,10 +116,10 @@ export function ProductDetailHero({ variants }: ProductDetailHeroProps) {
           <strong className="mini-cart-line-price">{linePrice}</strong>
         </div>
 
-        <Link className="checkout-cta" href="/cart">
+        <CartTrigger className="checkout-cta">
           <span>Checkout</span>
           <BagIcon className="cta-icon" />
-        </Link>
+        </CartTrigger>
       </div>
     </section>
   );

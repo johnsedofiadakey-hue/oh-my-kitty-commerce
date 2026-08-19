@@ -5,9 +5,16 @@ import { getStorefrontDeliveryOptions } from "@/lib/storefront/delivery";
 export const dynamic = "force-dynamic";
 
 const DELIVERY_STEPS = [
-  { title: "Choose pickup or delivery", description: "Pick your option at checkout — fees update live." },
+  { title: "Choose pickup or delivery", description: "Pick your option at checkout." },
   { title: "We prepare your order", description: "Your items are packed with care once payment is confirmed." },
   { title: "Collect or receive", description: "Pick up in Accra-Madina, or track your delivery via WhatsApp." }
+];
+
+const FREE_DELIVERY_NOTES = [
+  "Riders collect orders on Tuesdays and deliver by Saturday at the latest.",
+  "If you'll be travelling after ordering, choose Urgent Delivery instead — Free Delivery can't be switched once it's on its way.",
+  "Volume, weather, and other factors can delay Free Delivery — thank you for your patience.",
+  "Not received by Saturday? Message WhatsApp 0241448231 that day to follow up."
 ];
 
 export default async function DeliveryPage() {
@@ -48,10 +55,18 @@ export default async function DeliveryPage() {
                     <strong>{option.name}</strong>
                     {option.estimate ? <span> — {option.estimate}</span> : null}
                   </div>
-                  <strong>{option.fee === 0 ? "Free" : option.formattedFee}</strong>
+                  {option.fee > 0 ? <strong>{option.formattedFee}</strong> : null}
                 </div>
               ))}
             </div>
+          </section>
+          <section data-section-number="03">
+            <h2>Free Delivery — good to know</h2>
+            <ul className="delivery-notice-list">
+              {FREE_DELIVERY_NOTES.map((note) => (
+                <li key={note}>{note}</li>
+              ))}
+            </ul>
           </section>
         </div>
       </section>
