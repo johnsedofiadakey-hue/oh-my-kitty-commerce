@@ -105,7 +105,7 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
       <section className="cart-surface cart-empty">
         <span className="scene-kicker">Checkout</span>
         <h1>Your bag is empty.</h1>
-        <p>Add something before checking out.</p>
+        <p>Add something to your bag first, then come back here.</p>
         <Link className="portal-cta" href="/shop">
           <span>Explore care</span>
           <i aria-hidden="true" />
@@ -148,25 +148,25 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
 
       <form className="checkout-form" onSubmit={submitCheckout}>
         <label>
-          <span>Name</span>
+          <span>Your name</span>
           <input
             autoComplete="name"
             onChange={(event) => setCustomer((current) => ({ ...current, name: event.target.value }))}
-            placeholder="Customer name"
+            placeholder="e.g. Ama Owusu"
             required
             value={customer.name}
           />
         </label>
         <div className="checkout-form-grid">
           <label>
-            <span>Phone</span>
+            <span>Phone number</span>
             <input
               autoComplete="tel"
               inputMode="tel"
               onChange={(event) =>
                 setCustomer((current) => ({ ...current, phone: event.target.value }))
               }
-              placeholder="024..."
+              placeholder="024 000 0000"
               required
               type="tel"
               value={customer.phone}
@@ -180,7 +180,7 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
               onChange={(event) =>
                 setCustomer((current) => ({ ...current, email: event.target.value }))
               }
-              placeholder="For your order confirmation"
+              placeholder="We'll send your receipt here"
               required
               type="email"
               value={customer.email}
@@ -190,7 +190,7 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
 
         <div>
           <div className="checkout-section-head">
-            <span className="checkout-form-label">Delivery</span>
+            <span className="checkout-form-label">How do you want it?</span>
             <Link className="checkout-terms-link" href="/delivery">
               See delivery terms
             </Link>
@@ -215,24 +215,25 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
 
         {!isPickup ? (
           <label>
-            <span>Delivery address</span>
+            <span>Where should we bring it?</span>
             <input
               autoComplete="street-address"
               onChange={(event) =>
                 setCustomer((current) => ({ ...current, address: event.target.value }))
               }
-              placeholder="Street, area, landmark"
+              placeholder="House number, area, closest landmark"
               required
               value={customer.address}
             />
           </label>
         ) : null}
 
-        <label>
-          <span>Delivery notes (optional)</span>
-          <input
+        <label className="checkout-notes-field">
+          <span>Anything we should know? (optional)</span>
+          <textarea
             onChange={(event) => setCustomer((current) => ({ ...current, notes: event.target.value }))}
-            placeholder="Gate code, preferred time..."
+            placeholder="e.g. call before you arrive, gate code, best time to reach you"
+            rows={2}
             value={customer.notes}
           />
         </label>
@@ -257,12 +258,12 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
             Payments aren&apos;t set up yet on this environment, so orders can&apos;t be placed here.
           </p>
         ) : (
-          <p className="checkout-payment-note">Pay securely by card or mobile money — handled by Paystack.</p>
+          <p className="checkout-payment-note">Pay safely with Mobile Money or Card.</p>
         )}
 
         {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
         <button className="checkout-cta" disabled={submitting || !paystackEnabled} type="submit">
-          <span>{submitting ? "Redirecting to payment" : "Pay and place order"}</span>
+          <span>{submitting ? "Taking you to payment..." : "Pay now"}</span>
           <BagIcon className="cta-icon" />
         </button>
       </form>

@@ -3119,10 +3119,30 @@ button {
   transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 
+.checkout-form textarea {
+  width: 100%;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: var(--color-near-black);
+  background: var(--color-white-pure);
+  font: inherit;
+  resize: vertical;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
 .checkout-form input:focus,
-.checkout-form select:focus {
+.checkout-form select:focus,
+.checkout-form textarea:focus {
   border-color: var(--color-peach);
   outline: 3px solid rgb(246 184 174 / 28%);
+}
+
+.checkout-notes-field {
+  border: 1px dashed var(--color-line);
+  border-radius: 16px;
+  padding: 12px;
+  background: var(--color-peach-mist);
 }
 
 .checkout-form-grid {
