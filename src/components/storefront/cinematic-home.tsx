@@ -227,11 +227,16 @@ export function CinematicHome({ categories, products }: CinematicHomeProps) {
 
   // The `autoPlay` attribute (below) is what reliably starts playback —
   // browsers handle its readiness timing far better than a manual .play()
-  // call in an effect. This layout effect only steps in to immediately
-  // pause it for a reduced-motion visitor, before the first paint.
+  // call in an effect. This layout effect only steps in to slow the clip
+  // to a calmer ambient pace, and to immediately pause it for a
+  // reduced-motion visitor, before the first paint.
   useLayoutEffect(() => {
     const video = heroVideoRef.current;
-    if (video && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (!video) {
+      return;
+    }
+    video.playbackRate = 0.5;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       video.pause();
     }
   }, []);
