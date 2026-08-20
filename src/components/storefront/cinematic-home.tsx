@@ -15,6 +15,13 @@ type CinematicHomeProps = {
   products: StorefrontProductView[];
 };
 
+// Firebase Hosting's CDN has repeatedly kept serving an old cached copy of
+// this file after a deploy, even with a max-age=0 origin header — some edge
+// nodes just don't revalidate reliably. A version query string forces a new
+// cache key instead of depending on that. Bump this any time the hero video
+// or its poster frame changes.
+const HERO_VIDEO_VERSION = "2";
+
 const WORLD_TILE_CYCLE = ["tall", "small", "wide", "small"] as const;
 const EXHIBITION_VARIANT_CYCLE = ["a", "b", "c", "d", "e"] as const;
 
@@ -411,9 +418,9 @@ export function CinematicHome({ categories, products }: CinematicHomeProps) {
             loop
             muted
             playsInline
-            poster="/hero/video/ohmykitty-hero-poster.jpg"
+            poster={`/hero/video/ohmykitty-hero-poster.jpg?v=${HERO_VIDEO_VERSION}`}
           >
-            <source src="/hero/video/ohmykitty-hero.mp4" type="video/mp4" />
+            <source src={`/hero/video/ohmykitty-hero.mp4?v=${HERO_VIDEO_VERSION}`} type="video/mp4" />
           </video>
           <div className="hero-scene-scrim" aria-hidden="true" />
 
