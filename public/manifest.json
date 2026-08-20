@@ -26,6 +26,13 @@
       "description": "Open the point-of-sale screen",
       "url": "/pos",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Admin dashboard",
+      "short_name": "Admin",
+      "description": "Open the admin portal",
+      "url": "/admin",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

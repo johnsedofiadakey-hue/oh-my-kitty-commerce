@@ -5818,3 +5818,111 @@ button {
     display: none;
   }
 }
+
+/* Quick-fulfil — opened straight from an SMS link, no login. Built for one thumb. */
+.quick-fulfil-page {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100svh;
+  padding: 24px 16px;
+  background: var(--color-white);
+}
+
+.quick-fulfil-card {
+  width: 100%;
+  max-width: 440px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-large);
+  padding: 28px 22px;
+  background: var(--color-white-pure);
+  box-shadow: var(--shadow-soft);
+}
+
+.quick-fulfil-kicker {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-green);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.quick-fulfil-card h1 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.8rem;
+}
+
+.quick-fulfil-customer {
+  margin: 6px 0 0;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.quick-fulfil-phone {
+  display: inline-block;
+  margin-top: 4px;
+  color: var(--color-near-black);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.quick-fulfil-items {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-line);
+}
+
+.quick-fulfil-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.92rem;
+}
+
+.quick-fulfil-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-line);
+  font-weight: 800;
+}
+
+.quick-fulfil-current-status {
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: var(--color-peach-mist);
+  font-size: 0.85rem;
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.quick-fulfil-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.quick-fulfil-button {
+  width: 100%;
+  min-height: 54px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  padding: 0 18px;
+  color: var(--color-white-pure);
+  background: var(--color-near-black);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.quick-fulfil-button.danger {
+  color: var(--color-status-urgent);
+  background: var(--color-status-urgent-soft);
+  border-color: var(--color-status-urgent-line);
+}

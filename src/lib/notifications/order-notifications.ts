@@ -3,6 +3,7 @@ import type { Order } from "@/lib/commerce/types";
 import { getContentValue } from "@/lib/storefront/content";
 import { isArkeselConfigured, sendSms } from "@/lib/notifications/arkesel";
 import { serverEnv } from "@/lib/env/server";
+import { signOrderFulfilToken } from "@/lib/admin/quick-action-token";
 
 export type OrderNotificationEvent = "CONFIRMED" | "READY_FOR_PICKUP" | "OUT_FOR_DELIVERY";
 
@@ -51,7 +52,9 @@ export async function notifyAdminOfNewOrder(order: Order): Promise<void> {
   try {
     const customerName = order.customerSnapshot?.name ?? "Walk-in customer";
     const itemSummary = summarizeItems(order.items);
-    const message = `Oh My Kitty: New order ${order.orderNumber} from ${customerName} (${order.channel}) — ${itemSummary}. Total ${formatMoney(order.total)}.`;
+    const actionLink = buildFulfilLink(order.orderNumber);
+    const linePart = actionLink ? ` Fulfil: ${actionLink}` : "";
+    const message = `Oh My Kitty: New order ${order.orderNumber} from ${customerName} (${order.channel}) — ${itemSummary}. Total ${formatMoney(order.total)}.${linePart}`;
     const result = await sendSms({ to: adminPhone, message });
     if (!result.ok) {
       console.error(`Arkesel admin alert failed for order ${order.orderNumber}: ${result.message}`);
@@ -61,25 +64,39 @@ export async function notifyAdminOfNewOrder(order: Order): Promise<void> {
   }
 }
 
+/**
+ * Kept deliberately short — just the status and a link. Full details
+ * (items, totals, delivery address) live on the tracking page rather
+ * than in the text itself.
+ */
 async function buildMessage(order: Order, event: OrderNotificationEvent): Promise<string> {
   const trackingLink = buildTrackingLink(order.orderNumber);
-  const itemSummary = summarizeItems(order.items);
 
   switch (event) {
     case "CONFIRMED":
-      return `Oh My Kitty: Order ${order.orderNumber} confirmed! ${itemSummary}. Total ${formatMoney(order.total)}. Track: ${trackingLink}`;
+      return `Oh My Kitty: Payment confirmed for order ${order.orderNumber}! Track it: ${trackingLink}`;
     case "READY_FOR_PICKUP": {
       const pickupLocation = await getContentValue("pickup-location");
-      return `Oh My Kitty: Order ${order.orderNumber} is ready for pickup at ${pickupLocation}. ${itemSummary}. Track: ${trackingLink}`;
+      return `Oh My Kitty: Order ${order.orderNumber} is ready for pickup at ${pickupLocation}. Track: ${trackingLink}`;
     }
     case "OUT_FOR_DELIVERY":
-      return `Oh My Kitty: Order ${order.orderNumber} is out for delivery and should arrive soon. Track: ${trackingLink}`;
+      return `Oh My Kitty: Order ${order.orderNumber} is out for delivery! Track: ${trackingLink}`;
   }
 }
 
 function buildTrackingLink(orderNumber: string) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ohmyk1tty.web.app";
   return `${siteUrl}/track?order=${encodeURIComponent(orderNumber)}`;
+}
+
+function buildFulfilLink(orderNumber: string) {
+  const token = signOrderFulfilToken(orderNumber);
+  if (!token) {
+    return null;
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ohmyk1tty.web.app";
+  return `${siteUrl}/fulfil/${encodeURIComponent(orderNumber)}?token=${token}`;
 }
 
 /** Keeps the SMS to a couple of segments even for large carts — e.g. "2x Honey, 1x Kitty Oil +2 more". */
