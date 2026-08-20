@@ -19,6 +19,17 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }
         ]
+      },
+      {
+        // Next's default long-lived s-maxage on prerendered HTML pages is
+        // meant for platforms (Vercel) that version-key their CDN cache per
+        // deploy. Firebase Hosting's CDN doesn't — it caches by URL alone,
+        // so a page's chunk-hash references can go stale across deploys and
+        // 404 in visitors' browsers until the year-long cache expires.
+        // Actual /_next/static/* assets are safe to cache forever since
+        // their filenames are content-hashed; only override the page shell.
+        source: "/((?!_next/static).*)",
+        headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }]
       }
     ];
   }
