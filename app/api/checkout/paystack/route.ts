@@ -39,10 +39,15 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as PaystackCheckoutRequestBody;
     const items = parseCheckoutLines(body.items);
-    const email = normalizeOptionalString(body.customer?.email);
-    if (!email) {
-      throw new CommerceError("VALIDATION_ERROR", "An email is required for card payment receipts.");
+    const phone = normalizeOptionalString(body.customer?.phone);
+    if (!phone) {
+      throw new CommerceError("VALIDATION_ERROR", "A phone number is required.");
     }
+
+    // Email is optional for the customer — Paystack's API still requires
+    // some email on the transaction, so when none is given we derive a
+    // harmless placeholder from their phone number instead of blocking checkout.
+    const email = normalizeOptionalString(body.customer?.email) ?? placeholderEmail(phone);
 
     const deliveryTotal = await resolveDeliveryFee(context, body.deliveryRuleId);
     const idempotencyKey =
@@ -53,7 +58,7 @@ export async function POST(request: Request) {
       customerSnapshot: {
         name: normalizeOptionalString(body.customer?.name),
         email,
-        phone: normalizeOptionalString(body.customer?.phone) ?? null,
+        phone,
         address: normalizeOptionalString(body.customer?.address) ?? null,
         notes: normalizeOptionalString(body.customer?.notes) ?? null
       },
@@ -152,6 +157,12 @@ function normalizeRequiredString(value: unknown, key: string) {
 
 function normalizeOptionalString(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+/** Paystack's transaction API requires an email; customers who skip the field get this instead. */
+function placeholderEmail(phone: string) {
+  const digits = phone.replace(/\D/g, "").slice(-9) || "guest";
+  return `${digits}@guest.ohmykitty.com`;
 }
 
 function getRouteErrorMessage(error: unknown) {

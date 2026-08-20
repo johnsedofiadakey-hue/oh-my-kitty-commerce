@@ -173,15 +173,14 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
             />
           </label>
           <label>
-            <span>Email</span>
+            <span>Email (optional)</span>
             <input
               autoComplete="email"
               inputMode="email"
               onChange={(event) =>
                 setCustomer((current) => ({ ...current, email: event.target.value }))
               }
-              placeholder="We'll send your receipt here"
-              required
+              placeholder="If you'd like a receipt by email"
               type="email"
               value={customer.email}
             />
