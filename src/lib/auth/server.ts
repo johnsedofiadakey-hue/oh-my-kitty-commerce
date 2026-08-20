@@ -32,7 +32,8 @@ export const getRequiredAdminActor = cache(async (): Promise<CommerceActor> => {
     uid: decoded.uid,
     roleIds: parseRoleIds(decoded.roleIds),
     displayName: typeof decoded.name === "string" ? decoded.name : undefined,
-    email: typeof decoded.email === "string" ? decoded.email : undefined
+    email: typeof decoded.email === "string" ? decoded.email : undefined,
+    posEnabled: typeof decoded.posEnabled === "boolean" ? decoded.posEnabled : undefined
   };
 });
 

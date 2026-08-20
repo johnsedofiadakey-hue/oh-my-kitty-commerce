@@ -75,6 +75,7 @@ export type UserAccess = {
   uid: string;
   roleIds: string[];
   permissionOverrides?: Permission[];
+  posEnabled?: boolean;
 };
 
 export function getGrantedPermissions(roles: Role[], user: UserAccess): Set<Permission> {
@@ -94,7 +95,11 @@ export function canAccessAdmin(roles: Role[], user: UserAccess) {
 }
 
 export function canAccessPos(roles: Role[], user: UserAccess) {
-  return hasPermission(roles, user, "pos.access") && hasPermission(roles, user, "pos.sell");
+  return (
+    hasPermission(roles, user, "pos.access") &&
+    hasPermission(roles, user, "pos.sell") &&
+    user.posEnabled !== false
+  );
 }
 
 export function getHighestRoleLimit(
@@ -117,6 +122,51 @@ export const defaultRoles: Role[] = [
     limits: {
       maxDiscountPercent: 100,
       maxRefundAmount: Number.MAX_SAFE_INTEGER,
+      canOverridePrice: true
+    },
+    system: true
+  },
+  {
+    id: "role-manager",
+    name: "Manager",
+    permissions: [
+      "admin.access",
+      "dashboard.view",
+      "products.view",
+      "media.view",
+      "orders.view",
+      "orders.view_all",
+      "orders.update_status",
+      "orders.cancel",
+      "orders.refund",
+      "orders.void",
+      "fulfilment.view",
+      "fulfilment.update",
+      "inventory.view",
+      "inventory.receive",
+      "inventory.adjust",
+      "inventory.view_ledger",
+      "customers.view",
+      "customers.create",
+      "customers.update",
+      "customers.view_pii",
+      "promotions.view",
+      "reports.view",
+      "reports.financial",
+      "pos.access",
+      "pos.sell",
+      "pos.discount",
+      "pos.price_override",
+      "pos.refund",
+      "pos.void",
+      "pos.shift.open",
+      "pos.shift.close",
+      "pos.receipts.view",
+      "audit.view"
+    ],
+    limits: {
+      maxDiscountPercent: 20,
+      maxRefundAmount: 200000,
       canOverridePrice: true
     },
     system: true

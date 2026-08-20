@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import { formatMoney } from "@/lib/commerce/format";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 import {
@@ -30,7 +30,20 @@ type PosReceipt = {
   pending: boolean;
 };
 
-type PaymentMethod = "cash" | "mobile_money" | "manual_transfer";
+type PaymentMethod = "cash" | "mobile_money" | "card" | "manual_transfer";
+
+type MomoProvider = "mtn" | "vod" | "atl";
+
+const MOMO_PROVIDERS: { value: MomoProvider; label: string }[] = [
+  { value: "mtn", label: "MTN Mobile Money" },
+  { value: "vod", label: "Vodafone Cash" },
+  { value: "atl", label: "AirtelTigo Money" }
+];
+
+type MomoStage = "idle" | "waiting" | "failed";
+
+const MOMO_POLL_INTERVAL_MS = 3000;
+const MOMO_TIMEOUT_MS = 120_000;
 
 type PosShiftState = {
   id: string;
@@ -67,6 +80,13 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
   const [customerPhone, setCustomerPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [cashReceived, setCashReceived] = useState("");
+  const [momoProvider, setMomoProvider] = useState<MomoProvider>("mtn");
+  const [momoStage, setMomoStage] = useState<MomoStage>("idle");
+  const [momoMessage, setMomoMessage] = useState("");
+  const [momoElapsedMs, setMomoElapsedMs] = useState(0);
+  const [momoReference, setMomoReference] = useState<string | null>(null);
+  const momoPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const momoCancelledRef = useRef(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [receipt, setReceipt] = useState<PosReceipt | null>(null);
@@ -255,10 +275,168 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
     );
   }
 
+  function stopMomoPolling() {
+    if (momoPollRef.current) {
+      clearInterval(momoPollRef.current);
+      momoPollRef.current = null;
+    }
+  }
+
+  useEffect(() => stopMomoPolling, []);
+
+  function settleMomoSale(orderId: string, orderNumber: string, total: number) {
+    stopMomoPolling();
+    setMomoStage("idle");
+    setMomoMessage("");
+    setMomoElapsedMs(0);
+    setMomoReference(null);
+    setReceipt({ changeDue: 0, orderNumber, total, pending: false });
+    setShiftSales((current) => ({
+      cash: current.cash,
+      count: current.count + 1,
+      revenue: current.revenue + total
+    }));
+    setRecentSales((current) => [{ orderId, orderNumber, total }, ...current].slice(0, 8));
+    setCart([]);
+    setCustomerName("");
+    setCustomerPhone("");
+  }
+
+  async function cancelMomoCharge(reference: string | null) {
+    if (!reference) {
+      return;
+    }
+
+    momoCancelledRef.current = true;
+    stopMomoPolling();
+    setMomoStage("idle");
+    setMomoMessage("");
+    setMomoElapsedMs(0);
+    setMomoReference(null);
+    setSubmitting(false);
+    try {
+      await fetch(`/api/pos/momo/charge/${encodeURIComponent(reference)}/cancel`, { method: "POST" });
+    } catch {
+      // Best-effort — the charge will also self-resolve via Paystack's
+      // webhook if the customer approves after this point.
+    }
+  }
+
+  function startMomoPolling(reference: string) {
+    momoCancelledRef.current = false;
+    setMomoReference(reference);
+    let ticks = 0;
+
+    momoPollRef.current = setInterval(async () => {
+      if (momoCancelledRef.current) {
+        return;
+      }
+
+      ticks += 1;
+      const elapsed = ticks * MOMO_POLL_INTERVAL_MS;
+      setMomoElapsedMs(elapsed);
+
+      if (elapsed >= MOMO_TIMEOUT_MS) {
+        stopMomoPolling();
+        setMomoStage("failed");
+        setMomoMessage("The customer didn't approve in time. Try again, or pick a different payment method.");
+        setSubmitting(false);
+        void cancelMomoCharge(reference);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/pos/momo/charge/${encodeURIComponent(reference)}`);
+        const payload = (await response.json()) as {
+          status?: "success" | "pending" | "failed" | "cancelled";
+          orderId?: string;
+          orderNumber?: string;
+          total?: number;
+          message?: string;
+        };
+
+        if (payload.status === "success" && payload.orderId && payload.orderNumber) {
+          settleMomoSale(payload.orderId, payload.orderNumber, payload.total ?? subtotal);
+          setSubmitting(false);
+        } else if (payload.status === "failed" || payload.status === "cancelled") {
+          stopMomoPolling();
+          setMomoStage("failed");
+          setMomoMessage(payload.message ?? "The payment did not go through.");
+          setSubmitting(false);
+        }
+        // "pending" — keep polling, no state change needed beyond the elapsed tick above.
+      } catch {
+        // A transient network hiccup while polling isn't fatal — the next
+        // tick tries again; only the overall timeout above gives up.
+      }
+    }, MOMO_POLL_INTERVAL_MS);
+  }
+
+  async function startMomoCharge() {
+    if (!shift) {
+      return;
+    }
+
+    setSubmitting(true);
+    setErrorMessage("");
+    setMomoStage("waiting");
+    setMomoMessage("Starting charge...");
+    setMomoElapsedMs(0);
+
+    try {
+      const response = await fetch("/api/pos/momo/charge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer: { name: customerName, phone: customerPhone },
+          items: cart.map((line) => ({
+            productId: line.id,
+            variantId: line.variantId,
+            quantity: line.quantity
+          })),
+          provider: momoProvider,
+          posShiftId: shift.id,
+          idempotencyKey: crypto.randomUUID()
+        })
+      });
+      const payload = (await response.json()) as {
+        message?: string;
+        orderId?: string;
+        orderNumber?: string;
+        total?: number;
+        reference?: string;
+        chargeStatus?: string;
+        displayText?: string | null;
+      };
+
+      if (!response.ok || !payload.orderId || !payload.orderNumber || !payload.reference) {
+        throw new Error(payload.message ?? "Could not start the mobile money charge.");
+      }
+
+      if (payload.chargeStatus === "success") {
+        settleMomoSale(payload.orderId, payload.orderNumber, payload.total ?? subtotal);
+        setSubmitting(false);
+        return;
+      }
+
+      setMomoMessage(payload.displayText || "Ask the customer to check their phone and approve the payment.");
+      startMomoPolling(payload.reference);
+    } catch (error) {
+      setMomoStage("failed");
+      setMomoMessage(error instanceof Error ? error.message : "Could not start the mobile money charge.");
+      setSubmitting(false);
+    }
+  }
+
   async function completeSale(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!shift) {
+      return;
+    }
+
+    if (paymentMethod === "mobile_money") {
+      void startMomoCharge();
       return;
     }
 
@@ -548,7 +726,8 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
             <span>Customer phone</span>
             <input
               onChange={(event) => setCustomerPhone(event.target.value)}
-              placeholder="Optional"
+              placeholder={paymentMethod === "mobile_money" ? "024 000 0000" : "Optional"}
+              required={paymentMethod === "mobile_money"}
               value={customerPhone}
             />
           </label>
@@ -559,7 +738,10 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
               value={paymentMethod}
             >
               <option value="cash">Cash</option>
-              <option value="mobile_money">Mobile money</option>
+              <option disabled={!isOnline} value="mobile_money">
+                Mobile money{isOnline ? "" : " (needs a connection)"}
+              </option>
+              <option value="card">Card</option>
               <option value="manual_transfer">Manual transfer</option>
             </select>
           </label>
@@ -575,20 +757,55 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
               />
             </label>
           ) : null}
+          {paymentMethod === "mobile_money" ? (
+            <label className="admin-field">
+              <span>Network</span>
+              <select
+                onChange={(event) => setMomoProvider(event.target.value as MomoProvider)}
+                value={momoProvider}
+              >
+                {MOMO_PROVIDERS.map((provider) => (
+                  <option key={provider.value} value={provider.value}>
+                    {provider.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           <div className="pos-total">
             <span>Total</span>
             <strong>{formatMoney(subtotal)}</strong>
           </div>
+          {momoStage === "waiting" ? (
+            <div className="pos-momo-waiting" role="status">
+              <span className="pos-momo-spinner" aria-hidden="true" />
+              <strong>{momoMessage}</strong>
+              <span>{customerPhone}</span>
+              <small>{Math.max(0, Math.round((MOMO_TIMEOUT_MS - momoElapsedMs) / 1000))}s left</small>
+              <button
+                className="pos-secondary-button"
+                onClick={() => void cancelMomoCharge(momoReference)}
+                type="button"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : null}
+          {momoStage === "failed" ? <p className="form-error">{momoMessage}</p> : null}
           {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
           {source === "live" && !canSell ? (
             <p className="pos-hint">Open a shift before completing POS sales.</p>
           ) : null}
           <button
             className="checkout-button"
-            disabled={!canSell || submitting || cart.length === 0}
+            disabled={!canSell || submitting || cart.length === 0 || momoStage === "waiting"}
             type="submit"
           >
-            {submitting ? "Completing sale" : "Complete sale"}
+            {momoStage === "waiting"
+              ? "Waiting for customer"
+              : submitting
+                ? "Completing sale"
+                : "Complete sale"}
           </button>
         </form>
       </aside>

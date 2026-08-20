@@ -21,6 +21,12 @@ export function isPaystackConfigured() {
   return Boolean(serverEnv.PAYSTACK_SECRET_KEY);
 }
 
+/** Paystack's transaction API requires an email; customers who skip the field get this instead. */
+export function placeholderEmailForPhone(phone: string) {
+  const digits = phone.replace(/\D/g, "").slice(-9) || "guest";
+  return `${digits}@guest.ohmykitty.com`;
+}
+
 function requireSecretKey() {
   if (!serverEnv.PAYSTACK_SECRET_KEY) {
     throw new Error("PAYSTACK_SECRET_KEY is not configured.");
@@ -73,6 +79,75 @@ export async function initializePaystackTransaction(input: {
     authorizationUrl: payload.data.authorization_url,
     accessCode: payload.data.access_code,
     reference: payload.data.reference
+  };
+}
+
+export type MobileMoneyProvider = "mtn" | "vod" | "atl";
+
+export type PaystackChargeResult = {
+  reference: string;
+  status: "pay_offline" | "send_otp" | "success" | "failed" | "pending" | "unknown";
+  displayText: string | null;
+};
+
+/**
+ * Starts a direct mobile money charge (Paystack's /charge endpoint, distinct
+ * from the redirect-based /transaction/initialize used for online checkout).
+ * This is what actually pushes the USSD/PIN prompt to the customer's phone —
+ * the returned status is almost never "success" immediately; the caller must
+ * poll verifyPaystackTransaction with the same reference until it resolves.
+ */
+export async function chargePaystackMobileMoney(input: {
+  amountMinorUnit: number;
+  email: string;
+  reference: string;
+  phone: string;
+  provider: MobileMoneyProvider;
+  metadata?: Record<string, unknown>;
+}): Promise<PaystackChargeResult> {
+  const secretKey = requireSecretKey();
+
+  const response = await fetch(`${PAYSTACK_API_BASE}/charge`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      amount: input.amountMinorUnit,
+      email: input.email,
+      currency: "GHS",
+      reference: input.reference,
+      mobile_money: { phone: input.phone, provider: input.provider },
+      metadata: input.metadata ?? {}
+    })
+  });
+
+  const payload = (await response.json()) as {
+    status: boolean;
+    message: string;
+    data?: { status: string; reference: string; display_text?: string };
+  };
+
+  if (!response.ok || !payload.status || !payload.data) {
+    throw new Error(payload.message || "Could not start the mobile money charge.");
+  }
+
+  const status = payload.data.status;
+  const knownStatuses: PaystackChargeResult["status"][] = [
+    "pay_offline",
+    "send_otp",
+    "success",
+    "failed",
+    "pending"
+  ];
+
+  return {
+    reference: payload.data.reference,
+    status: knownStatuses.includes(status as PaystackChargeResult["status"])
+      ? (status as PaystackChargeResult["status"])
+      : "unknown",
+    displayText: payload.data.display_text ?? null
   };
 }
 

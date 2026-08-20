@@ -82,9 +82,17 @@ function parsePosLines(value: unknown) {
 }
 
 function parsePaymentMethod(value: unknown) {
-  return value === "cash" || value === "mobile_money" || value === "manual_transfer"
-    ? value
-    : "cash";
+  // Mobile money settles through /api/pos/momo/charge instead, which only
+  // marks a sale paid after a server-side Paystack verification — never
+  // instantly, the way this route settles cash/card/manual_transfer.
+  if (value === "mobile_money") {
+    throw new CommerceError(
+      "VALIDATION_ERROR",
+      "Mobile money sales must go through the mobile money charge flow."
+    );
+  }
+
+  return value === "cash" || value === "card" || value === "manual_transfer" ? value : "cash";
 }
 
 function parseOptionalMoneyMinorUnit(value: unknown) {

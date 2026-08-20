@@ -73,6 +73,7 @@ async function bootstrapOwner() {
     isAdmin: true,
     isStaff: true,
     roleIds: [ownerRoleId],
+    posEnabled: true,
     permissionsVersion: 1
   });
 

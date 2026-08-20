@@ -12,7 +12,10 @@ export type PendingSaleRequest = {
   amountReceived?: number;
   customer: { name: string; phone: string };
   items: { productId: string; variantId: string; quantity: number }[];
-  paymentMethod: "cash" | "mobile_money" | "manual_transfer";
+  // Mobile money can't be queued offline — it needs a live round trip to
+  // Paystack to push the prompt to the customer's phone, so it's excluded
+  // here and disabled in the POS UI while offline.
+  paymentMethod: "cash" | "card" | "manual_transfer";
   posShiftId: string;
 };
 

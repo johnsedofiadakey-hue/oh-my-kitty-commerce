@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { CommerceError } from "@/lib/commerce/errors";
 import { createPendingOnlineOrder } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
-import { initializePaystackTransaction, isPaystackConfigured } from "@/lib/payments/paystack";
+import {
+  initializePaystackTransaction,
+  isPaystackConfigured,
+  placeholderEmailForPhone
+} from "@/lib/payments/paystack";
 
 type CheckoutLineInput = {
   productId?: unknown;
@@ -47,7 +51,7 @@ export async function POST(request: Request) {
     // Email is optional for the customer — Paystack's API still requires
     // some email on the transaction, so when none is given we derive a
     // harmless placeholder from their phone number instead of blocking checkout.
-    const email = normalizeOptionalString(body.customer?.email) ?? placeholderEmail(phone);
+    const email = normalizeOptionalString(body.customer?.email) ?? placeholderEmailForPhone(phone);
 
     const deliveryTotal = await resolveDeliveryFee(context, body.deliveryRuleId);
     const idempotencyKey =
@@ -157,12 +161,6 @@ function normalizeRequiredString(value: unknown, key: string) {
 
 function normalizeOptionalString(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
-}
-
-/** Paystack's transaction API requires an email; customers who skip the field get this instead. */
-function placeholderEmail(phone: string) {
-  const digits = phone.replace(/\D/g, "").slice(-9) || "guest";
-  return `${digits}@guest.ohmykitty.com`;
 }
 
 function getRouteErrorMessage(error: unknown) {

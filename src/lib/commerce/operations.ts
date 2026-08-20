@@ -896,6 +896,112 @@ export async function completePosSale(
   return completeSale(context, actor, parsed);
 }
 
+/**
+ * Starts a POS mobile money sale awaiting Paystack confirmation. Mirrors
+ * createPendingOnlineOrder below: creates the order as PENDING_PAYMENT /
+ * payment PENDING and does NOT touch inventory — only confirmPaystackPayment
+ * does that, after the caller has verified the charge with Paystack directly.
+ */
+export async function createPendingPosMomoOrder(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: Omit<CreateOrderDraftInput, "channel"> & { posShiftId: string }
+) {
+  await assertCan(context, actor, "pos.sell");
+  const parsed = createOrderDraftInputSchema.parse({
+    ...input,
+    channel: "POS",
+    staffId: input.staffId ?? actor.uid
+  });
+
+  const shift = await context.repo.getPosShift(parsed.posShiftId ?? "");
+  if (!shift || shift.status !== "OPEN") {
+    throw new CommerceError("INVALID_STATE", "POS sale requires an open shift.");
+  }
+
+  return withTransaction(context, async () => {
+    const existingOrder = await context.repo.findOrderByIdempotencyKey(parsed.idempotencyKey);
+    if (existingOrder) {
+      const existingPayment = (await context.repo.listPayments()).find(
+        (payment) => payment.orderId === existingOrder.id
+      );
+      return { order: existingOrder, payment: existingPayment ?? null, idempotent: true };
+    }
+
+    const order = await buildOrder(context, parsed, {
+      status: "PENDING_PAYMENT",
+      paymentStatus: "PENDING"
+    });
+
+    const payment: Payment = {
+      id: createId(context, "payment"),
+      orderId: order.id,
+      provider: "PAYSTACK",
+      method: "mobile_money",
+      status: "PENDING",
+      amount: order.total,
+      currency: order.currency,
+      providerReference: null,
+      idempotencyKey: parsed.idempotencyKey,
+      createdAt: getNow(context),
+      updatedAt: getNow(context)
+    };
+
+    await context.repo.saveOrder(order);
+    await context.repo.savePayment(payment);
+    await writeAuditLog(context, actor, {
+      action: "orders.create_pending_payment",
+      entityType: "order",
+      entityId: order.id,
+      summary: `Created pending POS mobile money order ${order.orderNumber}`
+    });
+
+    return { order, payment, idempotent: false };
+  });
+}
+
+/** Cancels an unconfirmed POS mobile money charge (staff cancel or client-side timeout). */
+export async function cancelPendingPosMomoSale(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: { orderId: string }
+) {
+  await assertCan(context, actor, "pos.sell");
+  return withTransaction(context, async () => {
+    const order = await context.repo.getOrder(input.orderId);
+    if (!order || order.channel !== "POS") {
+      throw new CommerceError("NOT_FOUND", "POS order not found.");
+    }
+
+    if (order.paymentStatus === "PAID") {
+      // Already confirmed (e.g. the webhook won the race) — nothing to cancel.
+      return { order, idempotent: true };
+    }
+
+    if (order.status === "CANCELLED") {
+      return { order, idempotent: true };
+    }
+
+    const updatedOrder: Order = { ...order, status: "CANCELLED" };
+    await context.repo.saveOrder(updatedOrder);
+
+    const payments = await context.repo.listPayments();
+    const payment = payments.find((entry) => entry.orderId === order.id);
+    if (payment) {
+      await context.repo.savePayment({ ...payment, status: "FAILED", updatedAt: getNow(context) });
+    }
+
+    await writeAuditLog(context, actor, {
+      action: "pos.momo_charge_cancelled",
+      entityType: "order",
+      entityId: order.id,
+      summary: `Cancelled pending mobile money charge for ${order.orderNumber}`
+    });
+
+    return { order: updatedOrder, idempotent: false };
+  });
+}
+
 export async function completeOnlineOrder(context: CommerceContext, input: CompleteSaleInput) {
   const parsed = completeSaleInputSchema.parse({
     ...input,

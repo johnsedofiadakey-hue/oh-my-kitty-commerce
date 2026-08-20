@@ -39,6 +39,10 @@ export function StaffManagementForms({ inviteStaffAction, roles, disabled }: Sta
               <span>Email</span>
               <input name="email" placeholder="ama@ohmykitty.example" required type="email" />
             </label>
+            <label className="admin-field">
+              <span>Password</span>
+              <input minLength={6} name="password" placeholder="At least 6 characters" required type="password" />
+            </label>
           </div>
           <label className="admin-field">
             <span>Roles</span>

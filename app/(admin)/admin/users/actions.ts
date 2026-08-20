@@ -21,6 +21,7 @@ export async function inviteStaffAction(
 
     const displayName = formString(formData, "displayName");
     const email = formString(formData, "email");
+    const password = formString(formData, "password");
     const roleIds = formData.getAll("roleIds").map(String);
     const posEnabled = formData.get("posEnabled") === "on";
 
@@ -28,13 +29,18 @@ export async function inviteStaffAction(
       throw new CommerceError("VALIDATION_ERROR", "Choose at least one role.");
     }
 
+    if (password.length < 6) {
+      throw new CommerceError("VALIDATION_ERROR", "Password must be at least 6 characters.");
+    }
+
     // Auth user + claims are created first so the account only ever exists
     // once we're sure the caller is allowed to create it (requirePermission
     // above) — createStaffUser below then just records the resulting uid.
-    const authUser = await auth.createUser({ email, displayName });
+    const authUser = await auth.createUser({ email, displayName, password });
     await auth.setCustomUserClaims(authUser.uid, {
       isStaff: true,
       roleIds,
+      posEnabled,
       permissionsVersion: 1
     });
 
@@ -50,12 +56,10 @@ export async function inviteStaffAction(
       permissionOverrides: []
     });
 
-    const resetLink = await auth.generatePasswordResetLink(email);
-
     revalidatePath("/admin/users");
     return {
       status: "success",
-      message: `Invited ${displayName}. Share this link so they can set a password: ${resetLink}`
+      message: `Invited ${displayName}. Sign in with ${email} and the password you set.`
     };
   } catch (error) {
     return {
@@ -93,6 +97,7 @@ export async function updateStaffAccessAction(formData: FormData): Promise<void>
   await auth.setCustomUserClaims(id, {
     isStaff: status === "ACTIVE",
     roleIds,
+    posEnabled,
     permissionsVersion: 1
   });
 
