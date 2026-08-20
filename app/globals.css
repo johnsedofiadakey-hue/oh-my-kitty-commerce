@@ -806,7 +806,7 @@ button {
   min-height: 100svh;
   padding: 84px 0;
   color: var(--color-white);
-  background: var(--color-green);
+  background: linear-gradient(160deg, var(--color-peach-light), var(--color-peach-mist) 60%, var(--color-white) 100%);
   overflow: hidden;
 }
 
