@@ -27,7 +27,7 @@ type AddToBagButtonProps = {
 
 export function AddToBagButton({
   className = "product-add-button",
-  label = "Add to bag",
+  label = "Add to cart",
   line
 }: AddToBagButtonProps) {
   const [added, setAdded] = useState(false);

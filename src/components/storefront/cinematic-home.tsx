@@ -607,7 +607,7 @@ export function CinematicHome({ categories, products }: CinematicHomeProps) {
                   </div>
                 </Link>
                 <button
-                  aria-label={`Quick add ${dominantSeller.title} to bag`}
+                  aria-label={`Quick add ${dominantSeller.title} to cart`}
                   className="quick-add-button"
                   onClick={() => addLineToCart(toCartLine(dominantSeller))}
                   type="button"

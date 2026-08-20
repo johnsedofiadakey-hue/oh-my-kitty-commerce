@@ -104,8 +104,8 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
     return (
       <section className="cart-surface cart-empty">
         <span className="scene-kicker">Checkout</span>
-        <h1>Your bag is empty.</h1>
-        <p>Add something to your bag first, then come back here.</p>
+        <h1>Your cart is empty.</h1>
+        <p>Add something to your cart first, then come back here.</p>
         <Link className="portal-cta" href="/shop">
           <span>Explore care</span>
           <i aria-hidden="true" />

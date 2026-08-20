@@ -43,7 +43,7 @@ export function CartContents({ onNavigate }: CartContentsProps) {
   if (lines.length === 0) {
     return (
       <div className="cart-surface cart-empty">
-        <span className="scene-kicker">Bag</span>
+        <span className="scene-kicker">Cart</span>
         <h1>Your ritual is waiting.</h1>
         <p>Products added from the shop will appear here.</p>
         <Link className="portal-cta" href="/shop">
@@ -58,7 +58,7 @@ export function CartContents({ onNavigate }: CartContentsProps) {
     <div className="cart-surface">
       <div className="cart-heading">
         <div>
-          <span className="scene-kicker">Bag</span>
+          <span className="scene-kicker">Cart</span>
           <h1>Your care edit</h1>
         </div>
         <button className="text-button" onClick={clearCartLines} type="button">

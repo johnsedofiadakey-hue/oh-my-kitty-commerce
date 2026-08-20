@@ -61,7 +61,7 @@ export default async function PaystackCallbackPage({ searchParams }: PageProps) 
             <span className="scene-kicker">Payment not confirmed</span>
             <h1>We couldn&apos;t confirm that payment.</h1>
             <p>{result.message}</p>
-            <p>Your bag has not been cleared — you can safely try again.</p>
+            <p>Your cart has not been cleared — you can safely try again.</p>
           </>
         )}
         <Link className="portal-cta" href={result.state === "success" ? "/shop" : "/checkout"}>

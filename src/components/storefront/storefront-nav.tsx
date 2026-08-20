@@ -24,7 +24,7 @@ export function StorefrontNav() {
         </span>
       </Link>
 
-      <CartTrigger ariaLabel="View bag" className="bag-pill icon">
+      <CartTrigger ariaLabel="View cart" className="bag-pill icon">
         <BagIcon />
         <CartCount variant="badge" />
       </CartTrigger>

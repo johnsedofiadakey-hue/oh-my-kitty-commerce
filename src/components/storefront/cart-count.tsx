@@ -31,5 +31,5 @@ export function CartCount({ variant = "text" }: CartCountProps) {
     );
   }
 
-  return <>Bag {count}</>;
+  return <>Cart {count}</>;
 }

@@ -20,7 +20,7 @@ export default async function CheckoutPage() {
       <div className="cart-page-botanical" aria-hidden="true">
         <Image alt="" fill sizes="260px" src="/hero/botanicals/leaf-foreground-01.svg" />
       </div>
-      <TransactionalHeader actionHref="/cart" actionLabel="Back to bag" />
+      <TransactionalHeader actionHref="/cart" actionLabel="Back to cart" />
       <CheckoutClient deliveryOptions={deliveryOptions} paystackEnabled={isPaystackConfigured()} />
     </main>
   );

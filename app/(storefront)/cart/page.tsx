@@ -4,13 +4,13 @@ import { CartContents } from "@/components/storefront/cart-contents";
 import { TransactionalHeader } from "@/components/storefront/transactional-header";
 
 export const metadata: Metadata = {
-  title: "Your Bag",
+  title: "Your Cart",
   robots: { index: false, follow: false }
 };
 
 /**
  * Direct-navigation fallback (bookmarks, no-JS, "open in new tab" from the
- * bag icon) — day to day, CartTrigger opens the same content in the global
+ * cart icon) — day to day, CartTrigger opens the same content in the global
  * CartDrawer instead of routing here.
  */
 export default function CartPage() {

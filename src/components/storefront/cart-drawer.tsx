@@ -30,15 +30,15 @@ export function CartDrawer() {
   return (
     <>
       {open ? (
-        <button aria-label="Close bag" className="cart-drawer-backdrop" onClick={closeCart} type="button" />
+        <button aria-label="Close cart" className="cart-drawer-backdrop" onClick={closeCart} type="button" />
       ) : null}
       <aside
         aria-hidden={!open}
-        aria-label="Shopping bag"
+        aria-label="Shopping cart"
         className={open ? "cart-drawer open" : "cart-drawer"}
       >
         <div className="cart-drawer-handle" aria-hidden="true" />
-        <button aria-label="Close bag" className="sheet-close" onClick={closeCart} type="button">
+        <button aria-label="Close cart" className="sheet-close" onClick={closeCart} type="button">
           ×
         </button>
         <div className="cart-drawer-body">

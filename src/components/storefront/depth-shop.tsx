@@ -338,7 +338,7 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
               ) : null}
               <AddToBagButton
                 className="pdp-add-button"
-                label="Add to bag"
+                label="Add to cart"
                 line={toCartLine(selectedProduct)}
               />
               <Link
@@ -348,7 +348,7 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
                 Explore product →
               </Link>
               <CartTrigger className="sheet-cart-link" onBeforeOpen={() => setSelectedId(null)}>
-                View bag
+                View cart
               </CartTrigger>
             </div>
           </aside>
@@ -449,7 +449,7 @@ function ProductTile({
         aria-label={
           hasMultipleVariants
             ? `Choose a size for ${product.title}`
-            : `Quick add ${product.title} to bag`
+            : `Quick add ${product.title} to cart`
         }
         className={`quick-add-button ${added ? "added" : ""}`}
         onClick={(event) => {
