@@ -252,6 +252,16 @@ function ProductEditDrawer({
             <span>Adjust stock (+/-)</span>
             <input defaultValue="0" inputMode="numeric" name="stockDelta" />
           </label>
+          <label className="admin-field">
+            <span>Shop position (lower shows first — leave blank for A–Z order)</span>
+            <input
+              defaultValue={product.homepagePriority ?? ""}
+              inputMode="numeric"
+              min="0"
+              name="homepagePriority"
+              placeholder="Auto (A–Z)"
+            />
+          </label>
           <label className="admin-field checkbox">
             <input defaultChecked={product.bestSeller} name="bestSeller" type="checkbox" />
             <span>Best seller (shows in Live Products on the home page)</span>

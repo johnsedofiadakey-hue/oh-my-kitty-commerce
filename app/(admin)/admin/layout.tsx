@@ -33,6 +33,7 @@ const navConfig: NavConfigGroup[] = [
     label: "Catalog",
     items: [
       { label: "Products", href: "/admin/products", icon: "products", requiredPermission: "products.view" },
+      { label: "Categories", href: "/admin/categories", icon: "categories", requiredPermission: "products.view" },
       { label: "Taxonomy", href: "/admin/taxonomy", icon: "taxonomy", requiredPermission: "products.view" },
       { label: "Content & Media", href: "/admin/content", icon: "content", requiredPermission: "content.view" }
     ]

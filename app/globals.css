@@ -236,6 +236,24 @@ button {
     linear-gradient(135deg, rgb(243 169 157 / 20%), rgb(85 107 69 / 8%));
 }
 
+.hero-scene-video {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-scene-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 55%) 0%, rgb(255 249 246 / 30%) 45%, rgb(253 235 230 / 55%) 100%),
+    linear-gradient(135deg, rgb(243 169 157 / 12%), rgb(85 107 69 / 5%));
+}
+
 .hero-scene-copy {
   position: relative;
   z-index: 6;
@@ -788,7 +806,7 @@ button {
   min-height: 100svh;
   padding: 84px 0;
   color: var(--color-white);
-  background: var(--color-near-black);
+  background: var(--color-green);
   overflow: hidden;
 }
 
@@ -3472,6 +3490,26 @@ button {
     linear-gradient(135deg, rgb(255 250 247 / 92%), rgb(255 255 255 / 86%)),
     radial-gradient(circle at 18% 16%, rgb(246 184 174 / 32%), transparent 34%),
     radial-gradient(circle at 82% 84%, rgb(80 104 63 / 12%), transparent 30%);
+}
+
+.auth-page-inner {
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-back-link:hover {
+  color: var(--color-near-black);
 }
 
 .auth-card {

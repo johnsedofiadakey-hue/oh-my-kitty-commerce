@@ -260,6 +260,19 @@ export const updateRoutineInputSchema = taxonomyEntryFieldsSchema.partial().exte
   id: z.string().min(1)
 });
 
+export const createCategoryInputSchema = taxonomyEntryFieldsSchema.extend(taxonomyEntryDefaults);
+
+export const updateCategoryInputSchema = taxonomyEntryFieldsSchema.partial().extend({
+  id: z.string().min(1)
+});
+
+export const attachCategoryImageInputSchema = z.object({
+  categoryId: z.string().min(1),
+  storagePath: z.string().min(1),
+  url: z.string().min(1),
+  alt: z.string().min(1)
+});
+
 const deliveryRuleFieldsSchema = z.object({
   name: z.string().min(2),
   type: z.enum(["PICKUP", "LOCAL_DELIVERY", "NATIONWIDE_DELIVERY"]),
@@ -326,6 +339,9 @@ export type CreateProductTypeInput = z.input<typeof createProductTypeInputSchema
 export type UpdateProductTypeInput = z.input<typeof updateProductTypeInputSchema>;
 export type CreateRoutineInput = z.input<typeof createRoutineInputSchema>;
 export type UpdateRoutineInput = z.input<typeof updateRoutineInputSchema>;
+export type CreateCategoryInput = z.input<typeof createCategoryInputSchema>;
+export type UpdateCategoryInput = z.input<typeof updateCategoryInputSchema>;
+export type AttachCategoryImageInput = z.input<typeof attachCategoryImageInputSchema>;
 export type CreateVariantInput = z.input<typeof createVariantInputSchema>;
 export type UpdateVariantInput = z.input<typeof updateVariantInputSchema>;
 export type CreateOrderDraftInput = z.input<typeof createOrderDraftInputSchema>;

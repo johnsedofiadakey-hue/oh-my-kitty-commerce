@@ -2,6 +2,7 @@ const icons = {
   overview: ["M3 3h7v7H3z", "M14 3h7v7h-7z", "M3 14h7v7H3z", "M14 14h7v7h-7z"],
   products: ["M11 3h6a2 2 0 0 1 2 2v6l-9 9-8-8 9-9Z", "M14.5 8.5a1.4 1.4 0 1 0 0-2.8 1.4 1.4 0 0 0 0 2.8Z"],
   taxonomy: ["M12 3 3 8l9 5 9-5-9-5Z", "M3 13l9 5 9-5"],
+  categories: ["M4 4h7v7H4V4Z", "M13 4h7v7h-7V4Z", "M4 13h7v7H4v-7Z", "M13 13h7v7h-7v-7Z"],
   content: [
     "M3 4h18v16H3V4Z",
     "M9 10a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2Z",

@@ -11,7 +11,9 @@ import type { CommerceRepository, CommerceTransaction } from "@/lib/commerce/rep
 import { createNoopTransaction } from "@/lib/commerce/repository";
 import {
   adjustInventoryInputSchema,
+  attachCategoryImageInputSchema,
   completeSaleInputSchema,
+  createCategoryInputSchema,
   createConcernInputSchema,
   createCustomerInputSchema,
   createDeliveryRuleInputSchema,
@@ -32,12 +34,14 @@ import {
   createPromotionInputSchema,
   createRoutineInputSchema,
   createVariantInputSchema,
+  updateCategoryInputSchema,
   updateConcernInputSchema,
   updateProductInputSchema,
   updateProductTypeInputSchema,
   updateRoutineInputSchema,
   updateVariantInputSchema,
   type AdjustInventoryInput,
+  type AttachCategoryImageInput,
   type CompleteSaleInput,
   type CreateCustomerInput,
   type CreateOrderDraftInput,
@@ -57,6 +61,7 @@ import {
 } from "@/lib/commerce/schemas";
 import type {
   AuditLog,
+  Category,
   Concern,
   ContentBlock,
   Customer,
@@ -470,6 +475,68 @@ export async function updateRoutine(context: CommerceContext, actor: CommerceAct
   });
 
   return routine;
+}
+
+export async function createCategory(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "products.update");
+  const parsed = createCategoryInputSchema.parse(input);
+  const category: Category = { ...parsed, id: createSlugId("category", parsed.slug) };
+
+  await context.repo.saveCategory(category);
+  await writeAuditLog(context, actor, {
+    action: "categories.create",
+    entityType: "category",
+    entityId: category.id,
+    summary: `Created category ${category.title}`
+  });
+
+  return category;
+}
+
+export async function updateCategory(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "products.update");
+  const parsed = updateCategoryInputSchema.parse(input);
+  const existing = await requiredEntity(await context.repo.listCategories(), parsed.id, "Category");
+  const category: Category = { ...existing, ...parsed, id: existing.id };
+
+  await context.repo.saveCategory(category);
+  await writeAuditLog(context, actor, {
+    action: "categories.update",
+    entityType: "category",
+    entityId: category.id,
+    summary: `Updated category ${category.title}`
+  });
+
+  return category;
+}
+
+export async function attachCategoryImage(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: AttachCategoryImageInput
+) {
+  await assertCan(context, actor, "media.upload");
+  await assertCan(context, actor, "products.update");
+  const parsed = attachCategoryImageInputSchema.parse(input);
+
+  const category = await requiredEntity(await context.repo.listCategories(), parsed.categoryId, "Category");
+  const asset = await createMediaAsset(context, actor, {
+    storagePath: parsed.storagePath,
+    url: parsed.url,
+    alt: parsed.alt,
+    usage: ["category"]
+  });
+
+  const updatedCategory: Category = { ...category, mediaId: asset.id };
+  await context.repo.saveCategory(updatedCategory);
+  await writeAuditLog(context, actor, {
+    action: "categories.attach_image",
+    entityType: "category",
+    entityId: category.id,
+    summary: `Set image for ${category.title}`
+  });
+
+  return { asset, category: updatedCategory };
 }
 
 export async function createDeliveryRule(

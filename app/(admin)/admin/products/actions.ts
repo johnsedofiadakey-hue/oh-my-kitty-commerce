@@ -15,6 +15,7 @@ import { getRequiredAdminActor } from "@/lib/auth/server";
 import {
   formInteger,
   formMoneyMinorUnit,
+  formOptionalInteger,
   formOptionalString,
   formProductStatus,
   formString,
@@ -107,7 +108,8 @@ export async function quickEditCatalogueItemAction(formData: FormData): Promise<
     concernIds: formData.getAll("concernIds").map(String),
     productTypeIds: formData.getAll("productTypeIds").map(String),
     routineIds: formData.getAll("routineIds").map(String),
-    bestSeller: formData.get("bestSeller") === "on"
+    bestSeller: formData.get("bestSeller") === "on",
+    homepagePriority: formOptionalInteger(formData, "homepagePriority")
   });
 
   await updateVariant(context, actor, {

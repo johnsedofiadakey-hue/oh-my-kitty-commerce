@@ -41,6 +41,20 @@ export function formInteger(formData: FormData, key: string, fallback = 0) {
   return parsed;
 }
 
+export function formOptionalInteger(formData: FormData, key: string) {
+  const value = formString(formData, key);
+  if (!value) {
+    return undefined;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`${key} must be a whole number.`);
+  }
+
+  return parsed;
+}
+
 export function formMoneyMinorUnit(formData: FormData, key: string) {
   const value = formString(formData, key);
   if (!value) {

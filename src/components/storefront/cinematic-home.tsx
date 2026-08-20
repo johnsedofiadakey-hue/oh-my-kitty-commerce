@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { addLineToCart, type CartLine } from "@/components/storefront/add-to-bag-button";
 import { CartCount } from "@/components/storefront/cart-count";
 import { CartTrigger } from "@/components/storefront/cart-trigger";
@@ -215,6 +215,7 @@ function buildHeroTimeline(gsap: any, cfg: HeroBreakpointConfig) {
 
 export function CinematicHome({ categories, products }: CinematicHomeProps) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
   const bestSellers = products.filter((product) => product.bestSeller);
   const dominantSeller = bestSellers[0];
   const peekingSellers = bestSellers.slice(1, 4);
@@ -223,6 +224,17 @@ export function CinematicHome({ categories, products }: CinematicHomeProps) {
     products.find((product) => product.slug === "slippery-elms-dietary-supplement") ?? products[0];
   const reviewAccentA = products[3];
   const reviewAccentB = products[6];
+
+  // The `autoPlay` attribute (below) is what reliably starts playback —
+  // browsers handle its readiness timing far better than a manual .play()
+  // call in an effect. This layout effect only steps in to immediately
+  // pause it for a reduced-motion visitor, before the first paint.
+  useLayoutEffect(() => {
+    const video = heroVideoRef.current;
+    if (video && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      video.pause();
+    }
+  }, []);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -386,6 +398,20 @@ export function CinematicHome({ categories, products }: CinematicHomeProps) {
 
       <main>
         <section className="hero-scene" aria-labelledby="home-hero-title">
+          <video
+            ref={heroVideoRef}
+            className="hero-scene-video"
+            aria-hidden="true"
+            autoPlay
+            loop
+            muted
+            playsInline
+            poster="/hero/video/ohmykitty-hero-poster.jpg"
+          >
+            <source src="/hero/video/ohmykitty-hero.mp4" type="video/mp4" />
+          </video>
+          <div className="hero-scene-scrim" aria-hidden="true" />
+
           <div className="hero-scene-copy">
             <span className="scene-kicker">Oh My Kitty</span>
             <h1 id="home-hero-title">Intimate care.</h1>

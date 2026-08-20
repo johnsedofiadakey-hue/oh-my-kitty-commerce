@@ -11,23 +11,28 @@ export const metadata: Metadata = {
 export default function AdminLoginPage() {
   return (
     <main className="auth-page">
-      <section className="auth-card" aria-labelledby="admin-login-title">
-        <Link className="auth-logo" href="/">
-          <Image
-            src="/brand/oh-my-kitty-logo.jpeg"
-            alt="Oh My Kitty logo"
-            width={74}
-            height={74}
-            priority
-          />
-          <span>Oh My Kitty</span>
+      <div className="auth-page-inner">
+        <Link className="auth-back-link" href="/">
+          <span aria-hidden="true">&larr;</span> Back to site
         </Link>
-        <div className="auth-copy">
-          <p>Staff access</p>
-          <h1 id="admin-login-title">Sign in to admin</h1>
-        </div>
-        <AdminLoginForm />
-      </section>
+        <section className="auth-card" aria-labelledby="admin-login-title">
+          <Link className="auth-logo" href="/">
+            <Image
+              src="/brand/oh-my-kitty-logo.jpeg"
+              alt="Oh My Kitty logo"
+              width={74}
+              height={74}
+              priority
+            />
+            <span>Oh My Kitty</span>
+          </Link>
+          <div className="auth-copy">
+            <p>Staff access</p>
+            <h1 id="admin-login-title">Sign in to admin</h1>
+          </div>
+          <AdminLoginForm />
+        </section>
+      </div>
     </main>
   );
 }
