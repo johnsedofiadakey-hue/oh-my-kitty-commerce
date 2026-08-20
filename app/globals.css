@@ -5498,17 +5498,13 @@ button {
 
 .admin-drawer-row-trigger {
   display: block;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   border: 0;
-  border-bottom: 1px solid var(--color-line);
   padding: 0;
   background: none;
   text-align: left;
   cursor: pointer;
-}
-
-.admin-drawer-row-trigger:last-child {
-  border-bottom: 0;
 }
 
 .admin-drawer-row-trigger:hover {
@@ -5516,12 +5512,24 @@ button {
 }
 
 .order-row {
-  display: grid;
-  grid-template-columns: 48px minmax(160px, 1.6fr) 100px minmax(200px, 0.9fr) minmax(90px, 0.8fr);
+  display: flex;
   align-items: center;
   gap: 14px;
   min-width: 760px;
-  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-line);
+  padding: 4px 14px 4px 0;
+}
+
+.order-row:last-child {
+  border-bottom: 0;
+}
+
+.order-row-clickable {
+  display: grid;
+  grid-template-columns: 48px minmax(160px, 1.6fr) 100px minmax(90px, 0.7fr);
+  align-items: center;
+  gap: 14px;
+  padding: 8px 0 8px 14px;
 }
 
 .order-row-badges {
@@ -5556,8 +5564,69 @@ button {
 }
 
 .order-row-total {
+  flex: none;
+  min-width: 90px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+.order-queue-badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-white-pure);
+  border-radius: 999px;
+  background: var(--color-near-black);
+  color: var(--color-white-pure);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.inline-status-select {
+  flex: none;
+  min-height: 38px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  padding: 0 12px;
+  color: var(--color-near-black);
+  background: var(--color-white-pure);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.inline-status-select:disabled {
+  opacity: 0.6;
+}
+
+.admin-collapsible summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.admin-collapsible summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-collapsible summary::after {
+  content: "";
+  align-self: center;
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-right: 2px solid var(--color-muted);
+  border-bottom: 2px solid var(--color-muted);
+  transform: rotate(45deg);
+  transition: transform 160ms ease;
+}
+
+.admin-collapsible[open] summary::after {
+  transform: rotate(-135deg);
 }
 
 .order-status-pill {

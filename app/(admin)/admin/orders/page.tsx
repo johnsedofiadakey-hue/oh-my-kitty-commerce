@@ -4,9 +4,11 @@ import {
   formatMoney,
   getAdminOperationsData,
   getOrderCustomerName,
+  toSortableMillis
 } from "@/lib/admin/operations-data";
 import { requireAdminPermission } from "@/lib/auth/server";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
+import { InlineStatusSelect } from "@/components/admin/inline-status-select";
 import type { AdminOrderRow } from "@/lib/admin/operations-data";
 import { updateOrderFulfilmentAction } from "./actions";
 
@@ -24,8 +26,16 @@ const fulfilmentStatuses = [
 export default async function AdminOrdersPage() {
   await requireAdminPermission("orders.view");
   const data = await getAdminOperationsData();
-  const rows = data.orderRows;
   const disabled = data.source !== "live";
+
+  // Oldest-first within "needs attention" — staff work the queue in the order
+  // customers actually arrived in, same reasoning as a physical ticket queue.
+  const needsAttention = data.orderRows
+    .filter((row) => row.order.fulfilmentStatus !== "FULFILLED" && row.order.fulfilmentStatus !== "CANCELLED")
+    .sort((a, b) => toSortableMillis(a.order.createdAt) - toSortableMillis(b.order.createdAt));
+  const completed = data.orderRows
+    .filter((row) => row.order.fulfilmentStatus === "FULFILLED" || row.order.fulfilmentStatus === "CANCELLED")
+    .sort((a, b) => toSortableMillis(b.order.createdAt) - toSortableMillis(a.order.createdAt));
 
   return (
     <>
@@ -40,55 +50,83 @@ export default async function AdminOrdersPage() {
           {data.sourceMessage}
         </div>
       ) : null}
+
       <section className="admin-panel">
         <div className="panel-header">
-          <h2>Order queue</h2>
-          <span>{rows.length} orders</span>
+          <h2>Needs attention</h2>
+          <span>{needsAttention.length} order{needsAttention.length === 1 ? "" : "s"} &middot; oldest first</span>
         </div>
         <div className="order-list">
-          {rows.map((row) => (
-            <OrderRow disabled={disabled} key={row.order.id} row={row} />
+          {needsAttention.map((row, index) => (
+            <OrderRow disabled={disabled} key={row.order.id} queuePosition={index + 1} row={row} />
           ))}
-          {rows.length === 0 ? <p className="admin-help">Nothing here yet.</p> : null}
+          {needsAttention.length === 0 ? <p className="admin-help">Nothing waiting on you right now.</p> : null}
         </div>
       </section>
+
+      <details className="admin-panel admin-collapsible">
+        <summary className="panel-header">
+          <h2>Completed</h2>
+          <span>{completed.length} order{completed.length === 1 ? "" : "s"}</span>
+        </summary>
+        <div className="order-list">
+          {completed.map((row) => (
+            <OrderRow disabled={disabled} key={row.order.id} row={row} />
+          ))}
+          {completed.length === 0 ? <p className="admin-help">Nothing completed yet.</p> : null}
+        </div>
+      </details>
     </>
   );
 }
 
-function OrderRow({ row, disabled }: { row: AdminOrderRow; disabled: boolean }) {
+function OrderRow({
+  row,
+  disabled,
+  queuePosition
+}: {
+  row: AdminOrderRow;
+  disabled: boolean;
+  queuePosition?: number;
+}) {
   const { order } = row;
 
   return (
-    <AdminDrawer
-      title={order.orderNumber}
-      trigger={
-        <div className="order-row">
-          <div className="order-thumb" aria-hidden="true">
-            {order.items[0]?.mediaUrl ? (
-              <Image alt="" fill sizes="48px" src={order.items[0].mediaUrl} />
-            ) : (
-              <span className="order-thumb-empty" />
-            )}
-            {order.items.length > 1 ? (
-              <span className="order-thumb-count">+{order.items.length - 1}</span>
-            ) : null}
-          </div>
-          <div className="order-row-main">
-            <strong>{order.orderNumber}</strong>
-            <span>{getOrderCustomerName(order)}</span>
-          </div>
-          <span className="order-row-channel">{order.channel.replace("_", " ")}</span>
-          <div className="order-row-badges">
+    <div className="order-row">
+      <AdminDrawer
+        title={order.orderNumber}
+        trigger={
+          <div className="order-row-clickable">
+            <div className="order-thumb" aria-hidden="true">
+              {order.items[0]?.mediaUrl ? (
+                <Image alt="" fill sizes="48px" src={order.items[0].mediaUrl} />
+              ) : (
+                <span className="order-thumb-empty" />
+              )}
+              {order.items.length > 1 ? (
+                <span className="order-thumb-count">+{order.items.length - 1}</span>
+              ) : null}
+              {queuePosition ? <span className="order-queue-badge">{queuePosition}</span> : null}
+            </div>
+            <div className="order-row-main">
+              <strong>{order.orderNumber}</strong>
+              <span>{getOrderCustomerName(order)}</span>
+            </div>
+            <span className="order-row-channel">{order.channel.replace("_", " ")}</span>
             <StatusPill kind="payment" value={order.paymentStatus} />
-            <StatusPill kind="fulfilment" value={order.fulfilmentStatus} />
           </div>
-          <strong className="order-row-total">{formatMoney(order.total)}</strong>
-        </div>
-      }
-    >
-      <OrderDetail disabled={disabled} row={row} />
-    </AdminDrawer>
+        }
+      >
+        <OrderDetail disabled={disabled} row={row} />
+      </AdminDrawer>
+      <InlineStatusSelect
+        action={updateOrderFulfilmentAction}
+        currentStatus={order.fulfilmentStatus}
+        disabled={disabled}
+        orderId={order.id}
+      />
+      <strong className="order-row-total">{formatMoney(order.total)}</strong>
+    </div>
   );
 }
 
