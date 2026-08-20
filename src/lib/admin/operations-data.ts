@@ -131,7 +131,15 @@ export const getAdminOperationsData = cache(async (): Promise<AdminOperationsDat
   }
 });
 
-export { daysSince, formatDate, formatMoney, getOrderCustomerName, getProductTitle, getVariantLabel };
+export {
+  daysSince,
+  formatDate,
+  formatMoney,
+  getOrderCustomerName,
+  getProductTitle,
+  getVariantLabel,
+  toSortableMillis
+};
 
 function sampleOperationsData(sourceMessage: string): AdminOperationsData {
   return buildOperationsData({

@@ -81,7 +81,7 @@ import type {
   StaffUser,
   StoreSettings
 } from "@/lib/commerce/types";
-import { notifyOrderEvent } from "@/lib/notifications/order-notifications";
+import { notifyAdminOfNewOrder, notifyOrderEvent } from "@/lib/notifications/order-notifications";
 
 export type CommerceActor = UserAccess & {
   system?: boolean;
@@ -1013,6 +1013,7 @@ export async function confirmPaystackPayment(
 
   if (!result.alreadyConfirmed) {
     void notifyOrderEvent(result.order, "CONFIRMED");
+    void notifyAdminOfNewOrder(result.order);
   }
 
   return result;
@@ -1344,6 +1345,7 @@ async function completeSale(
 
   if (!result.idempotent) {
     void notifyOrderEvent(result.order, "CONFIRMED");
+    void notifyAdminOfNewOrder(result.order);
   }
 
   return result;

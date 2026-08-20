@@ -2,6 +2,7 @@ import { formatMoney } from "@/lib/commerce/format";
 import type { Order } from "@/lib/commerce/types";
 import { getContentValue } from "@/lib/storefront/content";
 import { isArkeselConfigured, sendSms } from "@/lib/notifications/arkesel";
+import { serverEnv } from "@/lib/env/server";
 
 export type OrderNotificationEvent = "CONFIRMED" | "READY_FOR_PICKUP" | "OUT_FOR_DELIVERY";
 
@@ -33,6 +34,30 @@ export async function notifyOrderEvent(order: Order, event: OrderNotificationEve
     }
   } catch (error) {
     console.error(`Arkesel SMS threw for order ${order.orderNumber} (${event}):`, error);
+  }
+}
+
+/**
+ * Alerts the store owner's phone (ARKESEL_ADMIN_ALERT_PHONE) when a new
+ * order comes in, online or POS. Same never-throws, fire-and-forget
+ * contract as notifyOrderEvent — see its doc comment.
+ */
+export async function notifyAdminOfNewOrder(order: Order): Promise<void> {
+  const adminPhone = serverEnv.ARKESEL_ADMIN_ALERT_PHONE;
+  if (!adminPhone || !isArkeselConfigured()) {
+    return;
+  }
+
+  try {
+    const customerName = order.customerSnapshot?.name ?? "Walk-in customer";
+    const itemSummary = summarizeItems(order.items);
+    const message = `Oh My Kitty: New order ${order.orderNumber} from ${customerName} (${order.channel}) — ${itemSummary}. Total ${formatMoney(order.total)}.`;
+    const result = await sendSms({ to: adminPhone, message });
+    if (!result.ok) {
+      console.error(`Arkesel admin alert failed for order ${order.orderNumber}: ${result.message}`);
+    }
+  } catch (error) {
+    console.error(`Arkesel admin alert threw for order ${order.orderNumber}:`, error);
   }
 }
 

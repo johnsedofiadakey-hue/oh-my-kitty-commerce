@@ -12,7 +12,8 @@ const serverEnvSchema = z.object({
   BOOTSTRAP_OWNER_DISPLAY_NAME: z.string().optional(),
   PAYSTACK_SECRET_KEY: z.string().optional(),
   ARKESEL_API_KEY: z.string().optional(),
-  ARKESEL_SENDER_ID: z.string().optional()
+  ARKESEL_SENDER_ID: z.string().optional(),
+  ARKESEL_ADMIN_ALERT_PHONE: z.string().optional()
 });
 
 export const serverEnv = serverEnvSchema.parse({
@@ -27,7 +28,8 @@ export const serverEnv = serverEnvSchema.parse({
   BOOTSTRAP_OWNER_DISPLAY_NAME: process.env.BOOTSTRAP_OWNER_DISPLAY_NAME,
   PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
   ARKESEL_API_KEY: process.env.ARKESEL_API_KEY,
-  ARKESEL_SENDER_ID: process.env.ARKESEL_SENDER_ID
+  ARKESEL_SENDER_ID: process.env.ARKESEL_SENDER_ID,
+  ARKESEL_ADMIN_ALERT_PHONE: process.env.ARKESEL_ADMIN_ALERT_PHONE
 });
 
 export function isProductionAppEnv(env = serverEnv) {

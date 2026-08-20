@@ -3,8 +3,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 type AdminDrawerProps = {
-  triggerLabel: string;
+  triggerLabel?: string;
   triggerClassName?: string;
+  /** Custom trigger content (e.g. a full summary row) instead of a plain labeled button. */
+  trigger?: ReactNode;
   title: string;
   children: ReactNode;
 };
@@ -12,6 +14,7 @@ type AdminDrawerProps = {
 export function AdminDrawer({
   triggerLabel,
   triggerClassName = "admin-action",
+  trigger,
   title,
   children
 }: AdminDrawerProps) {
@@ -39,8 +42,12 @@ export function AdminDrawer({
 
   return (
     <>
-      <button className={triggerClassName} onClick={() => setOpen(true)} type="button">
-        {triggerLabel}
+      <button
+        className={trigger ? "admin-drawer-row-trigger" : triggerClassName}
+        onClick={() => setOpen(true)}
+        type="button"
+      >
+        {trigger ?? triggerLabel}
       </button>
       {open ? (
         <button
