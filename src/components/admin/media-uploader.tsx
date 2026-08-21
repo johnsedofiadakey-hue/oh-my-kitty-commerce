@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, type ChangeEvent } from "react";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { getClientStorage } from "@/lib/firebase/client";
+import { getClientStorage, refreshClientIdToken } from "@/lib/firebase/client";
 import type { AdminActionState } from "@/lib/admin/product-form";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -64,6 +64,7 @@ export function MediaUploader({
     setMessage(null);
 
     try {
+      await refreshClientIdToken();
       const extension = file.name.split(".").pop() ?? "jpg";
       const storagePath = `products/${productId}/${variantId}-${Date.now()}.${extension}`;
       const storageRef = ref(storage, storagePath);

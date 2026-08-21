@@ -56,6 +56,21 @@ export function getClientStorage(): FirebaseStorage | null {
   return storage;
 }
 
+/**
+ * Firebase Storage rules read custom claims (isStaff/isAdmin) off the ID
+ * token, but the client SDK doesn't always proactively refresh a
+ * long-cached token before a write — an admin whose tab has been open a
+ * while can end up making Storage requests with a stale token even though
+ * they're genuinely signed in, and get a confusing storage/unauthorized
+ * error. Call this right before any Storage write to force a fresh token.
+ */
+export async function refreshClientIdToken(): Promise<void> {
+  const auth = getClientAuth();
+  if (auth?.currentUser) {
+    await auth.currentUser.getIdToken(true);
+  }
+}
+
 function connectClientEmulators(
   auth?: Auth,
   firestore?: Firestore,

@@ -8,6 +8,15 @@ const nextConfig: NextConfig = {
   // actually needed at runtime) — this is what the Cloud Run Dockerfile
   // copies into the final image instead of the whole node_modules tree.
   output: "standalone",
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "firebasestorage.googleapis.com",
+        pathname: "/v0/b/**"
+      }
+    ]
+  },
   async headers() {
     return [
       {
