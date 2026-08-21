@@ -217,6 +217,10 @@ export class MemoryCommerceRepository implements CommerceRepository {
     return [...this.roles.values()];
   }
 
+  async deleteRole(id: string) {
+    this.roles.delete(id);
+  }
+
   async saveStaffUser(user: StaffUser) {
     this.staffUsers.set(user.id, user);
   }

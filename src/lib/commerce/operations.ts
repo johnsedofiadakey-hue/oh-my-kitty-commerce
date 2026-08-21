@@ -18,7 +18,9 @@ import {
   createCustomerInputSchema,
   createDeliveryRuleInputSchema,
   updateDeliveryRuleInputSchema,
+  createRoleInputSchema,
   createStaffUserInputSchema,
+  updateRoleInputSchema,
   updateStaffUserInputSchema,
   updateStoreSettingsInputSchema,
   updateCustomerInputSchema,
@@ -763,6 +765,86 @@ export async function updateStaffUser(
   return staffUser;
 }
 
+export async function createRole(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "roles.create");
+  const parsed = createRoleInputSchema.parse(input);
+  const role: Role = {
+    id: await uniqueRoleId(context, parsed.name),
+    name: parsed.name,
+    permissions: parsed.permissions as Permission[],
+    limits: parsed.limits
+  };
+
+  await context.repo.saveRole(role);
+  await writeAuditLog(context, actor, {
+    action: "roles.create",
+    entityType: "role",
+    entityId: role.id,
+    summary: `Created role ${role.name}`
+  });
+
+  return role;
+}
+
+export async function updateRole(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "roles.update");
+  const parsed = updateRoleInputSchema.parse(input);
+  const existing = await context.repo.getRole(parsed.id);
+  if (!existing) {
+    throw new CommerceError("NOT_FOUND", "Role not found.");
+  }
+
+  if (existing.system) {
+    throw new CommerceError("VALIDATION_ERROR", "Built-in roles can't be edited.");
+  }
+
+  const role: Role = {
+    ...existing,
+    name: parsed.name ?? existing.name,
+    permissions: (parsed.permissions as Permission[] | undefined) ?? existing.permissions,
+    limits: parsed.limits ?? existing.limits
+  };
+
+  await context.repo.saveRole(role);
+  await writeAuditLog(context, actor, {
+    action: "roles.update",
+    entityType: "role",
+    entityId: role.id,
+    summary: `Updated role ${role.name}`
+  });
+
+  return role;
+}
+
+export async function deleteRole(context: CommerceContext, actor: CommerceActor, roleId: string) {
+  await assertCan(context, actor, "roles.update");
+  const existing = await context.repo.getRole(roleId);
+  if (!existing) {
+    throw new CommerceError("NOT_FOUND", "Role not found.");
+  }
+
+  if (existing.system) {
+    throw new CommerceError("VALIDATION_ERROR", "Built-in roles can't be deleted.");
+  }
+
+  const staffUsers = await context.repo.listStaffUsers();
+  const stillAssigned = staffUsers.some((user) => user.roleIds.includes(roleId));
+  if (stillAssigned) {
+    throw new CommerceError(
+      "VALIDATION_ERROR",
+      "This role is still assigned to a staff account — reassign them first."
+    );
+  }
+
+  await context.repo.deleteRole(roleId);
+  await writeAuditLog(context, actor, {
+    action: "roles.delete",
+    entityType: "role",
+    entityId: roleId,
+    summary: `Deleted role ${existing.name}`
+  });
+}
+
 export async function updateStoreSettings(
   context: CommerceContext,
   actor: CommerceActor,
@@ -1392,7 +1474,7 @@ async function requireReversalAuthorization(
   permission: Permission,
   amount: number
 ) {
-  const roles = await resolveRoles(context, actor.roleIds);
+  const roles = await getEffectiveRoles(context, actor.roleIds);
   const actorLimit = getHighestRoleLimit(roles, actor, "maxRefundAmount");
   if (amount <= actorLimit) {
     return;
@@ -1405,7 +1487,7 @@ async function requireReversalAuthorization(
     );
   }
 
-  const approverRoles = await resolveRoles(context, approverActor.roleIds);
+  const approverRoles = await getEffectiveRoles(context, approverActor.roleIds);
   if (!hasPermission(approverRoles, approverActor, permission)) {
     throw new CommerceError("FORBIDDEN", "The approving account cannot authorize this action.");
   }
@@ -1714,13 +1796,20 @@ async function assertCan(context: CommerceContext, actor: CommerceActor, permiss
     return;
   }
 
-  const roles = await resolveRoles(context, actor.roleIds);
+  const roles = await getEffectiveRoles(context, actor.roleIds);
   if (!hasPermission(roles, actor, permission)) {
     throw new CommerceError("FORBIDDEN", `Missing permission: ${permission}`);
   }
 }
 
-async function resolveRoles(context: CommerceContext, roleIds: string[]) {
+/**
+ * Resolves role ids to full Role objects: the three built-in roles resolve
+ * instantly with no Firestore read, and any other id (a custom role) is
+ * looked up live via context.repo.getRole(). Every permission check in the
+ * app should go through this rather than the static `defaultRoles` array
+ * directly, or a custom role silently grants nothing.
+ */
+export async function getEffectiveRoles(context: CommerceContext, roleIds: string[]) {
   const roleMap = new Map<string, Role>();
 
   for (const role of [...defaultRoles, ...(context.roles ?? [])]) {
@@ -1804,6 +1893,18 @@ function createId(context: CommerceContext, prefix: string) {
 
 function createSlugId(prefix: string, value: string) {
   return `${prefix}-${value.replace(/[^a-z0-9-]/g, "-")}`;
+}
+
+async function uniqueRoleId(context: CommerceContext, name: string) {
+  const base = createSlugId("role", name.toLowerCase().replaceAll(" ", "-"));
+  let candidate = base;
+  let suffix = 2;
+  while (await context.repo.getRole(candidate)) {
+    candidate = `${base}-${suffix}`;
+    suffix += 1;
+  }
+
+  return candidate;
 }
 
 function parseMoneyMinorUnit(value: unknown, key: string) {

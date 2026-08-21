@@ -2,9 +2,10 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { CommerceError } from "@/lib/commerce/errors";
-import type { CommerceActor } from "@/lib/commerce/operations";
+import { getEffectiveRoles, type CommerceActor } from "@/lib/commerce/operations";
+import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getAdminAuth } from "@/lib/firebase/server";
-import { defaultRoles, hasPermission, type Permission } from "@/lib/permissions/permissions";
+import { hasPermission, type Permission } from "@/lib/permissions/permissions";
 import { adminSessionCookieName } from "@/lib/auth/session";
 
 /**
@@ -72,11 +73,22 @@ export async function verifyManagerApprover(idToken: string): Promise<CommerceAc
  */
 export async function requireAdminPermission(permission: Permission): Promise<CommerceActor> {
   const actor = await getRequiredAdminActor();
-  if (!hasPermission(defaultRoles, actor, permission)) {
+  const roles = await effectiveRolesForActor(actor);
+  if (!hasPermission(roles, actor, permission)) {
     redirect("/admin");
   }
 
   return actor;
+}
+
+/** Falls back to no roles (i.e. no permissions) if Firestore isn't reachable — never silently grants access. */
+async function effectiveRolesForActor(actor: CommerceActor) {
+  const context = getCommerceServerContext();
+  if (!context) {
+    return [];
+  }
+
+  return getEffectiveRoles(context, actor.roleIds);
 }
 
 function parseRoleIds(value: unknown) {

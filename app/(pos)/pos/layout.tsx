@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getRequiredPosActor } from "@/lib/auth/pos-server";
-import { canAccessAdmin, canAccessPos, defaultRoles } from "@/lib/permissions/permissions";
-import type { CommerceActor } from "@/lib/commerce/operations";
+import { canAccessAdmin, canAccessPos } from "@/lib/permissions/permissions";
+import { getEffectiveRoles, type CommerceActor } from "@/lib/commerce/operations";
+import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { RegisterPosServiceWorker } from "@/components/pos/register-pos-service-worker";
 
 export const metadata: Metadata = {
@@ -22,8 +23,11 @@ export default async function PosLayout({
     redirect("/admin/login");
   }
 
-  if (!canAccessPos(defaultRoles, actor)) {
-    if (canAccessAdmin(defaultRoles, actor)) {
+  const context = getCommerceServerContext();
+  const roles = context ? await getEffectiveRoles(context, actor.roleIds) : [];
+
+  if (!canAccessPos(roles, actor)) {
+    if (canAccessAdmin(roles, actor)) {
       redirect("/admin");
     }
 

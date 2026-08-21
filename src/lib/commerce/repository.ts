@@ -63,6 +63,7 @@ export type CommerceRepository = {
   saveRole(role: Role): Promise<void>;
   getRole(id: string): Promise<Role | null>;
   listRoles(): Promise<Role[]>;
+  deleteRole(id: string): Promise<void>;
   saveStaffUser(user: StaffUser): Promise<void>;
   getStaffUser(id: string): Promise<StaffUser | null>;
   listStaffUsers(): Promise<StaffUser[]>;

@@ -5,11 +5,12 @@ import {
   confirmPaystackPayment,
   createPendingPosMomoOrder,
   evaluatePromotionCode,
+  getEffectiveRoles,
   type CommerceActor,
   type CommerceContext
 } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
-import { defaultRoles, hasPermission } from "@/lib/permissions/permissions";
+import { hasPermission } from "@/lib/permissions/permissions";
 import {
   chargePaystackMobileMoney,
   isPaystackConfigured,
@@ -178,8 +179,11 @@ async function applyPromoCode(
     items: evaluationLines
   });
 
-  if (evaluation.promotion.requiresManagerApproval && !hasPermission(defaultRoles, actor, "pos.price_override")) {
-    throw new CommerceError("FORBIDDEN", "This code needs a manager — ask a manager to apply it.");
+  if (evaluation.promotion.requiresManagerApproval) {
+    const roles = await getEffectiveRoles(context, actor.roleIds);
+    if (!hasPermission(roles, actor, "pos.price_override")) {
+      throw new CommerceError("FORBIDDEN", "This code needs a manager — ask a manager to apply it.");
+    }
   }
 
   return {

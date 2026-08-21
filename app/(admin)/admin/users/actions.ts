@@ -2,12 +2,25 @@
 
 import { revalidatePath } from "next/cache";
 import { CommerceError } from "@/lib/commerce/errors";
-import { createStaffUser, updateStaffUser } from "@/lib/commerce/operations";
+import {
+  createRole,
+  createStaffUser,
+  deleteRole,
+  getEffectiveRoles,
+  updateRole,
+  updateStaffUser,
+  type CommerceContext
+} from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getRequiredAdminActor } from "@/lib/auth/server";
 import { getAdminAuth } from "@/lib/firebase/server";
-import { defaultRoles, hasPermission, type Permission } from "@/lib/permissions/permissions";
-import { formString, type AdminActionState } from "@/lib/admin/product-form";
+import { hasPermission, type Permission } from "@/lib/permissions/permissions";
+import {
+  formOptionalInteger,
+  formOptionalMoneyMinorUnit,
+  formString,
+  type AdminActionState
+} from "@/lib/admin/product-form";
 
 export async function inviteStaffAction(
   _previousState: AdminActionState,
@@ -16,7 +29,7 @@ export async function inviteStaffAction(
   try {
     const context = requireCommerceContext();
     const actor = await getRequiredAdminActor();
-    requirePermission(actor, "users.create");
+    await requirePermission(context, actor, "users.create");
     const auth = requireAdminAuth();
 
     const displayName = formString(formData, "displayName");
@@ -72,7 +85,7 @@ export async function inviteStaffAction(
 export async function updateStaffAccessAction(formData: FormData): Promise<void> {
   const context = requireCommerceContext();
   const actor = await getRequiredAdminActor();
-  requirePermission(actor, "users.update");
+  await requirePermission(context, actor, "users.update");
   const auth = requireAdminAuth();
 
   const id = formString(formData, "id");
@@ -104,8 +117,96 @@ export async function updateStaffAccessAction(formData: FormData): Promise<void>
   revalidatePath("/admin/users");
 }
 
-function requirePermission(actor: { uid: string; roleIds: string[] }, permission: Permission) {
-  if (!hasPermission(defaultRoles, actor, permission)) {
+export async function createRoleAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+    await requirePermission(context, actor, "roles.create");
+
+    const name = formString(formData, "name");
+    const rolePermissions = formData.getAll("permissions").map(String);
+    if (rolePermissions.length === 0) {
+      throw new CommerceError("VALIDATION_ERROR", "Choose at least one permission.");
+    }
+
+    const role = await createRole(context, actor, {
+      name,
+      permissions: rolePermissions,
+      limits: parseRoleLimits(formData)
+    });
+
+    revalidatePath("/admin/users");
+    return { status: "success", message: `Created role ${role.name}.` };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
+}
+
+export async function updateRoleAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+    await requirePermission(context, actor, "roles.update");
+
+    const id = formString(formData, "id");
+    const name = formString(formData, "name");
+    const rolePermissions = formData.getAll("permissions").map(String);
+    if (rolePermissions.length === 0) {
+      throw new CommerceError("VALIDATION_ERROR", "Choose at least one permission.");
+    }
+
+    const role = await updateRole(context, actor, {
+      id,
+      name,
+      permissions: rolePermissions,
+      limits: parseRoleLimits(formData)
+    });
+
+    revalidatePath("/admin/users");
+    return { status: "success", message: `Updated role ${role.name}.` };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
+}
+
+export async function deleteRoleAction(formData: FormData): Promise<void> {
+  const context = requireCommerceContext();
+  const actor = await getRequiredAdminActor();
+  await requirePermission(context, actor, "roles.update");
+
+  await deleteRole(context, actor, formString(formData, "id"));
+  revalidatePath("/admin/users");
+}
+
+function parseRoleLimits(formData: FormData) {
+  const maxDiscountPercent = formOptionalInteger(formData, "maxDiscountPercent");
+  const maxRefundAmount = formOptionalMoneyMinorUnit(formData, "maxRefundAmount");
+  const canOverridePrice = formData.get("canOverridePrice") === "on";
+
+  if (maxDiscountPercent === undefined && maxRefundAmount === null && !canOverridePrice) {
+    return undefined;
+  }
+
+  return {
+    maxDiscountPercent,
+    maxRefundAmount: maxRefundAmount ?? undefined,
+    canOverridePrice
+  };
+}
+
+async function requirePermission(
+  context: CommerceContext,
+  actor: { uid: string; roleIds: string[] },
+  permission: Permission
+) {
+  const roles = await getEffectiveRoles(context, actor.roleIds);
+  if (!hasPermission(roles, actor, permission)) {
     throw new CommerceError("FORBIDDEN", `Missing permission: ${permission}`);
   }
 }

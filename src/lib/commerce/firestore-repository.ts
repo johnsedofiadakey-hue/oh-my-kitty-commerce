@@ -256,6 +256,10 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     return snapshot.docs.map((doc) => readDoc<Role>(doc)).filter(isDefined);
   }
 
+  async deleteRole(id: string) {
+    await this.db.collection("roles").doc(id).delete();
+  }
+
   async saveStaffUser(user: StaffUser) {
     await this.db.collection("users").doc(user.id).set(cleanFirestoreData(user), {
       merge: true

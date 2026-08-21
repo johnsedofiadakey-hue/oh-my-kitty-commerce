@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { permissions } from "@/lib/permissions/permissions";
 
 const slugSchema = z
   .string()
@@ -323,6 +324,26 @@ export const updateStaffUserInputSchema = staffUserFieldsSchema
     id: z.string().min(1)
   });
 
+const roleLimitsSchema = z.object({
+  maxDiscountPercent: z.number().min(0).max(100).optional(),
+  maxRefundAmount: z.number().int().min(0).optional(),
+  canOverridePrice: z.boolean().optional()
+});
+
+const roleFieldsSchema = z.object({
+  name: z.string().min(2),
+  permissions: z.array(z.enum(permissions)).min(1, "Choose at least one permission."),
+  limits: roleLimitsSchema.optional()
+});
+
+export const createRoleInputSchema = roleFieldsSchema;
+
+export const updateRoleInputSchema = roleFieldsSchema
+  .partial()
+  .extend({
+    id: z.string().min(1)
+  });
+
 export const updateContentBlockInputSchema = z.object({
   key: z.string().min(1),
   value: z.string()
@@ -350,6 +371,8 @@ export type CreateOrderDraftInput = z.input<typeof createOrderDraftInputSchema>;
 export type CompleteSaleInput = z.input<typeof completeSaleInputSchema>;
 export type CreateStaffUserInput = z.input<typeof createStaffUserInputSchema>;
 export type UpdateStaffUserInput = z.input<typeof updateStaffUserInputSchema>;
+export type CreateRoleInput = z.input<typeof createRoleInputSchema>;
+export type UpdateRoleInput = z.input<typeof updateRoleInputSchema>;
 export type UpdateStoreSettingsInput = z.input<typeof updateStoreSettingsInputSchema>;
 export type AdjustInventoryInput = z.input<typeof adjustInventoryInputSchema>;
 export type CreateCustomerInput = z.input<typeof createCustomerInputSchema>;

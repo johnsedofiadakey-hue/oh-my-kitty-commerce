@@ -1,8 +1,15 @@
 import { getAdminStaffData } from "@/lib/admin/staff";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { StaffManagementForms } from "@/components/admin/staff-management-forms";
+import { RoleManagementForm } from "@/components/admin/role-management-form";
 import { requireAdminPermission } from "@/lib/auth/server";
-import { inviteStaffAction, updateStaffAccessAction } from "./actions";
+import {
+  createRoleAction,
+  deleteRoleAction,
+  inviteStaffAction,
+  updateRoleAction,
+  updateStaffAccessAction
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -18,13 +25,18 @@ export default async function AdminUsersPage() {
           <h1 className="app-title">Users & Roles</h1>
           <p className="app-subtitle">Admin-created staff accounts, POS access, and RBAC permissions.</p>
         </div>
-        <AdminDrawer title="Invite staff" triggerLabel="Invite staff">
-          <StaffManagementForms
-            disabled={disabled}
-            inviteStaffAction={inviteStaffAction}
-            roles={data.roles.map((role) => ({ id: role.id, name: role.name }))}
-          />
-        </AdminDrawer>
+        <div className="page-heading-actions">
+          <AdminDrawer title="New role" triggerLabel="New role" triggerClassName="admin-action ghost">
+            <RoleManagementForm action={createRoleAction} disabled={disabled} />
+          </AdminDrawer>
+          <AdminDrawer title="Invite staff" triggerLabel="Invite staff">
+            <StaffManagementForms
+              disabled={disabled}
+              inviteStaffAction={inviteStaffAction}
+              roles={data.roles.map((role) => ({ id: role.id, name: role.name }))}
+            />
+          </AdminDrawer>
+        </div>
       </div>
       {data.sourceMessage ? (
         <div className="admin-alert" role="status">
@@ -92,6 +104,25 @@ export default async function AdminUsersPage() {
             <div className="stack-row" key={role.id}>
               <strong>{role.name}</strong>
               <span>{role.permissions.length} permissions</span>
+              {role.system ? (
+                <span className="admin-help">Built-in</span>
+              ) : (
+                <div className="stack-row-actions">
+                  <AdminDrawer
+                    title={`Edit ${role.name}`}
+                    triggerClassName="admin-action ghost small"
+                    triggerLabel="Edit"
+                  >
+                    <RoleManagementForm action={updateRoleAction} disabled={disabled} role={role} />
+                  </AdminDrawer>
+                  <form action={deleteRoleAction}>
+                    <input name="id" type="hidden" value={role.id} />
+                    <button className="admin-action ghost small" disabled={disabled} type="submit">
+                      Delete
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -4,8 +4,9 @@ import { AdminNav, type AdminNavGroup } from "@/components/admin/admin-nav";
 import type { AdminIconName } from "@/components/admin/admin-icons";
 import { getAdminOperationsData } from "@/lib/admin/operations-data";
 import { getRequiredAdminActor } from "@/lib/auth/server";
-import { canAccessAdmin, canAccessPos, defaultRoles, hasPermission, type Permission } from "@/lib/permissions/permissions";
-import type { CommerceActor } from "@/lib/commerce/operations";
+import { canAccessAdmin, canAccessPos, hasPermission, type Permission } from "@/lib/permissions/permissions";
+import { getEffectiveRoles, type CommerceActor } from "@/lib/commerce/operations";
+import { getCommerceServerContext } from "@/lib/commerce/server-context";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false }
@@ -94,8 +95,11 @@ export default async function AdminLayout({
     redirect("/admin/login");
   }
 
-  if (!canAccessAdmin(defaultRoles, actor)) {
-    if (canAccessPos(defaultRoles, actor)) {
+  const context = getCommerceServerContext();
+  const roles = context ? await getEffectiveRoles(context, actor.roleIds) : [];
+
+  if (!canAccessAdmin(roles, actor)) {
+    if (canAccessPos(roles, actor)) {
       redirect("/pos");
     }
 
@@ -128,7 +132,7 @@ export default async function AdminLayout({
     .map((group) => ({
       label: group.label,
       items: group.items
-        .filter((item) => hasPermission(defaultRoles, actor, item.requiredPermission))
+        .filter((item) => hasPermission(roles, actor, item.requiredPermission))
         .map((item) => ({
           label: item.label,
           href: item.href,
@@ -138,7 +142,7 @@ export default async function AdminLayout({
     }))
     .filter((group) => group.items.length > 0);
 
-  const actorRole = defaultRoles.find((role) => actor.roleIds.includes(role.id))?.name ?? "Staff";
+  const actorRole = roles.find((role) => actor.roleIds.includes(role.id))?.name ?? "Staff";
 
   return (
     <div className="app-shell">
