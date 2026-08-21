@@ -59,7 +59,9 @@ function InventoryRow({ row, disabled }: { row: AdminInventoryRow; disabled: boo
             <strong>{getProductTitle(product)}</strong>
             <span>{getVariantLabel(variant)}</span>
           </div>
-          <span className="order-status-pill">SKU {variant.sku}</span>
+          <span className="order-status-pill inventory-row-sku" title={variant.sku}>
+            SKU {variant.sku}
+          </span>
           <span className={lowStock ? "order-status-pill urgent" : "order-status-pill good"}>
             {lowStock ? "Low stock" : "Healthy"}
           </span>

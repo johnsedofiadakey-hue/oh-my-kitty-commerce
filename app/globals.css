@@ -2939,7 +2939,7 @@ button {
 
 .quantity-stepper {
   display: grid;
-  grid-template-columns: 36px 34px 36px;
+  grid-template-columns: 44px 34px 44px;
   align-items: center;
   border: 1px solid var(--color-line);
   border-radius: 999px;
@@ -2947,7 +2947,7 @@ button {
 }
 
 .quantity-stepper button {
-  height: 34px;
+  height: 44px;
   border: 0;
   background: var(--color-peach-mist);
   font-weight: 900;
@@ -5117,9 +5117,15 @@ button {
   }
 
   .metric-grid,
-  .product-grid,
   .admin-grid.two {
     grid-template-columns: 1fr;
+  }
+
+  /* Sized to the tile's own natural width rather than a fixed 1/2/3-column
+     breakpoint, so a tablet (plenty of width even once the cart becomes a
+     bottom sheet below) still shows a real grid instead of one long list. */
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   }
 
   .kpi-row {
@@ -5891,11 +5897,19 @@ button {
 /* Inventory list — same click-to-expand pattern as orders */
 .inventory-row {
   display: grid;
-  grid-template-columns: minmax(160px, 1.6fr) 120px 120px minmax(100px, 0.7fr);
+  grid-template-columns: minmax(160px, 1.6fr) minmax(90px, 180px) 100px minmax(100px, 0.7fr);
   align-items: center;
   gap: 14px;
   min-width: 620px;
   padding: 14px;
+}
+
+.inventory-row-sku {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .inventory-row-main {
