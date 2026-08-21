@@ -8,8 +8,9 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Shop",
-  description: "Browse the full Oh My Kitty intimate care catalogue — by need, product, or routine.",
+  title: "Shop Feminine Wellness Products",
+  description:
+    "Browse the full Oh My Kitty catalogue in Ghana — infection care sets, boric acid, feminine wash, period care, libido support, and razor-bump treatments. By need, product, or routine.",
   alternates: { canonical: "/shop" }
 };
 

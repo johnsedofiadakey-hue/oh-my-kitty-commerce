@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { FaqAccordion } from "@/components/storefront/faq-accordion";
 import { getContentValue } from "@/lib/storefront/content";
+import { buildFaqJsonLd } from "@/lib/seo/structured-data";
 
 export const metadata: Metadata = {
   title: "FAQ",
@@ -40,9 +41,14 @@ export const dynamic = "force-dynamic";
 
 export default async function FaqPage() {
   const whatsappNumber = await getContentValue("whatsapp-number");
+  const faqs = buildFaqs(whatsappNumber);
 
   return (
     <main className="legal-page">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildFaqJsonLd(faqs)) }}
+      />
       <div className="legal-page-botanical" aria-hidden="true">
         <Image alt="" fill sizes="260px" src="/hero/botanicals/leaf-foreground-01.svg" />
       </div>
@@ -53,7 +59,7 @@ export default async function FaqPage() {
         <span className="scene-kicker">FAQ</span>
         <h1>Questions, answered softly.</h1>
         <div className="legal-card">
-          <FaqAccordion entries={buildFaqs(whatsappNumber)} />
+          <FaqAccordion entries={faqs} />
         </div>
       </section>
     </main>

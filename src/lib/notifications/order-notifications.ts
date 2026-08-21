@@ -97,7 +97,7 @@ function fillTemplate(template: string, placeholders: Record<string, string>): s
 }
 
 function buildTrackingLink(orderNumber: string) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ohmyk1tty.web.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ohmykittygh.com";
   return `${siteUrl}/track?order=${encodeURIComponent(orderNumber)}`;
 }
 
@@ -107,7 +107,7 @@ function buildFulfilLink(orderNumber: string) {
     return null;
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ohmyk1tty.web.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ohmykittygh.com";
   return `${siteUrl}/fulfil/${encodeURIComponent(orderNumber)}?token=${token}`;
 }
 

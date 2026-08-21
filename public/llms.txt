@@ -1,0 +1,20 @@
+# Oh My Kitty
+
+> Feminine wellness and intimate care commerce based in Accra, Ghana. Sells feminine hygiene, infection care, period care, boric acid suppositories, libido support, and razor-bump/genital-wart treatments — ordered online, on WhatsApp, or picked up in Accra-Madina.
+
+Oh My Kitty is an online and in-person store serving customers in Ghana with feminine wellness products. Orders can be placed on the website, paid by card or mobile money via Paystack, and either delivered or picked up in Accra-Madina.
+
+## Key pages
+
+- [Shop](https://ohmykittygh.com/shop): full product catalogue
+- [FAQ](https://ohmykittygh.com/faq): ordering, pickup, delivery, and payment questions
+- [Delivery & Pickup](https://ohmykittygh.com/delivery): delivery areas and pickup details
+- [Contact](https://ohmykittygh.com/contact): how to reach the store
+
+## Categories
+
+Infection care sets, boric acid & dripping pills, period care, daily intimate care, razor bumps & ingrown hair care, genital warts care, libido support, herbs & supplements, home care.
+
+## Contact
+
+WhatsApp is the primary support channel; the number is listed on every page footer and the Contact page.

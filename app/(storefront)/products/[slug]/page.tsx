@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { ProductDetailHero } from "@/components/storefront/product-detail-hero";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
 import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefront/catalogue";
+import { buildProductJsonLd } from "@/lib/seo/structured-data";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,10 @@ export default async function ProductDetailPage({ params }: ProductPageParams) {
 
   return (
     <main className="product-detail-page">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildProductJsonLd(product)) }}
+      />
       <StorefrontNav />
 
       <ProductDetailHero variants={variants} />

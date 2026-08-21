@@ -2,6 +2,21 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
+const SEO_KEYWORDS = [
+  "feminine wellness Ghana",
+  "intimate care products Ghana",
+  "feminine hygiene Accra",
+  "yoni care Ghana",
+  "boric acid suppositories Ghana",
+  "infection care set Ghana",
+  "period care products Ghana",
+  "libido support Ghana",
+  "razor bump treatment Ghana",
+  "feminine wash Ghana",
+  "Accra Madina pickup",
+  "Oh My Kitty Ghana"
+];
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -9,12 +24,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://ohmyk1tty.web.app"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://ohmykittygh.com"),
   title: {
     default: "Oh My Kitty",
     template: "%s | Oh My Kitty"
   },
-  description: "Mobile-first feminine wellness commerce for Oh My Kitty.",
+  description: "Feminine wellness and intimate care, shipped or picked up in Accra, Ghana.",
+  keywords: SEO_KEYWORDS,
   applicationName: "Oh My Kitty Commerce",
   manifest: "/manifest.json",
   icons: {
@@ -24,7 +40,16 @@ export const metadata: Metadata = {
   },
   openGraph: {
     siteName: "Oh My Kitty",
-    type: "website"
+    type: "website",
+    locale: "en_GH",
+    url: "/",
+    title: "Oh My Kitty — Intimate care, naturally.",
+    description: "Feminine wellness and intimate care, shipped or picked up in Accra, Ghana."
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Oh My Kitty — Intimate care, naturally.",
+    description: "Feminine wellness and intimate care, shipped or picked up in Accra, Ghana."
   }
 };
 
