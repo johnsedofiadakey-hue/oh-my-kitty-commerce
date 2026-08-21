@@ -138,7 +138,9 @@ export const createOrderDraftInputSchema = z.object({
   createdBy: z.string().nullable().optional(),
   staffId: z.string().nullable().optional(),
   posShiftId: z.string().nullable().optional(),
-  idempotencyKey: z.string().min(8)
+  idempotencyKey: z.string().min(8),
+  promotionId: z.string().nullable().optional(),
+  promoCode: z.string().nullable().optional()
 });
 
 export const completeSaleInputSchema = createOrderDraftInputSchema.extend({

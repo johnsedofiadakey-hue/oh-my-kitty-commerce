@@ -42,6 +42,10 @@ export function CheckoutClient({
   const [deliveryId, setDeliveryId] = useState(deliveryOptions[0]?.id ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [promoInput, setPromoInput] = useState("");
+  const [promoStatus, setPromoStatus] = useState<"idle" | "checking" | "applied" | "error">("idle");
+  const [promoMessage, setPromoMessage] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountTotal: number } | null>(null);
 
   const subtotal = useMemo(
     () => lines.reduce((total, line) => total + line.unitPrice * line.quantity, 0),
@@ -49,8 +53,54 @@ export function CheckoutClient({
   );
   const selectedDelivery = deliveryOptions.find((option) => option.id === deliveryId);
   const deliveryFee = selectedDelivery?.fee ?? 0;
-  const total = subtotal + deliveryFee;
+  const discountTotal = appliedPromo?.discountTotal ?? 0;
+  const total = Math.max(0, subtotal + deliveryFee - discountTotal);
   const isPickup = selectedDelivery?.type === "PICKUP";
+
+  async function applyPromoCode() {
+    if (!promoInput.trim()) {
+      return;
+    }
+
+    setPromoStatus("checking");
+    setPromoMessage("");
+
+    try {
+      const response = await fetch("/api/checkout/promo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: promoInput,
+          items: lines.map((line) => ({ variantId: line.variantId, quantity: line.quantity }))
+        })
+      });
+      const payload = (await response.json()) as {
+        message?: string;
+        code?: string;
+        discountTotal?: number;
+        formattedDiscount?: string;
+      };
+
+      if (!response.ok || typeof payload.discountTotal !== "number" || !payload.code) {
+        throw new Error(payload.message ?? "That code didn't work.");
+      }
+
+      setAppliedPromo({ code: payload.code, discountTotal: payload.discountTotal });
+      setPromoStatus("applied");
+      setPromoMessage(`${payload.formattedDiscount} off applied.`);
+    } catch (error) {
+      setAppliedPromo(null);
+      setPromoStatus("error");
+      setPromoMessage(error instanceof Error ? error.message : "That code didn't work.");
+    }
+  }
+
+  function removePromoCode() {
+    setAppliedPromo(null);
+    setPromoInput("");
+    setPromoStatus("idle");
+    setPromoMessage("");
+  }
 
   async function submitCheckout(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -80,7 +130,8 @@ export function CheckoutClient({
             productId: line.productId,
             variantId: line.variantId,
             quantity: line.quantity
-          }))
+          })),
+          promoCode: appliedPromo?.code
         })
       });
       const payload = (await response.json()) as {
@@ -252,11 +303,50 @@ export function CheckoutClient({
           />
         </label>
 
+        <div className="checkout-promo-field">
+          <span>Promo code (optional)</span>
+          {appliedPromo ? (
+            <div className="checkout-promo-applied">
+              <span>
+                <strong>{appliedPromo.code}</strong> applied
+              </span>
+              <button onClick={removePromoCode} type="button">
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="checkout-promo-row">
+              <input
+                disabled={promoStatus === "checking"}
+                onChange={(event) => setPromoInput(event.target.value)}
+                placeholder="e.g. WELCOME10"
+                value={promoInput}
+              />
+              <button
+                disabled={promoStatus === "checking" || !promoInput.trim()}
+                onClick={applyPromoCode}
+                type="button"
+              >
+                {promoStatus === "checking" ? "Checking..." : "Apply"}
+              </button>
+            </div>
+          )}
+          {promoMessage ? (
+            <p className={promoStatus === "error" ? "form-error" : "checkout-promo-success"}>{promoMessage}</p>
+          ) : null}
+        </div>
+
         <div className="checkout-totals">
           <div>
             <span>Subtotal</span>
             <strong>{formatMoney(subtotal)}</strong>
           </div>
+          {discountTotal > 0 ? (
+            <div>
+              <span>Discount</span>
+              <strong>-{formatMoney(discountTotal)}</strong>
+            </div>
+          ) : null}
           <div>
             <span>Delivery</span>
             <strong>{deliveryFee === 0 ? "Free" : formatMoney(deliveryFee)}</strong>

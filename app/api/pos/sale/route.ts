@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getRequiredPosActor } from "@/lib/auth/pos-server";
 import { CommerceError } from "@/lib/commerce/errors";
-import { completePosSale } from "@/lib/commerce/operations";
+import { completePosSale, evaluatePromotionCode, type CommerceActor, type CommerceContext } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
+import { defaultRoles, hasPermission } from "@/lib/permissions/permissions";
 
 type PosLineInput = {
   productId?: unknown;
@@ -20,6 +21,7 @@ type PosSaleRequestBody = {
   items?: unknown;
   paymentMethod?: unknown;
   posShiftId?: unknown;
+  promoCode?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -34,6 +36,12 @@ export async function POST(request: Request) {
       getRequiredPosActor()
     ]);
     const paymentMethod = parsePaymentMethod(body.paymentMethod);
+    const promoCode = normalizeOptionalString(body.promoCode);
+    // Line discounts computed here flow into completePosSale, which already
+    // requires the pos.discount permission whenever any item has a
+    // discountTotal > 0 — no separate check needed for promo codes.
+    const { items, promotionId } = await applyPromoCode(context, actor, promoCode, parsePosLines(body.items));
+
     const sale = await completePosSale(context, actor, {
       amountReceived: parseOptionalMoneyMinorUnit(body.amountReceived),
       channel: "POS",
@@ -45,10 +53,12 @@ export async function POST(request: Request) {
       idempotencyKey:
         normalizeOptionalString(body.idempotencyKey) ??
         `pos-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
-      items: parsePosLines(body.items),
+      items,
       paymentMethod,
       paymentProvider: paymentMethod === "cash" ? "CASH" : "MANUAL",
       posShiftId: normalizeOptionalString(body.posShiftId),
+      promotionId,
+      promoCode: promotionId ? promoCode : null,
       taxTotal: 0
     });
 
@@ -64,6 +74,62 @@ export async function POST(request: Request) {
       { status: error instanceof CommerceError ? 400 : 500 }
     );
   }
+}
+
+/**
+ * Re-validates the promo code server-side against real live variant prices
+ * and merges the computed per-line discount into each item. Promotions
+ * flagged requiresManagerApproval can only be applied by an actor whose
+ * role already grants pos.price_override (Manager/Owner) — Sales Staff
+ * can't self-approve one, mirroring the refund/void approval boundary.
+ */
+async function applyPromoCode(
+  context: CommerceContext,
+  actor: CommerceActor,
+  promoCode: string | undefined,
+  items: { productId: string; variantId: string; quantity: number }[]
+): Promise<{
+  items: { productId: string; variantId: string; quantity: number; discountTotal?: number }[];
+  promotionId: string | null;
+}> {
+  if (!promoCode) {
+    return { items, promotionId: null };
+  }
+
+  const priceByVariantId = new Map<string, number>();
+  const productIds = Array.from(new Set(items.map((item) => item.productId)));
+  const variantLists = await Promise.all(productIds.map((productId) => context.repo.listVariants(productId)));
+  for (const variants of variantLists) {
+    for (const variant of variants) {
+      priceByVariantId.set(variant.id, variant.price);
+    }
+  }
+
+  const evaluationLines = items.map((item) => {
+    const unitPrice = priceByVariantId.get(item.variantId);
+    if (unitPrice === undefined) {
+      throw new CommerceError("VALIDATION_ERROR", "One of the items in the cart is no longer available.");
+    }
+    return { productId: item.productId, variantId: item.variantId, quantity: item.quantity, unitPrice };
+  });
+
+  const evaluation = await evaluatePromotionCode(context, {
+    code: promoCode,
+    channel: "POS",
+    items: evaluationLines
+  });
+
+  if (evaluation.promotion.requiresManagerApproval && !hasPermission(defaultRoles, actor, "pos.price_override")) {
+    throw new CommerceError("FORBIDDEN", "This code needs a manager — ask a manager to apply it.");
+  }
+
+  return {
+    items: items.map((item) => ({
+      ...item,
+      discountTotal: evaluation.lineDiscounts.get(item.variantId) ?? 0
+    })),
+    promotionId: evaluation.promotion.id
+  };
 }
 
 function parsePosLines(value: unknown) {

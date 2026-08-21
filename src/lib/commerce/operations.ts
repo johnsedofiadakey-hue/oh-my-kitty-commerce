@@ -370,6 +370,124 @@ export async function updatePromotion(
   return promotion;
 }
 
+export type PromotionEvaluationLine = {
+  productId: string;
+  variantId: string;
+  quantity: number;
+  unitPrice: number;
+};
+
+export type PromotionEvaluation = {
+  promotion: Promotion;
+  discountTotal: number;
+  lineDiscounts: Map<string, number>;
+};
+
+/**
+ * Checks a promo code against the current cart and computes the discount —
+ * pure validation, no side effects (usedCount is only incremented once an
+ * order actually completes, via redeemPromotion). Always re-run this
+ * server-side before completing a sale; never trust a client-supplied
+ * discount amount.
+ */
+export async function evaluatePromotionCode(
+  context: CommerceContext,
+  input: {
+    code: string;
+    channel: SalesChannel;
+    items: PromotionEvaluationLine[];
+  }
+): Promise<PromotionEvaluation> {
+  const normalizedCode = input.code.trim().toUpperCase();
+  if (!normalizedCode) {
+    throw new CommerceError("VALIDATION_ERROR", "Enter a promo code.");
+  }
+
+  const promotions = await context.repo.listPromotions();
+  const promotion = promotions.find((entry) => entry.code.toUpperCase() === normalizedCode);
+  if (!promotion) {
+    throw new CommerceError("VALIDATION_ERROR", "That code isn't valid.");
+  }
+
+  if (!promotion.active) {
+    throw new CommerceError("VALIDATION_ERROR", "That code is no longer active.");
+  }
+
+  // Firestore Timestamps aren't real Date instances at runtime — guard with
+  // instanceof rather than trusting the static type, same reason this
+  // codebase has toRealDate/toSortableMillis helpers elsewhere.
+  const now = getNow(context);
+  if (promotion.startsAt instanceof Date && now < promotion.startsAt) {
+    throw new CommerceError("VALIDATION_ERROR", "That code isn't active yet.");
+  }
+  if (promotion.endsAt instanceof Date && now > promotion.endsAt) {
+    throw new CommerceError("VALIDATION_ERROR", "That code has expired.");
+  }
+  if (promotion.usageLimit != null && promotion.usedCount >= promotion.usageLimit) {
+    throw new CommerceError("VALIDATION_ERROR", "That code has reached its usage limit.");
+  }
+  if (promotion.channelRestrictions.length > 0 && !promotion.channelRestrictions.includes(input.channel)) {
+    throw new CommerceError("VALIDATION_ERROR", "That code isn't valid for this order type.");
+  }
+
+  let categoriesByProductId: Map<string, string[]> | null = null;
+  if (promotion.categoryRestrictions.length > 0) {
+    const products = await context.repo.listProducts();
+    categoriesByProductId = new Map(products.map((product) => [product.id, product.categoryIds ?? []]));
+  }
+
+  const matchingItems = input.items.filter((item) => {
+    if (promotion.productRestrictions.length > 0 && !promotion.productRestrictions.includes(item.productId)) {
+      return false;
+    }
+    if (promotion.categoryRestrictions.length > 0) {
+      const productCategories = categoriesByProductId?.get(item.productId) ?? [];
+      if (!productCategories.some((categoryId) => promotion.categoryRestrictions.includes(categoryId))) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  if (matchingItems.length === 0) {
+    throw new CommerceError("VALIDATION_ERROR", "That code doesn't apply to anything in your cart.");
+  }
+
+  const matchingSubtotal = matchingItems.reduce((total, item) => total + item.unitPrice * item.quantity, 0);
+  const rawDiscount =
+    promotion.type === "PERCENT"
+      ? Math.round((matchingSubtotal * promotion.value) / 100)
+      : Math.min(promotion.value, matchingSubtotal);
+
+  // Split the discount proportionally across matching lines by their share
+  // of the matching subtotal — the last line absorbs any rounding remainder
+  // so the parts always sum exactly to rawDiscount.
+  const lineDiscounts = new Map<string, number>();
+  let remaining = rawDiscount;
+  matchingItems.forEach((item, index) => {
+    const lineTotal = item.unitPrice * item.quantity;
+    const isLast = index === matchingItems.length - 1;
+    const share = isLast ? remaining : Math.round((rawDiscount * lineTotal) / matchingSubtotal);
+    lineDiscounts.set(item.variantId, share);
+    remaining -= share;
+  });
+
+  return { promotion, discountTotal: rawDiscount, lineDiscounts };
+}
+
+/** Called once per order, only after it's genuinely confirmed/completed — never at draft/pending time. */
+export async function redeemPromotion(context: CommerceContext, promotionId: string): Promise<void> {
+  await withTransaction(context, async () => {
+    const promotions = await context.repo.listPromotions();
+    const promotion = promotions.find((entry) => entry.id === promotionId);
+    if (!promotion) {
+      return;
+    }
+
+    await context.repo.savePromotion({ ...promotion, usedCount: promotion.usedCount + 1 });
+  });
+}
+
 export async function createConcern(context: CommerceContext, actor: CommerceActor, input: unknown) {
   await assertCan(context, actor, "products.update");
   const parsed = createConcernInputSchema.parse(input);
@@ -1120,6 +1238,9 @@ export async function confirmPaystackPayment(
   if (!result.alreadyConfirmed) {
     void notifyOrderEvent(result.order, "CONFIRMED");
     void notifyAdminOfNewOrder(result.order);
+    if (result.order.promotionId) {
+      void redeemPromotion(context, result.order.promotionId);
+    }
   }
 
   return result;
@@ -1452,6 +1573,9 @@ async function completeSale(
   if (!result.idempotent) {
     void notifyOrderEvent(result.order, "CONFIRMED");
     void notifyAdminOfNewOrder(result.order);
+    if (result.order.promotionId) {
+      void redeemPromotion(context, result.order.promotionId);
+    }
   }
 
   return result;
@@ -1491,7 +1615,9 @@ async function buildOrder(
     staffId: input.staffId ?? null,
     posShiftId: input.posShiftId ?? null,
     idempotencyKey: input.idempotencyKey,
-    createdAt: getNow(context)
+    createdAt: getNow(context),
+    promotionId: input.promotionId ?? null,
+    promoCode: input.promoCode ?? null
   };
 }
 

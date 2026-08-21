@@ -78,6 +78,7 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
   const [cart, setCart] = useState<PosLine[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [promoCode, setPromoCode] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [cashReceived, setCashReceived] = useState("");
   const [momoProvider, setMomoProvider] = useState<MomoProvider>("mtn");
@@ -396,6 +397,7 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
           })),
           provider: momoProvider,
           posShiftId: shift.id,
+          promoCode: promoCode.trim() || undefined,
           idempotencyKey: crypto.randomUUID()
         })
       });
@@ -456,7 +458,8 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
         quantity: line.quantity
       })),
       paymentMethod,
-      posShiftId: shift.id
+      posShiftId: shift.id,
+      promoCode: promoCode.trim() || undefined
     };
     const estimatedTotal = subtotal;
 
@@ -474,6 +477,7 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
       setCashReceived("");
       setCustomerName("");
       setCustomerPhone("");
+      setPromoCode("");
     }
 
     try {
@@ -772,6 +776,14 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
               </select>
             </label>
           ) : null}
+          <label className="admin-field">
+            <span>Promo code (optional)</span>
+            <input
+              onChange={(event) => setPromoCode(event.target.value)}
+              placeholder="e.g. WELCOME10"
+              value={promoCode}
+            />
+          </label>
           <div className="pos-total">
             <span>Total</span>
             <strong>{formatMoney(subtotal)}</strong>

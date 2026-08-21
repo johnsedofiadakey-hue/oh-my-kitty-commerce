@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { CommerceError } from "@/lib/commerce/errors";
-import { createPendingOnlineOrder } from "@/lib/commerce/operations";
+import { createPendingOnlineOrder, evaluatePromotionCode } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
+import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefront/catalogue";
 import {
   initializePaystackTransaction,
   isPaystackConfigured,
@@ -25,6 +26,7 @@ type PaystackCheckoutRequestBody = {
   deliveryRuleId?: unknown;
   idempotencyKey?: unknown;
   items?: unknown;
+  promoCode?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -58,6 +60,9 @@ export async function POST(request: Request) {
       normalizeOptionalString(body.idempotencyKey) ??
       `checkout-paystack-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
+    const promoCode = normalizeOptionalString(body.promoCode);
+    const { items: itemsWithDiscounts, promotionId } = await applyPromoCode(context, promoCode, items);
+
     const pending = await createPendingOnlineOrder(context, {
       customerSnapshot: {
         name: normalizeOptionalString(body.customer?.name),
@@ -69,8 +74,10 @@ export async function POST(request: Request) {
       deliveryTotal,
       taxTotal: 0,
       idempotencyKey,
-      items,
-      paymentMethod: "card"
+      items: itemsWithDiscounts,
+      paymentMethod: "card",
+      promotionId,
+      promoCode: promotionId ? promoCode : null
     });
 
     if (pending.idempotent) {
@@ -103,6 +110,54 @@ export async function POST(request: Request) {
       { status: error instanceof CommerceError ? 400 : 500 }
     );
   }
+}
+
+/**
+ * Re-validates the promo code server-side against the real live prices —
+ * never trusts a client-supplied discount amount — and merges the computed
+ * per-line discount into each item before the order is built.
+ */
+async function applyPromoCode(
+  context: NonNullable<ReturnType<typeof getCommerceServerContext>>,
+  promoCode: string | undefined,
+  items: { productId: string; variantId: string; quantity: number }[]
+): Promise<{
+  items: { productId: string; variantId: string; quantity: number; discountTotal?: number }[];
+  promotionId: string | null;
+}> {
+  if (!promoCode) {
+    return { items, promotionId: null };
+  }
+
+  const catalogue = await getStorefrontCatalogue();
+  const products = toStorefrontProductViews(catalogue);
+  const productByVariantId = new Map(products.map((product) => [product.variantId, product]));
+
+  const evaluationLines = items.map((item) => {
+    const product = productByVariantId.get(item.variantId);
+    if (!product) {
+      throw new CommerceError("VALIDATION_ERROR", "One of the items in your cart is no longer available.");
+    }
+    return {
+      productId: item.productId,
+      variantId: item.variantId,
+      quantity: item.quantity,
+      unitPrice: product.price
+    };
+  });
+
+  const evaluation = await evaluatePromotionCode(context, {
+    code: promoCode,
+    channel: "ONLINE",
+    items: evaluationLines
+  });
+
+  const itemsWithDiscounts = items.map((item) => ({
+    ...item,
+    discountTotal: evaluation.lineDiscounts.get(item.variantId) ?? 0
+  }));
+
+  return { items: itemsWithDiscounts, promotionId: evaluation.promotion.id };
 }
 
 function getSiteUrl() {

@@ -205,6 +205,8 @@ export type Order = {
   posShiftId?: string | null;
   idempotencyKey: string;
   createdAt?: Date;
+  promotionId?: string | null;
+  promoCode?: string | null;
 };
 
 export type CustomerSnapshot = {
