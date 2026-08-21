@@ -41,8 +41,32 @@ export const CONTENT_REGISTRY = {
     label: "SMS: out for delivery (placeholders: {orderNumber}, {trackingLink})",
     group: "SMS templates",
     defaultValue: "Oh My Kitty: Order {orderNumber} is out for delivery! Track: {trackingLink}"
+  },
+  "shop-closed": {
+    label: "Shop status",
+    group: "Storefront",
+    defaultValue: "false",
+    options: [
+      { value: "false", label: "Open — taking orders" },
+      { value: "true", label: "Closed — pause new orders" }
+    ]
+  },
+  "shop-closed-message": {
+    label: "Message shown while closed",
+    group: "Storefront",
+    defaultValue:
+      "We're taking a short break and aren't able to take new orders right now. Thank you for your patience — check back soon."
   }
 } as const;
+
+/** True only for keys whose registry entry declares a fixed `options` list — everything else renders as free text. */
+export function isSelectContentKey(key: ContentKey): boolean {
+  return "options" in CONTENT_REGISTRY[key];
+}
+
+export async function isShopClosed(): Promise<boolean> {
+  return (await getContentValue("shop-closed")) === "true";
+}
 
 export type ContentKey = keyof typeof CONTENT_REGISTRY;
 

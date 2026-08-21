@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { getAdminOperationsData } from "@/lib/admin/operations-data";
 import { requireAdminPermission } from "@/lib/auth/server";
-import { CONTENT_REGISTRY, getContentBlocks, type ContentKey } from "@/lib/storefront/content";
+import { CONTENT_REGISTRY, getContentBlocks, isSelectContentKey, type ContentKey } from "@/lib/storefront/content";
 import { updateContentBlockAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -31,22 +31,35 @@ export default async function AdminContentPage() {
           <span>Changes appear on the storefront immediately</span>
         </div>
         <div className="quick-edit-list">
-          {keys.map((key) => (
-            <form action={updateContentBlockAction} className="quick-edit-row" key={key}>
-              <input name="key" type="hidden" value={key} />
-              <label className="admin-field">
-                <span>{CONTENT_REGISTRY[key].label}</span>
-                <input defaultValue={content[key]} disabled={disabled} name="value" required />
-              </label>
-              <label className="admin-field">
-                <span>Used on</span>
-                <input disabled value={CONTENT_REGISTRY[key].group} />
-              </label>
-              <button className="admin-action" disabled={disabled} type="submit">
-                Save
-              </button>
-            </form>
-          ))}
+          {keys.map((key) => {
+            const entry = CONTENT_REGISTRY[key];
+            return (
+              <form action={updateContentBlockAction} className="quick-edit-row" key={key}>
+                <input name="key" type="hidden" value={key} />
+                <label className="admin-field">
+                  <span>{entry.label}</span>
+                  {isSelectContentKey(key) && "options" in entry ? (
+                    <select defaultValue={content[key]} disabled={disabled} name="value" required>
+                      {entry.options.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input defaultValue={content[key]} disabled={disabled} name="value" required />
+                  )}
+                </label>
+                <label className="admin-field">
+                  <span>Used on</span>
+                  <input disabled value={entry.group} />
+                </label>
+                <button className="admin-action" disabled={disabled} type="submit">
+                  Save
+                </button>
+              </form>
+            );
+          })}
         </div>
       </section>
       <section className="admin-grid two">

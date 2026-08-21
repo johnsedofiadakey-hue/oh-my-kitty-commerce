@@ -3,6 +3,7 @@ import { CommerceError } from "@/lib/commerce/errors";
 import { createPendingOnlineOrder, evaluatePromotionCode } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefront/catalogue";
+import { isShopClosed } from "@/lib/storefront/content";
 import {
   initializePaystackTransaction,
   isPaystackConfigured,
@@ -31,6 +32,10 @@ type PaystackCheckoutRequestBody = {
 
 export async function POST(request: Request) {
   try {
+    if (await isShopClosed()) {
+      throw new CommerceError("INVALID_STATE", "We're not taking new orders right now — check back soon.");
+    }
+
     if (!isPaystackConfigured()) {
       throw new CommerceError(
         "INVALID_STATE",
