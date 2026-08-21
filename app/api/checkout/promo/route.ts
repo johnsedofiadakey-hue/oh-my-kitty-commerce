@@ -4,6 +4,7 @@ import { evaluatePromotionCode } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { formatMoney } from "@/lib/commerce/format";
 import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefront/catalogue";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 type PromoLineInput = {
   productId?: unknown;
@@ -22,6 +23,10 @@ type PromoRequestBody = {
  * of each line up from the live catalogue server-side.
  */
 export async function POST(request: Request) {
+  if (!checkRateLimit(`checkout-promo:${getClientIp(request)}`, 20, 60_000)) {
+    return NextResponse.json({ message: "Too many attempts — please wait a moment and try again." }, { status: 429 });
+  }
+
   try {
     const context = getCommerceServerContext();
     if (!context) {

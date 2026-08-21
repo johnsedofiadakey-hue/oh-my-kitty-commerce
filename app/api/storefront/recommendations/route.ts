@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefront/catalogue";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 /**
  * Cart cross-sell: given the product ids already in the cart, returns a few
@@ -8,6 +9,10 @@ import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefro
  * to the storefront can already see.
  */
 export async function GET(request: Request) {
+  if (!checkRateLimit(`storefront-recommendations:${getClientIp(request)}`, 30, 60_000)) {
+    return NextResponse.json({ products: [] }, { status: 429 });
+  }
+
   const url = new URL(request.url);
   const productIds = (url.searchParams.get("productIds") ?? "")
     .split(",")

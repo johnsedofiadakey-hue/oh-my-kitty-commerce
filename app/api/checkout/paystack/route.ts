@@ -4,6 +4,7 @@ import { createPendingOnlineOrder, evaluatePromotionCode } from "@/lib/commerce/
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefront/catalogue";
 import { isShopClosed } from "@/lib/storefront/content";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import {
   initializePaystackTransaction,
   isPaystackConfigured,
@@ -31,6 +32,10 @@ type PaystackCheckoutRequestBody = {
 };
 
 export async function POST(request: Request) {
+  if (!checkRateLimit(`checkout-paystack:${getClientIp(request)}`, 5, 60_000)) {
+    return NextResponse.json({ message: "Too many attempts — please wait a moment and try again." }, { status: 429 });
+  }
+
   try {
     if (await isShopClosed()) {
       throw new CommerceError("INVALID_STATE", "We're not taking new orders right now — check back soon.");

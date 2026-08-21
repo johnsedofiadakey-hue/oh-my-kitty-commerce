@@ -2,12 +2,17 @@ import { NextResponse } from "next/server";
 import { CommerceError } from "@/lib/commerce/errors";
 import { trackOrder } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 type TrackRequestBody = {
   orderNumber?: unknown;
 };
 
 export async function POST(request: Request) {
+  if (!checkRateLimit(`track:${getClientIp(request)}`, 20, 60_000)) {
+    return NextResponse.json({ message: "Too many attempts — please wait a moment and try again." }, { status: 429 });
+  }
+
   try {
     const context = getCommerceServerContext();
     if (!context) {
