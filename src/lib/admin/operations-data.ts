@@ -45,6 +45,13 @@ export type AdminChannelTotal = {
   revenue: number;
 };
 
+export type AdminTopProduct = {
+  productId: string;
+  title: string;
+  quantity: number;
+  revenue: number;
+};
+
 export type AdminOperationsData = {
   source: AdminOperationsSource;
   sourceMessage?: string;
@@ -62,6 +69,7 @@ export type AdminOperationsData = {
   orderRows: AdminOrderRow[];
   inventoryRows: AdminInventoryRow[];
   channelTotals: AdminChannelTotal[];
+  topProducts: AdminTopProduct[];
   metrics: {
     revenue: number;
     onlineOrders: number;
@@ -211,11 +219,34 @@ function buildOperationsData(input: {
   const cashSales = input.payments
     .filter((payment) => payment.method === "cash")
     .reduce((total, payment) => total + payment.amount, 0);
+  const topProducts = Object.values(
+    input.orders
+      .filter((order) => order.paymentStatus === "PAID")
+      .flatMap((order) => order.items)
+      .reduce<Record<string, AdminTopProduct>>((totals, item) => {
+        const existing = totals[item.productId];
+        if (existing) {
+          existing.quantity += item.quantity;
+          existing.revenue += item.lineTotal;
+        } else {
+          totals[item.productId] = {
+            productId: item.productId,
+            title: item.productTitle,
+            quantity: item.quantity,
+            revenue: item.lineTotal
+          };
+        }
+        return totals;
+      }, {})
+  )
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5);
 
   return {
     ...input,
     channelTotals,
     inventoryRows,
+    topProducts,
     metrics: {
       activeShifts: input.posShifts.filter((shift) => shift.status === "OPEN").length,
       cashSales,
