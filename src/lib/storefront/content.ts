@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { toWhatsAppLink } from "@/lib/storefront/whatsapp";
 
@@ -43,7 +44,7 @@ export const CONTENT_REGISTRY = {
     defaultValue: "Oh My Kitty: Order {orderNumber} is out for delivery! Track: {trackingLink}"
   },
   "shop-closed": {
-    label: "Shop status",
+    label: "Shop status (takes up to 30s to apply)",
     group: "Storefront",
     defaultValue: "false",
     options: [
@@ -64,13 +65,32 @@ export function isSelectContentKey(key: ContentKey): boolean {
   return "options" in CONTENT_REGISTRY[key];
 }
 
+const SHOP_CLOSED_CACHE_TTL_MS = 30_000;
+let shopClosedCache: { value: boolean; expiresAt: number } | null = null;
+
+/**
+ * Checked on every storefront request (see proxy.ts), so unlike the rest of
+ * this file it can't rely on React's per-request cache() alone — that only
+ * dedupes within a single page render, not across the many separate
+ * requests a busy storefront makes per second. A short TTL cache trades up
+ * to 30s of propagation delay on this one admin toggle (a rare, deliberate
+ * action) for avoiding a Firestore read on every single request.
+ */
 export async function isShopClosed(): Promise<boolean> {
-  return (await getContentValue("shop-closed")) === "true";
+  const now = Date.now();
+  if (shopClosedCache && shopClosedCache.expiresAt > now) {
+    return shopClosedCache.value;
+  }
+
+  const value = (await getContentValue("shop-closed")) === "true";
+  shopClosedCache = { value, expiresAt: now + SHOP_CLOSED_CACHE_TTL_MS };
+  return value;
 }
 
 export type ContentKey = keyof typeof CONTENT_REGISTRY;
 
-export async function getContentBlocks(): Promise<Record<ContentKey, string>> {
+/** cache()'d so the many independent getContentValue() callers on one page share a single Firestore read instead of one each. */
+export const getContentBlocks = cache(async (): Promise<Record<ContentKey, string>> => {
   const defaults = defaultContentBlocks();
   const context = getCommerceServerContext();
   if (!context) {
@@ -90,7 +110,7 @@ export async function getContentBlocks(): Promise<Record<ContentKey, string>> {
   } catch {
     return defaults;
   }
-}
+});
 
 export async function getContentValue(key: ContentKey): Promise<string> {
   const blocks = await getContentBlocks();
