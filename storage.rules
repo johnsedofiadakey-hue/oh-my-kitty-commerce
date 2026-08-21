@@ -28,6 +28,11 @@ service firebase.storage {
       allow write: if isStaff() && isReasonableImage();
     }
 
+    match /categories/{allPaths=**} {
+      allow read: if true;
+      allow write: if isStaff() && isReasonableImage();
+    }
+
     match /admin/{allPaths=**} {
       allow read, write: if isAdmin();
     }
