@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { openCart } from "@/lib/storefront/cart-store";
 
 export type CartLine = {
   productId: string;
@@ -35,6 +36,10 @@ export function AddToBagButton({
   function handleClick() {
     addLineToCart(line);
     setAdded(true);
+    // Opening the cart drawer immediately is the confirmation — it doubles
+    // as "here's what you just added" and "here's your whole cart," so
+    // there's no separate silent add + a later hunt for a cart icon.
+    openCart();
     window.setTimeout(() => setAdded(false), 1300);
   }
 

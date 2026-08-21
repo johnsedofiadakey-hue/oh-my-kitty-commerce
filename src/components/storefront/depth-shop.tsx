@@ -12,6 +12,7 @@ import {
 import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
+import { openCart } from "@/lib/storefront/cart-store";
 
 type DepthShopProps = {
   products: StorefrontProductView[];
@@ -256,11 +257,14 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
               <ProductTile
                 hasMultipleVariants={hasMultipleVariants}
                 key={product.variantId}
-                onQuickAdd={() =>
-                  hasMultipleVariants
-                    ? setSelectedId(product.variantId)
-                    : addLineToCart(toCartLine(product))
-                }
+                onQuickAdd={() => {
+                  if (hasMultipleVariants) {
+                    setSelectedId(product.variantId);
+                    return;
+                  }
+                  addLineToCart(toCartLine(product));
+                  openCart();
+                }}
                 onSelect={() => setSelectedId(product.variantId)}
                 product={product}
                 tileType={tileTypeForIndex(index)}

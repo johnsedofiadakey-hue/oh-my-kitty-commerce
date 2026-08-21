@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Route } from "next";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { addLineToCart, type CartLine } from "@/components/storefront/add-to-bag-button";
+import { openCart } from "@/lib/storefront/cart-store";
 import { CartCount } from "@/components/storefront/cart-count";
 import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
@@ -621,7 +622,10 @@ export function CinematicHome({ categories, products }: CinematicHomeProps) {
                 <button
                   aria-label={`Quick add ${dominantSeller.title} to cart`}
                   className="quick-add-button"
-                  onClick={() => addLineToCart(toCartLine(dominantSeller))}
+                  onClick={() => {
+                    addLineToCart(toCartLine(dominantSeller));
+                    openCart();
+                  }}
                   type="button"
                 >
                   +
