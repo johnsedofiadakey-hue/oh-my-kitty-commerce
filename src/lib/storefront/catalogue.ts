@@ -50,6 +50,8 @@ export type StorefrontProductView = {
   sku: string;
   price: number;
   formattedPrice: string;
+  compareAtPrice?: number;
+  formattedCompareAtPrice?: string;
   stockAvailable: number;
   imageUrl?: string;
   imageAlt?: string;
@@ -219,6 +221,15 @@ export function toStorefrontProductViews(catalogue: StorefrontCatalogue): Storef
       sku: variant.sku,
       price: variant.price,
       formattedPrice: formatStorefrontMoney(variant.price),
+      // Only a real "was" price if it's actually higher than the current
+      // price — otherwise there's no discount to show, so treat it as unset
+      // rather than displaying a confusing or backwards strikethrough.
+      compareAtPrice:
+        variant.compareAtPrice && variant.compareAtPrice > variant.price ? variant.compareAtPrice : undefined,
+      formattedCompareAtPrice:
+        variant.compareAtPrice && variant.compareAtPrice > variant.price
+          ? formatStorefrontMoney(variant.compareAtPrice)
+          : undefined,
       stockAvailable: variant.stockAvailable,
       imageUrl: media?.url,
       imageAlt: media?.alt,

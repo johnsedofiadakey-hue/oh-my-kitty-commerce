@@ -16,6 +16,7 @@ import {
   formInteger,
   formMoneyMinorUnit,
   formOptionalInteger,
+  formOptionalMoneyMinorUnit,
   formOptionalString,
   formProductStatus,
   formString,
@@ -117,6 +118,7 @@ export async function quickEditCatalogueItemAction(formData: FormData): Promise<
     id: variantId,
     title: formString(formData, "variantTitle"),
     price: formMoneyMinorUnit(formData, "price"),
+    compareAtPrice: formOptionalMoneyMinorUnit(formData, "compareAtPrice"),
     lowStockThreshold: formInteger(formData, "lowStockThreshold", 5)
   });
 

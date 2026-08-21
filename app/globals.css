@@ -2384,6 +2384,20 @@ button {
   align-items: center;
 }
 
+.price-with-compare {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.price-with-compare s {
+  color: var(--color-muted);
+  font-size: 0.86em;
+  font-weight: 600;
+  text-decoration-color: var(--color-status-urgent);
+}
+
 .product-detail-price strong {
   font-size: 1.4rem;
 }

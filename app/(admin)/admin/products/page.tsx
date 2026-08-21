@@ -244,6 +244,18 @@ function ProductEditDrawer({
               />
             </label>
             <label className="admin-field">
+              <span>Was price GHS (sale — leave blank for no sale)</span>
+              <input
+                defaultValue={variant.compareAtPrice ? (variant.compareAtPrice / 100).toFixed(2) : ""}
+                inputMode="decimal"
+                min="0"
+                name="compareAtPrice"
+                placeholder="e.g. 100.00"
+              />
+            </label>
+          </div>
+          <div className="admin-form-grid">
+            <label className="admin-field">
               <span>Low stock alert</span>
               <input defaultValue={variant.lowStockThreshold} inputMode="numeric" min="0" name="lowStockThreshold" required />
             </label>

@@ -340,7 +340,12 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
               <h2 id="product-sheet-title">{selectedProduct.title}</h2>
               <p>{selectedProduct.shortCopy}</p>
               <div className="sheet-meta">
-                <strong>{selectedProduct.formattedPrice}</strong>
+                <div className="price-with-compare">
+                  <strong>{selectedProduct.formattedPrice}</strong>
+                  {selectedProduct.formattedCompareAtPrice ? (
+                    <s>{selectedProduct.formattedCompareAtPrice}</s>
+                  ) : null}
+                </div>
                 <small>{selectedProduct.stockAvailable} available</small>
               </div>
               {siblingVariants.length > 1 ? (
@@ -483,7 +488,10 @@ function ProductTile({
         </div>
         <span>{product.primaryCategory}</span>
         <h2>{product.title}</h2>
-        <strong>{product.formattedPrice}</strong>
+        <div className="price-with-compare">
+          <strong>{product.formattedPrice}</strong>
+          {product.formattedCompareAtPrice ? <s>{product.formattedCompareAtPrice}</s> : null}
+        </div>
       </button>
       <button
         aria-label={

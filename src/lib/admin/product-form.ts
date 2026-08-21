@@ -55,6 +55,21 @@ export function formOptionalInteger(formData: FormData, key: string) {
   return parsed;
 }
 
+/** Unlike formMoneyMinorUnit, blank means "not set" (null) rather than 0 — for optional prices like a sale's compare-at price. */
+export function formOptionalMoneyMinorUnit(formData: FormData, key: string) {
+  const value = formString(formData, key);
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value.replace(/,/g, "");
+  if (!/^\d+(\.\d{1,2})?$/.test(normalized)) {
+    throw new Error(`${key} must be a valid amount.`);
+  }
+
+  return Math.round(Number(normalized) * 100);
+}
+
 export function formMoneyMinorUnit(formData: FormData, key: string) {
   const value = formString(formData, key);
   if (!value) {

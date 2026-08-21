@@ -51,7 +51,10 @@ export function ProductDetailHero({ variants }: ProductDetailHeroProps) {
         <p>{selected.description ?? selected.shortCopy}</p>
 
         <div className="product-detail-price">
-          <strong>{selected.formattedPrice}</strong>
+          <div className="price-with-compare">
+            <strong>{selected.formattedPrice}</strong>
+            {selected.formattedCompareAtPrice ? <s>{selected.formattedCompareAtPrice}</s> : null}
+          </div>
           <span>{selected.stockAvailable} available</span>
         </div>
 
