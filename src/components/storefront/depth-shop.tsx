@@ -1,8 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import type { Route } from "next";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AddToBagButton,
@@ -118,6 +116,26 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
       return [];
     }
     return products.filter((product) => product.id === selectedProduct.id);
+  }, [products, selectedProduct]);
+
+  // Same "shares a category" logic as the full product page's related-
+  // products section, just scoped to the quick-view sheet.
+  const relatedProducts = useMemo(() => {
+    if (!selectedProduct) {
+      return [];
+    }
+    const seenProductIds = new Set<string>();
+    return products.filter((product) => {
+      if (
+        product.id === selectedProduct.id ||
+        seenProductIds.has(product.id) ||
+        !product.categorySlugs.some((slug) => selectedProduct.categorySlugs.includes(slug))
+      ) {
+        return false;
+      }
+      seenProductIds.add(product.id);
+      return true;
+    }).slice(0, 4);
   }, [products, selectedProduct]);
 
   const variantCountByProductId = useMemo(() => {
@@ -345,15 +363,33 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
                 label="Add to cart"
                 line={toCartLine(selectedProduct)}
               />
-              <Link
-                className="sheet-detail-link"
-                href={`/products/${selectedProduct.slug}` as Route}
-              >
-                Explore product →
-              </Link>
               <CartTrigger className="sheet-cart-link" onBeforeOpen={() => setSelectedId(null)}>
                 View cart
               </CartTrigger>
+
+              {relatedProducts.length > 0 ? (
+                <div className="sheet-related">
+                  <span className="sheet-related-label">You might also like</span>
+                  <div className="sheet-related-row">
+                    {relatedProducts.map((related) => (
+                      <button
+                        className="sheet-related-card"
+                        key={related.variantId}
+                        onClick={() => setSelectedId(related.variantId)}
+                        type="button"
+                      >
+                        <div className="sheet-related-figure" aria-hidden="true">
+                          {related.imageUrl ? (
+                            <Image alt="" fill sizes="120px" src={related.imageUrl} />
+                          ) : null}
+                        </div>
+                        <span>{related.title}</span>
+                        <strong>{related.formattedPrice}</strong>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </aside>
         </div>
