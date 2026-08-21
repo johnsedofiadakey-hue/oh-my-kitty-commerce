@@ -7,7 +7,7 @@ type StorefrontFooterProps = {
   whatsappNumber: string;
 };
 
-type SocialIcon = "instagram" | "tiktok" | "whatsapp";
+type SocialIcon = "instagram" | "tiktok" | "snapchat" | "whatsapp";
 
 export function StorefrontFooter({ variant = "full", whatsappNumber }: StorefrontFooterProps) {
   const socialButtons = [
@@ -20,6 +20,11 @@ export function StorefrontFooter({ variant = "full", whatsappNumber }: Storefron
       href: "https://www.tiktok.com/@ohmykitty_30",
       icon: "tiktok" as SocialIcon,
       label: "TikTok"
+    },
+    {
+      href: "https://snapchat.com/t/d02oD04F",
+      icon: "snapchat" as SocialIcon,
+      label: "Snapchat"
     },
     {
       href: toWhatsAppLink(whatsappNumber),
@@ -122,6 +127,16 @@ function SocialIcon({ name }: { name: SocialIcon }) {
       <svg aria-hidden="true" viewBox="0 0 24 24">
         <path d="M14 4v10.1a4.3 4.3 0 1 1-3.3-4.2" />
         <path d="M14 5.5c.8 2.4 2.5 3.9 5 4.3" />
+      </svg>
+    );
+  }
+
+  if (name === "snapchat") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 3.5c-3.6 0-6.5 3-6.5 6.7v7.3l1.8-1.6 1.7 1.6 1.7-1.6 1.7 1.6 1.6-1.6 1.7 1.6 1.8-1.6v-7.3c0-3.7-2.9-6.7-6.5-6.7Z" />
+        <circle cx="9.6" cy="10.2" r="0.9" />
+        <circle cx="14.4" cy="10.2" r="0.9" />
       </svg>
     );
   }
