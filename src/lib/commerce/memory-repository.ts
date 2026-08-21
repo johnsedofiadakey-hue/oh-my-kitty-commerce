@@ -123,6 +123,10 @@ export class MemoryCommerceRepository implements CommerceRepository {
     this.media.set(media.id, media);
   }
 
+  async deleteMedia(id: string) {
+    this.media.delete(id);
+  }
+
   async listContentBlocks() {
     return [...this.contentBlocks.values()];
   }

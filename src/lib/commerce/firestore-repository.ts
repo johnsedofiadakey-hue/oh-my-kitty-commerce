@@ -125,6 +125,10 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     });
   }
 
+  async deleteMedia(id: string) {
+    await this.db.collection("media").doc(id).delete();
+  }
+
   async listContentBlocks() {
     const snapshot = await this.db.collection("contentBlocks").get();
     return snapshot.docs.map((doc) => readDoc<ContentBlock>(doc)).filter(isDefined);

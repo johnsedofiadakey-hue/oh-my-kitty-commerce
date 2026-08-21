@@ -40,6 +40,7 @@ export type CommerceRepository = {
   saveRoutine(routine: Routine): Promise<void>;
   listMedia(): Promise<MediaAsset[]>;
   saveMedia(media: MediaAsset): Promise<void>;
+  deleteMedia(id: string): Promise<void>;
   listContentBlocks(): Promise<ContentBlock[]>;
   saveContentBlock(block: ContentBlock): Promise<void>;
   saveCustomer(customer: Customer): Promise<void>;

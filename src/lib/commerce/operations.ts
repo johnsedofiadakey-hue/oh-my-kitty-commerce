@@ -928,6 +928,38 @@ export async function createMediaAsset(
   return asset;
 }
 
+export async function deleteMediaAsset(context: CommerceContext, actor: CommerceActor, mediaId: string) {
+  await assertCan(context, actor, "media.delete");
+
+  const [products, categories] = await Promise.all([
+    context.repo.listProducts(),
+    context.repo.listCategories()
+  ]);
+  const variants = (
+    await Promise.all(products.map((product) => context.repo.listVariants(product.id)))
+  ).flat();
+
+  const stillReferenced =
+    products.some((product) => product.mediaIds.includes(mediaId)) ||
+    variants.some((variant) => variant.mediaIds.includes(mediaId)) ||
+    categories.some((category) => category.mediaId === mediaId);
+
+  if (stillReferenced) {
+    throw new CommerceError(
+      "VALIDATION_ERROR",
+      "This image is still used by a product or category — replace it there first."
+    );
+  }
+
+  await context.repo.deleteMedia(mediaId);
+  await writeAuditLog(context, actor, {
+    action: "media.delete",
+    entityType: "media",
+    entityId: mediaId,
+    summary: `Deleted media ${mediaId}`
+  });
+}
+
 /**
  * Uploads a photo and makes it the given variant's primary image in one
  * step — the storefront and every admin list only ever reads

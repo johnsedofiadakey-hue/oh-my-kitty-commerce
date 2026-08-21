@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { CommerceError } from "@/lib/commerce/errors";
-import { updateContentBlock } from "@/lib/commerce/operations";
+import { createMediaAsset, deleteMediaAsset, updateContentBlock } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getRequiredAdminActor } from "@/lib/auth/server";
-import { formString } from "@/lib/admin/product-form";
+import { formString, type AdminActionState } from "@/lib/admin/product-form";
 
 export async function updateContentBlockAction(formData: FormData): Promise<void> {
   const context = requireCommerceContext();
@@ -21,6 +21,43 @@ export async function updateContentBlockAction(formData: FormData): Promise<void
   revalidatePath("/delivery");
   revalidatePath("/faq");
   revalidatePath("/returns");
+}
+
+export async function uploadGeneralMediaAction(input: {
+  storagePath: string;
+  url: string;
+  alt: string;
+}): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+    await createMediaAsset(context, actor, { ...input, usage: ["general"] });
+
+    revalidatePath("/admin/content");
+    return { status: "success", message: "Uploaded." };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
+}
+
+export async function deleteMediaAssetAction(formData: FormData): Promise<void> {
+  const context = requireCommerceContext();
+  const actor = await getRequiredAdminActor();
+
+  await deleteMediaAsset(context, actor, formString(formData, "id"));
+  revalidatePath("/admin/content");
+}
+
+function getActionErrorMessage(error: unknown) {
+  if (error instanceof CommerceError) {
+    return error.message;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Save failed.";
 }
 
 function requireCommerceContext() {

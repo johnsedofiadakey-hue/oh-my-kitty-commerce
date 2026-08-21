@@ -2,12 +2,8 @@
 
 import Image from "next/image";
 import { useState, type ChangeEvent } from "react";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { getClientStorage, refreshClientIdToken } from "@/lib/firebase/client";
-import { compressImage } from "@/lib/admin/compress-image";
+import { compressAndUploadImage } from "@/lib/admin/upload-image";
 import type { AdminActionState } from "@/lib/admin/product-form";
-
-const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
 type MediaUploaderProps = {
   productId: string;
@@ -45,33 +41,14 @@ export function MediaUploader({
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
-      setMessage({ status: "error", text: "Choose an image file." });
-      return;
-    }
-
-    if (file.size > MAX_FILE_BYTES) {
-      setMessage({ status: "error", text: "Image must be under 5MB." });
-      return;
-    }
-
-    const storage = getClientStorage();
-    if (!storage) {
-      setMessage({ status: "error", text: "Firebase Storage isn't configured for this environment yet." });
-      return;
-    }
-
     setUploading(true);
     setMessage(null);
 
     try {
-      await refreshClientIdToken();
-      const compressed = await compressImage(file);
-      const extension = compressed.name.split(".").pop() ?? "jpg";
-      const storagePath = `products/${productId}/${variantId}-${Date.now()}.${extension}`;
-      const storageRef = ref(storage, storagePath);
-      await uploadBytes(storageRef, compressed, { contentType: compressed.type });
-      const url = await getDownloadURL(storageRef);
+      const { storagePath, url } = await compressAndUploadImage(
+        file,
+        (extension) => `products/${productId}/${variantId}-${Date.now()}.${extension}`
+      );
 
       const result = await onAttach({ productId, variantId, storagePath, url, alt });
       if (result.status === "success") {
