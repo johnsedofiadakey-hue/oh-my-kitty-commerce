@@ -71,17 +71,29 @@ export async function notifyAdminOfNewOrder(order: Order): Promise<void> {
  */
 async function buildMessage(order: Order, event: OrderNotificationEvent): Promise<string> {
   const trackingLink = buildTrackingLink(order.orderNumber);
+  const placeholders: Record<string, string> = { orderNumber: order.orderNumber, trackingLink };
 
   switch (event) {
-    case "CONFIRMED":
-      return `Oh My Kitty: Payment confirmed for order ${order.orderNumber}! Track it: ${trackingLink}`;
-    case "READY_FOR_PICKUP": {
-      const pickupLocation = await getContentValue("pickup-location");
-      return `Oh My Kitty: Order ${order.orderNumber} is ready for pickup at ${pickupLocation}. Track: ${trackingLink}`;
+    case "CONFIRMED": {
+      const template = await getContentValue("sms-confirmed-template");
+      return fillTemplate(template, placeholders);
     }
-    case "OUT_FOR_DELIVERY":
-      return `Oh My Kitty: Order ${order.orderNumber} is out for delivery! Track: ${trackingLink}`;
+    case "READY_FOR_PICKUP": {
+      const [template, pickupLocation] = await Promise.all([
+        getContentValue("sms-ready-pickup-template"),
+        getContentValue("pickup-location")
+      ]);
+      return fillTemplate(template, { ...placeholders, pickupLocation });
+    }
+    case "OUT_FOR_DELIVERY": {
+      const template = await getContentValue("sms-out-for-delivery-template");
+      return fillTemplate(template, placeholders);
+    }
   }
+}
+
+function fillTemplate(template: string, placeholders: Record<string, string>): string {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) => placeholders[key] ?? match);
 }
 
 function buildTrackingLink(orderNumber: string) {

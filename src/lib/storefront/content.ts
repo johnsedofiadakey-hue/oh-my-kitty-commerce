@@ -26,6 +26,21 @@ export const CONTENT_REGISTRY = {
     label: "Pickup map link (Google Maps URL)",
     group: "Contact",
     defaultValue: "https://maps.google.com/?q=5.675043,-0.144152"
+  },
+  "sms-confirmed-template": {
+    label: "SMS: payment confirmed (placeholders: {orderNumber}, {trackingLink})",
+    group: "SMS templates",
+    defaultValue: "Oh My Kitty: Payment confirmed for order {orderNumber}! Track it: {trackingLink}"
+  },
+  "sms-ready-pickup-template": {
+    label: "SMS: ready for pickup (placeholders: {orderNumber}, {pickupLocation}, {trackingLink})",
+    group: "SMS templates",
+    defaultValue: "Oh My Kitty: Order {orderNumber} is ready for pickup at {pickupLocation}. Track: {trackingLink}"
+  },
+  "sms-out-for-delivery-template": {
+    label: "SMS: out for delivery (placeholders: {orderNumber}, {trackingLink})",
+    group: "SMS templates",
+    defaultValue: "Oh My Kitty: Order {orderNumber} is out for delivery! Track: {trackingLink}"
   }
 } as const;
 
