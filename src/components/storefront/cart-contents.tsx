@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import {
   clearCartLines,
   onCartChanged,
@@ -21,12 +21,81 @@ type CartContentsProps = {
   onNavigate?: () => void;
 };
 
+type Recommendation = {
+  productId: string;
+  variantId: string;
+  title: string;
+  variantTitle: string;
+  sku: string;
+  unitPrice: number;
+  formattedPrice: string;
+  imageUrl?: string;
+};
+
 export function CartContents({ onNavigate }: CartContentsProps) {
   const lines = useSyncExternalStore(subscribeToCart, readCartLines, getServerCartSnapshot);
   const subtotal = useMemo(
     () => lines.reduce((total, line) => total + line.unitPrice * line.quantity, 0),
     [lines]
   );
+  const cartProductIds = useMemo(
+    () => Array.from(new Set(lines.map((line) => line.productId))).sort(),
+    [lines]
+  );
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+
+  useEffect(() => {
+    // No early setRecommendations([]) here on purpose — when the cart is
+    // genuinely empty the component returns its own "empty cart" view below
+    // before this section would ever render, so there's nothing stale to
+    // clear, and synchronously setting state inside an effect body is
+    // exactly what react-hooks/set-state-in-effect flags.
+    if (cartProductIds.length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+    fetch(`/api/storefront/recommendations?productIds=${cartProductIds.join(",")}`)
+      .then((response) => response.json())
+      .then((payload: { products?: Recommendation[] }) => {
+        if (!cancelled) {
+          setRecommendations(payload.products ?? []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRecommendations([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cartProductIds is a derived, sorted, deduped array; comparing its join() avoids refetching on quantity-only changes.
+  }, [cartProductIds.join(",")]);
+
+  function addRecommendation(item: Recommendation) {
+    const existing = lines.find((line) => line.variantId === item.variantId);
+    const nextLines = existing
+      ? lines.map((line) =>
+          line.variantId === item.variantId ? { ...line, quantity: line.quantity + 1 } : line
+        )
+      : [
+          ...lines,
+          {
+            productId: item.productId,
+            variantId: item.variantId,
+            productTitle: item.title,
+            variantTitle: item.variantTitle,
+            sku: item.sku,
+            unitPrice: item.unitPrice,
+            quantity: 1,
+            imageUrl: item.imageUrl
+          }
+        ];
+
+    writeCartLines(nextLines);
+  }
 
   function updateQuantity(variantId: string, quantity: number) {
     const nextLines = lines
@@ -111,6 +180,31 @@ export function CartContents({ onNavigate }: CartContentsProps) {
           </article>
         ))}
       </div>
+
+      {recommendations.length > 0 ? (
+        <div className="cart-recommendations">
+          <span className="cart-recommendations-label">Goes well with your cart</span>
+          <div className="cart-recommendations-row">
+            {recommendations.map((item) => (
+              <div className="cart-recommendation-card" key={item.variantId}>
+                <div className="cart-recommendation-figure" aria-hidden="true">
+                  {item.imageUrl ? <Image alt="" fill sizes="80px" src={item.imageUrl} /> : null}
+                </div>
+                <span>{item.title}</span>
+                <strong>{item.formattedPrice}</strong>
+                <button
+                  aria-label={`Add ${item.title} to cart`}
+                  onClick={() => addRecommendation(item)}
+                  type="button"
+                >
+                  Add
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <div className="checkout-summary">
         <div>
           <span>Subtotal</span>
