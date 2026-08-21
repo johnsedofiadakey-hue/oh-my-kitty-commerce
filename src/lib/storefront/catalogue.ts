@@ -36,6 +36,7 @@ export type StorefrontCatalogue = {
   source: StorefrontCatalogueSource;
   sourceMessage?: string;
   cards: StorefrontProductCard[];
+  media: MediaAsset[];
 };
 
 export type StorefrontProductView = {
@@ -120,7 +121,8 @@ export const getStorefrontCatalogue = cache(async (): Promise<StorefrontCatalogu
 
     return {
       source: "live",
-      cards
+      cards,
+      media
     };
   } catch {
     return sampleStorefrontCatalogue("Firestore is not ready yet. Showing starter catalogue.");
@@ -128,18 +130,20 @@ export const getStorefrontCatalogue = cache(async (): Promise<StorefrontCatalogu
 });
 
 function sampleStorefrontCatalogue(sourceMessage: string): StorefrontCatalogue {
+  const media = sampleMedia.filter((asset) => asset.visibility === "PUBLIC");
   return {
     source: "sample",
     sourceMessage,
     cards: createCards(
       sampleProducts.filter((product) => product.status === "ACTIVE"),
       sampleVariants.filter((variant) => variant.active),
-      sampleMedia.filter((media) => media.visibility === "PUBLIC"),
+      media,
       sampleCategories.filter((category) => category.active),
       sampleConcerns.filter((concern) => concern.active),
       sampleProductTypes.filter((productType) => productType.active),
       sampleRoutines.filter((routine) => routine.active)
-    )
+    ),
+    media
   };
 }
 
@@ -240,21 +244,27 @@ export function toStorefrontCategorySummaries(
   catalogue: StorefrontCatalogue
 ): StorefrontCategorySummary[] {
   const tones: StorefrontProductView["tone"][] = ["peach", "green", "ivory"];
+  const mediaById = new Map(catalogue.media.map((asset) => [asset.id, asset]));
   const bySlug = new Map<string, { category: Category; productCount: number; imageUrl?: string }>();
 
   for (const card of catalogue.cards) {
     for (const category of card.categories) {
+      // A category's own uploaded photo (set on the Categories admin page)
+      // always wins — falling back to a product's photo only when the
+      // category itself has none, so the tile isn't blank.
+      const categoryImageUrl = category.mediaId ? mediaById.get(category.mediaId)?.url : undefined;
+
       const existing = bySlug.get(category.slug);
       if (existing) {
         existing.productCount += 1;
-        if (!existing.imageUrl && card.media?.url) {
-          existing.imageUrl = card.media.url;
+        if (!existing.imageUrl && (categoryImageUrl ?? card.media?.url)) {
+          existing.imageUrl = categoryImageUrl ?? card.media?.url;
         }
       } else {
         bySlug.set(category.slug, {
           category,
           productCount: 1,
-          imageUrl: card.media?.url
+          imageUrl: categoryImageUrl ?? card.media?.url
         });
       }
     }
