@@ -21,6 +21,11 @@ export const CONTENT_REGISTRY = {
     label: "Pickup location",
     group: "Contact",
     defaultValue: "Accra-Madina"
+  },
+  "pickup-map-link": {
+    label: "Pickup map link (Google Maps URL)",
+    group: "Contact",
+    defaultValue: "https://maps.google.com/?q=5.675043,-0.144152"
   }
 } as const;
 

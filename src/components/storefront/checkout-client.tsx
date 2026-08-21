@@ -11,6 +11,8 @@ import type { StorefrontDeliveryOption } from "@/lib/storefront/delivery";
 type CheckoutClientProps = {
   deliveryOptions: StorefrontDeliveryOption[];
   paystackEnabled: boolean;
+  pickupLocation: string;
+  pickupMapLink: string;
 };
 
 type CustomerState = {
@@ -23,7 +25,12 @@ type CustomerState = {
 
 const serverCartSnapshot: CartLine[] = [];
 
-export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutClientProps) {
+export function CheckoutClient({
+  deliveryOptions,
+  paystackEnabled,
+  pickupLocation,
+  pickupMapLink
+}: CheckoutClientProps) {
   const lines = useSyncExternalStore(subscribeToCart, readCartLines, getServerCartSnapshot);
   const [customer, setCustomer] = useState<CustomerState>({
     name: "",
@@ -225,7 +232,15 @@ export function CheckoutClient({ deliveryOptions, paystackEnabled }: CheckoutCli
               value={customer.address}
             />
           </label>
-        ) : null}
+        ) : (
+          <div className="checkout-pickup-location">
+            <span className="checkout-form-label">Pickup location</span>
+            <p>{pickupLocation}</p>
+            <a href={pickupMapLink} rel="noreferrer" target="_blank">
+              Get directions
+            </a>
+          </div>
+        )}
 
         <label className="checkout-notes-field">
           <span>Anything we should know? (optional)</span>
