@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, type ChangeEvent } from "react";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { getClientStorage, refreshClientIdToken } from "@/lib/firebase/client";
+import { compressImage } from "@/lib/admin/compress-image";
 import type { AdminActionState } from "@/lib/admin/product-form";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -65,10 +66,11 @@ export function MediaUploader({
 
     try {
       await refreshClientIdToken();
-      const extension = file.name.split(".").pop() ?? "jpg";
+      const compressed = await compressImage(file);
+      const extension = compressed.name.split(".").pop() ?? "jpg";
       const storagePath = `products/${productId}/${variantId}-${Date.now()}.${extension}`;
       const storageRef = ref(storage, storagePath);
-      await uploadBytes(storageRef, file, { contentType: file.type });
+      await uploadBytes(storageRef, compressed, { contentType: compressed.type });
       const url = await getDownloadURL(storageRef);
 
       const result = await onAttach({ productId, variantId, storagePath, url, alt });
