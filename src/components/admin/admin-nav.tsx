@@ -101,13 +101,13 @@ export function AdminNav({ groups, actorName, actorRole }: AdminNavProps) {
           ))}
         </div>
         <div className="nav-foot">
-          <div className="nav-user">
+          <Link className="nav-user" href={"/admin/account" as Route}>
             <span className="nav-avatar">{initials(actorName)}</span>
             <span className="nav-user-copy">
               <strong>{actorName}</strong>
               <em>{actorRole}</em>
             </span>
-          </div>
+          </Link>
           <AdminSignOutButton />
         </div>
       </aside>
