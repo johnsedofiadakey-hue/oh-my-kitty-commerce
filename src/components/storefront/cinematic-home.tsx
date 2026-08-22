@@ -21,7 +21,7 @@ type CinematicHomeProps = {
 // nodes just don't revalidate reliably. A version query string forces a new
 // cache key instead of depending on that. Bump this any time the hero video
 // or its poster frame changes.
-const HERO_VIDEO_VERSION = "2";
+const HERO_VIDEO_VERSION = "3";
 
 const WORLD_TILE_CYCLE = ["tall", "small", "wide", "small"] as const;
 const EXHIBITION_VARIANT_CYCLE = ["a", "b", "c", "d", "e"] as const;
