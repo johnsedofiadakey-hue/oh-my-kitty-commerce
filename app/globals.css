@@ -2640,6 +2640,24 @@ button {
   text-underline-offset: 3px;
 }
 
+.footer-credit {
+  justify-self: start;
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.footer-credit a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer-credit a:hover {
+  color: var(--color-peach);
+}
+
 .legal-page {
   position: relative;
   min-height: 100svh;

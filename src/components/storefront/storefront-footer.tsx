@@ -105,6 +105,13 @@ export function StorefrontFooter({ variant = "full", whatsappNumber }: Storefron
           <Link className="footer-admin-link" href="/admin/login">
             Admin
           </Link>
+
+          <p className="footer-credit">
+            Built and powered by{" "}
+            <a href="https://stormglide.io" rel="noreferrer" target="_blank">
+              stormglide.io
+            </a>
+          </p>
         </div>
       </div>
     </footer>

@@ -4,6 +4,8 @@ Firebase-first commerce platform for Oh My Kitty, a feminine hygiene and wellnes
 
 This repository contains the Codex project pack plus the current implementation baseline. It is designed so Codex can continue implementation without re-interpreting the product, design, POS, admin, permissions, Firebase, and security direction from chat history.
 
+> **For what's actually built today**, see [`docs/BUILD-LOG.md`](docs/BUILD-LOG.md) — the stack, architecture, and a feature-by-feature history grounded in the real commit log. Everything below this point (and the rest of `docs/`) is the original upfront planning spec and has drifted from current state in a number of places.
+
 ## Current Status
 
 - Repository state: Phase 2 admin portal product workflow baseline with working local storefront shop/cart preview.
