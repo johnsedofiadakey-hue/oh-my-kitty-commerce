@@ -1329,7 +1329,14 @@ export async function confirmPaystackPayment(
     }
 
     const updatedOrder: Order = { ...order, status: "PAID", paymentStatus: "PAID" };
-    const movements = await decrementInventoryForOrder(context, actor, updatedOrder);
+    // allowOversell: the customer's money has already moved at Paystack by
+    // this point — refusing to confirm the order over a stock shortfall
+    // doesn't protect anything, it just leaves a paid customer with no
+    // order and the store with no record a payment came in. Let stock go
+    // negative as a visible oversold signal instead of blocking here.
+    const movements = await decrementInventoryForOrder(context, actor, updatedOrder, {
+      allowOversell: true
+    });
     const updatedPayment: Payment = {
       ...payment,
       status: "PAID",
@@ -1779,7 +1786,8 @@ async function buildOrderItems(
 async function decrementInventoryForOrder(
   context: CommerceContext,
   actor: CommerceActor,
-  order: Order
+  order: Order,
+  options: { allowOversell?: boolean } = {}
 ) {
   const movements: InventoryMovement[] = [];
 
@@ -1790,7 +1798,8 @@ async function decrementInventoryForOrder(
       continue;
     }
 
-    if (variant.stockAvailable < item.quantity || variant.stockOnHand < item.quantity) {
+    const insufficientStock = variant.stockAvailable < item.quantity || variant.stockOnHand < item.quantity;
+    if (insufficientStock && !options.allowOversell) {
       throw new CommerceError("OUT_OF_STOCK", `${variant.sku} does not have enough stock.`);
     }
 
