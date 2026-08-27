@@ -6462,6 +6462,27 @@ button {
   font-style: italic;
 }
 
+.admin-help-link {
+  color: var(--color-status-good);
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.admin-help-screenshot {
+  display: block;
+  margin-top: 6px;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+}
+
+.admin-help-screenshot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .admin-help-error {
   margin: 0 16px;
   color: var(--color-status-urgent);

@@ -7,8 +7,11 @@ import { checkRateLimit } from "@/lib/rate-limit";
 const MAX_MESSAGES = 12;
 const MAX_MESSAGE_LENGTH = 2000;
 
+const CURRENT_PATH_PATTERN = /^\/admin(\/[a-z-]+)?$/;
+
 type HelpRequestBody = {
   messages?: unknown;
+  currentPath?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -28,8 +31,12 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as HelpRequestBody;
     const messages = parseMessages(body.messages);
+    const currentPath =
+      typeof body.currentPath === "string" && CURRENT_PATH_PATTERN.test(body.currentPath)
+        ? body.currentPath
+        : undefined;
 
-    const reply = await askAdminHelp(messages);
+    const reply = await askAdminHelp(messages, currentPath);
     return NextResponse.json({ reply });
   } catch (error) {
     if (error instanceof CommerceError) {
