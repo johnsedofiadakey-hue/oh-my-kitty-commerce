@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdminNav, type AdminNavGroup } from "@/components/admin/admin-nav";
+import { AdminHelpWidget } from "@/components/admin/admin-help-widget";
 import type { AdminIconName } from "@/components/admin/admin-icons";
 import { getAdminOperationsData } from "@/lib/admin/operations-data";
 import { getRequiredAdminActor } from "@/lib/auth/server";
@@ -157,6 +158,7 @@ export default async function AdminLayout({
       <main className="app-main" id="admin-main">
         {children}
       </main>
+      <AdminHelpWidget />
     </div>
   );
 }
