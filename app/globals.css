@@ -180,6 +180,7 @@ button {
 
 .bag-pill,
 .portal-cta,
+.portal-cta-secondary,
 .portal-link,
 .sheet-cart-link,
 .sheet-detail-link,
@@ -373,7 +374,10 @@ button {
 
 .hero-scene-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: var(--hero-copy-align, center);
+  gap: 12px;
   margin-top: 20px;
 }
 
@@ -660,6 +664,20 @@ button {
   background:
     linear-gradient(135deg, rgb(255 255 255 / 88%), rgb(255 255 255 / 28%)),
     var(--color-peach);
+}
+
+/* Quieter than .portal-cta on purpose — this offers guidance, it isn't
+   competing with "Shop care" for the primary action. */
+.portal-cta-secondary {
+  margin-top: 22px;
+  border: 1.5px solid rgb(17 17 17 / 55%);
+  color: var(--color-near-black);
+  background: rgb(255 255 255 / 45%);
+  backdrop-filter: blur(6px);
+}
+
+.portal-cta-secondary:hover {
+  background: rgb(255 255 255 / 70%);
 }
 
 .shop-control {

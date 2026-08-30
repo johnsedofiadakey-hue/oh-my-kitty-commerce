@@ -10,11 +10,15 @@ import { CartCount } from "@/components/storefront/cart-count";
 import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
 import type { StorefrontCategorySummary, StorefrontProductView } from "@/lib/storefront/catalogue";
+import { toWhatsAppLink } from "@/lib/storefront/whatsapp";
 
 type CinematicHomeProps = {
   categories: StorefrontCategorySummary[];
   products: StorefrontProductView[];
+  whatsappNumber: string;
 };
+
+const CONSULT_MESSAGE = "Hi! I'd like some guidance before I order 🌸";
 
 // Firebase Hosting's CDN has repeatedly kept serving an old cached copy of
 // this file after a deploy, even with a max-age=0 origin header — some edge
@@ -221,7 +225,7 @@ function buildHeroTimeline(gsap: any, cfg: HeroBreakpointConfig) {
   return tl;
 }
 
-export function CinematicHome({ categories, products }: CinematicHomeProps) {
+export function CinematicHome({ categories, products, whatsappNumber }: CinematicHomeProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const heroVideoRef = useRef<HTMLVideoElement>(null);
   const bestSellers = products.filter((product) => product.bestSeller);
@@ -434,6 +438,14 @@ export function CinematicHome({ categories, products }: CinematicHomeProps) {
                 <span>Shop care</span>
                 <i aria-hidden="true" />
               </Link>
+              <a
+                className="portal-cta-secondary"
+                href={toWhatsAppLink(whatsappNumber, CONSULT_MESSAGE)}
+                rel="noreferrer"
+                target="_blank"
+              >
+                Get guidance
+              </a>
             </div>
           </div>
 
