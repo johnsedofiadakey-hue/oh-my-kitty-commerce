@@ -10,7 +10,9 @@ const publicEnvSchema = z.object({
   NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: z.string().optional(),
   NEXT_PUBLIC_SITE_URL: z.string().optional(),
   NEXT_PUBLIC_SITE_NAME: z.string().optional(),
-  NEXT_PUBLIC_USE_FIREBASE_EMULATORS: z.string().optional()
+  NEXT_PUBLIC_USE_FIREBASE_EMULATORS: z.string().optional(),
+  NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: z.string().optional(),
+  NEXT_PUBLIC_BING_SITE_VERIFICATION: z.string().optional()
 });
 
 export const publicEnv = publicEnvSchema.parse({
@@ -24,7 +26,9 @@ export const publicEnv = publicEnvSchema.parse({
   NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   NEXT_PUBLIC_SITE_NAME: process.env.NEXT_PUBLIC_SITE_NAME,
-  NEXT_PUBLIC_USE_FIREBASE_EMULATORS: process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS
+  NEXT_PUBLIC_USE_FIREBASE_EMULATORS: process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS,
+  NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+  NEXT_PUBLIC_BING_SITE_VERIFICATION: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
 });
 
 const requiredFirebaseKeys = [

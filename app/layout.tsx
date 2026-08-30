@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { publicEnv } from "@/lib/env/public";
 import "./globals.css";
 
 const SEO_KEYWORDS = [
@@ -50,6 +51,15 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Oh My Kitty — Intimate care, naturally.",
     description: "Feminine wellness and intimate care, shipped or picked up in Accra, Ghana."
+  },
+  // Unset until the codes are pulled from Google Search Console / Bing
+  // Webmaster Tools and added as env vars — Next omits an unset
+  // verification tag entirely rather than rendering it empty.
+  verification: {
+    google: publicEnv.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    other: publicEnv.NEXT_PUBLIC_BING_SITE_VERIFICATION
+      ? { "msvalidate.01": publicEnv.NEXT_PUBLIC_BING_SITE_VERIFICATION }
+      : undefined
   }
 };
 
