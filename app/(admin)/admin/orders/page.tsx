@@ -6,6 +6,7 @@ import {
   getOrderCustomerName,
   toSortableMillis
 } from "@/lib/admin/operations-data";
+import { formatFulfilmentStatus, formatPaymentStatus } from "@/lib/commerce/format";
 import { requireAdminPermission } from "@/lib/auth/server";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { InlineStatusSelect } from "@/components/admin/inline-status-select";
@@ -241,7 +242,7 @@ function OrderDetail({ row, disabled }: { row: AdminOrderRow; disabled: boolean 
             <select defaultValue={order.fulfilmentStatus} disabled={disabled} name="fulfilmentStatus">
               {fulfilmentStatuses.map((status) => (
                 <option key={status} value={status}>
-                  {status.replaceAll("_", " ")}
+                  {formatFulfilmentStatus(status)}
                 </option>
               ))}
             </select>
@@ -271,5 +272,6 @@ function StatusPill({ kind, value }: { kind: "payment" | "fulfilment"; value: st
             ? "warn"
             : "neutral";
 
-  return <span className={`order-status-pill ${tone}`}>{value.replaceAll("_", " ")}</span>;
+  const label = kind === "payment" ? formatPaymentStatus(value) : formatFulfilmentStatus(value);
+  return <span className={`order-status-pill ${tone}`}>{label}</span>;
 }

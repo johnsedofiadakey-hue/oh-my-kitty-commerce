@@ -8,17 +8,9 @@ import {
   getAdminOperationsData,
   getOrderCustomerName
 } from "@/lib/admin/operations-data";
+import { formatFulfilmentStatus } from "@/lib/commerce/format";
 
 export const dynamic = "force-dynamic";
-
-const FULFILMENT_LABEL: Record<string, string> = {
-  UNFULFILLED: "Unfulfilled",
-  PROCESSING: "Processing",
-  READY_FOR_PICKUP: "Ready for pickup",
-  OUT_FOR_DELIVERY: "Out for delivery",
-  FULFILLED: "Fulfilled",
-  CANCELLED: "Cancelled"
-};
 
 export default async function AdminDashboardPage() {
   const data = await getAdminOperationsData();
@@ -142,7 +134,7 @@ export default async function AdminDashboardPage() {
                 <span>{getOrderCustomerName(order)}</span>
                 <span className="status neutral">{order.channel.replace("_", " ")}</span>
                 <span className={fulfilmentStatusClass(order.fulfilmentStatus)}>
-                  {FULFILMENT_LABEL[order.fulfilmentStatus] ?? order.fulfilmentStatus}
+                  {formatFulfilmentStatus(order.fulfilmentStatus)}
                 </span>
                 <span>{formatMoney(order.total)}</span>
               </div>
@@ -167,7 +159,7 @@ export default async function AdminDashboardPage() {
                     <span className="attention-stripe urgent" />
                     <div className="attention-body">
                       <strong>
-                        {order.orderNumber} &mdash; {(FULFILMENT_LABEL[order.fulfilmentStatus] ?? order.fulfilmentStatus).toLowerCase()}
+                        {order.orderNumber} &mdash; {formatFulfilmentStatus(order.fulfilmentStatus).toLowerCase()}
                       </strong>
                       <span>{age !== null ? `No update in ${age} day${age === 1 ? "" : "s"}` : "Awaiting fulfilment"}</span>
                     </div>

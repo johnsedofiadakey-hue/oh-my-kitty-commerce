@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { trackOrder } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { verifyOrderFulfilToken } from "@/lib/admin/quick-action-token";
-import { formatMoney } from "@/lib/commerce/format";
+import { formatFulfilmentStatus, formatMoney } from "@/lib/commerce/format";
 import { quickFulfilAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -85,7 +85,7 @@ export default async function QuickFulfilPage({ params, searchParams }: PageProp
         </div>
 
         <div className="quick-fulfil-current-status">
-          Current status: <strong>{order.fulfilmentStatus.replaceAll("_", " ")}</strong>
+          Current status: <strong>{formatFulfilmentStatus(order.fulfilmentStatus)}</strong>
         </div>
 
         <div className="quick-fulfil-actions">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition, type ChangeEvent } from "react";
+import { formatFulfilmentStatus } from "@/lib/commerce/format";
 
 const FULFILMENT_STATUSES = [
   "UNFULFILLED",
@@ -42,7 +43,7 @@ export function InlineStatusSelect({ orderId, currentStatus, disabled, action }:
     >
       {FULFILMENT_STATUSES.map((status) => (
         <option key={status} value={status}>
-          {status.replaceAll("_", " ")}
+          {formatFulfilmentStatus(status)}
         </option>
       ))}
     </select>
