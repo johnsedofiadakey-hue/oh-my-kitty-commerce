@@ -38,21 +38,39 @@ export async function proxy(request: NextRequest) {
 // across all three, since Firebase Hosting rewrites can't distinguish which
 // hostname a request arrived on. Scoped to this proxy's existing matcher,
 // so it never touches /api and can't interfere with the Paystack webhook.
+//
+// This is deliberately an allowlist of known duplicate hosts, not an
+// "isn't the canonical host" check — Firebase Hosting's rewrite to Cloud
+// Run replaces the Host header with Cloud Run's own internal hostname, so
+// a naive not-canonical check redirect-looped the live canonical domain
+// the first time this shipped. Matching only known alternates means an
+// unrecognized host (including whatever internal host Firebase Hosting
+// substitutes) is left alone instead of risking that again.
+const KNOWN_ALTERNATE_HOSTS: (string | RegExp)[] = [
+  "ohmyk1tty.web.app",
+  /^oh-my-kitty-[a-z0-9]+(-[a-z0-9]+)?\.[a-z0-9-]+\.run\.app$/
+];
+
 function getCanonicalHostRedirect(request: NextRequest) {
   if (!isProductionAppEnv()) {
     return null;
   }
 
   const canonicalOrigin = getCanonicalOrigin();
-  const requestHost = request.headers.get("host");
+  const requestHost = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
 
-  if (!canonicalOrigin || !requestHost || requestHost === new URL(canonicalOrigin).host) {
+  if (!canonicalOrigin || !requestHost) {
     return null;
   }
 
-  // Built from a fresh URL rather than mutating request.nextUrl.clone() —
-  // NextURL's .host setter doesn't reliably drop a port the original
-  // request carried, which leaked the dev port into the redirect target.
+  const isKnownAlternate = KNOWN_ALTERNATE_HOSTS.some((host) =>
+    typeof host === "string" ? host === requestHost : host.test(requestHost)
+  );
+
+  if (!isKnownAlternate) {
+    return null;
+  }
+
   const target = new URL(`${request.nextUrl.pathname}${request.nextUrl.search}`, canonicalOrigin);
   return NextResponse.redirect(target, 308);
 }
