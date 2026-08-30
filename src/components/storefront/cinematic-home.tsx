@@ -15,7 +15,7 @@ import { toWhatsAppLink } from "@/lib/storefront/whatsapp";
 type CinematicHomeProps = {
   categories: StorefrontCategorySummary[];
   products: StorefrontProductView[];
-  whatsappNumber: string;
+  consultWhatsappNumber: string;
 };
 
 const CONSULT_MESSAGE = "Hi! I'd like some guidance before I order 🌸";
@@ -225,7 +225,7 @@ function buildHeroTimeline(gsap: any, cfg: HeroBreakpointConfig) {
   return tl;
 }
 
-export function CinematicHome({ categories, products, whatsappNumber }: CinematicHomeProps) {
+export function CinematicHome({ categories, products, consultWhatsappNumber }: CinematicHomeProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const heroVideoRef = useRef<HTMLVideoElement>(null);
   const bestSellers = products.filter((product) => product.bestSeller);
@@ -440,7 +440,7 @@ export function CinematicHome({ categories, products, whatsappNumber }: Cinemati
               </Link>
               <a
                 className="portal-cta-secondary"
-                href={toWhatsAppLink(whatsappNumber, CONSULT_MESSAGE)}
+                href={toWhatsAppLink(consultWhatsappNumber, CONSULT_MESSAGE)}
                 rel="noreferrer"
                 target="_blank"
               >

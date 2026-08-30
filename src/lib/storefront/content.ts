@@ -18,6 +18,11 @@ export const CONTENT_REGISTRY = {
     group: "Contact",
     defaultValue: "0241448231"
   },
+  "consult-whatsapp-number": {
+    label: "WhatsApp number for the homepage \"Get guidance\" button",
+    group: "Contact",
+    defaultValue: "0549420566"
+  },
   "pickup-location": {
     label: "Pickup location",
     group: "Contact",

@@ -22,7 +22,7 @@ export default async function StorefrontHomePage() {
     <CinematicHome
       categories={toStorefrontCategorySummaries(catalogue)}
       products={toStorefrontProductViews(catalogue)}
-      whatsappNumber={content["whatsapp-number"]}
+      consultWhatsappNumber={content["consult-whatsapp-number"]}
     />
   );
 }
