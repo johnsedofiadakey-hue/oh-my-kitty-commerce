@@ -27,7 +27,7 @@ ARG NEXT_PUBLIC_SITE_NAME="Oh My Kitty"
 ARG NEXT_PUBLIC_USE_FIREBASE_EMULATORS=false
 # Empty until pulled from Google Search Console / Bing Webmaster Tools —
 # the layout omits the verification meta tag entirely while these are unset.
-ARG NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=""
+ARG NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION="xIVp48knuGbSkvYtDejhJ39WH_rZKm0H9U-J1cgKtC8"
 ARG NEXT_PUBLIC_BING_SITE_VERIFICATION=""
 ARG APP_ENV=production
 ENV NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY \
