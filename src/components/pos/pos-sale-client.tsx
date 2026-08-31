@@ -12,11 +12,13 @@ import {
 } from "@/lib/pos/offline-queue";
 import { PosRecentSales, type RecentPosSale } from "@/components/pos/pos-reversal-panel";
 import { PosOrderLookup } from "@/components/pos/pos-order-lookup";
+import { AdminSignOutButton } from "@/components/auth/admin-sign-out-button";
 
 type PosSaleClientProps = {
   products: StorefrontProductView[];
   source: "live" | "sample";
   sourceMessage?: string;
+  staffName: string;
 };
 
 type PosLine = StorefrontProductView & {
@@ -73,7 +75,7 @@ function getServerOnlineSnapshot() {
   return true;
 }
 
-export function PosSaleClient({ products, source, sourceMessage }: PosSaleClientProps) {
+export function PosSaleClient({ products, source, sourceMessage, staffName }: PosSaleClientProps) {
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<PosLine[]>([]);
   const [customerName, setCustomerName] = useState("");
@@ -593,6 +595,10 @@ export function PosSaleClient({ products, source, sourceMessage }: PosSaleClient
               <span className="status-pill pending">{pendingCount} pending sync</span>
             ) : null}
           </div>
+        </div>
+        <div className="pos-staff-bar">
+          <span>Signed in as {staffName}</span>
+          <AdminSignOutButton />
         </div>
         {failedSales.length > 0 ? (
           <div className="admin-alert danger" role="alert">

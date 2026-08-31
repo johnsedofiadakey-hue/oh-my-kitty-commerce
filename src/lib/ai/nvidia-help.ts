@@ -21,7 +21,7 @@ const PAGE_CONTEXT: Record<string, string> = {
   "/admin/categories": "the Categories page — create/quick-edit categories, toggle active, upload a category photo.",
   "/admin/taxonomy": "the Taxonomy page — manages shared classification lists (product types, concerns, routines) that product forms pull from.",
   "/admin/content": "the Content & Media page — a 'Site content' section of editable fields (WhatsApp number, pickup location, SMS templates, shop status/message), and an 'Upload an image' section with a Media library list below it.",
-  "/admin/orders": "the Orders page — a numbered 'Needs attention' queue (oldest first) with an inline status dropdown per row, and a collapsed 'Completed' section. Clicking a row opens full detail including refund/void.",
+  "/admin/orders": "the Orders page — a numbered 'Needs attention' queue (oldest first) with an inline status dropdown per row, and a collapsed 'Completed' section. Clicking a row opens full detail (customer, items, totals) and the same status control. There's no refund/void here — that only exists for POS sales, not online orders.",
   "/admin/customers": "the Customers page — view/create/update customer records.",
   "/admin/promotions": "the Promotions page — create/edit discount codes: code, percent or fixed amount, date range, usage limit, product/category/channel restrictions, and a 'requires manager approval' toggle.",
   "/admin/inventory": "the Inventory page — a list of product variants; clicking one opens a drawer with a stock adjustment form and that variant's movement history.",
@@ -39,7 +39,6 @@ const AVAILABLE_SCREENSHOTS: Record<string, string> = {
   "products-list": "the Products list",
   "products-edit-image-upload": "a product's edit drawer, showing the image upload field",
   "orders-queue": "the Orders 'Needs attention' queue with the inline status dropdown",
-  "orders-refund-void": "an order's detail view with the refund/void controls",
   "promotions-create": "the promotion creation form",
   "content-shop-status": "the Shop status toggle on Content & Media",
   "users-role-editor": "the custom role permission editor on Users & roles"

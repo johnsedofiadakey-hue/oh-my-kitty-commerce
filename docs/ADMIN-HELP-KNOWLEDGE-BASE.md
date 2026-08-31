@@ -62,7 +62,7 @@ There are three built-in roles, plus the ability to create custom ones:
 
 **How do I update an order's status?** Use the inline status dropdown directly on the row in the "Needs attention" queue, or open the row's detail drawer for the same control with more context.
 
-**How do I refund or void an order?** Open the order in **Orders** (or from POS if it was a POS sale). Refund/void requires the `orders.refund`/`orders.void` permission — Owners and Managers have it by default, Sales Staff don't. If the refund/void amount is over the acting staff member's role limit, it requires manager approval — the approving manager enters their own credentials to confirm, verified server-side.
+**How do I refund or void an order?** Right now this only works for a sale made at POS (in person) — open it from the POS receipt/history and use the refund or void action there. Online orders paid through the storefront (Paystack) can't be refunded or voided from inside this admin yet — the order detail view in **Orders** only lets you update fulfilment status. To refund a customer who paid online, that has to be done directly through the Paystack dashboard outside this app for now — mention this limitation rather than describing steps that don't exist here.
 
 **A customer says they paid but I don't see their order.** Ask for their order number or phone number and check **Orders**. If it's a real Paystack payment, it should appear as soon as payment is confirmed. If it genuinely isn't there despite a real successful payment, that's unusual — flag it to an Owner rather than guess.
 

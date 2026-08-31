@@ -3,11 +3,12 @@ import {
   getStorefrontCatalogue,
   toStorefrontProductViews
 } from "@/lib/storefront/catalogue";
+import { getRequiredPosActor } from "@/lib/auth/pos-server";
 
 export const dynamic = "force-dynamic";
 
 export default async function PosPage() {
-  const catalogue = await getStorefrontCatalogue();
+  const [catalogue, actor] = await Promise.all([getStorefrontCatalogue(), getRequiredPosActor()]);
   const products = toStorefrontProductViews(catalogue);
 
   return (
@@ -15,6 +16,7 @@ export default async function PosPage() {
       products={products}
       source={catalogue.source}
       sourceMessage={catalogue.sourceMessage}
+      staffName={actor.displayName ?? actor.email ?? "Staff"}
     />
   );
 }
