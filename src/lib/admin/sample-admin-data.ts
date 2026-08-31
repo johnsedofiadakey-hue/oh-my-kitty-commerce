@@ -134,6 +134,13 @@ export function getRoleNames(roleIds: string[]) {
  * `.getTime()` sort throws. Every field typed `Date` in commerce/types.ts is
  * really "Date | Timestamp" at runtime once it round-trips through
  * Firestore — this duck-types either into a real Date.
+ *
+ * Also recovers `{ _seconds, _nanoseconds }` — the plain-object shape a real
+ * Timestamp decays into if it's ever spread into another write without going
+ * through a Timestamp-aware clean step first (see cleanFirestoreData). Once a
+ * field is written in that shape it comes back from Firestore as a plain
+ * object forever, with no `.toDate()` to call — this is the only way to
+ * still read a date out of it.
  */
 function toRealDate(value: unknown): Date | null {
   if (value instanceof Date) {
@@ -147,6 +154,19 @@ function toRealDate(value: unknown): Date | null {
     typeof (value as { toDate: unknown }).toDate === "function"
   ) {
     return (value as { toDate: () => Date }).toDate();
+  }
+
+  if (
+    value &&
+    typeof value === "object" &&
+    "_seconds" in value &&
+    typeof (value as { _seconds: unknown })._seconds === "number"
+  ) {
+    const seconds = (value as { _seconds: number })._seconds;
+    const nanoseconds = "_nanoseconds" in value && typeof (value as { _nanoseconds: unknown })._nanoseconds === "number"
+      ? (value as { _nanoseconds: number })._nanoseconds
+      : 0;
+    return new Date(seconds * 1000 + Math.round(nanoseconds / 1e6));
   }
 
   return null;

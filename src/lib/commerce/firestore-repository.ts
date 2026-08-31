@@ -1,4 +1,4 @@
-import type { Firestore } from "firebase-admin/firestore";
+import { Timestamp, type Firestore } from "firebase-admin/firestore";
 import type { Role } from "@/lib/permissions/permissions";
 import type { CommerceRepository } from "@/lib/commerce/repository";
 import type {
@@ -314,7 +314,13 @@ function cleanFirestoreData(value: unknown): FirebaseFirestore.DocumentData {
     return value.map((item) => cleanFirestoreData(item));
   }
 
-  if (value instanceof Date || value === null || typeof value !== "object") {
+  // Timestamp does NOT extend Date — a value read back from Firestore (e.g. an
+  // existing order's createdAt, spread into an update) falls through to the
+  // generic object branch below without this check, and Object.entries() on a
+  // Timestamp instance yields its private {_seconds, _nanoseconds} fields,
+  // silently rewriting it into a dead plain object that never parses as a
+  // date again on every future read.
+  if (value instanceof Date || value instanceof Timestamp || value === null || typeof value !== "object") {
     return value as FirebaseFirestore.DocumentData;
   }
 
