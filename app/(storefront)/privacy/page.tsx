@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Route } from "next";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -36,10 +37,10 @@ export default function PrivacyPage() {
             </p>
           </section>
           <section data-section-number="03">
-            <h2>Final legal review</h2>
+            <h2>Your information, your choice</h2>
             <p>
-              This is starter website copy. Before public launch, replace it with final legal text
-              reviewed for the business location, delivery policy, payment provider, and data rules.
+              You can ask us to update or delete your personal information at any time.{" "}
+              <Link href={"/contact" as Route}>Contact us</Link> and we&apos;ll take care of it.
             </p>
           </section>
         </div>

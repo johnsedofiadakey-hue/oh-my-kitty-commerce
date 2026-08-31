@@ -36,7 +36,7 @@ const EXHIBITION_VARIANT_CYCLE = ["a", "b", "c", "d", "e"] as const;
  */
 const SAMPLE_REVIEWS = [
   { initials: "A.K.", quote: "Gentle and effective, exactly what I needed." },
-  { initials: "N.O.", quote: "My new daily ritual. Feels made for me." },
+  { initials: "N.O.", quote: "Now part of my daily routine. Feels made for me." },
   { initials: "S.T.", quote: "Fast delivery and the packaging is so soft." },
   { initials: "P.D.", quote: "Finally a brand that gets it right." }
 ] as const;
@@ -435,7 +435,7 @@ export function CinematicHome({ categories, products, consultWhatsappNumber }: C
             <p className="hero-scene-script">Naturally.</p>
             <div className="hero-scene-actions">
               <Link className="portal-cta" href="/shop">
-                <span>Shop care</span>
+                <span>Shop now</span>
                 <i aria-hidden="true" />
               </Link>
               <a
@@ -542,7 +542,7 @@ export function CinematicHome({ categories, products, consultWhatsappNumber }: C
               <div className="exhibition-panel-copy">
                 <span>Full catalogue</span>
                 <h2>Shop now.</h2>
-                <p>The full immersive shopping experience.</p>
+                <p>See everything we sell.</p>
               </div>
             </Link>
           </div>
@@ -553,8 +553,8 @@ export function CinematicHome({ categories, products, consultWhatsappNumber }: C
             <div className="world-dissolve" aria-hidden="true" />
             <div className="world-track">
               <div className="world-intro">
-                <span className="scene-kicker">Exhibition</span>
-                <h2>The range, up close.</h2>
+                <span className="scene-kicker">Explore</span>
+                <h2>A closer look at our products.</h2>
               </div>
               {worldProducts.map((product, index) => {
                 const tile = WORLD_TILE_CYCLE[index % WORLD_TILE_CYCLE.length];
@@ -614,8 +614,8 @@ export function CinematicHome({ categories, products, consultWhatsappNumber }: C
         {dominantSeller ? (
           <section className="best-sellers" aria-label="Best sellers">
             <div className="best-sellers-heading">
-              <span className="scene-kicker">Shop the ritual</span>
-              <h2>Loved on repeat.</h2>
+              <span className="scene-kicker">Best sellers</span>
+              <h2>Customer favorites.</h2>
             </div>
             <div className="best-sellers-stage">
               <article className="best-seller-dominant">
@@ -667,7 +667,7 @@ export function CinematicHome({ categories, products, consultWhatsappNumber }: C
         ) : null}
 
         <section className="social-proof" aria-label="Customer reviews">
-          <span className="scene-kicker">In her words</span>
+          <span className="scene-kicker">Customer reviews</span>
           <div className="review-fragments">
             {reviewAccentA?.imageUrl ? (
               <div className="review-fragment-figure figure-a" aria-hidden="true">

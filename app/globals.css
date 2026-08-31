@@ -1533,55 +1533,9 @@ button {
 .depth-shop-hero {
   position: relative;
   display: grid;
-  min-height: 72svh;
-  place-items: end start;
+  place-items: start start;
   padding: 108px 20px 54px;
   overflow: hidden;
-}
-
-.shop-hero-stage {
-  position: relative;
-  z-index: 1;
-  width: min(84vw, 420px);
-  height: min(52svh, 380px);
-  margin: 0 0 18px auto;
-}
-
-.shop-hero-figure {
-  position: absolute;
-  overflow: visible;
-}
-
-.shop-hero-figure img {
-  border-radius: 26px;
-  object-fit: cover;
-  box-shadow: 0 20px 46px rgb(17 17 17 / 14%);
-}
-
-.shop-hero-figure.center {
-  z-index: 3;
-  top: 6%;
-  left: 22%;
-  width: 58%;
-  height: 90%;
-}
-
-.shop-hero-figure.left {
-  z-index: 1;
-  top: 30%;
-  left: -6%;
-  width: 40%;
-  height: 58%;
-  opacity: 0.88;
-}
-
-.shop-hero-figure.right {
-  z-index: 2;
-  top: 0;
-  right: -4%;
-  width: 44%;
-  height: 64%;
-  opacity: 0.94;
 }
 
 .depth-shop-copy {
@@ -1665,33 +1619,6 @@ button {
 .shop-search:focus-within {
   border-color: var(--color-peach);
   box-shadow: 0 10px 30px rgb(246 184 174 / 22%);
-}
-
-.discovery-mode-switch {
-  display: flex;
-  gap: 4px;
-  border-radius: 999px;
-  padding: 4px;
-  background: rgb(17 17 17 / 4%);
-}
-
-.discovery-mode-switch button {
-  flex: 1;
-  min-height: 44px;
-  border: 0;
-  border-radius: 999px;
-  padding: 0 10px;
-  color: var(--color-muted);
-  background: none;
-  font-size: 0.82rem;
-  font-weight: 800;
-  transition: background 220ms ease, color 220ms ease;
-}
-
-.discovery-mode-switch button.active {
-  color: var(--color-near-black);
-  background: var(--color-white-pure);
-  box-shadow: 0 8px 20px rgb(17 17 17 / 8%);
 }
 
 .filter-chip-row {
@@ -5570,7 +5497,6 @@ button {
   }
 
   .depth-shop-hero {
-    min-height: 66svh;
     padding: 96px 20px 44px;
   }
 

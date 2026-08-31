@@ -113,10 +113,10 @@ export function CartContents({ onNavigate }: CartContentsProps) {
     return (
       <div className="cart-surface cart-empty">
         <span className="scene-kicker">Cart</span>
-        <h1>Your ritual is waiting.</h1>
+        <h1>Your cart is empty.</h1>
         <p>Products added from the shop will appear here.</p>
         <Link className="portal-cta" href="/shop">
-          <span>Explore care</span>
+          <span>Start shopping</span>
           <i aria-hidden="true" />
         </Link>
       </div>
@@ -128,7 +128,7 @@ export function CartContents({ onNavigate }: CartContentsProps) {
       <div className="cart-heading">
         <div>
           <span className="scene-kicker">Cart</span>
-          <h1>Your care edit</h1>
+          <h1>Your cart</h1>
         </div>
         <button className="text-button" onClick={clearCartLines} type="button">
           Clear

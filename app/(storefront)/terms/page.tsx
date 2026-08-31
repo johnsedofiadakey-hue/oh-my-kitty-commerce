@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Route } from "next";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -38,15 +39,15 @@ export default function TermsPage() {
           <section data-section-number="03">
             <h2>Returns and support</h2>
             <p>
-              The final return, exchange, cancellation, and intimate-care product policies must be
-              confirmed by the business before launch.
+              See our <Link href={"/returns" as Route}>Returns &amp; Support</Link> page for how
+              returns, exchanges, and refunds work.
             </p>
           </section>
           <section data-section-number="04">
-            <h2>Final legal review</h2>
+            <h2>Questions</h2>
             <p>
-              This is starter website copy. Replace it with final legal wording before accepting
-              real customer orders.
+              If anything here isn&apos;t clear, <Link href={"/contact" as Route}>contact us</Link> and
+              we&apos;ll help.
             </p>
           </section>
         </div>

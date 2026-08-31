@@ -18,7 +18,7 @@ export default async function SearchPage() {
   return (
     <DepthShop
       products={toStorefrontProductViews(catalogue)}
-      sourceMessage="Search by product name, category, variant, or SKU."
+      sourceMessage="Search by product name, category, or size."
     />
   );
 }

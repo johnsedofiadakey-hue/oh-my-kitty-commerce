@@ -17,18 +17,10 @@ type DepthShopProps = {
   sourceMessage?: string;
 };
 
-type DiscoveryMode = "need" | "product" | "routine";
-
 type DiscoveryOption = {
   slug: string;
   label: string;
 };
-
-const DISCOVERY_MODES: { id: DiscoveryMode; label: string }[] = [
-  { id: "need", label: "By need" },
-  { id: "product", label: "By product" },
-  { id: "routine", label: "By routine" }
-];
 
 const TILE_CYCLE_LENGTH = 7;
 
@@ -43,48 +35,27 @@ function tileTypeForIndex(index: number): "standard" | "featured" | "tall" | "fe
 export function DepthShop({ products, sourceMessage }: DepthShopProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [mode, setMode] = useState<DiscoveryMode>("need");
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const optionsByMode = useMemo<Record<DiscoveryMode, DiscoveryOption[]>>(() => {
-    const collect = (
-      slugsKey: "concernSlugs" | "productTypeSlugs" | "routineSlugs",
-      labelsKey: "concernLabels" | "productTypeLabels" | "routineLabels"
-    ) => {
-      const bySlug = new Map<string, string>();
-      for (const product of products) {
-        product[slugsKey].forEach((slug, index) => {
-          if (!bySlug.has(slug)) {
-            bySlug.set(slug, product[labelsKey][index] ?? slug);
-          }
-        });
-      }
-      return Array.from(bySlug, ([slug, label]) => ({ slug, label }));
-    };
-
-    return {
-      need: collect("concernSlugs", "concernLabels"),
-      product: collect("productTypeSlugs", "productTypeLabels"),
-      routine: collect("routineSlugs", "routineLabels")
-    };
+  const categoryOptions = useMemo<DiscoveryOption[]>(() => {
+    const bySlug = new Map<string, string>();
+    for (const product of products) {
+      product.categorySlugs.forEach((slug, index) => {
+        if (!bySlug.has(slug)) {
+          bySlug.set(slug, product.categoryLabels[index] ?? slug);
+        }
+      });
+    }
+    return Array.from(bySlug, ([slug, label]) => ({ slug, label }));
   }, [products]);
-
-  const options = optionsByMode[mode];
-
-  function selectMode(nextMode: DiscoveryMode) {
-    setMode(nextMode);
-    setFilter("all");
-  }
 
   const filteredProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    const slugsKey =
-      mode === "need" ? "concernSlugs" : mode === "product" ? "productTypeSlugs" : "routineSlugs";
 
     return products.filter((product) => {
-      const matchesFilter = filter === "all" || product[slugsKey].includes(filter);
+      const matchesFilter = filter === "all" || product.categorySlugs.includes(filter);
       const matchesQuery =
         !normalizedQuery ||
         [
@@ -104,7 +75,7 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
 
       return matchesFilter && matchesQuery;
     });
-  }, [filter, mode, products, query]);
+  }, [filter, products, query]);
 
   const selectedProduct = useMemo(
     () => products.find((product) => product.variantId === selectedId) ?? null,
@@ -178,18 +149,6 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
             start: "top 78%"
           }
         });
-
-        gsap.to(".shop-hero-figure.center", {
-          scale: 1.08,
-          rotate: 2,
-          ease: "none",
-          scrollTrigger: {
-            trigger: ".depth-shop-hero",
-            start: "top top",
-            end: "bottom top",
-            scrub: 0.8
-          }
-        });
       }, rootRef);
     }
 
@@ -224,14 +183,9 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
       <StorefrontNav />
 
       <section className="depth-shop-hero">
-        <div className="shop-hero-stage" aria-hidden="true">
-          <ShopHeroFigure position="left" product={products[2]} />
-          <ShopHeroFigure position="center" product={products[0]} />
-          <ShopHeroFigure position="right" product={products[1]} />
-        </div>
         <div className="depth-shop-copy">
           <span className="scene-kicker">Shop</span>
-          <h1>Shop your ritual.</h1>
+          <h1>Shop our products.</h1>
           {sourceMessage ? <p>{sourceMessage}</p> : null}
         </div>
       </section>
@@ -248,22 +202,7 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
           />
         </label>
 
-        <div className="discovery-mode-switch" role="tablist" aria-label="Discovery mode">
-          {DISCOVERY_MODES.map((entry) => (
-            <button
-              aria-selected={mode === entry.id}
-              className={mode === entry.id ? "active" : ""}
-              key={entry.id}
-              onClick={() => selectMode(entry.id)}
-              role="tab"
-              type="button"
-            >
-              {entry.label}
-            </button>
-          ))}
-        </div>
-
-        <FilterChips filter={filter} onSelect={setFilter} options={options} />
+        <FilterChips filter={filter} onSelect={setFilter} options={categoryOptions} />
       </section>
 
       {filteredProducts.length > 0 ? (
@@ -294,7 +233,7 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
       ) : (
         <section className="shop-empty">
           <h2>Nothing matched that yet.</h2>
-          <p>Try clearing filters, or explore by need instead.</p>
+          <p>Try clearing your filters, or search for something else.</p>
           <button
             className="portal-cta"
             onClick={() => {
@@ -513,30 +452,6 @@ function ProductTile({
         {added ? "✓" : hasMultipleVariants ? "···" : "+"}
       </button>
     </article>
-  );
-}
-
-function ShopHeroFigure({
-  position,
-  product
-}: {
-  position: "left" | "center" | "right";
-  product?: StorefrontProductView;
-}) {
-  if (!product?.imageUrl) {
-    return null;
-  }
-
-  return (
-    <div className={`shop-hero-figure ${position}`}>
-      <Image
-        alt=""
-        aria-hidden="true"
-        fill
-        sizes="230px"
-        src={product.imageUrl}
-      />
-    </div>
   );
 }
 

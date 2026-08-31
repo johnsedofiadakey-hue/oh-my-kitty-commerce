@@ -15,24 +15,23 @@ function buildFaqs(whatsappNumber: string) {
   return [
     {
       question: "Can I order online and pick up?",
-      answer: "Yes. Pickup is available in the checkout flow and can be confirmed by the store before fulfilment."
+      answer: "Yes. Choose pickup when you check out, and we'll get your order ready for you."
     },
     {
-      question: "Are prices final?",
-      answer:
-        "The current catalogue is editable by admin. Final product prices, bundles, and promotions should be confirmed before public launch."
+      question: "Do you offer discounts?",
+      answer: "Yes — if you have a promo code, enter it at checkout to get your discount."
     },
     {
       question: "Can I contact the store before buying?",
-      answer: `Yes. Use WhatsApp ${whatsappNumber} or the social icons in the footer for customer support.`
+      answer: `Yes. Message us on WhatsApp ${whatsappNumber}, or use the social links in the footer.`
     },
     {
-      question: "Where are product instructions?",
-      answer: "Follow the product packaging. Admin can add usage, ingredient, and warning details per product before launch."
+      question: "How do I use the products?",
+      answer: "Instructions are on the product packaging. If you're not sure, message us on WhatsApp and we'll help."
     },
     {
       question: "How do I pay?",
-      answer: "Checkout is handled securely by Paystack, which accepts both card and mobile money."
+      answer: "You can pay by Mobile Money or card. Payments are handled securely by Paystack."
     }
   ];
 }
@@ -57,7 +56,7 @@ export default async function FaqPage() {
           Oh My Kitty
         </Link>
         <span className="scene-kicker">FAQ</span>
-        <h1>Questions, answered softly.</h1>
+        <h1>Common questions.</h1>
         <div className="legal-card">
           <FaqAccordion entries={faqs} />
         </div>

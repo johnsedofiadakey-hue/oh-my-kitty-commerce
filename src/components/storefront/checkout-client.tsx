@@ -165,7 +165,7 @@ export function CheckoutClient({
         <h1>Your cart is empty.</h1>
         <p>Add something to your cart first, then come back here.</p>
         <Link className="portal-cta" href="/shop">
-          <span>Explore care</span>
+          <span>Start shopping</span>
           <i aria-hidden="true" />
         </Link>
       </section>
