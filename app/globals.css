@@ -585,8 +585,14 @@ button {
   width: 100%;
   height: 100%;
   border: 0;
-  object-fit: cover;
+  /* These are background-removed product cutouts, not edge-to-edge lifestyle
+     photography — cover was cropping the tops/bottoms off in short, wide
+     tiles. contain keeps the whole product visible, letterboxed on the
+     packshot's own gradient background. */
+  object-fit: contain;
   object-position: center;
+  box-sizing: border-box;
+  padding: 10px;
 }
 
 .product-photo-label {
