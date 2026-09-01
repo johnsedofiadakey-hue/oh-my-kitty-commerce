@@ -8,6 +8,7 @@ import {
   createProduct,
   createVariant,
   deleteProduct,
+  deleteProducts,
   updateProduct,
   updateVariant
 } from "@/lib/commerce/operations";
@@ -169,6 +170,33 @@ export async function deleteProductAction(productId: string): Promise<AdminActio
     revalidatePath("/shop");
     revalidatePath("/admin/products");
     return { status: "success", message: "Product deleted." };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
+}
+
+export async function deleteProductsAction(productIds: string[]): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+    const result = await deleteProducts(context, actor, productIds);
+
+    revalidatePath("/");
+    revalidatePath("/shop");
+    revalidatePath("/admin/products");
+
+    if (result.failed.length === 0) {
+      return {
+        status: "success",
+        message: `Deleted ${result.deletedCount} product${result.deletedCount === 1 ? "" : "s"}.`
+      };
+    }
+
+    const failureDetail = result.failed.map((entry) => entry.message).join("; ");
+    return {
+      status: result.deletedCount > 0 ? "success" : "error",
+      message: `Deleted ${result.deletedCount} of ${productIds.length}. ${result.failed.length} failed: ${failureDetail}`
+    };
   } catch (error) {
     return { status: "error", message: getActionErrorMessage(error) };
   }

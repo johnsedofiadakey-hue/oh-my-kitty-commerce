@@ -143,6 +143,21 @@ export default async function AdminLayout({
     }))
     .filter((group) => group.items.length > 0);
 
+  // POS access is a combined check (pos.access + pos.sell + posEnabled), not
+  // a single permission, so it can't live in navConfig's generic filter —
+  // this account also has admin.access (Owner/Manager), so the layout's own
+  // redirect to /pos never fires for them and they'd otherwise have no way
+  // to find it from inside the admin UI at all.
+  if (canAccessPos(roles, actor)) {
+    const salesGroup = groups.find((group) => group.label === "Sales");
+    const posItem = { label: "POS", href: "/pos", icon: "pos" as const };
+    if (salesGroup) {
+      salesGroup.items.unshift(posItem);
+    } else {
+      groups.push({ label: "Sales", items: [posItem] });
+    }
+  }
+
   const actorRole = roles.find((role) => actor.roleIds.includes(role.id))?.name ?? "Staff";
 
   return (

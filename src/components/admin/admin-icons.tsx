@@ -36,7 +36,8 @@ const icons = {
     "M12 3v2.2M12 18.8V21M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M3 12h2.2M18.8 12H21M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6"
   ],
   alert: ["M12 3 2 20h20L12 3Z", "M12 10v4.5M12 17.4v.1"],
-  trendUp: ["M4 17 10 11l4 4 6-8", "M15 7h5v5"]
+  trendUp: ["M4 17 10 11l4 4 6-8", "M15 7h5v5"],
+  pos: ["M4 9h16v11H4Z", "M7 9V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4", "M4 14h16", "M9 17h2"]
 } as const;
 
 export type AdminIconName = keyof typeof icons;

@@ -4556,6 +4556,72 @@ button {
   grid-template-columns: repeat(6, minmax(120px, 1fr));
 }
 
+.admin-table.five.with-select .admin-table-row {
+  min-width: 800px;
+  grid-template-columns: 32px repeat(5, minmax(120px, 1fr));
+}
+
+.admin-table-select-cell {
+  display: flex;
+  align-items: center;
+}
+
+.admin-table-select-cell input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-near-black);
+}
+
+.admin-bulk-action-bar {
+  position: sticky;
+  top: 8px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--color-status-urgent-line);
+  border-radius: var(--radius-medium);
+  background: var(--color-status-urgent-soft);
+}
+
+.admin-bulk-action-bar strong {
+  color: var(--color-near-black);
+}
+
+.admin-bulk-action-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-bulk-confirm {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-status-urgent-line);
+  border-radius: var(--radius-medium);
+  background: var(--color-status-urgent-soft);
+}
+
+.admin-bulk-confirm p {
+  margin: 0;
+  color: var(--color-near-black);
+  font-size: 0.88rem;
+}
+
+.admin-bulk-confirm-list {
+  max-height: 160px;
+  overflow-y: auto;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--color-muted);
+  font-size: 0.84rem;
+}
+
 .admin-table-row:last-child {
   border-bottom: 0;
 }

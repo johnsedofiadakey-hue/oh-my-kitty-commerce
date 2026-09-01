@@ -184,6 +184,42 @@ export async function deleteProduct(context: CommerceContext, actor: CommerceAct
   });
 }
 
+export type BulkDeleteResult = {
+  deletedCount: number;
+  deletedTitles: string[];
+  failed: { productId: string; message: string }[];
+};
+
+/**
+ * Deletes many products in one call. Each product is removed independently —
+ * one failing (already gone, bad permission mid-batch, etc.) doesn't abort
+ * the rest — so the caller can show the customer exactly what went through
+ * and what didn't, rather than an all-or-nothing batch.
+ */
+export async function deleteProducts(
+  context: CommerceContext,
+  actor: CommerceActor,
+  productIds: string[]
+): Promise<BulkDeleteResult> {
+  const result: BulkDeleteResult = { deletedCount: 0, deletedTitles: [], failed: [] };
+
+  for (const productId of productIds) {
+    try {
+      const product = await requiredProduct(context, productId);
+      await deleteProduct(context, actor, productId);
+      result.deletedCount += 1;
+      result.deletedTitles.push(product.title);
+    } catch (error) {
+      result.failed.push({
+        productId,
+        message: error instanceof CommerceError ? error.message : "Delete failed."
+      });
+    }
+  }
+
+  return result;
+}
+
 export async function createVariant(
   context: CommerceContext,
   actor: CommerceActor,
