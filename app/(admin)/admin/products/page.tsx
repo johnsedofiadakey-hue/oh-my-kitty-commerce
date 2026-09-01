@@ -41,7 +41,11 @@ export default async function AdminProductsPage() {
             />
           </AdminDrawer>
           <AdminDrawer title="New product" triggerLabel="New product">
-            <CreateProductForm action={createProductWithDefaultVariantAction} disabled={disabled} />
+            <CreateProductForm
+              action={createProductWithDefaultVariantAction}
+              attachProductImageAction={attachProductImageAction}
+              disabled={disabled}
+            />
           </AdminDrawer>
         </div>
       </div>

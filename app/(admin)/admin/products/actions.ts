@@ -30,7 +30,7 @@ export async function createProductWithDefaultVariantAction(
   _previousState: AdminActionState,
   formData: FormData
 ): Promise<AdminActionState> {
-  return runAdminProductAction(async () => {
+  try {
     const context = requireCommerceContext();
     const actor = await getRequiredAdminActor();
     const title = formString(formData, "title");
@@ -49,7 +49,7 @@ export async function createProductWithDefaultVariantAction(
       bestSeller: formData.get("bestSeller") === "on"
     });
 
-    await createVariant(context, actor, {
+    const variant = await createVariant(context, actor, {
       productId: product.id,
       title: formOptionalString(formData, "variantTitle") ?? "Default",
       sku: formString(formData, "sku"),
@@ -63,8 +63,16 @@ export async function createProductWithDefaultVariantAction(
       active: true
     });
 
-    return `Created ${product.title}.`;
-  });
+    revalidatePath("/admin/products");
+    return {
+      status: "success",
+      message: `Created ${product.title}.`,
+      productId: product.id,
+      variantId: variant.id
+    };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
 }
 
 export async function createVariantAction(

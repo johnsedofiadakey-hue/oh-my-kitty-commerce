@@ -3,7 +3,9 @@ import type { ProductStatus } from "@/lib/commerce/types";
 
 export const adminActionStateSchema = z.object({
   status: z.enum(["idle", "success", "error"]),
-  message: z.string()
+  message: z.string(),
+  productId: z.string().optional(),
+  variantId: z.string().optional()
 });
 
 export type AdminActionState = z.infer<typeof adminActionStateSchema>;
