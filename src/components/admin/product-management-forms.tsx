@@ -232,6 +232,10 @@ export function CreateProductForm({
               />
             </label>
           </div>
+          <label className="admin-field">
+            <span>Cost per unit GHS (for profit reports — leave blank if unknown)</span>
+            <input inputMode="decimal" min="0" name="cost" placeholder="e.g. 15.00" />
+          </label>
           <label className="admin-field checkbox">
             <input name="bestSeller" type="checkbox" />
             <span>Best seller (shows in Live Products on the home page)</span>
@@ -296,10 +300,16 @@ export function CreateVariantForm({
               <input defaultValue="0" inputMode="numeric" min="0" name="stockOnHand" required />
             </label>
           </div>
-          <label className="admin-field">
-            <span>Low stock</span>
-            <input defaultValue="5" inputMode="numeric" min="0" name="lowStockThreshold" required />
-          </label>
+          <div className="admin-form-grid">
+            <label className="admin-field">
+              <span>Low stock</span>
+              <input defaultValue="5" inputMode="numeric" min="0" name="lowStockThreshold" required />
+            </label>
+            <label className="admin-field">
+              <span>Cost per unit GHS (optional)</span>
+              <input inputMode="decimal" min="0" name="cost" placeholder="e.g. 15.00" />
+            </label>
+          </div>
           <button className="admin-action" type="submit">
             {pending ? "Adding" : "Add variant"}
           </button>

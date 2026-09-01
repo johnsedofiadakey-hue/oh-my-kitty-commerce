@@ -179,6 +179,10 @@ export type OrderItem = {
   sku: string;
   quantity: number;
   unitPrice: MoneyMinorUnit;
+  // Snapshotted from the variant's cost at sale time, same reasoning as
+  // unitPrice — a later cost edit must not change what a past order's
+  // profit report shows. Null when no cost was set on the variant yet.
+  unitCost: MoneyMinorUnit | null;
   discountTotal: MoneyMinorUnit;
   lineTotal: MoneyMinorUnit;
   mediaUrl?: string;

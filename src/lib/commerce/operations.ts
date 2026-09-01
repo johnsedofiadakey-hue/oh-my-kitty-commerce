@@ -1857,6 +1857,7 @@ async function buildOrderItems(
       sku: variant.sku,
       quantity: item.quantity,
       unitPrice: variant.price,
+      unitCost: variant.cost ?? null,
       discountTotal: item.discountTotal,
       lineTotal: grossLineTotal - item.discountTotal,
       mediaUrl

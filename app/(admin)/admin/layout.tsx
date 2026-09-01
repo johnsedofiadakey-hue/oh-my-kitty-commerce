@@ -71,6 +71,7 @@ const navConfig: NavConfigGroup[] = [
     label: "Insights",
     items: [
       { label: "Reports", href: "/admin/reports", icon: "reports", requiredPermission: "reports.view" },
+      { label: "Financial", href: "/admin/financial", icon: "financial", requiredPermission: "reports.financial" },
       { label: "Audit log", href: "/admin/audit", icon: "audit", requiredPermission: "audit.view" }
     ]
   },

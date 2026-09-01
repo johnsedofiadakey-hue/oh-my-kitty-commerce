@@ -840,6 +840,7 @@ export const sampleOrders: Order[] = [
         sku: "OMK-SE-30",
         quantity: 1,
         unitPrice: 12000,
+        unitCost: null,
         discountTotal: 0,
         lineTotal: 12000
       }
@@ -876,6 +877,7 @@ export const sampleOrders: Order[] = [
         sku: "OMK-OIL-DEFAULT",
         quantity: 1,
         unitPrice: 9500,
+        unitCost: null,
         discountTotal: 0,
         lineTotal: 9500
       }

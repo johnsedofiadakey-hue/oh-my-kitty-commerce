@@ -56,6 +56,7 @@ export async function createProductWithDefaultVariantAction(
       optionValues: {},
       price: formMoneyMinorUnit(formData, "price"),
       currency: "GHS",
+      cost: formOptionalMoneyMinorUnit(formData, "cost"),
       mediaIds: [],
       trackInventory: true,
       stockOnHand: formInteger(formData, "stockOnHand", 0),
@@ -90,6 +91,7 @@ export async function createVariantAction(
       optionValues: {},
       price: formMoneyMinorUnit(formData, "price"),
       currency: "GHS",
+      cost: formOptionalMoneyMinorUnit(formData, "cost"),
       mediaIds: [],
       trackInventory: true,
       stockOnHand: formInteger(formData, "stockOnHand", 0),
@@ -129,6 +131,7 @@ export async function quickEditCatalogueItemAction(formData: FormData): Promise<
     title: formString(formData, "variantTitle"),
     price: formMoneyMinorUnit(formData, "price"),
     compareAtPrice: formOptionalMoneyMinorUnit(formData, "compareAtPrice"),
+    cost: formOptionalMoneyMinorUnit(formData, "cost"),
     lowStockThreshold: formInteger(formData, "lowStockThreshold", 5)
   });
 

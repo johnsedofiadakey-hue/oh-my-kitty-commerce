@@ -416,6 +416,16 @@ function ProductEditDrawer({
               <span>Low stock alert</span>
               <input defaultValue={variant.lowStockThreshold} inputMode="numeric" min="0" name="lowStockThreshold" required />
             </label>
+            <label className="admin-field">
+              <span>Cost per unit GHS (for profit reports — leave blank if unknown)</span>
+              <input
+                defaultValue={variant.cost ? (variant.cost / 100).toFixed(2) : ""}
+                inputMode="decimal"
+                min="0"
+                name="cost"
+                placeholder="e.g. 15.00"
+              />
+            </label>
           </div>
           <label className="admin-field">
             <span>Adjust stock (+/-)</span>
