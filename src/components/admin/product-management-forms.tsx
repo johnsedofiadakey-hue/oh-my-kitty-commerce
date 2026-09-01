@@ -105,6 +105,7 @@ export function CreateProductForm({
     if (result.productId && result.variantId && photo) {
       const productId = result.productId;
       const variantId = result.variantId;
+      const alt = String(formData.get("title") ?? "").trim() || "Product photo";
       setPhotoUploading(true);
       try {
         const { storagePath, url } = await compressAndUploadImage(
@@ -116,7 +117,7 @@ export function CreateProductForm({
           variantId,
           storagePath,
           url,
-          alt: ""
+          alt
         });
         setPhotoStatus({ status: attachResult.status, text: attachResult.message });
       } catch (error) {
