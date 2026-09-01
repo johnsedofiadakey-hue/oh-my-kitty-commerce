@@ -99,7 +99,12 @@ export default async function AdminLayout({
   const context = getCommerceServerContext();
   const roles = context ? await getEffectiveRoles(context, actor.roleIds) : [];
 
-  if (!canAccessAdmin(roles, actor)) {
+  // A POS-only account with orders.view (e.g. Sales Staff) still needs a way
+  // to reach Orders to fulfil pickups — without this they'd be bounced back
+  // to /pos before the nav filtering below even runs.
+  const canReachOrdersOnly = canAccessPos(roles, actor) && hasPermission(roles, actor, "orders.view");
+
+  if (!canAccessAdmin(roles, actor) && !canReachOrdersOnly) {
     if (canAccessPos(roles, actor)) {
       redirect("/pos");
     }

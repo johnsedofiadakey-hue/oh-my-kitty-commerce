@@ -22,16 +22,6 @@ type DiscoveryOption = {
   label: string;
 };
 
-const TILE_CYCLE_LENGTH = 7;
-
-function tileTypeForIndex(index: number): "standard" | "featured" | "tall" | "feature" {
-  const position = index % TILE_CYCLE_LENGTH;
-  if (position === 2) return "featured";
-  if (position === 5) return "tall";
-  if (position === 6) return "feature";
-  return "standard";
-}
-
 export function DepthShop({ products, sourceMessage }: DepthShopProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -214,7 +204,7 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
         </section>
       ) : filteredProducts.length > 0 ? (
         <section className="depth-shop-grid" aria-label="Products">
-          {filteredProducts.map((product, index) => {
+          {filteredProducts.map((product) => {
             const hasMultipleVariants = (variantCountByProductId.get(product.id) ?? 1) > 1;
 
             return (
@@ -231,8 +221,6 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
                 }}
                 onSelect={() => setSelectedId(product.variantId)}
                 product={product}
-                tileType={tileTypeForIndex(index)}
-                tone={product.tone}
               />
             );
           })}
@@ -412,22 +400,17 @@ function ProductTile({
   hasMultipleVariants,
   onQuickAdd,
   onSelect,
-  product,
-  tileType,
-  tone
+  product
 }: {
   hasMultipleVariants: boolean;
   onQuickAdd: () => void;
   onSelect: () => void;
   product: StorefrontProductView;
-  tileType: "standard" | "featured" | "tall" | "feature";
-  tone: StorefrontProductView["tone"];
 }) {
   const [added, setAdded] = useState(false);
-  const isFeatureMoment = tileType === "feature";
 
   return (
-    <article className={`depth-product-card tile-${tileType} ${isFeatureMoment ? tone : ""}`}>
+    <article className="depth-product-card">
       <button className="depth-product-card-hit" onClick={onSelect} type="button">
         <div className="depth-product-stage" aria-hidden="true">
           <ProductPackshot product={product} />

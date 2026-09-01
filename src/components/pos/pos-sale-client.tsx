@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
+import Link from "next/link";
 import { formatMoney } from "@/lib/commerce/format";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 import {
@@ -15,6 +16,7 @@ import { PosOrderLookup } from "@/components/pos/pos-order-lookup";
 import { AdminSignOutButton } from "@/components/auth/admin-sign-out-button";
 
 type PosSaleClientProps = {
+  canViewOrders: boolean;
   products: StorefrontProductView[];
   source: "live" | "sample";
   sourceMessage?: string;
@@ -75,7 +77,13 @@ function getServerOnlineSnapshot() {
   return true;
 }
 
-export function PosSaleClient({ products, source, sourceMessage, staffName }: PosSaleClientProps) {
+export function PosSaleClient({
+  canViewOrders,
+  products,
+  source,
+  sourceMessage,
+  staffName
+}: PosSaleClientProps) {
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<PosLine[]>([]);
   const [customerName, setCustomerName] = useState("");
@@ -524,8 +532,19 @@ export function PosSaleClient({ products, source, sourceMessage, staffName }: Po
   return (
     <>
       <main className="pos-products">
-        <h1 className="app-title">POS sale</h1>
-        <p className="app-subtitle">Search, tap products, take payment, and issue a receipt.</p>
+        <div className="page-heading">
+          <div>
+            <h1 className="app-title">POS sale</h1>
+            <p className="app-subtitle">Search, tap products, take payment, and issue a receipt.</p>
+          </div>
+          {canViewOrders ? (
+            <div className="page-heading-actions">
+              <Link className="admin-action ghost" href="/admin/orders">
+                Orders
+              </Link>
+            </div>
+          ) : null}
+        </div>
         {sourceMessage ? (
           <div className="admin-alert" role="status">
             {sourceMessage}

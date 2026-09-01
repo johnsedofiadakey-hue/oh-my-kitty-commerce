@@ -178,7 +178,6 @@ export const defaultRoles: Role[] = [
     permissions: [
       "pos.access",
       "pos.sell",
-      "products.view",
       "orders.view",
       "customers.view",
       "customers.create",
