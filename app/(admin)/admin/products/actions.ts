@@ -104,50 +104,59 @@ export async function createVariantAction(
 }
 
 
-export async function quickEditCatalogueItemAction(formData: FormData): Promise<void> {
-  const context = requireCommerceContext();
-  const actor = await getRequiredAdminActor();
-  const productId = formString(formData, "productId");
-  const variantId = formString(formData, "variantId");
-  const categoryId = formOptionalString(formData, "categoryId");
-  const stockDelta = formInteger(formData, "stockDelta", 0);
+export async function quickEditCatalogueItemAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+    const productId = formString(formData, "productId");
+    const variantId = formString(formData, "variantId");
+    const categoryId = formOptionalString(formData, "categoryId");
+    const stockDelta = formInteger(formData, "stockDelta", 0);
 
-  await updateProduct(context, actor, {
-    id: productId,
-    title: formString(formData, "title"),
-    shortCopy: formOptionalString(formData, "shortCopy"),
-    status: formProductStatus(formData, "status"),
-    categoryIds: categoryId ? [categoryId] : [],
-    concernIds: formData.getAll("concernIds").map(String),
-    productTypeIds: formData.getAll("productTypeIds").map(String),
-    routineIds: formData.getAll("routineIds").map(String),
-    bestSeller: formData.get("bestSeller") === "on",
-    homepagePriority: formOptionalInteger(formData, "homepagePriority")
-  });
-
-  await updateVariant(context, actor, {
-    productId,
-    id: variantId,
-    title: formString(formData, "variantTitle"),
-    price: formMoneyMinorUnit(formData, "price"),
-    compareAtPrice: formOptionalMoneyMinorUnit(formData, "compareAtPrice"),
-    cost: formOptionalMoneyMinorUnit(formData, "cost"),
-    lowStockThreshold: formInteger(formData, "lowStockThreshold", 5)
-  });
-
-  if (stockDelta !== 0) {
-    await adjustInventory(context, actor, {
-      productId,
-      variantId,
-      type: "MANUAL_ADJUSTMENT",
-      quantityDelta: stockDelta,
-      reason: "Admin quick edit"
+    const product = await updateProduct(context, actor, {
+      id: productId,
+      title: formString(formData, "title"),
+      shortCopy: formOptionalString(formData, "shortCopy"),
+      status: formProductStatus(formData, "status"),
+      categoryIds: categoryId ? [categoryId] : [],
+      concernIds: formData.getAll("concernIds").map(String),
+      productTypeIds: formData.getAll("productTypeIds").map(String),
+      routineIds: formData.getAll("routineIds").map(String),
+      bestSeller: formData.get("bestSeller") === "on",
+      homepagePriority: formOptionalInteger(formData, "homepagePriority")
     });
-  }
 
-  revalidatePath("/");
-  revalidatePath("/shop");
-  revalidatePath("/admin/products");
+    await updateVariant(context, actor, {
+      productId,
+      id: variantId,
+      title: formString(formData, "variantTitle"),
+      price: formMoneyMinorUnit(formData, "price"),
+      compareAtPrice: formOptionalMoneyMinorUnit(formData, "compareAtPrice"),
+      cost: formOptionalMoneyMinorUnit(formData, "cost"),
+      lowStockThreshold: formInteger(formData, "lowStockThreshold", 5)
+    });
+
+    if (stockDelta !== 0) {
+      await adjustInventory(context, actor, {
+        productId,
+        variantId,
+        type: "MANUAL_ADJUSTMENT",
+        quantityDelta: stockDelta,
+        reason: "Admin quick edit"
+      });
+    }
+
+    revalidatePath("/");
+    revalidatePath("/shop");
+    revalidatePath("/admin/products");
+
+    return { status: "success", message: `Saved ${product.title}.` };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
 }
 
 export async function attachProductImageAction(input: {

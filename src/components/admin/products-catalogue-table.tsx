@@ -1,11 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { DeleteProductButton } from "@/components/admin/delete-product-button";
 import { MediaUploader } from "@/components/admin/media-uploader";
-import type { AdminActionState } from "@/lib/admin/product-form";
+import {
+  initialAdminActionState,
+  type AdminActionState,
+  type AdminFormAction
+} from "@/lib/admin/product-form";
 import type { getAdminCatalogueData } from "@/lib/admin/catalogue";
 
 type CatalogueData = Awaited<ReturnType<typeof getAdminCatalogueData>>;
@@ -23,7 +27,7 @@ type ProductsCatalogueTableProps = {
   }) => Promise<AdminActionState>;
   deleteProductAction: (productId: string) => Promise<AdminActionState>;
   deleteProductsAction: (productIds: string[]) => Promise<AdminActionState>;
-  quickEditCatalogueItemAction: (formData: FormData) => Promise<void>;
+  quickEditCatalogueItemAction: AdminFormAction;
 };
 
 export function ProductsCatalogueTable({
@@ -276,6 +280,8 @@ function ProductEditDrawer({
   deleteProductAction: ProductsCatalogueTableProps["deleteProductAction"];
   quickEditCatalogueItemAction: ProductsCatalogueTableProps["quickEditCatalogueItemAction"];
 }) {
+  const [state, formAction, pending] = useActionState(quickEditCatalogueItemAction, initialAdminActionState);
+
   if (!product) {
     return null;
   }
@@ -297,10 +303,10 @@ function ProductEditDrawer({
           variantId={variant.id}
         />
       </div>
-      <form action={quickEditCatalogueItemAction} className="admin-form">
+      <form action={formAction} className="admin-form">
         <input name="productId" type="hidden" value={product.id} />
         <input name="variantId" type="hidden" value={variant.id} />
-        <fieldset disabled={disabled}>
+        <fieldset disabled={disabled || pending}>
           <label className="admin-field">
             <span>Product name</span>
             <input defaultValue={product.title} name="title" required />
@@ -445,8 +451,11 @@ function ProductEditDrawer({
             <input defaultChecked={product.bestSeller} name="bestSeller" type="checkbox" />
             <span>Best seller (shows in Live Products on the home page)</span>
           </label>
+          {state.message ? (
+            <p className={`admin-form-status ${state.status}`}>{state.message}</p>
+          ) : null}
           <button className="admin-action" type="submit">
-            Save changes
+            {pending ? "Saving..." : "Save changes"}
           </button>
         </fieldset>
       </form>
