@@ -3934,6 +3934,23 @@ button {
   gap: 8px;
 }
 
+.admin-inline-confirm {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-medium);
+  background: var(--color-cream);
+}
+
+.admin-inline-confirm input {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-small);
+  background: var(--color-white-pure);
+}
+
 .admin-action.small {
   min-height: 30px;
   padding: 0 12px;
@@ -4822,6 +4839,23 @@ button {
 
 .quick-edit-row:last-child {
   border-bottom: 0;
+}
+
+.quick-edit-list > div {
+  border-bottom: 1px solid rgb(234 217 210 / 70%);
+}
+
+.quick-edit-list > div:last-child {
+  border-bottom: 0;
+}
+
+.quick-edit-list > div .quick-edit-row {
+  border-bottom: 0;
+}
+
+.quick-edit-list > div .admin-inline-confirm,
+.quick-edit-list > div > .admin-action {
+  margin: 0 16px 14px;
 }
 
 .stack-list {

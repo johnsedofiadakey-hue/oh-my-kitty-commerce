@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { CommerceError } from "@/lib/commerce/errors";
-import { updateOrderFulfilment } from "@/lib/commerce/operations";
+import { deleteOrder, updateOrderFulfilment } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getRequiredAdminActor } from "@/lib/auth/server";
-import { formString } from "@/lib/admin/product-form";
+import { formString, type AdminActionState } from "@/lib/admin/product-form";
 import type { FulfilmentStatus } from "@/lib/commerce/types";
 
 const fulfilmentStatuses: FulfilmentStatus[] = [
@@ -27,6 +27,22 @@ export async function updateOrderFulfilmentAction(formData: FormData): Promise<v
   });
 
   revalidatePath("/admin/orders");
+}
+
+export async function deleteOrderAction(orderId: string): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+    await deleteOrder(context, actor, orderId);
+
+    revalidatePath("/admin/orders");
+    return { status: "success", message: "Order deleted." };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof CommerceError ? error.message : "Delete failed."
+    };
+  }
 }
 
 function formFulfilmentStatus(formData: FormData): FulfilmentStatus {

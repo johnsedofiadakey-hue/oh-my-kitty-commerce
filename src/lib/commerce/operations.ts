@@ -1631,6 +1631,27 @@ export async function updateOrderFulfilment(
   return updatedOrder;
 }
 
+export async function deleteOrder(context: CommerceContext, actor: CommerceActor, orderId: string) {
+  await assertCan(context, actor, "orders.delete");
+  const order = await context.repo.getOrder(orderId);
+  if (!order) {
+    throw new CommerceError("NOT_FOUND", `Order not found: ${orderId}`);
+  }
+
+  const payments = (await context.repo.listPayments()).filter((payment) => payment.orderId === orderId);
+  for (const payment of payments) {
+    await context.repo.deletePayment(payment.id);
+  }
+  await context.repo.deleteOrder(orderId);
+
+  await writeAuditLog(context, actor, {
+    action: "orders.delete",
+    entityType: "order",
+    entityId: orderId,
+    summary: `Deleted order ${order.orderNumber} (${payments.length} payment${payments.length === 1 ? "" : "s"})`
+  });
+}
+
 /** Order/receipt lookup for POS — find a past sale by order number, customer name, or phone. */
 export async function searchOrders(context: CommerceContext, actor: CommerceActor, query: string) {
   await assertCan(context, actor, "pos.receipts.view");

@@ -178,6 +178,10 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     return snapshot.docs.map((doc) => readDoc<Order>(doc)).filter(isDefined);
   }
 
+  async deleteOrder(id: string) {
+    await this.db.collection("orders").doc(id).delete();
+  }
+
   async findOrderByIdempotencyKey(idempotencyKey: string) {
     const snapshot = await this.db
       .collection("orders")
@@ -197,6 +201,10 @@ export class FirestoreCommerceRepository implements CommerceRepository {
   async listPayments() {
     const snapshot = await this.db.collection("payments").get();
     return snapshot.docs.map((doc) => readDoc<Payment>(doc)).filter(isDefined);
+  }
+
+  async deletePayment(id: string) {
+    await this.db.collection("payments").doc(id).delete();
   }
 
   async saveInventoryMovement(movement: InventoryMovement) {

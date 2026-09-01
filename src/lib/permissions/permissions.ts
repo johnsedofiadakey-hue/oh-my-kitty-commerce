@@ -19,6 +19,7 @@ export const permissions = [
   "orders.cancel",
   "orders.refund",
   "orders.void",
+  "orders.delete",
   "fulfilment.view",
   "fulfilment.update",
   "inventory.view",

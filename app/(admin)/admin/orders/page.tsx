@@ -10,8 +10,12 @@ import { formatFulfilmentStatus, formatPaymentStatus } from "@/lib/commerce/form
 import { requireAdminPermission } from "@/lib/auth/server";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { InlineStatusSelect } from "@/components/admin/inline-status-select";
+import { DeleteOrderButton } from "@/components/admin/delete-order-button";
 import type { AdminOrderRow } from "@/lib/admin/operations-data";
-import { updateOrderFulfilmentAction } from "./actions";
+import { getEffectiveRoles } from "@/lib/commerce/operations";
+import { getCommerceServerContext } from "@/lib/commerce/server-context";
+import { hasPermission } from "@/lib/permissions/permissions";
+import { deleteOrderAction, updateOrderFulfilmentAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +29,10 @@ const fulfilmentStatuses = [
 ] as const;
 
 export default async function AdminOrdersPage() {
-  await requireAdminPermission("orders.view");
+  const actor = await requireAdminPermission("orders.view");
+  const context = getCommerceServerContext();
+  const roles = context ? await getEffectiveRoles(context, actor.roleIds) : [];
+  const canDelete = hasPermission(roles, actor, "orders.delete");
   const data = await getAdminOperationsData();
   const disabled = data.source !== "live";
 
@@ -59,7 +66,7 @@ export default async function AdminOrdersPage() {
         </div>
         <div className="order-list">
           {needsAttention.map((row, index) => (
-            <OrderRow disabled={disabled} key={row.order.id} queuePosition={index + 1} row={row} />
+            <OrderRow canDelete={canDelete} disabled={disabled} key={row.order.id} queuePosition={index + 1} row={row} />
           ))}
           {needsAttention.length === 0 ? <p className="admin-help">Nothing waiting on you right now.</p> : null}
         </div>
@@ -72,7 +79,7 @@ export default async function AdminOrdersPage() {
         </summary>
         <div className="order-list">
           {completed.map((row) => (
-            <OrderRow disabled={disabled} key={row.order.id} row={row} />
+            <OrderRow canDelete={canDelete} disabled={disabled} key={row.order.id} row={row} />
           ))}
           {completed.length === 0 ? <p className="admin-help">Nothing completed yet.</p> : null}
         </div>
@@ -84,10 +91,12 @@ export default async function AdminOrdersPage() {
 function OrderRow({
   row,
   disabled,
+  canDelete,
   queuePosition
 }: {
   row: AdminOrderRow;
   disabled: boolean;
+  canDelete: boolean;
   queuePosition?: number;
 }) {
   const { order } = row;
@@ -118,7 +127,7 @@ function OrderRow({
           </div>
         }
       >
-        <OrderDetail disabled={disabled} row={row} />
+        <OrderDetail canDelete={canDelete} disabled={disabled} row={row} />
       </AdminDrawer>
       <InlineStatusSelect
         action={updateOrderFulfilmentAction}
@@ -131,7 +140,7 @@ function OrderRow({
   );
 }
 
-function OrderDetail({ row, disabled }: { row: AdminOrderRow; disabled: boolean }) {
+function OrderDetail({ row, disabled, canDelete }: { row: AdminOrderRow; disabled: boolean; canDelete: boolean }) {
   const { order, payment } = row;
   const address = order.customerSnapshot?.address;
   const phone = order.customerSnapshot?.phone;
@@ -252,6 +261,18 @@ function OrderDetail({ row, disabled }: { row: AdminOrderRow; disabled: boolean 
           </button>
         </form>
       </section>
+
+      {canDelete ? (
+        <section className="order-detail-section">
+          <h3>Danger zone</h3>
+          <DeleteOrderButton
+            action={deleteOrderAction}
+            disabled={disabled}
+            orderId={order.id}
+            orderNumber={order.orderNumber}
+          />
+        </section>
+      ) : null}
     </div>
   );
 }

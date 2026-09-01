@@ -167,6 +167,10 @@ export class MemoryCommerceRepository implements CommerceRepository {
     return [...this.orders.values()];
   }
 
+  async deleteOrder(id: string) {
+    this.orders.delete(id);
+  }
+
   async findOrderByIdempotencyKey(idempotencyKey: string) {
     return [...this.orders.values()].find((order) => order.idempotencyKey === idempotencyKey) ?? null;
   }
@@ -177,6 +181,10 @@ export class MemoryCommerceRepository implements CommerceRepository {
 
   async listPayments() {
     return [...this.payments.values()];
+  }
+
+  async deletePayment(id: string) {
+    this.payments.delete(id);
   }
 
   async saveInventoryMovement(movement: InventoryMovement) {

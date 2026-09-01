@@ -51,9 +51,11 @@ export type CommerceRepository = {
   saveOrder(order: Order): Promise<void>;
   getOrder(id: string): Promise<Order | null>;
   listOrders(): Promise<Order[]>;
+  deleteOrder(id: string): Promise<void>;
   findOrderByIdempotencyKey(idempotencyKey: string): Promise<Order | null>;
   savePayment(payment: Payment): Promise<void>;
   listPayments(): Promise<Payment[]>;
+  deletePayment(id: string): Promise<void>;
   saveInventoryMovement(movement: InventoryMovement): Promise<void>;
   listInventoryMovements(variantId: string): Promise<InventoryMovement[]>;
   savePromotion(promotion: Promotion): Promise<void>;

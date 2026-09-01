@@ -9,6 +9,7 @@ import {
   getEffectiveRoles,
   updateRole,
   updateStaffUser,
+  writeAuditLog,
   type CommerceContext
 } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
@@ -115,6 +116,38 @@ export async function updateStaffAccessAction(formData: FormData): Promise<void>
   });
 
   revalidatePath("/admin/users");
+}
+
+export async function resetStaffPasswordAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+    await requirePermission(context, actor, "users.update");
+    const auth = requireAdminAuth();
+
+    const id = formString(formData, "id");
+    const newPassword = formString(formData, "newPassword");
+
+    if (newPassword.length < 6) {
+      throw new CommerceError("VALIDATION_ERROR", "Password must be at least 6 characters.");
+    }
+
+    const targetUser = await auth.updateUser(id, { password: newPassword });
+
+    await writeAuditLog(context, actor, {
+      action: "users.reset_password",
+      entityType: "user",
+      entityId: id,
+      summary: `Reset password for ${targetUser.email ?? targetUser.displayName ?? id}`
+    });
+
+    return { status: "success", message: "Password reset." };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
 }
 
 export async function createRoleAction(
