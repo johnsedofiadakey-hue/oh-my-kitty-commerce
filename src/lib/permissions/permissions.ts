@@ -5,6 +5,7 @@ export const permissions = [
   "products.create",
   "products.update",
   "products.archive",
+  "products.delete",
   "products.publish",
   "products.price.update",
   "media.view",

@@ -25,8 +25,10 @@ export type CommerceRepository = {
   listProducts(): Promise<Product[]>;
   getProduct(id: string): Promise<Product | null>;
   saveProduct(product: Product): Promise<void>;
+  deleteProduct(id: string): Promise<void>;
   getVariant(productId: string, variantId: string): Promise<ProductVariant | null>;
   saveVariant(variant: ProductVariant): Promise<void>;
+  deleteVariant(productId: string, variantId: string): Promise<void>;
   listVariants(productId: string): Promise<ProductVariant[]>;
   listCategories(): Promise<Category[]>;
   saveCategory(category: Category): Promise<void>;

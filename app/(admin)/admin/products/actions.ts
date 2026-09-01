@@ -7,6 +7,7 @@ import {
   attachProductImage,
   createProduct,
   createVariant,
+  deleteProduct,
   updateProduct,
   updateVariant
 } from "@/lib/commerce/operations";
@@ -153,6 +154,21 @@ export async function attachProductImageAction(input: {
     revalidatePath("/shop");
     revalidatePath("/admin/products");
     return { status: "success", message: "Image updated." };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
+}
+
+export async function deleteProductAction(productId: string): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+    await deleteProduct(context, actor, productId);
+
+    revalidatePath("/");
+    revalidatePath("/shop");
+    revalidatePath("/admin/products");
+    return { status: "success", message: "Product deleted." };
   } catch (error) {
     return { status: "error", message: getActionErrorMessage(error) };
   }

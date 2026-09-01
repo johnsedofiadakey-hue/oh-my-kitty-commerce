@@ -41,6 +41,10 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     });
   }
 
+  async deleteProduct(id: string) {
+    await this.db.collection("products").doc(id).delete();
+  }
+
   async getVariant(productId: string, variantId: string) {
     return readDoc<ProductVariant>(
       await this.variantCollection(productId).doc(variantId).get()
@@ -51,6 +55,10 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     await this.variantCollection(variant.productId).doc(variant.id).set(cleanFirestoreData(variant), {
       merge: true
     });
+  }
+
+  async deleteVariant(productId: string, variantId: string) {
+    await this.variantCollection(productId).doc(variantId).delete();
   }
 
   async listVariants(productId: string) {

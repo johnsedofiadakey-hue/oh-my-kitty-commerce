@@ -1,5 +1,6 @@
 import { getAdminCatalogueData } from "@/lib/admin/catalogue";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
+import { DeleteProductButton } from "@/components/admin/delete-product-button";
 import { MediaUploader } from "@/components/admin/media-uploader";
 import { CreateProductForm, CreateVariantForm } from "@/components/admin/product-management-forms";
 import { requireAdminPermission } from "@/lib/auth/server";
@@ -7,6 +8,7 @@ import {
   attachProductImageAction,
   createProductWithDefaultVariantAction,
   createVariantAction,
+  deleteProductAction,
   quickEditCatalogueItemAction
 } from "./actions";
 
@@ -283,6 +285,12 @@ function ProductEditDrawer({
           </button>
         </fieldset>
       </form>
+      <DeleteProductButton
+        action={deleteProductAction}
+        disabled={disabled}
+        productId={product.id}
+        productTitle={product.title}
+      />
     </AdminDrawer>
   );
 }

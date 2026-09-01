@@ -158,6 +158,32 @@ export async function updateProduct(
   return product;
 }
 
+/**
+ * Permanently removes a product and all its variants. Order line items are
+ * a snapshot (title, price, image copied at purchase time) rather than a
+ * live reference, so past orders keep displaying correctly after this —
+ * but inventory movement history and any promotion restricted to this
+ * product will be left pointing at an id that no longer resolves. That's a
+ * deliberate tradeoff for a real delete instead of an archive.
+ */
+export async function deleteProduct(context: CommerceContext, actor: CommerceActor, productId: string) {
+  await assertCan(context, actor, "products.delete");
+  const product = await requiredProduct(context, productId);
+  const variants = await context.repo.listVariants(productId);
+
+  for (const variant of variants) {
+    await context.repo.deleteVariant(productId, variant.id);
+  }
+  await context.repo.deleteProduct(productId);
+
+  await writeAuditLog(context, actor, {
+    action: "products.delete",
+    entityType: "product",
+    entityId: productId,
+    summary: `Deleted product ${product.title} (${variants.length} variant${variants.length === 1 ? "" : "s"})`
+  });
+}
+
 export async function createVariant(
   context: CommerceContext,
   actor: CommerceActor,

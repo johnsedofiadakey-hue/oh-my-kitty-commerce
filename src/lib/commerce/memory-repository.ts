@@ -58,6 +58,10 @@ export class MemoryCommerceRepository implements CommerceRepository {
     this.products.set(product.id, product);
   }
 
+  async deleteProduct(id: string) {
+    this.products.delete(id);
+  }
+
   async getVariant(productId: string, variantId: string) {
     const variant = this.variants.get(variantKey(productId, variantId));
     return variant ?? null;
@@ -65,6 +69,10 @@ export class MemoryCommerceRepository implements CommerceRepository {
 
   async saveVariant(variant: ProductVariant) {
     this.variants.set(variantKey(variant.productId, variant.id), variant);
+  }
+
+  async deleteVariant(productId: string, variantId: string) {
+    this.variants.delete(variantKey(productId, variantId));
   }
 
   async listVariants(productId: string) {
