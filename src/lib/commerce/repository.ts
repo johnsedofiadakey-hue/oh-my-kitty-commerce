@@ -16,6 +16,7 @@ import type {
   ProductType,
   ProductVariant,
   Promotion,
+  RawMaterial,
   Routine,
   StaffUser,
   StoreSettings
@@ -40,6 +41,10 @@ export type CommerceRepository = {
   saveProductType(productType: ProductType): Promise<void>;
   listRoutines(): Promise<Routine[]>;
   saveRoutine(routine: Routine): Promise<void>;
+  listRawMaterials(): Promise<RawMaterial[]>;
+  getRawMaterial(id: string): Promise<RawMaterial | null>;
+  saveRawMaterial(material: RawMaterial): Promise<void>;
+  deleteRawMaterial(id: string): Promise<void>;
   listMedia(): Promise<MediaAsset[]>;
   saveMedia(media: MediaAsset): Promise<void>;
   deleteMedia(id: string): Promise<void>;

@@ -17,6 +17,7 @@ import type {
   ProductType,
   ProductVariant,
   Promotion,
+  RawMaterial,
   Routine,
   StaffUser,
   StoreSettings
@@ -30,6 +31,7 @@ export class MemoryCommerceRepository implements CommerceRepository {
   concerns = new Map<string, Concern>();
   productTypes = new Map<string, ProductType>();
   routines = new Map<string, Routine>();
+  rawMaterials = new Map<string, RawMaterial>();
   media = new Map<string, MediaAsset>();
   contentBlocks = new Map<string, ContentBlock>();
   customers = new Map<string, Customer>();
@@ -121,6 +123,22 @@ export class MemoryCommerceRepository implements CommerceRepository {
 
   async saveRoutine(routine: Routine) {
     this.routines.set(routine.id, routine);
+  }
+
+  async listRawMaterials() {
+    return [...this.rawMaterials.values()].sort((first, second) => first.name.localeCompare(second.name));
+  }
+
+  async getRawMaterial(id: string) {
+    return this.rawMaterials.get(id) ?? null;
+  }
+
+  async saveRawMaterial(material: RawMaterial) {
+    this.rawMaterials.set(material.id, material);
+  }
+
+  async deleteRawMaterial(id: string) {
+    this.rawMaterials.delete(id);
   }
 
   async listMedia() {

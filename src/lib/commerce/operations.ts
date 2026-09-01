@@ -36,6 +36,8 @@ import {
   createPromotionInputSchema,
   createRoutineInputSchema,
   createVariantInputSchema,
+  createRawMaterialInputSchema,
+  updateRawMaterialInputSchema,
   updateCategoryInputSchema,
   updateConcernInputSchema,
   updateProductInputSchema,
@@ -78,6 +80,8 @@ import type {
   ProductType,
   ProductVariant,
   Promotion,
+  RawMaterial,
+  RecipeItem,
   Routine,
   SalesChannel,
   StaffUser,
@@ -235,6 +239,11 @@ export async function createVariant(
     stockAvailable: input.stockAvailable === undefined ? parsed.stockOnHand : parsed.stockAvailable
   };
 
+  const recipeCost = await computeRecipeCost(context, variant.recipe);
+  if (recipeCost !== null) {
+    variant.cost = recipeCost;
+  }
+
   await context.repo.saveVariant(variant);
   await writeAuditLog(context, actor, {
     action: "variants.create",
@@ -278,6 +287,11 @@ export async function updateVariant(
     stockOnHand: existing.stockOnHand,
     stockAvailable: existing.stockAvailable
   };
+
+  const recipeCost = await computeRecipeCost(context, variant.recipe);
+  if (recipeCost !== null) {
+    variant.cost = recipeCost;
+  }
 
   await context.repo.saveVariant(variant);
   await writeAuditLog(context, actor, {
@@ -905,6 +919,141 @@ export async function deleteRole(context: CommerceContext, actor: CommerceActor,
     entityId: roleId,
     summary: `Deleted role ${existing.name}`
   });
+}
+
+export async function listRawMaterials(context: CommerceContext, actor: CommerceActor) {
+  await assertCan(context, actor, "reports.financial");
+  return context.repo.listRawMaterials();
+}
+
+export async function createRawMaterial(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "reports.financial");
+  const parsed = createRawMaterialInputSchema.parse(input);
+  const material: RawMaterial = {
+    id: await uniqueMaterialId(context, parsed.name),
+    ...parsed,
+    createdAt: getNow(context),
+    updatedAt: getNow(context)
+  };
+
+  await context.repo.saveRawMaterial(material);
+  await writeAuditLog(context, actor, {
+    action: "materials.create",
+    entityType: "rawMaterial",
+    entityId: material.id,
+    summary: `Added raw material ${material.name}`
+  });
+
+  return material;
+}
+
+export async function updateRawMaterial(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "reports.financial");
+  const parsed = updateRawMaterialInputSchema.parse(input);
+  const existing = await context.repo.getRawMaterial(parsed.id);
+  if (!existing) {
+    throw new CommerceError("NOT_FOUND", "Raw material not found.");
+  }
+
+  const material: RawMaterial = {
+    ...existing,
+    ...parsed,
+    id: existing.id,
+    updatedAt: getNow(context)
+  };
+
+  await context.repo.saveRawMaterial(material);
+  await recomputeCostsForMaterial(context, material.id);
+  await writeAuditLog(context, actor, {
+    action: "materials.update",
+    entityType: "rawMaterial",
+    entityId: material.id,
+    summary: `Updated raw material ${material.name}`
+  });
+
+  return material;
+}
+
+export async function deleteRawMaterial(context: CommerceContext, actor: CommerceActor, materialId: string) {
+  await assertCan(context, actor, "reports.financial");
+  const existing = await context.repo.getRawMaterial(materialId);
+  if (!existing) {
+    throw new CommerceError("NOT_FOUND", "Raw material not found.");
+  }
+
+  const products = await context.repo.listProducts();
+  for (const product of products) {
+    const variants = await context.repo.listVariants(product.id);
+    const usedIn = variants.find((variant) => variant.recipe?.some((item) => item.materialId === materialId));
+    if (usedIn) {
+      throw new CommerceError(
+        "VALIDATION_ERROR",
+        `Still used in ${product.title}'s recipe (${usedIn.title}) — remove it from that recipe first.`
+      );
+    }
+  }
+
+  await context.repo.deleteRawMaterial(materialId);
+  await writeAuditLog(context, actor, {
+    action: "materials.delete",
+    entityType: "rawMaterial",
+    entityId: materialId,
+    summary: `Deleted raw material ${existing.name}`
+  });
+}
+
+/**
+ * A material's price changing should immediately update the derived cost of
+ * every variant whose recipe uses it — otherwise a product's profit report
+ * silently keeps using a stale ingredient price until someone happens to
+ * re-save that product.
+ */
+async function recomputeCostsForMaterial(context: CommerceContext, materialId: string) {
+  const products = await context.repo.listProducts();
+  for (const product of products) {
+    const variants = await context.repo.listVariants(product.id);
+    for (const variant of variants) {
+      if (!variant.recipe?.some((item) => item.materialId === materialId)) {
+        continue;
+      }
+      const cost = await computeRecipeCost(context, variant.recipe);
+      if (cost !== null && cost !== variant.cost) {
+        await context.repo.saveVariant({ ...variant, cost });
+      }
+    }
+  }
+}
+
+async function computeRecipeCost(context: CommerceContext, recipe: RecipeItem[] | undefined) {
+  if (!recipe || recipe.length === 0) {
+    return null;
+  }
+
+  const materials = await context.repo.listRawMaterials();
+  const materialsById = new Map(materials.map((material) => [material.id, material]));
+
+  let total = 0;
+  for (const item of recipe) {
+    const material = materialsById.get(item.materialId);
+    if (!material) {
+      continue;
+    }
+    total += material.costPerUnit * item.quantityPerUnit;
+  }
+
+  return Math.round(total);
+}
+
+async function uniqueMaterialId(context: CommerceContext, name: string) {
+  const base = createSlugId("material", name.toLowerCase().replaceAll(" ", "-"));
+  let candidate = base;
+  let suffix = 2;
+  while (await context.repo.getRawMaterial(candidate)) {
+    candidate = `${base}-${suffix}`;
+    suffix += 1;
+  }
+
+  return candidate;
 }
 
 export async function updateStoreSettings(

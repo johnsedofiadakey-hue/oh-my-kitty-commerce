@@ -13,6 +13,7 @@ import type {
   Product,
   ProductType,
   ProductVariant,
+  RawMaterial,
   Routine
 } from "@/lib/commerce/types";
 
@@ -36,6 +37,7 @@ export type AdminCatalogueData = {
   productTypes: ProductType[];
   routines: Routine[];
   media: MediaAsset[];
+  rawMaterials: RawMaterial[];
 };
 
 export async function getAdminCatalogueData(): Promise<AdminCatalogueData> {
@@ -50,13 +52,14 @@ export async function getAdminCatalogueData(): Promise<AdminCatalogueData> {
       products.map((product) => context.repo.listVariants(product.id))
     );
     const variants = variantGroups.flat();
-    const [categories, collections, concerns, productTypes, routines, media] = await Promise.all([
+    const [categories, collections, concerns, productTypes, routines, media, rawMaterials] = await Promise.all([
       context.repo.listCategories(),
       context.repo.listCollections(),
       context.repo.listConcerns(),
       context.repo.listProductTypes(),
       context.repo.listRoutines(),
-      context.repo.listMedia()
+      context.repo.listMedia(),
+      context.repo.listRawMaterials()
     ]);
     return {
       source: "live",
@@ -68,7 +71,8 @@ export async function getAdminCatalogueData(): Promise<AdminCatalogueData> {
       concerns,
       productTypes,
       routines,
-      media
+      media,
+      rawMaterials
     };
   } catch {
     return sampleCatalogue(
@@ -101,7 +105,8 @@ function sampleCatalogue(sourceMessage: string): AdminCatalogueData {
     concerns: adminData.concerns,
     productTypes: adminData.productTypes,
     routines: adminData.routines,
-    media: adminData.media
+    media: adminData.media,
+    rawMaterials: []
   };
 }
 

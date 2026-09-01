@@ -18,6 +18,7 @@ import type {
   ProductType,
   ProductVariant,
   Promotion,
+  RawMaterial,
   Routine,
   StaffUser,
   StoreSettings
@@ -120,6 +121,25 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     await this.db.collection("routines").doc(routine.id).set(cleanFirestoreData(routine), {
       merge: true
     });
+  }
+
+  async listRawMaterials() {
+    const snapshot = await this.db.collection("rawMaterials").orderBy("name").get();
+    return snapshot.docs.map((doc) => readDoc<RawMaterial>(doc)).filter(isDefined);
+  }
+
+  async getRawMaterial(id: string) {
+    return readDoc<RawMaterial>(await this.db.collection("rawMaterials").doc(id).get());
+  }
+
+  async saveRawMaterial(material: RawMaterial) {
+    await this.db.collection("rawMaterials").doc(material.id).set(cleanFirestoreData(material), {
+      merge: true
+    });
+  }
+
+  async deleteRawMaterial(id: string) {
+    await this.db.collection("rawMaterials").doc(id).delete();
   }
 
   async listMedia() {

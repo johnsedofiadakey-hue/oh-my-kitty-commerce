@@ -75,6 +75,13 @@ export type Product = {
   updatedAt?: Date;
 };
 
+export type RecipeItem = {
+  materialId: string;
+  // How much of the material one unit of this variant uses, in the
+  // material's own unit (e.g. 2.5 "ml" of a material priced per ml).
+  quantityPerUnit: number;
+};
+
 export type ProductVariant = {
   id: string;
   productId: string;
@@ -85,13 +92,28 @@ export type ProductVariant = {
   price: MoneyMinorUnit;
   currency: CurrencyCode;
   compareAtPrice?: MoneyMinorUnit | null;
+  // Manually entered cost per unit. When `recipe` is set (non-empty), this
+  // is instead derived server-side from the recipe's materials and their
+  // current prices, and manual edits to it are overwritten on save.
   cost?: MoneyMinorUnit | null;
+  recipe?: RecipeItem[];
   mediaIds: string[];
   trackInventory: boolean;
   stockOnHand: number;
   stockAvailable: number;
   lowStockThreshold: number;
   active: boolean;
+};
+
+export type RawMaterial = {
+  id: string;
+  name: string;
+  // Unit the material is measured/costed in, e.g. "ml", "g", "piece", "cap".
+  unit: string;
+  costPerUnit: MoneyMinorUnit;
+  supplier?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export type Category = {

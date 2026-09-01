@@ -80,6 +80,11 @@ export const updateProductInputSchema = productFieldsSchema.partial().extend({
   id: z.string().min(1)
 });
 
+const recipeItemSchema = z.object({
+  materialId: z.string().min(1),
+  quantityPerUnit: z.number().min(0)
+});
+
 const variantFieldsSchema = z.object({
   productId: z.string().min(1),
   title: z.string().min(1),
@@ -90,6 +95,7 @@ const variantFieldsSchema = z.object({
   currency: z.literal("GHS"),
   compareAtPrice: moneySchema.nullable().optional(),
   cost: moneySchema.nullable().optional(),
+  recipe: z.array(recipeItemSchema).optional(),
   mediaIds: z.array(z.string().min(1)),
   trackInventory: z.boolean(),
   stockOnHand: z.number().int().min(0),
@@ -97,6 +103,21 @@ const variantFieldsSchema = z.object({
   lowStockThreshold: z.number().int().min(0),
   active: z.boolean()
 });
+
+const rawMaterialFieldsSchema = z.object({
+  name: z.string().min(1),
+  unit: z.string().min(1),
+  costPerUnit: moneySchema,
+  supplier: z.string().optional()
+});
+
+export const createRawMaterialInputSchema = rawMaterialFieldsSchema;
+
+export const updateRawMaterialInputSchema = rawMaterialFieldsSchema
+  .partial()
+  .extend({
+    id: z.string().min(1)
+  });
 
 export const createVariantInputSchema = variantFieldsSchema.extend({
   optionValues: z.record(z.string(), z.string()).default({}),
@@ -373,6 +394,8 @@ export type CreateStaffUserInput = z.input<typeof createStaffUserInputSchema>;
 export type UpdateStaffUserInput = z.input<typeof updateStaffUserInputSchema>;
 export type CreateRoleInput = z.input<typeof createRoleInputSchema>;
 export type UpdateRoleInput = z.input<typeof updateRoleInputSchema>;
+export type CreateRawMaterialInput = z.input<typeof createRawMaterialInputSchema>;
+export type UpdateRawMaterialInput = z.input<typeof updateRawMaterialInputSchema>;
 export type UpdateStoreSettingsInput = z.input<typeof updateStoreSettingsInputSchema>;
 export type AdjustInventoryInput = z.input<typeof adjustInventoryInputSchema>;
 export type CreateCustomerInput = z.input<typeof createCustomerInputSchema>;

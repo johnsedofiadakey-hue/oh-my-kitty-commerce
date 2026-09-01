@@ -136,6 +136,7 @@ export async function quickEditCatalogueItemAction(
       price: formMoneyMinorUnit(formData, "price"),
       compareAtPrice: formOptionalMoneyMinorUnit(formData, "compareAtPrice"),
       cost: formOptionalMoneyMinorUnit(formData, "cost"),
+      recipe: formRecipe(formData),
       lowStockThreshold: formInteger(formData, "lowStockThreshold", 5)
     });
 
@@ -238,6 +239,27 @@ async function runAdminProductAction(
       message: getActionErrorMessage(error)
     };
   }
+}
+
+const RECIPE_FIELD_PREFIX = "recipeQuantity.";
+
+function formRecipe(formData: FormData) {
+  const items: { materialId: string; quantityPerUnit: number }[] = [];
+
+  for (const [key, value] of formData.entries()) {
+    if (!key.startsWith(RECIPE_FIELD_PREFIX) || typeof value !== "string") {
+      continue;
+    }
+
+    const quantity = Number.parseFloat(value);
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      continue;
+    }
+
+    items.push({ materialId: key.slice(RECIPE_FIELD_PREFIX.length), quantityPerUnit: quantity });
+  }
+
+  return items;
 }
 
 function requireCommerceContext() {

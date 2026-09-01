@@ -423,7 +423,10 @@ function ProductEditDrawer({
               <input defaultValue={variant.lowStockThreshold} inputMode="numeric" min="0" name="lowStockThreshold" required />
             </label>
             <label className="admin-field">
-              <span>Cost per unit GHS (for profit reports — leave blank if unknown)</span>
+              <span>
+                Cost per unit GHS
+                {catalogue.rawMaterials.length > 0 ? " (ignored if you set a recipe below)" : " (for profit reports — leave blank if unknown)"}
+              </span>
               <input
                 defaultValue={variant.cost ? (variant.cost / 100).toFixed(2) : ""}
                 inputMode="decimal"
@@ -433,6 +436,32 @@ function ProductEditDrawer({
               />
             </label>
           </div>
+          {catalogue.rawMaterials.length > 0 ? (
+            <div className="admin-field-group">
+              <span className="admin-field-group-label">
+                Recipe — how much of each material one unit uses. Leave a material at 0 if it&apos;s not
+                used. Cost per unit is calculated from these automatically.
+              </span>
+              {catalogue.rawMaterials.map((material) => {
+                const existing = variant.recipe?.find((item) => item.materialId === material.id);
+                return (
+                  <label className="admin-field recipe-field" key={material.id}>
+                    <span>
+                      {material.name} <small>({material.unit})</small>
+                    </span>
+                    <input
+                      defaultValue={existing?.quantityPerUnit ?? ""}
+                      inputMode="decimal"
+                      min="0"
+                      name={`recipeQuantity.${material.id}`}
+                      placeholder="0"
+                      step="any"
+                    />
+                  </label>
+                );
+              })}
+            </div>
+          ) : null}
           <label className="admin-field">
             <span>Adjust stock (+/-)</span>
             <input defaultValue="0" inputMode="numeric" name="stockDelta" />
