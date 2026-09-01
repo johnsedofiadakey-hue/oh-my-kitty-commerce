@@ -116,9 +116,16 @@ export const getStorefrontCatalogue = cache(async (): Promise<StorefrontCatalogu
     ]);
     const cards = createCards(products, variants, media, categories, concerns, productTypes, routines);
     if (cards.length === 0) {
-      return sampleStorefrontCatalogue(
-        "No live products are published yet. Showing starter catalogue."
-      );
+      // Genuinely live and working, just nothing published yet (e.g. mid
+      // re-upload after a catalogue clear-out) — show that honestly rather
+      // than falling back to the sample catalogue, which shares real
+      // product names and would read as leftover/undeleted inventory.
+      return {
+        source: "live",
+        sourceMessage: "We're restocking — new products are on their way.",
+        cards: [],
+        media
+      };
     }
 
     return {

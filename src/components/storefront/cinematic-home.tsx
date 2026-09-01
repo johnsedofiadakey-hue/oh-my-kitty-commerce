@@ -16,6 +16,7 @@ type CinematicHomeProps = {
   categories: StorefrontCategorySummary[];
   products: StorefrontProductView[];
   consultWhatsappNumber: string;
+  sourceMessage?: string;
 };
 
 const CONSULT_MESSAGE = "Hi! I'd like some guidance before I order 🌸";
@@ -225,7 +226,7 @@ function buildHeroTimeline(gsap: any, cfg: HeroBreakpointConfig) {
   return tl;
 }
 
-export function CinematicHome({ categories, products, consultWhatsappNumber }: CinematicHomeProps) {
+export function CinematicHome({ categories, products, consultWhatsappNumber, sourceMessage }: CinematicHomeProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const heroVideoRef = useRef<HTMLVideoElement>(null);
   const bestSellers = products.filter((product) => product.bestSeller);
@@ -497,6 +498,13 @@ export function CinematicHome({ categories, products, consultWhatsappNumber }: C
             </svg>
           </div>
         </section>
+
+        {products.length === 0 && sourceMessage ? (
+          <section className="shop-empty">
+            <h2>We&apos;re restocking.</h2>
+            <p>{sourceMessage}</p>
+          </section>
+        ) : null}
 
         <section className="exhibition-gallery" aria-label="Shop by category">
           <div className="exhibition-arch" aria-hidden="true">

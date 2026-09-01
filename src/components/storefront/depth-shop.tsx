@@ -190,22 +190,29 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
         </div>
       </section>
 
-      <section className="shop-filter-bar" aria-label="Shop filters">
-        <label className={`shop-search ${searchOpen ? "open" : ""}`}>
-          <span aria-hidden="true">⌕</span>
-          <input
-            onBlur={() => setSearchOpen(false)}
-            onChange={(event) => setQuery(event.target.value)}
-            onFocus={() => setSearchOpen(true)}
-            placeholder="What are you looking for?"
-            value={query}
-          />
-        </label>
+      {products.length > 0 ? (
+        <section className="shop-filter-bar" aria-label="Shop filters">
+          <label className={`shop-search ${searchOpen ? "open" : ""}`}>
+            <span aria-hidden="true">⌕</span>
+            <input
+              onBlur={() => setSearchOpen(false)}
+              onChange={(event) => setQuery(event.target.value)}
+              onFocus={() => setSearchOpen(true)}
+              placeholder="What are you looking for?"
+              value={query}
+            />
+          </label>
 
-        <FilterChips filter={filter} onSelect={setFilter} options={categoryOptions} />
-      </section>
+          <FilterChips filter={filter} onSelect={setFilter} options={categoryOptions} />
+        </section>
+      ) : null}
 
-      {filteredProducts.length > 0 ? (
+      {products.length === 0 ? (
+        <section className="shop-empty">
+          <h2>We&apos;re restocking.</h2>
+          <p>New products are on their way — check back soon.</p>
+        </section>
+      ) : filteredProducts.length > 0 ? (
         <section className="depth-shop-grid" aria-label="Products">
           {filteredProducts.map((product, index) => {
             const hasMultipleVariants = (variantCountByProductId.get(product.id) ?? 1) > 1;

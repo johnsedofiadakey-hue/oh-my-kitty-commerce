@@ -23,6 +23,7 @@ export default async function StorefrontHomePage() {
       categories={toStorefrontCategorySummaries(catalogue)}
       products={toStorefrontProductViews(catalogue)}
       consultWhatsappNumber={content["consult-whatsapp-number"]}
+      sourceMessage={catalogue.sourceMessage}
     />
   );
 }
