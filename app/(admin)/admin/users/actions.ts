@@ -6,6 +6,7 @@ import {
   createRole,
   createStaffUser,
   deleteRole,
+  deleteStaffUser,
   getEffectiveRoles,
   updateRole,
   updateStaffUser,
@@ -116,6 +117,25 @@ export async function updateStaffAccessAction(formData: FormData): Promise<void>
   });
 
   revalidatePath("/admin/users");
+}
+
+export async function deleteStaffUserAction(staffId: string): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+    const auth = requireAdminAuth();
+
+    const deleted = await deleteStaffUser(context, actor, staffId);
+
+    // Firestore doc is gone; also remove the sign-in account itself so the
+    // person can't just sign back in with their existing password.
+    await auth.deleteUser(staffId).catch(() => undefined);
+
+    revalidatePath("/admin/users");
+    return { status: "success", message: `Deleted ${deleted.displayName ?? deleted.email}.` };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
 }
 
 export async function resetStaffPasswordAction(

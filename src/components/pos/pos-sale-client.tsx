@@ -29,6 +29,7 @@ type PosLine = StorefrontProductView & {
 
 type PosReceipt = {
   changeDue: number;
+  orderId: string | null;
   orderNumber: string | null;
   total: number;
   pending: boolean;
@@ -301,7 +302,7 @@ export function PosSaleClient({
     setMomoMessage("");
     setMomoElapsedMs(0);
     setMomoReference(null);
-    setReceipt({ changeDue: 0, orderNumber, total, pending: false });
+    setReceipt({ changeDue: 0, orderId, orderNumber, total, pending: false });
     setShiftSales((current) => ({
       cash: current.cash,
       count: current.count + 1,
@@ -474,7 +475,7 @@ export function PosSaleClient({
     const estimatedTotal = subtotal;
 
     function settleLocally(orderId: string | null, orderNumber: string | null, total: number, pending: boolean) {
-      setReceipt({ changeDue, orderNumber, total, pending });
+      setReceipt({ changeDue, orderId, orderNumber, total, pending });
       setShiftSales((current) => ({
         cash: current.cash + (paymentMethod === "cash" ? total : 0),
         count: current.count + 1,
@@ -703,6 +704,16 @@ export function PosSaleClient({
             <strong>{receipt.pending ? "Will sync when back online" : receipt.orderNumber}</strong>
             <small>{formatMoney(receipt.total)}</small>
             {receipt.changeDue > 0 ? <small>Change {formatMoney(receipt.changeDue)}</small> : null}
+            {receipt.orderId ? (
+              <a
+                className="admin-action ghost small"
+                href={`/receipt/order/${receipt.orderId}`}
+                rel="noopener"
+                target="_blank"
+              >
+                Print receipt
+              </a>
+            ) : null}
           </div>
         ) : null}
         <div className="pos-cart-lines">

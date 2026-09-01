@@ -841,6 +841,28 @@ export async function updateStaffUser(
   return staffUser;
 }
 
+export async function deleteStaffUser(context: CommerceContext, actor: CommerceActor, staffId: string) {
+  await assertCan(context, actor, "users.delete");
+  const existing = await context.repo.getStaffUser(staffId);
+  if (!existing) {
+    throw new CommerceError("NOT_FOUND", "Staff account not found.");
+  }
+
+  if (staffId === actor.uid) {
+    throw new CommerceError("VALIDATION_ERROR", "You can't delete your own account.");
+  }
+
+  await context.repo.deleteStaffUser(staffId);
+  await writeAuditLog(context, actor, {
+    action: "users.delete",
+    entityType: "user",
+    entityId: staffId,
+    summary: `Deleted staff account ${existing.email}`
+  });
+
+  return existing;
+}
+
 export async function createRole(context: CommerceContext, actor: CommerceActor, input: unknown) {
   await assertCan(context, actor, "roles.create");
   const parsed = createRoleInputSchema.parse(input);

@@ -155,6 +155,9 @@ function OrderDetail({ row, disabled, canDelete }: { row: AdminOrderRow; disable
           <span>{order.channel.replace("_", " ")}</span>
           {payment ? <span>{payment.provider} &middot; {payment.method.replace("_", " ")}</span> : null}
         </div>
+        <a className="admin-action ghost small" href={`/receipt/order/${order.id}`} rel="noopener" target="_blank">
+          Print receipt
+        </a>
       </section>
 
       <section className="order-detail-section">

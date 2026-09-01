@@ -6615,3 +6615,133 @@ button {
 .admin-help-form button:disabled {
   opacity: 0.5;
 }
+
+/* Receipt print view — a standalone route (app/receipt/order/[id]) with no
+   admin/POS chrome, sized to simulate 80mm thermal paper on screen and to
+   print cleanly on it via @page below. */
+.receipt-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-height: 100vh;
+  padding: 24px 16px 60px;
+  background: var(--color-cream);
+}
+
+.receipt-print-bar {
+  display: flex;
+  gap: 10px;
+}
+
+.receipt-paper {
+  width: 80mm;
+  max-width: 100%;
+  padding: 14px 12px;
+  border: 1px solid var(--color-line);
+  border-radius: 4px;
+  background: var(--color-white-pure);
+  box-shadow: 0 12px 32px rgb(17 17 17 / 10%);
+  color: var(--color-near-black);
+  font-family: "Courier New", ui-monospace, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.receipt-header {
+  display: grid;
+  gap: 2px;
+  text-align: center;
+}
+
+.receipt-header strong {
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.receipt-header span {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+}
+
+.receipt-rule {
+  border-top: 1px dashed var(--color-line);
+  margin: 10px 0;
+}
+
+.receipt-meta {
+  display: grid;
+  gap: 3px;
+}
+
+.receipt-meta div,
+.receipt-totals div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.receipt-items {
+  display: grid;
+  gap: 8px;
+}
+
+.receipt-item-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.receipt-item-sub {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+}
+
+.receipt-totals {
+  display: grid;
+  gap: 3px;
+}
+
+.receipt-grand-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--color-near-black);
+  font-weight: 800;
+  font-size: 0.92rem;
+}
+
+.receipt-footer {
+  margin: 0;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .receipt-page {
+    display: block;
+    min-height: 0;
+    padding: 0;
+    background: var(--color-white-pure);
+  }
+
+  .receipt-paper {
+    width: 100%;
+    border: 0;
+    box-shadow: none;
+  }
+
+  @page {
+    size: 80mm auto;
+    margin: 4mm;
+  }
+}

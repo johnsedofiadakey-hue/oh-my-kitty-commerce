@@ -3,10 +3,12 @@ import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { StaffManagementForms } from "@/components/admin/staff-management-forms";
 import { RoleManagementForm } from "@/components/admin/role-management-form";
 import { ResetStaffPasswordButton } from "@/components/admin/reset-staff-password-button";
+import { DeleteStaffButton } from "@/components/admin/delete-staff-button";
 import { requireAdminPermission } from "@/lib/auth/server";
 import {
   createRoleAction,
   deleteRoleAction,
+  deleteStaffUserAction,
   inviteStaffAction,
   resetStaffPasswordAction,
   updateRoleAction,
@@ -16,7 +18,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function AdminUsersPage() {
-  await requireAdminPermission("users.view");
+  const actor = await requireAdminPermission("users.view");
   const data = await getAdminStaffData();
   const disabled = data.source !== "live";
 
@@ -94,6 +96,14 @@ export default async function AdminUsersPage() {
                 </button>
               </form>
               <ResetStaffPasswordButton action={resetStaffPasswordAction} disabled={disabled} userId={user.id} />
+              {user.id !== actor.uid ? (
+                <DeleteStaffButton
+                  action={deleteStaffUserAction}
+                  disabled={disabled}
+                  staffEmail={user.email}
+                  staffId={user.id}
+                />
+              ) : null}
             </div>
           ))}
           {data.users.length === 0 ? <p className="admin-help">No staff accounts yet.</p> : null}

@@ -315,6 +315,10 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     return snapshot.docs.map((doc) => readDoc<StaffUser>(doc)).filter(isDefined);
   }
 
+  async deleteStaffUser(id: string) {
+    await this.db.collection("users").doc(id).delete();
+  }
+
   async getStoreSettings() {
     return readDoc<StoreSettings>(await this.db.collection("settings").doc("store").get());
   }

@@ -55,7 +55,6 @@ export function ProductDetailHero({ variants }: ProductDetailHeroProps) {
             <strong>{selected.formattedPrice}</strong>
             {selected.formattedCompareAtPrice ? <s>{selected.formattedCompareAtPrice}</s> : null}
           </div>
-          <span>{selected.stockAvailable} available</span>
         </div>
 
         <div className="size-pill-row">

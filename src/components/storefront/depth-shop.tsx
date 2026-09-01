@@ -280,7 +280,6 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
                     <s>{selectedProduct.formattedCompareAtPrice}</s>
                   ) : null}
                 </div>
-                <small>{selectedProduct.stockAvailable} available</small>
               </div>
               {siblingVariants.length > 1 ? (
                 <div className="size-pill-row">

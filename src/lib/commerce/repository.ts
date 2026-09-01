@@ -77,6 +77,7 @@ export type CommerceRepository = {
   saveStaffUser(user: StaffUser): Promise<void>;
   getStaffUser(id: string): Promise<StaffUser | null>;
   listStaffUsers(): Promise<StaffUser[]>;
+  deleteStaffUser(id: string): Promise<void>;
   getStoreSettings(): Promise<StoreSettings | null>;
   saveStoreSettings(settings: StoreSettings): Promise<void>;
   saveAuditLog(log: AuditLog): Promise<void>;

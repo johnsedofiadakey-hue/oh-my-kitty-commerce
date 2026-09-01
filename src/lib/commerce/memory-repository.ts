@@ -271,6 +271,10 @@ export class MemoryCommerceRepository implements CommerceRepository {
     return [...this.staffUsers.values()];
   }
 
+  async deleteStaffUser(id: string) {
+    this.staffUsers.delete(id);
+  }
+
   async getStoreSettings() {
     return this.storeSettings;
   }
