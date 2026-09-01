@@ -1708,22 +1708,25 @@ button {
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 4px;
+  gap: 2px;
   border: 0;
-  padding: 12px 14px 16px;
+  padding: 8px 10px 12px;
   color: inherit;
   background: none;
   text-align: left;
 }
 
+/* The image carries the tile — no colored "frame" behind it, just the
+   card's own white surface, and it takes most of the card's height so the
+   product itself is what a customer notices first. */
 .depth-product-stage {
   position: relative;
   display: grid;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 5;
   place-items: center;
-  margin: -12px -14px 10px;
+  margin: -12px -14px 8px;
   overflow: hidden;
-  background: linear-gradient(160deg, var(--color-peach-mist), var(--color-cream));
+  background: var(--color-white-pure);
 }
 
 .sheet-stage {
@@ -1744,17 +1747,24 @@ button {
 .depth-product-stage .product-packshot.photo-packshot {
   width: 100%;
   height: 100%;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.depth-product-stage .photo-packshot > img {
+  padding: 6px;
 }
 
 .depth-product-stage .product-packshot:not(.photo-packshot) {
-  width: 62%;
-  height: 62%;
+  width: 52%;
+  height: 52%;
   border-radius: 20px;
 }
 
 .depth-product-card-hit span:first-child {
   color: var(--color-green);
-  font-size: 0.72rem;
+  font-size: 0.64rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1765,16 +1775,16 @@ button {
   overflow: hidden;
   max-width: none;
   margin: 0;
-  font-size: clamp(0.9rem, 2.6vw, 1.02rem);
-  font-weight: 800;
+  font-size: 0.82rem;
+  font-weight: 700;
   line-height: 1.25;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
 .depth-product-card-hit strong {
-  margin-top: 2px;
-  font-size: 0.98rem;
+  margin-top: 1px;
+  font-size: 0.8rem;
 }
 
 .quick-add-button {
