@@ -94,9 +94,7 @@ export const getAdminOperationsData = cache(async (): Promise<AdminOperationsDat
 
   try {
     const products = await context.repo.listProducts();
-    const variants = (
-      await Promise.all(products.map((product) => context.repo.listVariants(product.id)))
-    ).flat();
+    const variants = await context.repo.listAllVariants();
     const [
       customers,
       media,
@@ -116,9 +114,7 @@ export const getAdminOperationsData = cache(async (): Promise<AdminOperationsDat
       context.repo.listPosShifts(),
       context.repo.listAuditLogs()
     ]);
-    const inventoryMovements = (
-      await Promise.all(variants.map((variant) => context.repo.listInventoryMovements(variant.id)))
-    ).flat();
+    const inventoryMovements = await context.repo.listAllInventoryMovements();
 
     return buildOperationsData({
       auditLogs,

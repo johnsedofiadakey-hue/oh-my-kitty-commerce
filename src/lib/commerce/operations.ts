@@ -1168,9 +1168,7 @@ export async function deleteMediaAsset(context: CommerceContext, actor: Commerce
     context.repo.listProducts(),
     context.repo.listCategories()
   ]);
-  const variants = (
-    await Promise.all(products.map((product) => context.repo.listVariants(product.id)))
-  ).flat();
+  const variants = await context.repo.listAllVariants();
 
   const stillReferenced =
     products.some((product) => product.mediaIds.includes(mediaId)) ||

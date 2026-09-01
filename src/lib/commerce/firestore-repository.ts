@@ -67,6 +67,17 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     return snapshot.docs.map((doc) => readDoc<ProductVariant>(doc)).filter(isDefined);
   }
 
+  /**
+   * One collection-group query for every product's variants, instead of the
+   * N per-product subcollection queries listVariants would take called in a
+   * loop — used wherever the whole catalogue's variants are needed at once
+   * (storefront pages, admin catalogue/operations data).
+   */
+  async listAllVariants() {
+    const snapshot = await this.db.collectionGroup("variants").get();
+    return snapshot.docs.map((doc) => readDoc<ProductVariant>(doc)).filter(isDefined);
+  }
+
   async listCategories() {
     const snapshot = await this.db.collection("categories").orderBy("sortOrder").get();
     return snapshot.docs.map((doc) => readDoc<Category>(doc)).filter(isDefined);
@@ -240,6 +251,17 @@ export class FirestoreCommerceRepository implements CommerceRepository {
       .where("variantId", "==", variantId)
       .get();
 
+    return snapshot.docs.map((doc) => readDoc<InventoryMovement>(doc)).filter(isDefined);
+  }
+
+  /**
+   * One query for every variant's movements, instead of the N queries
+   * listInventoryMovements would take called per-variant — used by admin
+   * pages that need the whole ledger (just Inventory today) rather than a
+   * single variant's history.
+   */
+  async listAllInventoryMovements() {
+    const snapshot = await this.db.collection("inventoryMovements").get();
     return snapshot.docs.map((doc) => readDoc<InventoryMovement>(doc)).filter(isDefined);
   }
 

@@ -31,6 +31,7 @@ export type CommerceRepository = {
   saveVariant(variant: ProductVariant): Promise<void>;
   deleteVariant(productId: string, variantId: string): Promise<void>;
   listVariants(productId: string): Promise<ProductVariant[]>;
+  listAllVariants(): Promise<ProductVariant[]>;
   listCategories(): Promise<Category[]>;
   saveCategory(category: Category): Promise<void>;
   listCollections(): Promise<Collection[]>;
@@ -63,6 +64,7 @@ export type CommerceRepository = {
   deletePayment(id: string): Promise<void>;
   saveInventoryMovement(movement: InventoryMovement): Promise<void>;
   listInventoryMovements(variantId: string): Promise<InventoryMovement[]>;
+  listAllInventoryMovements(): Promise<InventoryMovement[]>;
   savePromotion(promotion: Promotion): Promise<void>;
   listPromotions(): Promise<Promotion[]>;
   saveDeliveryRule(deliveryRule: DeliveryRule): Promise<void>;

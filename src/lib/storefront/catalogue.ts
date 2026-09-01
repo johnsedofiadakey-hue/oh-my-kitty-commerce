@@ -101,11 +101,10 @@ export const getStorefrontCatalogue = cache(async (): Promise<StorefrontCatalogu
     const products = (await context.repo.listProducts()).filter(
       (product) => product.status === "ACTIVE"
     );
-    const variants = (
-      await Promise.all(products.map((product) => context.repo.listVariants(product.id)))
-    )
-      .flat()
-      .filter((variant) => variant.active);
+    const productIds = new Set(products.map((product) => product.id));
+    const variants = (await context.repo.listAllVariants()).filter(
+      (variant) => variant.active && productIds.has(variant.productId)
+    );
 
     const [media, categories, concerns, productTypes, routines] = await Promise.all([
       context.repo.listMedia(),

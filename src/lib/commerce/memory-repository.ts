@@ -81,6 +81,10 @@ export class MemoryCommerceRepository implements CommerceRepository {
     return [...this.variants.values()].filter((variant) => variant.productId === productId);
   }
 
+  async listAllVariants() {
+    return [...this.variants.values()];
+  }
+
   async listCategories() {
     return [...this.categories.values()].sort((first, second) => first.sortOrder - second.sortOrder);
   }
@@ -213,6 +217,10 @@ export class MemoryCommerceRepository implements CommerceRepository {
     return [...this.inventoryMovements.values()].filter(
       (movement) => movement.variantId === variantId
     );
+  }
+
+  async listAllInventoryMovements() {
+    return [...this.inventoryMovements.values()];
   }
 
   async savePromotion(promotion: Promotion) {

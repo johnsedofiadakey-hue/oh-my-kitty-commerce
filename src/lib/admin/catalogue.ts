@@ -48,10 +48,7 @@ export async function getAdminCatalogueData(): Promise<AdminCatalogueData> {
 
   try {
     const products = await context.repo.listProducts();
-    const variantGroups = await Promise.all(
-      products.map((product) => context.repo.listVariants(product.id))
-    );
-    const variants = variantGroups.flat();
+    const variants = await context.repo.listAllVariants();
     const [categories, collections, concerns, productTypes, routines, media, rawMaterials] = await Promise.all([
       context.repo.listCategories(),
       context.repo.listCollections(),
