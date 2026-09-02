@@ -144,9 +144,13 @@ button {
   color: var(--color-near-black);
 }
 
+/* Solid, not translucent — a gradient fading to 0% opacity let scrolled
+   product text and images bleed straight through the nav as they passed
+   underneath it (same bug .shop-filter-bar was already fixed for below). */
 .storefront-nav.glass,
 .shop-header.cinematic {
-  background: linear-gradient(180deg, rgb(255 255 255 / 82%), rgb(255 255 255 / 0%));
+  background: var(--color-white-pure);
+  box-shadow: 0 1px 0 var(--color-line);
 }
 
 .brand-mark {
@@ -1719,7 +1723,7 @@ button {
    that without giving up the sticky behavior. */
 .shop-filter-bar {
   position: sticky;
-  top: 76px;
+  top: 82px;
   z-index: 10;
   display: grid;
   gap: 12px;
