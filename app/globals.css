@@ -1237,22 +1237,27 @@ button {
   line-height: 1;
 }
 
+/* Each panel mirrors the shop-grid card discipline — the product shown
+   whole on its own blended backing, a plain copy footer below rather than
+   text-over-photo — instead of a hard cover-crop that chopped bottles and
+   labels in half. Heights still vary by tile for rhythm, but within a much
+   narrower band than before so neighboring panels read as a considered
+   layout, not a jumble of mismatched fragments. */
 .world-panel {
   position: relative;
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
   width: min(48vw, 240px);
-  height: 62%;
+  height: 60%;
   overflow: hidden;
   border-radius: 24px;
-  background: linear-gradient(160deg, var(--color-peach-mist), var(--color-cream));
+  background: var(--color-white-pure);
   box-shadow: 0 20px 50px rgb(17 17 17 / 10%);
 }
 
 .world-panel-tall {
-  height: 82%;
+  height: 74%;
 }
 
 .world-panel-small {
@@ -1263,30 +1268,34 @@ button {
 
 .world-panel-wide {
   width: min(56vw, 280px);
-  height: 70%;
+  height: 66%;
 }
 
 .world-panel-figure {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: var(--color-peach-mist);
 }
 
 .world-panel-figure img {
-  object-fit: cover;
+  object-fit: contain;
+  padding: 14px;
 }
 
 .world-panel-copy {
   position: relative;
   z-index: 1;
   display: grid;
+  flex: 0 0 auto;
   gap: 2px;
-  padding: 16px;
-  color: var(--color-white-pure);
-  background: linear-gradient(180deg, rgb(17 17 17 / 0%) 40%, rgb(17 17 17 / 82%) 100%);
+  padding: 14px 16px;
+  color: var(--color-near-black);
+  background: var(--color-white-pure);
 }
 
 .world-panel-copy span {
-  color: var(--color-peach);
+  color: var(--color-green);
   font-size: 0.7rem;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -1298,6 +1307,16 @@ button {
   font-family: var(--font-serif);
   font-size: 1.2rem;
   font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.world-panel-copy strong {
+  margin-top: 2px;
+  color: var(--color-green);
+  font-size: 0.92rem;
+  font-weight: 800;
 }
 
 .world-botanical {
