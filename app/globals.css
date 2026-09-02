@@ -569,13 +569,15 @@ button {
   mask-image: radial-gradient(closest-side, black 62%, transparent 100%);
 }
 
-/* Shop-grid product photography: full-bleed real photo, no circle/fog vignette. */
+/* Shop-grid product photography: full-bleed real photo, no circle/fog vignette.
+   Flat peach-mist matches the studio backdrop already baked into the product
+   photos themselves, so the CSS box and the photo's own background read as
+   one continuous surface instead of a visible frame. */
 .product-packshot.photo-packshot {
   padding: 0;
   border: 0;
   border-radius: 22px;
-  background: linear-gradient(160deg, var(--color-peach-mist), var(--color-cream));
-  box-shadow: 0 18px 40px rgb(17 17 17 / 10%);
+  background: var(--color-peach-mist);
   overflow: hidden;
 }
 
@@ -1726,7 +1728,7 @@ button {
   place-items: center;
   margin: -12px -14px 8px;
   overflow: hidden;
-  background: var(--color-white-pure);
+  background: var(--color-peach-mist);
 }
 
 .sheet-stage {
@@ -1753,7 +1755,7 @@ button {
 }
 
 .depth-product-stage .photo-packshot > img {
-  padding: 6px;
+  padding: 0;
 }
 
 .depth-product-stage .product-packshot:not(.photo-packshot) {
