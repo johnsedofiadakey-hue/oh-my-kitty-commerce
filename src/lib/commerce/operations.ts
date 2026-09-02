@@ -1987,6 +1987,44 @@ export async function deleteOrder(context: CommerceContext, actor: CommerceActor
   });
 }
 
+export type BulkDeleteOrdersResult = {
+  deletedCount: number;
+  deletedOrderNumbers: string[];
+  failed: { orderId: string; message: string }[];
+};
+
+/**
+ * Deletes many orders in one call — for clearing out test/seed orders before
+ * handoff. Each order is removed independently, same reasoning as
+ * deleteProducts: one failing doesn't abort the rest.
+ */
+export async function deleteOrders(
+  context: CommerceContext,
+  actor: CommerceActor,
+  orderIds: string[]
+): Promise<BulkDeleteOrdersResult> {
+  const result: BulkDeleteOrdersResult = { deletedCount: 0, deletedOrderNumbers: [], failed: [] };
+
+  for (const orderId of orderIds) {
+    try {
+      const order = await context.repo.getOrder(orderId);
+      if (!order) {
+        throw new CommerceError("NOT_FOUND", `Order not found: ${orderId}`);
+      }
+      await deleteOrder(context, actor, orderId);
+      result.deletedCount += 1;
+      result.deletedOrderNumbers.push(order.orderNumber);
+    } catch (error) {
+      result.failed.push({
+        orderId,
+        message: error instanceof CommerceError ? error.message : "Delete failed."
+      });
+    }
+  }
+
+  return result;
+}
+
 /** Order/receipt lookup for POS — find a past sale by order number, customer name, or phone. */
 export async function searchOrders(context: CommerceContext, actor: CommerceActor, query: string) {
   await assertCan(context, actor, "pos.receipts.view");

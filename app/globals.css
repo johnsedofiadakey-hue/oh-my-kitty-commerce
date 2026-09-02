@@ -4964,6 +4964,33 @@ button {
   accent-color: var(--color-near-black);
 }
 
+.order-row-select {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.order-row-select input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-near-black);
+}
+
+.admin-select-all-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.admin-select-all-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-near-black);
+}
+
 .admin-bulk-action-bar {
   position: sticky;
   top: 8px;

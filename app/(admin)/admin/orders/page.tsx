@@ -12,12 +12,17 @@ import { requireAdminPermission } from "@/lib/auth/server";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { InlineStatusSelect } from "@/components/admin/inline-status-select";
 import { DeleteOrderButton } from "@/components/admin/delete-order-button";
+import {
+  OrderSelectCheckbox,
+  OrdersBulkBar,
+  OrdersSelectionProvider
+} from "@/components/admin/orders-selection";
 import type { AdminOrderRow } from "@/lib/admin/operations-data";
 import type { Order } from "@/lib/commerce/types";
 import { getEffectiveRoles } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { hasPermission } from "@/lib/permissions/permissions";
-import { deleteOrderAction, updateOrderFulfilmentAction } from "./actions";
+import { deleteOrderAction, deleteOrdersAction, updateOrderFulfilmentAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -67,8 +72,11 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
     .filter((row) => row.order.fulfilmentStatus === "FULFILLED" || row.order.fulfilmentStatus === "CANCELLED")
     .sort((a, b) => toSortableMillis(b.order.createdAt) - toSortableMillis(a.order.createdAt));
 
+  const allOrderIds = channelRows.map((row) => row.order.id);
+  const orderNumberById = Object.fromEntries(channelRows.map((row) => [row.order.id, row.order.orderNumber]));
+
   return (
-    <>
+    <OrdersSelectionProvider allOrderIds={allOrderIds}>
       <div className="page-heading">
         <div>
           <h1 className="app-title">Orders</h1>
@@ -100,6 +108,15 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
         })}
       </div>
 
+      {canDelete ? (
+        <OrdersBulkBar
+          allOrderIds={allOrderIds}
+          deleteOrdersAction={deleteOrdersAction}
+          disabled={disabled}
+          orderNumberById={orderNumberById}
+        />
+      ) : null}
+
       <section className="admin-panel">
         <div className="panel-header">
           <h2>Needs attention</h2>
@@ -125,7 +142,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
           {completed.length === 0 ? <p className="admin-help">Nothing completed yet.</p> : null}
         </div>
       </details>
-    </>
+    </OrdersSelectionProvider>
   );
 }
 
@@ -144,6 +161,7 @@ function OrderRow({
 
   return (
     <div className="order-row">
+      {canDelete ? <OrderSelectCheckbox orderId={order.id} orderNumber={order.orderNumber} /> : null}
       <AdminDrawer
         title={order.orderNumber}
         trigger={
