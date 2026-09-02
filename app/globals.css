@@ -6415,6 +6415,19 @@ button {
   background: var(--color-status-urgent-soft);
 }
 
+.order-status-pill.info {
+  border-color: var(--color-line);
+  color: var(--color-green);
+  background: var(--color-peach-mist);
+}
+
+.catalogue-title-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
 /* Order detail drawer */
 .order-detail {
   display: grid;

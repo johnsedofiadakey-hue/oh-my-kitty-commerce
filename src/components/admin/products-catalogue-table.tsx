@@ -241,7 +241,14 @@ function ProductRow({
           type="checkbox"
         />
       </span>
-      <strong>{product?.title ?? "Unknown product"}</strong>
+      <span className="catalogue-title-cell">
+        <strong>{product?.title ?? "Unknown product"}</strong>
+        {variant.bundleComponents && variant.bundleComponents.length > 0 ? (
+          <span className="order-status-pill info" title={bundleTooltip(variant, catalogue)}>
+            Set — {variant.bundleComponents.length} item{variant.bundleComponents.length === 1 ? "" : "s"}
+          </span>
+        ) : null}
+      </span>
       <span>{variant.title}</span>
       <span>GHS {(variant.price / 100).toFixed(2)}</span>
       <span className={lowStock ? "status danger" : "status"}>{variant.stockAvailable}</span>
@@ -261,6 +268,17 @@ function ProductRow({
       </span>
     </div>
   );
+}
+
+function bundleTooltip(variant: CatalogueRow["variant"], catalogue: CatalogueData): string {
+  const lines = (variant.bundleComponents ?? []).map((item) => {
+    const componentVariant = catalogue.variants.find((v) => v.id === item.variantId);
+    const componentProduct = componentVariant
+      ? catalogue.products.find((p) => p.id === componentVariant.productId)
+      : undefined;
+    return `${componentProduct?.title ?? "Unknown product"} ×${item.quantity}`;
+  });
+  return `Contains: ${lines.join(", ")}`;
 }
 
 function ProductEditDrawer({
