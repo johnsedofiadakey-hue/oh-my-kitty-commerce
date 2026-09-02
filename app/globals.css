@@ -5409,18 +5409,6 @@ button {
   background: #fffaf7;
 }
 
-.pos-shift-heading {
-  display: flex;
-  gap: 10px;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.pos-shift-heading strong {
-  color: var(--color-near-black);
-}
-
-.pos-shift-heading span,
 .pos-hint {
   color: var(--color-muted);
   font-size: 0.82rem;
@@ -5439,26 +5427,6 @@ button {
   padding: 0 12px;
   color: var(--color-near-black);
   background: var(--color-white-pure);
-}
-
-.pos-shift-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.pos-shift-stats span {
-  display: grid;
-  gap: 4px;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-small);
-  padding: 8px;
-  color: var(--color-muted);
-  font-size: 0.76rem;
-}
-
-.pos-shift-stats strong {
-  color: var(--color-near-black);
 }
 
 .pos-secondary-button {

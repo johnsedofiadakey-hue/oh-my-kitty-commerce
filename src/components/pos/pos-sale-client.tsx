@@ -54,8 +54,6 @@ type PosShiftState = {
   id: string;
   openingCash: number;
   status: "OPEN" | "CLOSED";
-  expectedCash?: number;
-  difference?: number;
 };
 
 // useSyncExternalStore (not useState+useEffect) so the connectivity pill can
@@ -102,10 +100,8 @@ export function PosSaleClient({
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [receipt, setReceipt] = useState<PosReceipt | null>(null);
-  const [closingCash, setClosingCash] = useState("");
   const [shiftBusy, setShiftBusy] = useState(false);
   const [shift, setShift] = useState<PosShiftState | null>(null);
-  const [shiftSales, setShiftSales] = useState({ count: 0, revenue: 0, cash: 0 });
   const [recentSales, setRecentSales] = useState<RecentPosSale[]>([]);
   const [pendingSales, setPendingSales] = useState<PendingAction[]>([]);
   const isOnline = useSyncExternalStore(subscribeToOnlineStatus, getOnlineSnapshot, getServerOnlineSnapshot);
@@ -119,11 +115,10 @@ export function PosSaleClient({
   }, []);
 
   const attemptSync = useCallback(async () => {
-    // Queued sales are already counted in shiftSales optimistically (see
-    // completeSale) — a successful replay just confirms that total was
-    // right. A permanently failed one (e.g. sold out by the time it synced)
-    // is surfaced in the "Sync issues" list below for staff to reconcile by
-    // hand rather than silently rewriting the running cash total.
+    // A successful replay just confirms a queued sale was right. A
+    // permanently failed one (e.g. sold out by the time it synced) is
+    // surfaced in the "Sync issues" list below for staff to reconcile by
+    // hand.
     const result = await replayPendingSales();
     refreshPendingSales();
     return result;
@@ -206,7 +201,6 @@ export function PosSaleClient({
         openingCash: payload.openingCash ?? 0,
         status: "OPEN"
       });
-      setShiftSales({ count: 0, revenue: 0, cash: 0 });
       setRecentSales([]);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not open shift.");
@@ -228,51 +222,6 @@ export function PosSaleClient({
     autoShiftAttempted.current = true;
     void openShift();
   }, [source, shift, shiftBusy]);
-
-  async function closeShift() {
-    if (!shift) {
-      return;
-    }
-
-    setShiftBusy(true);
-    setErrorMessage("");
-
-    try {
-      const response = await fetch("/api/pos/shift", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          closingCash: parseMoneyInput(closingCash) ?? 0,
-          id: shift.id
-        })
-      });
-      const payload = (await response.json()) as {
-        difference?: number;
-        expectedCash?: number;
-        message?: string;
-        status?: PosShiftState["status"];
-      };
-
-      if (!response.ok || payload.status !== "CLOSED") {
-        throw new Error(payload.message ?? "Could not close shift.");
-      }
-
-      setShift({
-        ...shift,
-        difference: payload.difference,
-        expectedCash: payload.expectedCash,
-        status: "CLOSED"
-      });
-      setClosingCash("");
-      // Let the auto-open effect immediately start a fresh shift rather than
-      // leaving staff on a dead "shift closed" screen until they refresh.
-      autoShiftAttempted.current = false;
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Could not close shift.");
-    } finally {
-      setShiftBusy(false);
-    }
-  }
 
   function addProduct(product: StorefrontProductView) {
     setReceipt(null);
@@ -320,11 +269,6 @@ export function PosSaleClient({
     setMomoElapsedMs(0);
     setMomoReference(null);
     setReceipt({ changeDue: 0, orderId, orderNumber, total, pending: false });
-    setShiftSales((current) => ({
-      cash: current.cash,
-      count: current.count + 1,
-      revenue: current.revenue + total
-    }));
     setRecentSales((current) => [{ orderId, orderNumber, total }, ...current].slice(0, 8));
     setCart([]);
     setCustomerName("");
@@ -493,11 +437,6 @@ export function PosSaleClient({
 
     function settleLocally(orderId: string | null, orderNumber: string | null, total: number, pending: boolean) {
       setReceipt({ changeDue, orderId, orderNumber, total, pending });
-      setShiftSales((current) => ({
-        cash: current.cash + (paymentMethod === "cash" ? total : 0),
-        count: current.count + 1,
-        revenue: current.revenue + total
-      }));
       if (orderId && orderNumber) {
         setRecentSales((current) => [{ orderId, orderNumber, total }, ...current].slice(0, 8));
       }
@@ -648,82 +587,27 @@ export function PosSaleClient({
             <span>These were made offline but the server rejected them once reconnected — reconcile manually.</span>
           </div>
         ) : null}
-        <section className="pos-shift-panel" aria-label="POS shift">
-          <div className="pos-shift-heading">
-            <strong>
-              {shift?.status === "OPEN"
-                ? "Shift open"
-                : shiftBusy
-                  ? "Starting shift…"
-                  : "Shift"}
-            </strong>
-            <span>{shift?.id ?? "Tracked automatically"}</span>
-          </div>
-          {/* Opening/closing a shift can fail (permissions, network, a
-              double-open), and errorMessage is shared with the checkout
-              form far below — without this, a failed shift action showed
-              no visible feedback anywhere near where the user clicked. */}
-          {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
-          {shift?.status === "OPEN" ? (
-            <>
-              <div className="pos-shift-stats">
-                <span>
-                  Sales <strong>{shiftSales.count}</strong>
-                </span>
-                <span>
-                  Revenue <strong>{formatMoney(shiftSales.revenue)}</strong>
-                </span>
-                <span>
-                  Cash <strong>{formatMoney(shift.openingCash + shiftSales.cash)}</strong>
-                </span>
-              </div>
-              <label className="admin-field">
-                <span>Closing cash GHS</span>
-                <input
-                  inputMode="decimal"
-                  onChange={(event) => setClosingCash(event.target.value)}
-                  placeholder={((shift.openingCash + shiftSales.cash) / 100).toFixed(2)}
-                  value={closingCash}
-                />
-              </label>
-              <button
-                className="pos-secondary-button"
-                disabled={shiftBusy}
-                onClick={closeShift}
-                type="button"
-              >
-                {shiftBusy ? "Closing" : "Close shift"}
-              </button>
-            </>
-          ) : (
-            <>
-              {shift?.status === "CLOSED" ? (
-                <div className="pos-receipt compact" role="status">
-                  <span>Shift closed</span>
-                  <strong>Expected {formatMoney(shift.expectedCash ?? 0)}</strong>
-                  <small>Difference {formatMoney(shift.difference ?? 0)}</small>
-                </div>
-              ) : null}
-              {/* A shift opens automatically in the background (see the
-                  effect above) — staff never see or click an "Open shift"
-                  step. This only renders if that silent attempt actually
-                  failed, so there's still a way to recover instead of being
-                  stuck on a dead page. */}
-              {!shiftBusy && source === "live" && errorMessage ? (
-                <button
-                  className="pos-secondary-button"
-                  onClick={() => {
-                    autoShiftAttempted.current = false;
-                    void openShift();
-                  }}
-                  type="button"
-                >
-                  Try again
-                </button>
-              ) : null}
-            </>
-          )}
-        </section>
+        {/* Shifts open silently in the background purely for
+            cash-accountability reporting — nothing shift-related shows up
+            during normal operation on purpose (this is a fast-moving
+            customer-service counter, not a back-office tool). This panel
+            only appears at all if that silent open genuinely fails, so
+            there's still a way to recover instead of a dead page. */}
+        {errorMessage && (!shift || shift.status !== "OPEN") && !shiftBusy && source === "live" ? (
+          <section className="pos-shift-panel" aria-label="POS shift">
+            <p className="form-error">{errorMessage}</p>
+            <button
+              className="pos-secondary-button"
+              onClick={() => {
+                autoShiftAttempted.current = false;
+                void openShift();
+              }}
+              type="button"
+            >
+              Try again
+            </button>
+          </section>
+        ) : null}
         <PosRecentSales onReversed={handleReversed} sales={recentSales} />
         <PosOrderLookup />
         {receipt ? (
@@ -869,8 +753,8 @@ export function PosSaleClient({
           ) : null}
           {momoStage === "failed" ? <p className="form-error">{momoMessage}</p> : null}
           {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
-          {source === "live" && !canSell ? (
-            <p className="pos-hint">Open a shift before completing POS sales.</p>
+          {source === "live" && !canSell && !errorMessage ? (
+            <p className="pos-hint">Setting up…</p>
           ) : null}
           <button
             className="checkout-button"
