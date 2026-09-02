@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import {
   formatDate,
   formatMoney,
@@ -12,6 +13,7 @@ import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { InlineStatusSelect } from "@/components/admin/inline-status-select";
 import { DeleteOrderButton } from "@/components/admin/delete-order-button";
 import type { AdminOrderRow } from "@/lib/admin/operations-data";
+import type { Order } from "@/lib/commerce/types";
 import { getEffectiveRoles } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { hasPermission } from "@/lib/permissions/permissions";
@@ -28,7 +30,18 @@ const fulfilmentStatuses = [
   "CANCELLED"
 ] as const;
 
-export default async function AdminOrdersPage() {
+const CHANNEL_FILTERS: { label: string; value: Order["channel"] | "all" }[] = [
+  { label: "All", value: "all" },
+  { label: "Online", value: "ONLINE" },
+  { label: "POS", value: "POS" },
+  { label: "Admin-created", value: "ADMIN_CREATED" }
+];
+
+type AdminOrdersPageProps = {
+  searchParams: Promise<{ channel?: string }>;
+};
+
+export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
   const actor = await requireAdminPermission("orders.view");
   const context = getCommerceServerContext();
   const roles = context ? await getEffectiveRoles(context, actor.roleIds) : [];
@@ -36,12 +49,21 @@ export default async function AdminOrdersPage() {
   const data = await getAdminOperationsData();
   const disabled = data.source !== "live";
 
+  const { channel: channelParam } = await searchParams;
+  const selectedChannel = CHANNEL_FILTERS.some((option) => option.value === channelParam)
+    ? (channelParam as Order["channel"] | "all")
+    : "all";
+  const channelRows =
+    selectedChannel === "all"
+      ? data.orderRows
+      : data.orderRows.filter((row) => row.order.channel === selectedChannel);
+
   // Oldest-first within "needs attention" — staff work the queue in the order
   // customers actually arrived in, same reasoning as a physical ticket queue.
-  const needsAttention = data.orderRows
+  const needsAttention = channelRows
     .filter((row) => row.order.fulfilmentStatus !== "FULFILLED" && row.order.fulfilmentStatus !== "CANCELLED")
     .sort((a, b) => toSortableMillis(a.order.createdAt) - toSortableMillis(b.order.createdAt));
-  const completed = data.orderRows
+  const completed = channelRows
     .filter((row) => row.order.fulfilmentStatus === "FULFILLED" || row.order.fulfilmentStatus === "CANCELLED")
     .sort((a, b) => toSortableMillis(b.order.createdAt) - toSortableMillis(a.order.createdAt));
 
@@ -58,6 +80,25 @@ export default async function AdminOrdersPage() {
           {data.sourceMessage}
         </div>
       ) : null}
+
+      <div className="admin-chip-group" aria-label="Filter by channel">
+        {CHANNEL_FILTERS.map((option) => {
+          const count =
+            option.value === "all"
+              ? data.orderRows.length
+              : data.orderRows.filter((row) => row.order.channel === option.value).length;
+          return (
+            <Link
+              className="admin-chip-link"
+              data-active={selectedChannel === option.value}
+              href={option.value === "all" ? "/admin/orders" : `/admin/orders?channel=${option.value}`}
+              key={option.value}
+            >
+              {option.label} <span>{count}</span>
+            </Link>
+          );
+        })}
+      </div>
 
       <section className="admin-panel">
         <div className="panel-header">

@@ -4420,6 +4420,31 @@ button {
   accent-color: var(--color-peach);
 }
 
+.admin-chip-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  padding: 6px 12px;
+  color: var(--color-muted);
+  font-size: 0.84rem;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+
+.admin-chip-link span {
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.admin-chip-link[data-active="true"] {
+  border-color: var(--color-peach);
+  background: var(--color-peach-mist);
+  color: var(--color-near-black);
+  font-weight: 700;
+}
+
 .admin-grid {
   display: grid;
   gap: 14px;
