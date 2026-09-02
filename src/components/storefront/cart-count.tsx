@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { onCartChanged, readCartLines } from "@/components/storefront/add-to-bag-button";
 
 type CartCountProps = {
@@ -9,10 +9,18 @@ type CartCountProps = {
 
 export function CartCount({ variant = "text" }: CartCountProps) {
   const [count, setCount] = useState(0);
+  const [bump, setBump] = useState(false);
+  const previousCount = useRef(0);
 
   useEffect(() => {
     function syncCount() {
-      setCount(readCartLines().reduce((total, line) => total + line.quantity, 0));
+      const next = readCartLines().reduce((total, line) => total + line.quantity, 0);
+      if (next > previousCount.current) {
+        setBump(true);
+        window.setTimeout(() => setBump(false), 420);
+      }
+      previousCount.current = next;
+      setCount(next);
     }
 
     syncCount();
@@ -25,7 +33,7 @@ export function CartCount({ variant = "text" }: CartCountProps) {
     }
 
     return (
-      <span aria-hidden="true" className="bag-badge">
+      <span aria-hidden="true" className={`bag-badge ${bump ? "bump" : ""}`}>
         {count}
       </span>
     );

@@ -9,10 +9,11 @@ import {
 } from "@/components/storefront/add-to-bag-button";
 import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
-import type { StorefrontProductView } from "@/lib/storefront/catalogue";
+import type { StorefrontCategorySummary, StorefrontProductView } from "@/lib/storefront/catalogue";
 import { openCart } from "@/lib/storefront/cart-store";
 
 type DepthShopProps = {
+  categories: StorefrontCategorySummary[];
   products: StorefrontProductView[];
   sourceMessage?: string;
 };
@@ -20,26 +21,20 @@ type DepthShopProps = {
 type DiscoveryOption = {
   slug: string;
   label: string;
+  imageUrl?: string;
 };
 
-export function DepthShop({ products, sourceMessage }: DepthShopProps) {
+export function DepthShop({ categories, products, sourceMessage }: DepthShopProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const categoryOptions = useMemo<DiscoveryOption[]>(() => {
-    const bySlug = new Map<string, string>();
-    for (const product of products) {
-      product.categorySlugs.forEach((slug, index) => {
-        if (!bySlug.has(slug)) {
-          bySlug.set(slug, product.categoryLabels[index] ?? slug);
-        }
-      });
-    }
-    return Array.from(bySlug, ([slug, label]) => ({ slug, label }));
-  }, [products]);
+  const categoryOptions = useMemo<DiscoveryOption[]>(
+    () => categories.map((category) => ({ slug: category.slug, label: category.title, imageUrl: category.imageUrl })),
+    [categories]
+  );
 
   const filteredProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -139,6 +134,16 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
             start: "top 78%"
           }
         });
+
+        const heroTimeline = gsap.timeline({ defaults: { ease: "power3.out" } });
+        heroTimeline
+          .from(".depth-shop-copy .scene-kicker", { y: 16, opacity: 0, duration: 0.5 })
+          .from(
+            ".depth-shop-copy h1 .word",
+            { yPercent: 115, duration: 0.8, stagger: 0.07 },
+            "-=0.25"
+          )
+          .from(".depth-shop-copy p", { y: 12, opacity: 0, duration: 0.5 }, "-=0.35");
       }, rootRef);
     }
 
@@ -175,7 +180,13 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
       <section className="depth-shop-hero">
         <div className="depth-shop-copy">
           <span className="scene-kicker">Shop</span>
-          <h1>Shop our products.</h1>
+          <h1>
+            {"Shop our products.".split(" ").map((word, index) => (
+              <span className="word-mask" key={word + index}>
+                <span className="word">{word}&nbsp;</span>
+              </span>
+            ))}
+          </h1>
           {sourceMessage ? <p>{sourceMessage}</p> : null}
         </div>
       </section>
@@ -204,11 +215,15 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
         </section>
       ) : filteredProducts.length > 0 ? (
         <section className="depth-shop-grid" aria-label="Products">
-          {filteredProducts.map((product) => {
+          {filteredProducts.map((product, index) => {
             const hasMultipleVariants = (variantCountByProductId.get(product.id) ?? 1) > 1;
 
             return (
               <ProductTile
+                // Every 5th tile runs wide — a deliberate rest stop so the
+                // grid reads as a considered layout rather than a uniform
+                // wall of identical tiles.
+                featured={index > 0 && (index + 1) % 5 === 0}
                 hasMultipleVariants={hasMultipleVariants}
                 key={product.variantId}
                 onQuickAdd={() => {
@@ -388,6 +403,11 @@ function FilterChips({
           onClick={() => onSelect(option.slug)}
           type="button"
         >
+          {option.imageUrl ? (
+            <span className="filter-chip-thumb" aria-hidden="true">
+              <Image alt="" fill sizes="28px" src={option.imageUrl} />
+            </span>
+          ) : null}
           {option.label}
         </button>
       ))}
@@ -396,11 +416,13 @@ function FilterChips({
 }
 
 function ProductTile({
+  featured,
   hasMultipleVariants,
   onQuickAdd,
   onSelect,
   product
 }: {
+  featured: boolean;
   hasMultipleVariants: boolean;
   onQuickAdd: () => void;
   onSelect: () => void;
@@ -409,7 +431,7 @@ function ProductTile({
   const [added, setAdded] = useState(false);
 
   return (
-    <article className="depth-product-card">
+    <article className={`depth-product-card ${featured ? "featured" : ""}`}>
       <button className="depth-product-card-hit" onClick={onSelect} type="button">
         <div className="depth-product-stage" aria-hidden="true">
           <ProductPackshot product={product} />

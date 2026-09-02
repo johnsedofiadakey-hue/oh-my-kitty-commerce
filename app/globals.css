@@ -1,3 +1,38 @@
+/* Display/heading face, self-hosted — --font-serif referenced this by name
+   for a while with no @font-face backing it, so every headline was silently
+   falling back to plain Inter. */
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/satoshi/Satoshi-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/satoshi/Satoshi-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/satoshi/Satoshi-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/satoshi/Satoshi-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --color-white: #fff9f6;
   --color-white-pure: #ffffff;
@@ -47,6 +82,7 @@ html {
 }
 
 body {
+  position: relative;
   min-height: 100%;
   margin: 0;
   color: var(--color-near-black);
@@ -55,6 +91,20 @@ body {
     linear-gradient(180deg, var(--color-white-pure) 0%, var(--color-white) 100%);
   font-family: var(--font-sans);
   letter-spacing: 0;
+}
+
+/* A whisper of paper grain over every page — the flat peach/cream fields
+   read a little sterile without it. Fixed + low opacity so it never
+   competes with content, generated inline so there's no extra asset. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
 }
 
 a {
@@ -176,6 +226,16 @@ button {
   font-size: 0.6rem;
   font-weight: 800;
   box-shadow: 0 0 0 2px var(--color-white-pure);
+}
+
+.bag-badge.bump {
+  animation: quick-add-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bag-badge.bump {
+    animation: none;
+  }
 }
 
 .bag-pill,
@@ -1546,6 +1606,40 @@ button {
   overflow: hidden;
 }
 
+/* Ambient drifting glow behind the hero type — slow enough to read as
+   atmosphere, not a distraction. Disabled below under reduced-motion. */
+.depth-shop-hero::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  z-index: 1;
+  width: 60vw;
+  height: 60vw;
+  max-width: 620px;
+  max-height: 620px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(243 169 157 / 30%), transparent 72%);
+  animation: hero-drift 22s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes hero-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-4%, 5%) scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .depth-shop-hero::before {
+    animation: none;
+  }
+}
+
 .depth-shop-copy {
   position: relative;
   z-index: 2;
@@ -1560,6 +1654,17 @@ button {
   font-size: clamp(4.2rem, 14vw, 10rem);
   font-weight: 400;
   line-height: 0.82;
+}
+
+.depth-shop-copy h1 .word-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+}
+
+.depth-shop-copy h1 .word {
+  display: inline-block;
+  will-change: transform;
 }
 
 .depth-shop-copy p {
@@ -1589,6 +1694,21 @@ button {
   .depth-shop-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+}
+
+/* Every 5th card runs wide (see depth-shop.tsx) — a rest stop in an
+   otherwise uniform grid, with a landscape image instead of the usual
+   portrait crop so the extra width reads as intentional, not stretched. */
+.depth-product-card.featured {
+  grid-column: span 2;
+}
+
+.depth-product-card.featured .depth-product-stage {
+  aspect-ratio: 16 / 9;
+}
+
+.depth-product-card.featured .depth-product-card-hit h2 {
+  font-size: 1.05rem;
 }
 
 /* Docks just below the fixed site header (.storefront-nav) while scrolling,
@@ -1668,6 +1788,9 @@ button {
 .filter-chip {
   position: relative;
   z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   flex: 0 0 auto;
   min-height: 44px;
   border: 0;
@@ -1681,6 +1804,20 @@ button {
 
 .filter-chip[data-active="true"] {
   color: var(--color-near-black);
+}
+
+.filter-chip-thumb {
+  position: relative;
+  overflow: hidden;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--color-peach-mist);
+  flex-shrink: 0;
+}
+
+.filter-chip-thumb img {
+  object-fit: cover;
 }
 
 .depth-product-card {
@@ -1816,6 +1953,25 @@ button {
 .quick-add-button.added {
   background: var(--color-green);
   color: var(--color-white-pure);
+  animation: quick-add-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes quick-add-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.28) rotate(-8deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quick-add-button.added {
+    animation: none;
+  }
 }
 
 .shop-empty {

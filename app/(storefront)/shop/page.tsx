@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DepthShop } from "@/components/storefront/depth-shop";
 import {
   getStorefrontCatalogue,
+  toStorefrontCategorySummaries,
   toStorefrontProductViews
 } from "@/lib/storefront/catalogue";
 
@@ -19,6 +20,7 @@ export default async function ShopPage() {
 
   return (
     <DepthShop
+      categories={toStorefrontCategorySummaries(catalogue)}
       products={toStorefrontProductViews(catalogue)}
       sourceMessage={catalogue.sourceMessage}
     />

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { DepthShop } from "@/components/storefront/depth-shop";
 import {
   getStorefrontCatalogue,
+  toStorefrontCategorySummaries,
   toStorefrontProductViews
 } from "@/lib/storefront/catalogue";
 
@@ -55,6 +56,7 @@ export default async function CategoryPage({ params }: CategoryPageParams) {
 
   return (
     <DepthShop
+      categories={toStorefrontCategorySummaries(catalogue)}
       products={categoryProducts}
       sourceMessage={`${categoryTitle} products from the live Oh My Kitty catalogue.`}
     />
