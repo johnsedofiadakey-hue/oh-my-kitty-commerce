@@ -55,6 +55,8 @@ export default async function ReceiptPage({ params }: ReceiptPageParams) {
       <PrintReceiptButton />
       <div className="receipt-paper">
         <div className="receipt-header">
+          {/* eslint-disable-next-line @next/next/no-img-element -- printed output needs a plain, immediately-available img, not next/image's lazy/responsive srcset. */}
+          <img alt="" className="receipt-logo" src="/brand/oh-my-kitty-logo.jpeg" />
           <strong>{storeName}</strong>
           <span>Intimate care, made for every version of her.</span>
         </div>

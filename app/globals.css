@@ -6982,8 +6982,20 @@ button {
 
 .receipt-header {
   display: grid;
+  justify-items: center;
   gap: 2px;
   text-align: center;
+}
+
+.receipt-logo {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  border-radius: 999px;
+  object-fit: cover;
+  /* Thermal printers are monochrome regardless — converting up front makes
+     the on-screen preview match what actually comes out of the printer. */
+  filter: grayscale(1) contrast(1.15);
 }
 
 .receipt-header strong {
