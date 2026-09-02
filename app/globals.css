@@ -1995,22 +1995,16 @@ button {
   border-radius: 20px;
 }
 
-.depth-product-card-hit span:first-child {
+.category-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  color: var(--color-green);
-  font-size: 0.64rem;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.6rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-.badge-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
 }
 
 .depth-product-card-hit h2 {
@@ -2027,7 +2021,9 @@ button {
 
 .depth-product-card-hit strong {
   margin-top: 1px;
+  color: var(--color-green);
   font-size: 0.8rem;
+  font-weight: 800;
 }
 
 .quick-add-button {
@@ -2616,6 +2612,19 @@ button {
   font-size: 0.86em;
   font-weight: 600;
   text-decoration-color: var(--color-status-urgent);
+}
+
+.sale-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: var(--color-white-pure);
+  background: var(--color-green);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .product-detail-price strong {

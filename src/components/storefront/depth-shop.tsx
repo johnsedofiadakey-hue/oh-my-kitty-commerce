@@ -13,10 +13,16 @@ import type { StorefrontCategorySummary, StorefrontProductView } from "@/lib/sto
 import { celebrateBurst } from "@/lib/storefront/celebrate";
 import { openCart } from "@/lib/storefront/cart-store";
 
-// Cosmetic variety for the category badge dot — cycles deterministically per
+// Cosmetic variety for the category pill — cycles deterministically per
 // product so the grid doesn't read as one repeated "CARE" label everywhere,
-// independent of whether real category taxonomy is assigned yet.
-const badgeAccents = ["#f3a99d", "#556b45", "#c98a6b", "#849373", "#d98ea0"];
+// independent of whether real category taxonomy is assigned yet. Drawn only
+// from real brand tokens (peach/green and their soft variants), not new hues.
+const badgeAccents = [
+  { background: "var(--color-peach)", color: "var(--color-near-black)" },
+  { background: "var(--color-green)", color: "var(--color-white-pure)" },
+  { background: "var(--color-green-soft)", color: "var(--color-white-pure)" },
+  { background: "var(--color-peach-light)", color: "var(--color-near-black)" }
+];
 
 function badgeAccentFor(id: string) {
   let hash = 0;
@@ -466,18 +472,18 @@ function ProductTile({
         <div className="depth-product-stage" aria-hidden="true">
           <ProductPackshot product={product} />
         </div>
-        <span>
-          <i
-            aria-hidden="true"
-            className="badge-dot"
-            style={{ background: badgeAccentFor(product.id) }}
-          />
+        <span className="category-pill" style={badgeAccentFor(product.id)}>
           {product.primaryCategory}
         </span>
         <h2>{product.title}</h2>
         <div className="price-with-compare">
           <strong>{product.formattedPrice}</strong>
-          {product.formattedCompareAtPrice ? <s>{product.formattedCompareAtPrice}</s> : null}
+          {product.formattedCompareAtPrice ? (
+            <>
+              <s>{product.formattedCompareAtPrice}</s>
+              <span className="sale-pill">Sale</span>
+            </>
+          ) : null}
         </div>
       </button>
       <button
