@@ -10,7 +10,21 @@ import {
 import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
 import type { StorefrontCategorySummary, StorefrontProductView } from "@/lib/storefront/catalogue";
+import { celebrateBurst } from "@/lib/storefront/celebrate";
 import { openCart } from "@/lib/storefront/cart-store";
+
+// Cosmetic variety for the category badge dot — cycles deterministically per
+// product so the grid doesn't read as one repeated "CARE" label everywhere,
+// independent of whether real category taxonomy is assigned yet.
+const badgeAccents = ["#f3a99d", "#556b45", "#c98a6b", "#849373", "#d98ea0"];
+
+function badgeAccentFor(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i += 1) {
+    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  }
+  return badgeAccents[hash % badgeAccents.length];
+}
 
 type DepthShopProps = {
   categories: StorefrontCategorySummary[];
@@ -210,6 +224,14 @@ export function DepthShop({ categories, products, sourceMessage }: DepthShopProp
 
       {products.length === 0 ? (
         <section className="shop-empty">
+          <Image
+            alt=""
+            aria-hidden="true"
+            className="shop-empty-mascot"
+            height={72}
+            src="/brand/oh-my-kitty-logo.jpeg"
+            width={72}
+          />
           <h2>We&apos;re restocking.</h2>
           <p>New products are on their way — check back soon.</p>
         </section>
@@ -242,6 +264,14 @@ export function DepthShop({ categories, products, sourceMessage }: DepthShopProp
         </section>
       ) : (
         <section className="shop-empty">
+          <Image
+            alt=""
+            aria-hidden="true"
+            className="shop-empty-mascot"
+            height={72}
+            src="/brand/oh-my-kitty-logo.jpeg"
+            width={72}
+          />
           <h2>Nothing matched that yet.</h2>
           <p>Try clearing your filters, or search for something else.</p>
           <button
@@ -436,7 +466,14 @@ function ProductTile({
         <div className="depth-product-stage" aria-hidden="true">
           <ProductPackshot product={product} />
         </div>
-        <span>{product.primaryCategory}</span>
+        <span>
+          <i
+            aria-hidden="true"
+            className="badge-dot"
+            style={{ background: badgeAccentFor(product.id) }}
+          />
+          {product.primaryCategory}
+        </span>
         <h2>{product.title}</h2>
         <div className="price-with-compare">
           <strong>{product.formattedPrice}</strong>
@@ -453,6 +490,7 @@ function ProductTile({
         onClick={(event) => {
           event.stopPropagation();
           onQuickAdd();
+          void celebrateBurst(event.currentTarget);
           if (!hasMultipleVariants) {
             setAdded(true);
             window.setTimeout(() => setAdded(false), 1300);
@@ -467,15 +505,18 @@ function ProductTile({
 }
 
 function ProductPackshot({ product }: { product: StorefrontProductView }) {
+  const [loaded, setLoaded] = useState(false);
+
   if (product.imageUrl) {
     return (
-      <div className="product-packshot photo-packshot">
+      <div className={`product-packshot photo-packshot ${loaded ? "" : "loading"}`}>
         <Image
           src={product.imageUrl}
           alt=""
           fill
           sizes="(max-width: 820px) calc(100vw - 80px), 430px"
           aria-hidden="true"
+          onLoad={() => setLoaded(true)}
         />
       </div>
     );

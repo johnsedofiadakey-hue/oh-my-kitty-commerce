@@ -8,7 +8,7 @@ export function StorefrontNav() {
   return (
     <nav aria-label="Storefront" className="storefront-nav glass">
       <Link className="brand-lockup" href="/">
-        <span aria-hidden="true" className="brand-lockup-icon">
+        <span aria-hidden="true" className="brand-lockup-icon boop">
           <Image
             alt=""
             fill

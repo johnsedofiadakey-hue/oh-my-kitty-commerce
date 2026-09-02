@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
+import { celebrateBurst } from "@/lib/storefront/celebrate";
 import { openCart } from "@/lib/storefront/cart-store";
 
 export type CartLine = {
@@ -32,10 +33,14 @@ export function AddToBagButton({
   line
 }: AddToBagButtonProps) {
   const [added, setAdded] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   function handleClick() {
     addLineToCart(line);
     setAdded(true);
+    if (buttonRef.current) {
+      void celebrateBurst(buttonRef.current);
+    }
     // Opening the cart drawer immediately is the confirmation — it doubles
     // as "here's what you just added" and "here's your whole cart," so
     // there's no separate silent add + a later hunt for a cart icon.
@@ -44,7 +49,7 @@ export function AddToBagButton({
   }
 
   return (
-    <button className={className} onClick={handleClick} type="button">
+    <button className={className} onClick={handleClick} ref={buttonRef} type="button">
       {added ? "Added" : label}
     </button>
   );

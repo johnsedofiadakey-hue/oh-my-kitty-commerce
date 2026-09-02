@@ -4,6 +4,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import type { MouseEvent, ReactNode } from "react";
 import { openCart } from "@/lib/storefront/cart-store";
+import { useCartBump } from "@/lib/storefront/use-cart-bump";
 
 type CartTriggerProps = {
   children: ReactNode;
@@ -14,6 +15,8 @@ type CartTriggerProps = {
 };
 
 export function CartTrigger({ children, className, ariaLabel, onBeforeOpen }: CartTriggerProps) {
+  const bump = useCartBump();
+
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) {
       return;
@@ -25,7 +28,12 @@ export function CartTrigger({ children, className, ariaLabel, onBeforeOpen }: Ca
   }
 
   return (
-    <Link aria-label={ariaLabel} className={className} href={"/cart" as Route} onClick={handleClick}>
+    <Link
+      aria-label={ariaLabel}
+      className={`${className ?? ""} ${bump ? "cart-trigger-bump" : ""}`.trim()}
+      href={"/cart" as Route}
+      onClick={handleClick}
+    >
       {children}
     </Link>
   );

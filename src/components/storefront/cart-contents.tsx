@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   clearCartLines,
   onCartChanged,
@@ -32,6 +32,16 @@ type Recommendation = {
   imageUrl?: string;
 };
 
+type DeliveryOption = {
+  id: string;
+  name: string;
+  type: "PICKUP" | "LOCAL_DELIVERY" | "NATIONWIDE_DELIVERY";
+  fee: number;
+  formattedFee: string;
+  freeAbove?: number | null;
+  estimate?: string;
+};
+
 export function CartContents({ onNavigate }: CartContentsProps) {
   const lines = useSyncExternalStore(subscribeToCart, readCartLines, getServerCartSnapshot);
   const subtotal = useMemo(
@@ -43,6 +53,35 @@ export function CartContents({ onNavigate }: CartContentsProps) {
     [lines]
   );
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/storefront/delivery-options")
+      .then((response) => response.json())
+      .then((payload: { options?: DeliveryOption[] }) => {
+        if (!cancelled) {
+          setDeliveryOptions(payload.options ?? []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDeliveryOptions([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // The lowest free-delivery threshold across active delivery options — the
+  // one worth showing progress toward, since it's the easiest to unlock.
+  const freeDeliveryThreshold = useMemo(() => {
+    const thresholds = deliveryOptions
+      .map((option) => option.freeAbove)
+      .filter((value): value is number => typeof value === "number" && value > 0);
+    return thresholds.length > 0 ? Math.min(...thresholds) : null;
+  }, [deliveryOptions]);
 
   useEffect(() => {
     // No early setRecommendations([]) here on purpose — when the cart is
@@ -112,6 +151,14 @@ export function CartContents({ onNavigate }: CartContentsProps) {
   if (lines.length === 0) {
     return (
       <div className="cart-surface cart-empty">
+        <Image
+          alt=""
+          aria-hidden="true"
+          className="cart-empty-mascot"
+          height={72}
+          src="/brand/oh-my-kitty-logo.jpeg"
+          width={72}
+        />
         <span className="scene-kicker">Cart</span>
         <h1>Your cart is empty.</h1>
         <p>Products added from the shop will appear here.</p>
@@ -181,6 +228,10 @@ export function CartContents({ onNavigate }: CartContentsProps) {
         ))}
       </div>
 
+      {freeDeliveryThreshold ? (
+        <FreeDeliveryProgress subtotal={subtotal} threshold={freeDeliveryThreshold} />
+      ) : null}
+
       {recommendations.length > 0 ? (
         <div className="cart-recommendations">
           <span className="cart-recommendations-label">Goes well with your cart</span>
@@ -230,4 +281,32 @@ function subscribeToCart(listener: () => void) {
 
 function getServerCartSnapshot(): CartLine[] {
   return serverCartSnapshot;
+}
+
+function FreeDeliveryProgress({ subtotal, threshold }: { subtotal: number; threshold: number }) {
+  const unlocked = subtotal >= threshold;
+  const progress = Math.min(1, subtotal / threshold);
+  const wasUnlocked = useRef(unlocked);
+  const [justUnlocked, setJustUnlocked] = useState(false);
+
+  useEffect(() => {
+    if (unlocked && !wasUnlocked.current) {
+      setJustUnlocked(true);
+      window.setTimeout(() => setJustUnlocked(false), 900);
+    }
+    wasUnlocked.current = unlocked;
+  }, [unlocked]);
+
+  return (
+    <div className={`free-delivery-progress ${justUnlocked ? "pop" : ""}`}>
+      <p>
+        {unlocked
+          ? "You've unlocked free delivery! 🎉"
+          : `Add ${formatMoney(threshold - subtotal)} more for free delivery.`}
+      </p>
+      <div className="free-delivery-track">
+        <div className="free-delivery-fill" style={{ width: `${progress * 100}%` }} />
+      </div>
+    </div>
+  );
 }
