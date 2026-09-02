@@ -462,6 +462,35 @@ function ProductEditDrawer({
               })}
             </div>
           ) : null}
+          {catalogue.variants.length > 1 ? (
+            <div className="admin-field-group">
+              <span className="admin-field-group-label">
+                Bundle contents — if this variant is a set assembled from other products, list how many of
+                each go into one set. Leave everything blank if this isn&apos;t a set.
+              </span>
+              {catalogue.variants
+                .filter((other) => other.id !== variant.id)
+                .map((other) => {
+                  const otherProductTitle =
+                    catalogue.products.find((p) => p.id === other.productId)?.title ?? "Unknown product";
+                  const existing = variant.bundleComponents?.find((item) => item.variantId === other.id);
+                  return (
+                    <label className="admin-field recipe-field" key={other.id}>
+                      <span>
+                        {otherProductTitle} <small>({other.title})</small>
+                      </span>
+                      <input
+                        defaultValue={existing?.quantity ?? ""}
+                        inputMode="numeric"
+                        min="0"
+                        name={`bundleQuantity.${other.id}`}
+                        placeholder="0"
+                      />
+                    </label>
+                  );
+                })}
+            </div>
+          ) : null}
           <label className="admin-field">
             <span>Adjust stock (+/-)</span>
             <input defaultValue="0" inputMode="numeric" name="stockDelta" />

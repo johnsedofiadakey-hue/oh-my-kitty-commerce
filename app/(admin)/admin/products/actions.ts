@@ -137,6 +137,7 @@ export async function quickEditCatalogueItemAction(
       compareAtPrice: formOptionalMoneyMinorUnit(formData, "compareAtPrice"),
       cost: formOptionalMoneyMinorUnit(formData, "cost"),
       recipe: formRecipe(formData),
+      bundleComponents: formBundleComponents(formData),
       lowStockThreshold: formInteger(formData, "lowStockThreshold", 5)
     });
 
@@ -257,6 +258,27 @@ function formRecipe(formData: FormData) {
     }
 
     items.push({ materialId: key.slice(RECIPE_FIELD_PREFIX.length), quantityPerUnit: quantity });
+  }
+
+  return items;
+}
+
+const BUNDLE_FIELD_PREFIX = "bundleQuantity.";
+
+function formBundleComponents(formData: FormData) {
+  const items: { variantId: string; quantity: number }[] = [];
+
+  for (const [key, value] of formData.entries()) {
+    if (!key.startsWith(BUNDLE_FIELD_PREFIX) || typeof value !== "string") {
+      continue;
+    }
+
+    const quantity = Number.parseInt(value, 10);
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      continue;
+    }
+
+    items.push({ variantId: key.slice(BUNDLE_FIELD_PREFIX.length), quantity });
   }
 
   return items;

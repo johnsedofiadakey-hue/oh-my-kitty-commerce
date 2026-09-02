@@ -11,6 +11,7 @@ import type { CommerceRepository, CommerceTransaction } from "@/lib/commerce/rep
 import { createNoopTransaction } from "@/lib/commerce/repository";
 import {
   adjustInventoryInputSchema,
+  assembleBundleInputSchema,
   attachCategoryImageInputSchema,
   completeSaleInputSchema,
   createCategoryInputSchema,
@@ -45,6 +46,7 @@ import {
   updateRoutineInputSchema,
   updateVariantInputSchema,
   type AdjustInventoryInput,
+  type AssembleBundleInput,
   type AttachCategoryImageInput,
   type CompleteSaleInput,
   type CreateCustomerInput,
@@ -350,6 +352,111 @@ export async function adjustInventory(
     });
 
     return { variant: updatedVariant, movement };
+  });
+}
+
+/**
+ * Moves stock from a kit's declared components into the kit itself — the
+ * deliberate "I just physically assembled N of these" action. Selling the
+ * kit afterward works exactly like selling any other product (decrements
+ * its own stock directly via decrementInventoryForOrder); this is the only
+ * place component stock is ever touched. Existing stock on the kit is left
+ * alone — this only ever adds N new units, it's not a reconciliation tool.
+ */
+export async function assembleBundle(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: AssembleBundleInput
+) {
+  await assertCan(context, actor, "inventory.adjust");
+  const parsed = assembleBundleInputSchema.parse(input);
+
+  return withTransaction(context, async () => {
+    const kit = await requiredVariant(context, parsed.productId, parsed.variantId);
+    if (!kit.bundleComponents || kit.bundleComponents.length === 0) {
+      throw new CommerceError("VALIDATION_ERROR", `${kit.sku} has no bundle contents defined.`);
+    }
+
+    const allVariants = await context.repo.listAllVariants();
+    const variantsById = new Map(allVariants.map((variant) => [variant.id, variant]));
+
+    const components = kit.bundleComponents.map((item) => {
+      const component = variantsById.get(item.variantId);
+      if (!component) {
+        throw new CommerceError("NOT_FOUND", `Bundle component not found: ${item.variantId}`);
+      }
+      if (component.bundleComponents && component.bundleComponents.length > 0) {
+        throw new CommerceError(
+          "INVALID_STATE",
+          `${component.sku} is itself a kit — nesting kits inside kits isn't supported.`
+        );
+      }
+      return { component, neededQuantity: item.quantity * parsed.quantity };
+    });
+
+    for (const { component, neededQuantity } of components) {
+      if (component.stockAvailable < neededQuantity) {
+        throw new CommerceError(
+          "OUT_OF_STOCK",
+          `Not enough stock of ${component.sku} to assemble ${parsed.quantity} × ${kit.sku} (need ${neededQuantity}, have ${component.stockAvailable}).`
+        );
+      }
+    }
+
+    const movements: InventoryMovement[] = [];
+    for (const { component, neededQuantity } of components) {
+      const stockOnHand = component.stockOnHand - neededQuantity;
+      const stockAvailable = component.stockAvailable - neededQuantity;
+      const updatedComponent: ProductVariant = { ...component, stockOnHand, stockAvailable };
+      const movement: InventoryMovement = {
+        id: createId(context, "movement"),
+        productId: component.productId,
+        variantId: component.id,
+        type: "BUNDLE_CONSUMED",
+        quantityDelta: neededQuantity * -1,
+        stockAfter: stockAvailable,
+        reason: `Assembled ${parsed.quantity} × ${kit.sku}: ${parsed.reason}`,
+        actorId: actor.uid,
+        createdAt: getNow(context)
+      };
+
+      await context.repo.saveVariant(updatedComponent);
+      await context.repo.saveInventoryMovement(movement);
+      movements.push(movement);
+    }
+
+    const kitStockOnHand = kit.stockOnHand + parsed.quantity;
+    const kitStockAvailable = kit.stockAvailable + parsed.quantity;
+    const updatedKit: ProductVariant = {
+      ...kit,
+      stockOnHand: kitStockOnHand,
+      stockAvailable: kitStockAvailable
+    };
+    const kitMovement: InventoryMovement = {
+      id: createId(context, "movement"),
+      productId: parsed.productId,
+      variantId: parsed.variantId,
+      type: "BUNDLE_ASSEMBLED",
+      quantityDelta: parsed.quantity,
+      stockAfter: kitStockAvailable,
+      reason: parsed.reason,
+      actorId: actor.uid,
+      createdAt: getNow(context)
+    };
+
+    await context.repo.saveVariant(updatedKit);
+    await context.repo.saveInventoryMovement(kitMovement);
+    movements.push(kitMovement);
+
+    await writeAuditLog(context, actor, {
+      action: "inventory.assemble",
+      entityType: "inventoryMovement",
+      entityId: kitMovement.id,
+      summary: `Assembled ${parsed.quantity} × ${kit.sku} from ${components.length} component(s)`,
+      reason: parsed.reason
+    });
+
+    return { variant: updatedKit, movements };
   });
 }
 

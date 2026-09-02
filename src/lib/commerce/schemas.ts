@@ -85,6 +85,11 @@ const recipeItemSchema = z.object({
   quantityPerUnit: z.number().min(0)
 });
 
+const bundleComponentItemSchema = z.object({
+  variantId: z.string().min(1),
+  quantity: z.number().int().min(1)
+});
+
 const variantFieldsSchema = z.object({
   productId: z.string().min(1),
   title: z.string().min(1),
@@ -96,6 +101,7 @@ const variantFieldsSchema = z.object({
   compareAtPrice: moneySchema.nullable().optional(),
   cost: moneySchema.nullable().optional(),
   recipe: z.array(recipeItemSchema).optional(),
+  bundleComponents: z.array(bundleComponentItemSchema).optional(),
   mediaIds: z.array(z.string().min(1)),
   trackInventory: z.boolean(),
   stockOnHand: z.number().int().min(0),
@@ -177,6 +183,13 @@ export const adjustInventoryInputSchema = z.object({
   variantId: z.string().min(1),
   type: z.enum(["STOCK_RECEIVED", "DAMAGE", "LOSS", "MANUAL_ADJUSTMENT"]),
   quantityDelta: nonZeroQuantitySchema,
+  reason: z.string().min(3)
+});
+
+export const assembleBundleInputSchema = z.object({
+  productId: z.string().min(1),
+  variantId: z.string().min(1),
+  quantity: z.number().int().min(1),
   reason: z.string().min(3)
 });
 
@@ -398,6 +411,7 @@ export type CreateRawMaterialInput = z.input<typeof createRawMaterialInputSchema
 export type UpdateRawMaterialInput = z.input<typeof updateRawMaterialInputSchema>;
 export type UpdateStoreSettingsInput = z.input<typeof updateStoreSettingsInputSchema>;
 export type AdjustInventoryInput = z.input<typeof adjustInventoryInputSchema>;
+export type AssembleBundleInput = z.input<typeof assembleBundleInputSchema>;
 export type CreateCustomerInput = z.input<typeof createCustomerInputSchema>;
 export type UpdateCustomerInput = z.input<typeof updateCustomerInputSchema>;
 export type CreatePromotionInput = z.input<typeof createPromotionInputSchema>;

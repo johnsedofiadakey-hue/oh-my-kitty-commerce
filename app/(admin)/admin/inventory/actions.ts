@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { CommerceError } from "@/lib/commerce/errors";
-import { adjustInventory } from "@/lib/commerce/operations";
+import { adjustInventory, assembleBundle } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getRequiredAdminActor } from "@/lib/auth/server";
 import { formInteger, formString } from "@/lib/admin/product-form";
@@ -25,6 +25,22 @@ export async function adjustInventoryAction(formData: FormData): Promise<void> {
     variantId: formString(formData, "variantId"),
     type: formMovementType(formData),
     quantityDelta: formInteger(formData, "quantityDelta", 0),
+    reason: formString(formData, "reason")
+  });
+
+  revalidatePath("/admin/inventory");
+  revalidatePath("/admin/products");
+  revalidatePath("/shop");
+}
+
+export async function assembleBundleAction(formData: FormData): Promise<void> {
+  const context = requireCommerceContext();
+  const actor = await getRequiredAdminActor();
+
+  await assembleBundle(context, actor, {
+    productId: formString(formData, "productId"),
+    variantId: formString(formData, "variantId"),
+    quantity: formInteger(formData, "quantity", 0),
     reason: formString(formData, "reason")
   });
 
