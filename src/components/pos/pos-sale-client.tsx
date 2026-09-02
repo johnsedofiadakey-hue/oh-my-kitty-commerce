@@ -636,6 +636,11 @@ export function PosSaleClient({
             <strong>{shift?.status === "OPEN" ? "Shift open" : "Open shift"}</strong>
             <span>{shift?.id ?? "Required before sale"}</span>
           </div>
+          {/* Opening/closing a shift can fail (permissions, network, a
+              double-open), and errorMessage is shared with the checkout
+              form far below — without this, a failed shift action showed
+              no visible feedback anywhere near where the user clicked. */}
+          {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
           {shift?.status === "OPEN" ? (
             <>
               <div className="pos-shift-stats">
