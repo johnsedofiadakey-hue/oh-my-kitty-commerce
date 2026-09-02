@@ -86,8 +86,8 @@ export type CommerceRepository = {
   listAuditLogs(): Promise<AuditLog[]>;
 };
 
-export type CommerceTransaction = <T>(operation: () => Promise<T>) => Promise<T>;
+export type CommerceTransaction = <T>(operation: (repo: CommerceRepository) => Promise<T>) => Promise<T>;
 
-export function createNoopTransaction(): CommerceTransaction {
-  return (operation) => operation();
+export function createNoopTransaction(repo: CommerceRepository): CommerceTransaction {
+  return (operation) => operation(repo);
 }

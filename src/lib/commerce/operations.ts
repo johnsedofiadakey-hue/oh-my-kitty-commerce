@@ -314,8 +314,8 @@ export async function adjustInventory(
   await assertCan(context, actor, "inventory.adjust");
   const parsed = adjustInventoryInputSchema.parse(input);
 
-  return withTransaction(context, async () => {
-    const variant = await requiredVariant(context, parsed.productId, parsed.variantId);
+  return withTransaction(context, async (repo) => {
+    const variant = await requiredVariant(context, parsed.productId, parsed.variantId, repo);
     const stockOnHand = variant.stockOnHand + parsed.quantityDelta;
     const stockAvailable = variant.stockAvailable + parsed.quantityDelta;
 
@@ -341,15 +341,20 @@ export async function adjustInventory(
       createdAt: getNow(context)
     };
 
-    await context.repo.saveVariant(updatedVariant);
-    await context.repo.saveInventoryMovement(movement);
-    await writeAuditLog(context, actor, {
-      action: "inventory.adjust",
-      entityType: "inventoryMovement",
-      entityId: movement.id,
-      summary: `Adjusted stock for ${variant.sku}`,
-      reason: parsed.reason
-    });
+    await repo.saveVariant(updatedVariant);
+    await repo.saveInventoryMovement(movement);
+    await writeAuditLog(
+      context,
+      actor,
+      {
+        action: "inventory.adjust",
+        entityType: "inventoryMovement",
+        entityId: movement.id,
+        summary: `Adjusted stock for ${variant.sku}`,
+        reason: parsed.reason
+      },
+      repo
+    );
 
     return { variant: updatedVariant, movement };
   });
@@ -371,13 +376,13 @@ export async function assembleBundle(
   await assertCan(context, actor, "inventory.adjust");
   const parsed = assembleBundleInputSchema.parse(input);
 
-  return withTransaction(context, async () => {
-    const kit = await requiredVariant(context, parsed.productId, parsed.variantId);
+  return withTransaction(context, async (repo) => {
+    const kit = await requiredVariant(context, parsed.productId, parsed.variantId, repo);
     if (!kit.bundleComponents || kit.bundleComponents.length === 0) {
       throw new CommerceError("VALIDATION_ERROR", `${kit.sku} has no bundle contents defined.`);
     }
 
-    const allVariants = await context.repo.listAllVariants();
+    const allVariants = await repo.listAllVariants();
     const variantsById = new Map(allVariants.map((variant) => [variant.id, variant]));
 
     const components = kit.bundleComponents.map((item) => {
@@ -420,8 +425,8 @@ export async function assembleBundle(
         createdAt: getNow(context)
       };
 
-      await context.repo.saveVariant(updatedComponent);
-      await context.repo.saveInventoryMovement(movement);
+      await repo.saveVariant(updatedComponent);
+      await repo.saveInventoryMovement(movement);
       movements.push(movement);
     }
 
@@ -444,17 +449,22 @@ export async function assembleBundle(
       createdAt: getNow(context)
     };
 
-    await context.repo.saveVariant(updatedKit);
-    await context.repo.saveInventoryMovement(kitMovement);
+    await repo.saveVariant(updatedKit);
+    await repo.saveInventoryMovement(kitMovement);
     movements.push(kitMovement);
 
-    await writeAuditLog(context, actor, {
-      action: "inventory.assemble",
-      entityType: "inventoryMovement",
-      entityId: kitMovement.id,
-      summary: `Assembled ${parsed.quantity} × ${kit.sku} from ${components.length} component(s)`,
-      reason: parsed.reason
-    });
+    await writeAuditLog(
+      context,
+      actor,
+      {
+        action: "inventory.assemble",
+        entityType: "inventoryMovement",
+        entityId: kitMovement.id,
+        summary: `Assembled ${parsed.quantity} × ${kit.sku} from ${components.length} component(s)`,
+        reason: parsed.reason
+      },
+      repo
+    );
 
     return { variant: updatedKit, movements };
   });
@@ -662,14 +672,14 @@ export async function evaluatePromotionCode(
 
 /** Called once per order, only after it's genuinely confirmed/completed — never at draft/pending time. */
 export async function redeemPromotion(context: CommerceContext, promotionId: string): Promise<void> {
-  await withTransaction(context, async () => {
-    const promotions = await context.repo.listPromotions();
+  await withTransaction(context, async (repo) => {
+    const promotions = await repo.listPromotions();
     const promotion = promotions.find((entry) => entry.id === promotionId);
     if (!promotion) {
       return;
     }
 
-    await context.repo.savePromotion({ ...promotion, usedCount: promotion.usedCount + 1 });
+    await repo.savePromotion({ ...promotion, usedCount: promotion.usedCount + 1 });
   });
 }
 
@@ -1489,19 +1499,24 @@ export async function createPendingPosMomoOrder(
     throw new CommerceError("INVALID_STATE", "POS sale requires an open shift.");
   }
 
-  return withTransaction(context, async () => {
-    const existingOrder = await context.repo.findOrderByIdempotencyKey(parsed.idempotencyKey);
+  return withTransaction(context, async (repo) => {
+    const existingOrder = await repo.findOrderByIdempotencyKey(parsed.idempotencyKey);
     if (existingOrder) {
-      const existingPayment = (await context.repo.listPayments()).find(
+      const existingPayment = (await repo.listPayments()).find(
         (payment) => payment.orderId === existingOrder.id
       );
       return { order: existingOrder, payment: existingPayment ?? null, idempotent: true };
     }
 
-    const order = await buildOrder(context, parsed, {
-      status: "PENDING_PAYMENT",
-      paymentStatus: "PENDING"
-    });
+    const order = await buildOrder(
+      context,
+      parsed,
+      {
+        status: "PENDING_PAYMENT",
+        paymentStatus: "PENDING"
+      },
+      repo
+    );
 
     const payment: Payment = {
       id: createId(context, "payment"),
@@ -1517,14 +1532,19 @@ export async function createPendingPosMomoOrder(
       updatedAt: getNow(context)
     };
 
-    await context.repo.saveOrder(order);
-    await context.repo.savePayment(payment);
-    await writeAuditLog(context, actor, {
-      action: "orders.create_pending_payment",
-      entityType: "order",
-      entityId: order.id,
-      summary: `Created pending POS mobile money order ${order.orderNumber}`
-    });
+    await repo.saveOrder(order);
+    await repo.savePayment(payment);
+    await writeAuditLog(
+      context,
+      actor,
+      {
+        action: "orders.create_pending_payment",
+        entityType: "order",
+        entityId: order.id,
+        summary: `Created pending POS mobile money order ${order.orderNumber}`
+      },
+      repo
+    );
 
     return { order, payment, idempotent: false };
   });
@@ -1537,8 +1557,8 @@ export async function cancelPendingPosMomoSale(
   input: { orderId: string }
 ) {
   await assertCan(context, actor, "pos.sell");
-  return withTransaction(context, async () => {
-    const order = await context.repo.getOrder(input.orderId);
+  return withTransaction(context, async (repo) => {
+    const order = await repo.getOrder(input.orderId);
     if (!order || order.channel !== "POS") {
       throw new CommerceError("NOT_FOUND", "POS order not found.");
     }
@@ -1552,21 +1572,27 @@ export async function cancelPendingPosMomoSale(
       return { order, idempotent: true };
     }
 
-    const updatedOrder: Order = { ...order, status: "CANCELLED" };
-    await context.repo.saveOrder(updatedOrder);
+    const payments = await repo.listPayments();
 
-    const payments = await context.repo.listPayments();
+    const updatedOrder: Order = { ...order, status: "CANCELLED" };
+    await repo.saveOrder(updatedOrder);
+
     const payment = payments.find((entry) => entry.orderId === order.id);
     if (payment) {
-      await context.repo.savePayment({ ...payment, status: "FAILED", updatedAt: getNow(context) });
+      await repo.savePayment({ ...payment, status: "FAILED", updatedAt: getNow(context) });
     }
 
-    await writeAuditLog(context, actor, {
-      action: "pos.momo_charge_cancelled",
-      entityType: "order",
-      entityId: order.id,
-      summary: `Cancelled pending mobile money charge for ${order.orderNumber}`
-    });
+    await writeAuditLog(
+      context,
+      actor,
+      {
+        action: "pos.momo_charge_cancelled",
+        entityType: "order",
+        entityId: order.id,
+        summary: `Cancelled pending mobile money charge for ${order.orderNumber}`
+      },
+      repo
+    );
 
     return { order: updatedOrder, idempotent: false };
   });
@@ -1595,19 +1621,24 @@ export async function createPendingOnlineOrder(
   const parsed = createOrderDraftInputSchema.parse({ ...input, channel: "ONLINE" });
   const actor = systemActor("online-checkout-paystack");
 
-  return withTransaction(context, async () => {
-    const existingOrder = await context.repo.findOrderByIdempotencyKey(parsed.idempotencyKey);
+  return withTransaction(context, async (repo) => {
+    const existingOrder = await repo.findOrderByIdempotencyKey(parsed.idempotencyKey);
     if (existingOrder) {
-      const existingPayment = (await context.repo.listPayments()).find(
+      const existingPayment = (await repo.listPayments()).find(
         (payment) => payment.orderId === existingOrder.id
       );
       return { order: existingOrder, payment: existingPayment ?? null, idempotent: true };
     }
 
-    const order = await buildOrder(context, parsed, {
-      status: "PENDING_PAYMENT",
-      paymentStatus: "PENDING"
-    });
+    const order = await buildOrder(
+      context,
+      parsed,
+      {
+        status: "PENDING_PAYMENT",
+        paymentStatus: "PENDING"
+      },
+      repo
+    );
 
     const payment: Payment = {
       id: createId(context, "payment"),
@@ -1623,14 +1654,19 @@ export async function createPendingOnlineOrder(
       updatedAt: getNow(context)
     };
 
-    await context.repo.saveOrder(order);
-    await context.repo.savePayment(payment);
-    await writeAuditLog(context, actor, {
-      action: "orders.create_pending_payment",
-      entityType: "order",
-      entityId: order.id,
-      summary: `Created pending Paystack order ${order.orderNumber}`
-    });
+    await repo.saveOrder(order);
+    await repo.savePayment(payment);
+    await writeAuditLog(
+      context,
+      actor,
+      {
+        action: "orders.create_pending_payment",
+        entityType: "order",
+        entityId: order.id,
+        summary: `Created pending Paystack order ${order.orderNumber}`
+      },
+      repo
+    );
 
     return { order, payment, idempotent: false };
   });
@@ -1650,13 +1686,13 @@ export async function confirmPaystackPayment(
 ) {
   const actor = systemActor("paystack-webhook");
 
-  const result = await withTransaction(context, async () => {
-    const order = await context.repo.getOrder(input.orderId);
+  const result = await withTransaction(context, async (repo) => {
+    const order = await repo.getOrder(input.orderId);
     if (!order) {
       throw new CommerceError("NOT_FOUND", `Order not found: ${input.orderId}`);
     }
 
-    const payments = await context.repo.listPayments();
+    const payments = await repo.listPayments();
     const payment = payments.find((entry) => entry.orderId === order.id);
     if (!payment) {
       throw new CommerceError("NOT_FOUND", `No payment record for order: ${order.id}`);
@@ -1672,9 +1708,13 @@ export async function confirmPaystackPayment(
     // doesn't protect anything, it just leaves a paid customer with no
     // order and the store with no record a payment came in. Let stock go
     // negative as a visible oversold signal instead of blocking here.
-    const movements = await decrementInventoryForOrder(context, actor, updatedOrder, {
-      allowOversell: true
-    });
+    const movements = await decrementInventoryForOrder(
+      context,
+      actor,
+      updatedOrder,
+      { allowOversell: true },
+      repo
+    );
     const updatedPayment: Payment = {
       ...payment,
       status: "PAID",
@@ -1682,14 +1722,19 @@ export async function confirmPaystackPayment(
       updatedAt: getNow(context)
     };
 
-    await context.repo.saveOrder(updatedOrder);
-    await context.repo.savePayment(updatedPayment);
-    await writeAuditLog(context, actor, {
-      action: "orders.confirm_paystack_payment",
-      entityType: "order",
-      entityId: order.id,
-      summary: `Confirmed Paystack payment for ${order.orderNumber}`
-    });
+    await repo.saveOrder(updatedOrder);
+    await repo.savePayment(updatedPayment);
+    await writeAuditLog(
+      context,
+      actor,
+      {
+        action: "orders.confirm_paystack_payment",
+        entityType: "order",
+        entityId: order.id,
+        summary: `Confirmed Paystack payment for ${order.orderNumber}`
+      },
+      repo
+    );
 
     return { order: updatedOrder, payment: updatedPayment, inventoryMovements: movements, alreadyConfirmed: false };
   });
@@ -1760,8 +1805,8 @@ async function reversePosSale(
   await assertCan(context, actor, permission);
   const parsed = posReversalInputSchema.parse(input);
 
-  return withTransaction(context, async () => {
-    const order = await context.repo.getOrder(parsed.orderId);
+  return withTransaction(context, async (repo) => {
+    const order = await repo.getOrder(parsed.orderId);
     if (!order) {
       throw new CommerceError("NOT_FOUND", `Order not found: ${parsed.orderId}`);
     }
@@ -1778,11 +1823,20 @@ async function reversePosSale(
       throw new CommerceError("INVALID_STATE", "Only a paid sale can be refunded or voided.");
     }
 
-    await requireReversalAuthorization(context, actor, approverActor, permission, order.total);
+    await requireReversalAuthorization(context, actor, approverActor, permission, order.total, repo);
+
+    // Firestore transactions require every read before any write — read
+    // every item's variant and the payment list up front, then do the
+    // whole write phase below.
+    const variants: (ProductVariant | null)[] = [];
+    for (const item of order.items) {
+      variants.push(await repo.getVariant(item.productId, item.variantId));
+    }
+    const payments = await repo.listPayments();
 
     const movements: InventoryMovement[] = [];
-    for (const item of order.items) {
-      const variant = await context.repo.getVariant(item.productId, item.variantId);
+    for (const [index, item] of order.items.entries()) {
+      const variant = variants[index];
       if (!variant) {
         continue;
       }
@@ -1810,9 +1864,9 @@ async function reversePosSale(
       };
 
       if (parsed.restock) {
-        await context.repo.saveVariant(updatedVariant);
+        await repo.saveVariant(updatedVariant);
       }
-      await context.repo.saveInventoryMovement(movement);
+      await repo.saveInventoryMovement(movement);
       movements.push(movement);
     }
 
@@ -1822,23 +1876,27 @@ async function reversePosSale(
       paymentStatus: "REFUNDED",
       fulfilmentStatus: mode === "VOID" ? "CANCELLED" : order.fulfilmentStatus
     };
-    await context.repo.saveOrder(updatedOrder);
+    await repo.saveOrder(updatedOrder);
 
-    const payments = await context.repo.listPayments();
     const payment = payments.find((entry) => entry.orderId === order.id);
     let updatedPayment: Payment | null = null;
     if (payment) {
       updatedPayment = { ...payment, status: "REFUNDED", updatedAt: getNow(context) };
-      await context.repo.savePayment(updatedPayment);
+      await repo.savePayment(updatedPayment);
     }
 
-    await writeAuditLog(context, actor, {
-      action: mode === "REFUND" ? "pos.refund" : "pos.void",
-      entityType: "order",
-      entityId: order.id,
-      summary: `${mode === "REFUND" ? "Refunded" : "Voided"} ${order.orderNumber}`,
-      reason: approverActor ? `${parsed.reason} — approved by ${approverActor.uid}` : parsed.reason
-    });
+    await writeAuditLog(
+      context,
+      actor,
+      {
+        action: mode === "REFUND" ? "pos.refund" : "pos.void",
+        entityType: "order",
+        entityId: order.id,
+        summary: `${mode === "REFUND" ? "Refunded" : "Voided"} ${order.orderNumber}`,
+        reason: approverActor ? `${parsed.reason} — approved by ${approverActor.uid}` : parsed.reason
+      },
+      repo
+    );
 
     return { order: updatedOrder, payment: updatedPayment, inventoryMovements: movements, idempotent: false };
   });
@@ -1849,9 +1907,10 @@ async function requireReversalAuthorization(
   actor: CommerceActor,
   approverActor: CommerceActor | undefined,
   permission: Permission,
-  amount: number
+  amount: number,
+  repo: CommerceRepository = context.repo
 ) {
-  const roles = await getEffectiveRoles(context, actor.roleIds);
+  const roles = await getEffectiveRoles(context, actor.roleIds, repo);
   const actorLimit = getHighestRoleLimit(roles, actor, "maxRefundAmount");
   if (amount <= actorLimit) {
     return;
@@ -1864,7 +1923,7 @@ async function requireReversalAuthorization(
     );
   }
 
-  const approverRoles = await getEffectiveRoles(context, approverActor.roleIds);
+  const approverRoles = await getEffectiveRoles(context, approverActor.roleIds, repo);
   if (!hasPermission(approverRoles, approverActor, permission)) {
     throw new CommerceError("FORBIDDEN", "The approving account cannot authorize this action.");
   }
@@ -1978,7 +2037,8 @@ export async function trackOrder(context: CommerceContext, orderNumber: string) 
 export async function writeAuditLog(
   context: CommerceContext,
   actor: CommerceActor,
-  input: Omit<AuditLog, "id" | "actorId" | "createdAt">
+  input: Omit<AuditLog, "id" | "actorId" | "createdAt">,
+  repo: CommerceRepository = context.repo
 ) {
   const log: AuditLog = {
     ...input,
@@ -1987,7 +2047,7 @@ export async function writeAuditLog(
     createdAt: getNow(context)
   };
 
-  await context.repo.saveAuditLog(log);
+  await repo.saveAuditLog(log);
   return log;
 }
 
@@ -1998,8 +2058,8 @@ async function completeSale(
 ): Promise<CompletedSale> {
   const parsed = completeSaleInputSchema.parse(input);
 
-  const result = await withTransaction(context, async () => {
-    const existingOrder = await context.repo.findOrderByIdempotencyKey(parsed.idempotencyKey);
+  const result = await withTransaction(context, async (repo) => {
+    const existingOrder = await repo.findOrderByIdempotencyKey(parsed.idempotencyKey);
     if (existingOrder) {
       return {
         order: existingOrder,
@@ -2009,16 +2069,21 @@ async function completeSale(
       };
     }
 
-    const order = await buildOrder(context, parsed, {
-      status: "PAID",
-      paymentStatus: "PAID"
-    });
+    const order = await buildOrder(
+      context,
+      parsed,
+      {
+        status: "PAID",
+        paymentStatus: "PAID"
+      },
+      repo
+    );
 
     if (parsed.paymentMethod === "cash" && (parsed.amountReceived ?? order.total) < order.total) {
       throw new CommerceError("INVALID_STATE", "Cash received is less than order total.");
     }
 
-    const movements = await decrementInventoryForOrder(context, actor, order);
+    const movements = await decrementInventoryForOrder(context, actor, order, {}, repo);
     const payment: Payment = {
       id: createId(context, "payment"),
       orderId: order.id,
@@ -2033,14 +2098,19 @@ async function completeSale(
       updatedAt: getNow(context)
     };
 
-    await context.repo.saveOrder(order);
-    await context.repo.savePayment(payment);
-    await writeAuditLog(context, actor, {
-      action: "orders.complete_sale",
-      entityType: "order",
-      entityId: order.id,
-      summary: `Completed ${order.channel} sale`
-    });
+    await repo.saveOrder(order);
+    await repo.savePayment(payment);
+    await writeAuditLog(
+      context,
+      actor,
+      {
+        action: "orders.complete_sale",
+        entityType: "order",
+        entityId: order.id,
+        summary: `Completed ${order.channel} sale`
+      },
+      repo
+    );
 
     return {
       order,
@@ -2064,9 +2134,10 @@ async function completeSale(
 async function buildOrder(
   context: CommerceContext,
   input: ParsedCreateOrderDraftInput,
-  state: Pick<Order, "status" | "paymentStatus">
+  state: Pick<Order, "status" | "paymentStatus">,
+  repo: CommerceRepository = context.repo
 ): Promise<Order> {
-  const items = await buildOrderItems(context, input.items);
+  const items = await buildOrderItems(context, input.items, repo);
   const subtotal = items.reduce((total, item) => total + item.unitPrice * item.quantity, 0);
   const discountTotal = items.reduce((total, item) => total + item.discountTotal, 0);
   const total = subtotal - discountTotal + input.deliveryTotal + input.taxTotal;
@@ -2103,19 +2174,20 @@ async function buildOrder(
 
 async function buildOrderItems(
   context: CommerceContext,
-  items: ParsedCreateOrderDraftInput["items"]
+  items: ParsedCreateOrderDraftInput["items"],
+  repo: CommerceRepository = context.repo
 ): Promise<OrderItem[]> {
   const result: OrderItem[] = [];
   // Resolved and snapshotted onto the order at creation time — same reason
   // productTitle/variantTitle/sku are snapshots rather than live joins: a
   // later product edit, media swap, or deletion must not change what a past
   // order shows.
-  const media = await context.repo.listMedia();
+  const media = await repo.listMedia();
   const mediaById = new Map(media.map((asset) => [asset.id, asset]));
 
   for (const item of items) {
-    const product = await requiredProduct(context, item.productId);
-    const variant = await requiredVariant(context, item.productId, item.variantId);
+    const product = await requiredProduct(context, item.productId, repo);
+    const variant = await requiredVariant(context, item.productId, item.variantId, repo);
     const grossLineTotal = variant.price * item.quantity;
 
     if (item.discountTotal > grossLineTotal) {
@@ -2147,13 +2219,19 @@ async function decrementInventoryForOrder(
   context: CommerceContext,
   actor: CommerceActor,
   order: Order,
-  options: { allowOversell?: boolean } = {}
+  options: { allowOversell?: boolean } = {},
+  repo: CommerceRepository = context.repo
 ) {
-  const movements: InventoryMovement[] = [];
-
+  // Firestore transactions require every read before any write, so the
+  // per-item read, validate, and write phases are kept fully separate here
+  // rather than interleaved in one loop.
+  const variants: ProductVariant[] = [];
   for (const item of order.items) {
-    const variant = await requiredVariant(context, item.productId, item.variantId);
+    variants.push(await requiredVariant(context, item.productId, item.variantId, repo));
+  }
 
+  for (const [index, item] of order.items.entries()) {
+    const variant = variants[index];
     if (!variant.trackInventory) {
       continue;
     }
@@ -2161,6 +2239,14 @@ async function decrementInventoryForOrder(
     const insufficientStock = variant.stockAvailable < item.quantity || variant.stockOnHand < item.quantity;
     if (insufficientStock && !options.allowOversell) {
       throw new CommerceError("OUT_OF_STOCK", `${variant.sku} does not have enough stock.`);
+    }
+  }
+
+  const movements: InventoryMovement[] = [];
+  for (const [index, item] of order.items.entries()) {
+    const variant = variants[index];
+    if (!variant.trackInventory) {
+      continue;
     }
 
     const stockOnHand = variant.stockOnHand - item.quantity;
@@ -2184,8 +2270,8 @@ async function decrementInventoryForOrder(
       createdAt: getNow(context)
     };
 
-    await context.repo.saveVariant(updatedVariant);
-    await context.repo.saveInventoryMovement(movement);
+    await repo.saveVariant(updatedVariant);
+    await repo.saveInventoryMovement(movement);
     movements.push(movement);
   }
 
@@ -2210,7 +2296,11 @@ async function assertCan(context: CommerceContext, actor: CommerceActor, permiss
  * app should go through this rather than the static `defaultRoles` array
  * directly, or a custom role silently grants nothing.
  */
-export async function getEffectiveRoles(context: CommerceContext, roleIds: string[]) {
+export async function getEffectiveRoles(
+  context: CommerceContext,
+  roleIds: string[],
+  repo: CommerceRepository = context.repo
+) {
   const roleMap = new Map<string, Role>();
 
   for (const role of [...defaultRoles, ...(context.roles ?? [])]) {
@@ -2219,7 +2309,7 @@ export async function getEffectiveRoles(context: CommerceContext, roleIds: strin
 
   for (const roleId of roleIds) {
     if (!roleMap.has(roleId)) {
-      const role = await context.repo.getRole(roleId);
+      const role = await repo.getRole(roleId);
       if (role) {
         roleMap.set(role.id, role);
       }
@@ -2229,8 +2319,8 @@ export async function getEffectiveRoles(context: CommerceContext, roleIds: strin
   return [...roleMap.values()];
 }
 
-async function requiredProduct(context: CommerceContext, id: string) {
-  const product = await context.repo.getProduct(id);
+async function requiredProduct(context: CommerceContext, id: string, repo: CommerceRepository = context.repo) {
+  const product = await repo.getProduct(id);
   if (!product) {
     throw new CommerceError("NOT_FOUND", `Product not found: ${id}`);
   }
@@ -2238,8 +2328,13 @@ async function requiredProduct(context: CommerceContext, id: string) {
   return product;
 }
 
-async function requiredVariant(context: CommerceContext, productId: string, variantId: string) {
-  const variant = await context.repo.getVariant(productId, variantId);
+async function requiredVariant(
+  context: CommerceContext,
+  productId: string,
+  variantId: string,
+  repo: CommerceRepository = context.repo
+) {
+  const variant = await repo.getVariant(productId, variantId);
   if (!variant) {
     throw new CommerceError("NOT_FOUND", `Variant not found: ${variantId}`);
   }
@@ -2320,6 +2415,6 @@ function parseMoneyMinorUnit(value: unknown, key: string) {
   return value;
 }
 
-function withTransaction<T>(context: CommerceContext, operation: () => Promise<T>) {
-  return (context.transaction ?? createNoopTransaction())(operation);
+function withTransaction<T>(context: CommerceContext, operation: (repo: CommerceRepository) => Promise<T>) {
+  return (context.transaction ?? createNoopTransaction(context.repo))(operation);
 }

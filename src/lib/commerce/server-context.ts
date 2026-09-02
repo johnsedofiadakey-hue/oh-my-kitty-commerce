@@ -10,6 +10,7 @@ export function getCommerceServerContext(): CommerceContext | null {
   }
 
   return {
-    repo: new FirestoreCommerceRepository(db)
+    repo: new FirestoreCommerceRepository(db),
+    transaction: (operation) => db.runTransaction((tx) => operation(new FirestoreCommerceRepository(db, tx)))
   };
 }
