@@ -102,7 +102,6 @@ export function PosSaleClient({
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [receipt, setReceipt] = useState<PosReceipt | null>(null);
-  const [openingCash, setOpeningCash] = useState("");
   const [closingCash, setClosingCash] = useState("");
   const [shiftBusy, setShiftBusy] = useState(false);
   const [shift, setShift] = useState<PosShiftState | null>(null);
@@ -182,12 +181,14 @@ export function PosSaleClient({
     setErrorMessage("");
 
     try {
+      // No manual "opening cash" entry anymore — shifts open silently in the
+      // background purely for cash-accountability reporting, so this is
+      // always 0. A real opening float still gets recorded via "Closing
+      // cash" at end of day, same as before.
       const response = await fetch("/api/pos/shift", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          openingCash: parseMoneyInput(openingCash) ?? 0
-        })
+        body: JSON.stringify({ openingCash: 0 })
       });
       const payload = (await response.json()) as {
         id?: string;
@@ -207,13 +208,26 @@ export function PosSaleClient({
       });
       setShiftSales({ count: 0, revenue: 0, cash: 0 });
       setRecentSales([]);
-      setOpeningCash("");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not open shift.");
     } finally {
       setShiftBusy(false);
     }
   }
+
+  // A shift opens automatically the moment one isn't already running — staff
+  // never manually "open" one. autoShiftAttempted guards against retry
+  // storms if it fails; it's reset after a successful close (see closeShift)
+  // and by the manual "Try again" fallback so a real failure isn't a dead end.
+  const autoShiftAttempted = useRef(false);
+
+  useEffect(() => {
+    if (source !== "live" || shift?.status === "OPEN" || shiftBusy || autoShiftAttempted.current) {
+      return;
+    }
+    autoShiftAttempted.current = true;
+    void openShift();
+  }, [source, shift, shiftBusy]);
 
   async function closeShift() {
     if (!shift) {
@@ -250,6 +264,9 @@ export function PosSaleClient({
         status: "CLOSED"
       });
       setClosingCash("");
+      // Let the auto-open effect immediately start a fresh shift rather than
+      // leaving staff on a dead "shift closed" screen until they refresh.
+      autoShiftAttempted.current = false;
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not close shift.");
     } finally {
@@ -633,8 +650,14 @@ export function PosSaleClient({
         ) : null}
         <section className="pos-shift-panel" aria-label="POS shift">
           <div className="pos-shift-heading">
-            <strong>{shift?.status === "OPEN" ? "Shift open" : "Open shift"}</strong>
-            <span>{shift?.id ?? "Required before sale"}</span>
+            <strong>
+              {shift?.status === "OPEN"
+                ? "Shift open"
+                : shiftBusy
+                  ? "Starting shift…"
+                  : "Shift"}
+            </strong>
+            <span>{shift?.id ?? "Tracked automatically"}</span>
           </div>
           {/* Opening/closing a shift can fail (permissions, network, a
               double-open), and errorMessage is shared with the checkout
@@ -681,23 +704,23 @@ export function PosSaleClient({
                   <small>Difference {formatMoney(shift.difference ?? 0)}</small>
                 </div>
               ) : null}
-              <label className="admin-field">
-                <span>Opening cash GHS</span>
-                <input
-                  inputMode="decimal"
-                  onChange={(event) => setOpeningCash(event.target.value)}
-                  placeholder="0.00"
-                  value={openingCash}
-                />
-              </label>
-              <button
-                className="pos-secondary-button"
-                disabled={source !== "live" || shiftBusy}
-                onClick={openShift}
-                type="button"
-              >
-                {shiftBusy ? "Opening" : "Open shift"}
-              </button>
+              {/* A shift opens automatically in the background (see the
+                  effect above) — staff never see or click an "Open shift"
+                  step. This only renders if that silent attempt actually
+                  failed, so there's still a way to recover instead of being
+                  stuck on a dead page. */}
+              {!shiftBusy && source === "live" && errorMessage ? (
+                <button
+                  className="pos-secondary-button"
+                  onClick={() => {
+                    autoShiftAttempted.current = false;
+                    void openShift();
+                  }}
+                  type="button"
+                >
+                  Try again
+                </button>
+              ) : null}
             </>
           )}
         </section>
