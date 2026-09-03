@@ -2026,16 +2026,29 @@ export async function deleteOrders(
 }
 
 /** Order/receipt lookup for POS — find a past sale by order number, customer name, or phone. */
-export async function searchOrders(context: CommerceContext, actor: CommerceActor, query: string) {
+export async function searchOrders(
+  context: CommerceContext,
+  actor: CommerceActor,
+  query: string,
+  options: { posShiftId?: string } = {}
+) {
   await assertCan(context, actor, "pos.receipts.view");
   const normalized = query.trim().toLowerCase();
-  if (!normalized) {
+  if (!normalized && !options.posShiftId) {
     return [];
   }
 
   const orders = await context.repo.listOrders();
   return orders
     .filter((order) => {
+      if (options.posShiftId && order.posShiftId !== options.posShiftId) {
+        return false;
+      }
+
+      if (!normalized) {
+        return true;
+      }
+
       const haystack = [order.orderNumber, order.customerSnapshot?.name, order.customerSnapshot?.phone]
         .filter((value): value is string => Boolean(value))
         .join(" ")
@@ -2043,7 +2056,20 @@ export async function searchOrders(context: CommerceContext, actor: CommerceActo
 
       return haystack.includes(normalized);
     })
+    .sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
     .slice(0, 15);
+}
+
+function toMillis(value: unknown): number {
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+
+  if (value && typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
+    return (value as { toDate: () => Date }).toDate().getTime();
+  }
+
+  return 0;
 }
 
 /**

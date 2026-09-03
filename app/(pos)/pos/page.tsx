@@ -17,10 +17,14 @@ export default async function PosPage() {
   const context = getCommerceServerContext();
   const roles = context ? await getEffectiveRoles(context, actor.roleIds) : [];
   const canViewOrders = hasPermission(roles, actor, "orders.view");
+  const canRefund = hasPermission(roles, actor, "pos.refund");
+  const canVoid = hasPermission(roles, actor, "pos.void");
 
   return (
     <PosSaleClient
+      canRefund={canRefund}
       canViewOrders={canViewOrders}
+      canVoid={canVoid}
       products={products}
       source={catalogue.source}
       sourceMessage={catalogue.sourceMessage}

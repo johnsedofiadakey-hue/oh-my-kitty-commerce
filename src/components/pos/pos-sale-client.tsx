@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
-import Link from "next/link";
 import { formatMoney } from "@/lib/commerce/format";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 import {
@@ -11,12 +10,13 @@ import {
   replayPendingSales,
   type PendingAction
 } from "@/lib/pos/offline-queue";
-import { PosRecentSales, type RecentPosSale } from "@/components/pos/pos-reversal-panel";
-import { PosOrderLookup } from "@/components/pos/pos-order-lookup";
+import { PosOrdersPanel } from "@/components/pos/pos-orders-panel";
 import { AdminSignOutButton } from "@/components/auth/admin-sign-out-button";
 
 type PosSaleClientProps = {
+  canRefund: boolean;
   canViewOrders: boolean;
+  canVoid: boolean;
   products: StorefrontProductView[];
   source: "live" | "sample";
   sourceMessage?: string;
@@ -77,7 +77,9 @@ function getServerOnlineSnapshot() {
 }
 
 export function PosSaleClient({
+  canRefund,
   canViewOrders,
+  canVoid,
   products,
   source,
   sourceMessage,
@@ -102,10 +104,10 @@ export function PosSaleClient({
   const [receipt, setReceipt] = useState<PosReceipt | null>(null);
   const [shiftBusy, setShiftBusy] = useState(false);
   const [shift, setShift] = useState<PosShiftState | null>(null);
-  const [recentSales, setRecentSales] = useState<RecentPosSale[]>([]);
   const [pendingSales, setPendingSales] = useState<PendingAction[]>([]);
   const isOnline = useSyncExternalStore(subscribeToOnlineStatus, getOnlineSnapshot, getServerOnlineSnapshot);
   const [cartSheetOpen, setCartSheetOpen] = useState(false);
+  const [ordersOpen, setOrdersOpen] = useState(false);
   const canSell = source === "live" && shift?.status === "OPEN";
   const pendingCount = pendingSales.filter((sale) => sale.status === "pending").length;
   const failedSales = pendingSales.filter((sale) => sale.status === "failed");
@@ -201,7 +203,6 @@ export function PosSaleClient({
         openingCash: payload.openingCash ?? 0,
         status: "OPEN"
       });
-      setRecentSales([]);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Could not open shift.");
     } finally {
@@ -239,18 +240,23 @@ export function PosSaleClient({
     });
   }
 
-  function handleReversed(orderId: string, mode: "REFUND" | "VOID") {
-    setRecentSales((current) =>
-      current.map((sale) => (sale.orderId === orderId ? { ...sale, reversed: mode } : sale))
-    );
-  }
-
   function setQuantity(variantId: string, quantity: number) {
     setCart((current) =>
       current
         .map((line) => (line.variantId === variantId ? { ...line, quantity } : line))
         .filter((line) => line.quantity > 0)
     );
+  }
+
+  // Every field a fresh sale should start blank on — reused by both the
+  // post-sale reset and the manual "Clear cart" action, so a misring never
+  // leaves stale customer/promo/cash-tendered fields behind either way.
+  function clearCart() {
+    setCart([]);
+    setCustomerName("");
+    setCustomerPhone("");
+    setPromoCode("");
+    setCashReceived("");
   }
 
   function stopMomoPolling() {
@@ -269,10 +275,7 @@ export function PosSaleClient({
     setMomoElapsedMs(0);
     setMomoReference(null);
     setReceipt({ changeDue: 0, orderId, orderNumber, total, pending: false });
-    setRecentSales((current) => [{ orderId, orderNumber, total }, ...current].slice(0, 8));
-    setCart([]);
-    setCustomerName("");
-    setCustomerPhone("");
+    clearCart();
   }
 
   async function cancelMomoCharge(reference: string | null) {
@@ -437,14 +440,7 @@ export function PosSaleClient({
 
     function settleLocally(orderId: string | null, orderNumber: string | null, total: number, pending: boolean) {
       setReceipt({ changeDue, orderId, orderNumber, total, pending });
-      if (orderId && orderNumber) {
-        setRecentSales((current) => [{ orderId, orderNumber, total }, ...current].slice(0, 8));
-      }
-      setCart([]);
-      setCashReceived("");
-      setCustomerName("");
-      setCustomerPhone("");
-      setPromoCode("");
+      clearCart();
     }
 
     try {
@@ -496,9 +492,9 @@ export function PosSaleClient({
           </div>
           {canViewOrders ? (
             <div className="page-heading-actions">
-              <Link className="admin-action ghost" href="/admin/orders">
+              <button className="admin-action ghost" onClick={() => setOrdersOpen(true)} type="button">
                 Orders
-              </Link>
+              </button>
             </div>
           ) : null}
         </div>
@@ -562,7 +558,22 @@ export function PosSaleClient({
         className={cartSheetOpen ? "pos-cart open" : "pos-cart"}
       >
         <div className="pos-cart-heading">
-          <h2 className="app-title">Cart</h2>
+          <div className="pos-cart-heading-title">
+            <h2 className="app-title">Cart</h2>
+            {cart.length > 0 ? (
+              <button
+                className="pos-clear-cart-button"
+                onClick={() => {
+                  if (window.confirm(`Clear all ${cart.length} item${cart.length === 1 ? "" : "s"} from the cart?`)) {
+                    clearCart();
+                  }
+                }}
+                type="button"
+              >
+                Clear
+              </button>
+            ) : null}
+          </div>
           <div className="pos-connection-status">
             <span className={isOnline ? "status-pill online" : "status-pill offline"}>
               {isOnline ? "Online" : "Offline"}
@@ -608,8 +619,6 @@ export function PosSaleClient({
             </button>
           </section>
         ) : null}
-        <PosRecentSales onReversed={handleReversed} sales={recentSales} />
-        <PosOrderLookup />
         {receipt ? (
           <div className={receipt.pending ? "pos-receipt pending" : "pos-receipt"} role="status">
             <span>{receipt.pending ? "Saved offline" : "Receipt"}</span>
@@ -769,6 +778,14 @@ export function PosSaleClient({
           </button>
         </form>
       </aside>
+      <PosOrdersPanel
+        canRefund={canRefund}
+        canViewOrders={canViewOrders}
+        canVoid={canVoid}
+        onClose={() => setOrdersOpen(false)}
+        open={ordersOpen}
+        shiftId={shift?.id ?? null}
+      />
     </>
   );
 }

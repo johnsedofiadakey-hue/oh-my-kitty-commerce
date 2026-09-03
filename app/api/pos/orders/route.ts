@@ -11,9 +11,11 @@ export async function GET(request: Request) {
       throw new CommerceError("INVALID_STATE", "Firebase Admin is not configured yet.");
     }
 
-    const query = new URL(request.url).searchParams.get("q") ?? "";
+    const url = new URL(request.url);
+    const query = url.searchParams.get("q") ?? "";
+    const shiftId = url.searchParams.get("shiftId") ?? undefined;
     const actor = await getRequiredPosActor();
-    const orders = await searchOrders(context, actor, query);
+    const orders = await searchOrders(context, actor, query, { posShiftId: shiftId });
 
     return NextResponse.json({
       orders: orders.map((order) => ({
