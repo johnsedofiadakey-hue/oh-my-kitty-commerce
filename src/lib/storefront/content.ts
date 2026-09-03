@@ -48,6 +48,11 @@ export const CONTENT_REGISTRY = {
     group: "SMS templates",
     defaultValue: "Oh My Kitty: Order {orderNumber} is out for delivery! Track: {trackingLink}"
   },
+  "sms-pos-completed-template": {
+    label: "SMS: in-store (POS) sale complete (placeholders: {orderNumber}, {total})",
+    group: "SMS templates",
+    defaultValue: "Oh My Kitty: Thank you for shopping with us! Your order {orderNumber} ({total}) is complete — we hope you love it."
+  },
   "shop-closed": {
     label: "Shop status (takes up to 30s to apply)",
     group: "Storefront",

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { formatMoney } from "@/lib/commerce/format";
+import { formatMoney, formatPaymentMethod } from "@/lib/commerce/format";
 import { PosReversalForm, type ReversalMode } from "@/components/pos/pos-reversal-panel";
 
 type PosOrderSummary = {
@@ -12,6 +12,7 @@ type PosOrderSummary = {
   paymentStatus: string;
   status: string;
   customerName: string | null;
+  paymentMethod: string | null;
 };
 
 type ReversedAs = "REFUND" | "VOID" | null;
@@ -228,7 +229,10 @@ function OrderList({
             {reversed ? (
               <span className="status danger">{reversed === "REFUND" ? "Refunded" : "Voided"}</span>
             ) : (
-              <span>{formatMoney(order.total)}</span>
+              <div className="pos-order-row-amount">
+                <span>{formatMoney(order.total)}</span>
+                {order.paymentMethod ? <small>{formatPaymentMethod(order.paymentMethod)}</small> : null}
+              </div>
             )}
           </button>
         );
@@ -264,7 +268,10 @@ function OrderDetail({
       <div className="pos-order-detail-summary">
         <strong>{order.orderNumber}</strong>
         <span>{order.customerName ?? "Walk-in customer"}</span>
-        <span>{formatMoney(order.total)}</span>
+        <span>
+          {formatMoney(order.total)}
+          {order.paymentMethod ? ` · ${formatPaymentMethod(order.paymentMethod)}` : ""}
+        </span>
         {reversed ? (
           <span className="status danger">{reversed === "REFUND" ? "Refunded" : "Voided"}</span>
         ) : null}

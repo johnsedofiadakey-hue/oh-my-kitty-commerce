@@ -15,7 +15,11 @@ export async function GET(request: Request) {
     const query = url.searchParams.get("q") ?? "";
     const shiftId = url.searchParams.get("shiftId") ?? undefined;
     const actor = await getRequiredPosActor();
-    const orders = await searchOrders(context, actor, query, { posShiftId: shiftId });
+    const [orders, payments] = await Promise.all([
+      searchOrders(context, actor, query, { posShiftId: shiftId }),
+      context.repo.listPayments()
+    ]);
+    const paymentByOrderId = new Map(payments.map((payment) => [payment.orderId, payment]));
 
     return NextResponse.json({
       orders: orders.map((order) => ({
@@ -26,7 +30,8 @@ export async function GET(request: Request) {
         paymentStatus: order.paymentStatus,
         fulfilmentStatus: order.fulfilmentStatus,
         total: order.total,
-        customerName: order.customerSnapshot?.name ?? null
+        customerName: order.customerSnapshot?.name ?? null,
+        paymentMethod: paymentByOrderId.get(order.id)?.method ?? null
       }))
     });
   } catch (error) {

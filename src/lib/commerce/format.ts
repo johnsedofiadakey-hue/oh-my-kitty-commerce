@@ -28,10 +28,21 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   PARTIALLY_REFUNDED: "Partially refunded"
 };
 
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cash: "Cash",
+  mobile_money: "Mobile Money",
+  card: "Card",
+  manual_transfer: "Bank Transfer"
+};
+
 export function formatFulfilmentStatus(status: string) {
   return FULFILMENT_STATUS_LABELS[status] ?? status.replaceAll("_", " ");
 }
 
 export function formatPaymentStatus(status: string) {
   return PAYMENT_STATUS_LABELS[status] ?? status.replaceAll("_", " ");
+}
+
+export function formatPaymentMethod(method: string) {
+  return PAYMENT_METHOD_LABELS[method] ?? method.replaceAll("_", " ");
 }

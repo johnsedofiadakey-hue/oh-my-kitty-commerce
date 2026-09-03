@@ -7,7 +7,7 @@ import {
   getOrderCustomerName,
   toSortableMillis
 } from "@/lib/admin/operations-data";
-import { formatFulfilmentStatus, formatPaymentStatus } from "@/lib/commerce/format";
+import { formatFulfilmentStatus, formatPaymentMethod, formatPaymentStatus } from "@/lib/commerce/format";
 import { requireAdminPermission } from "@/lib/auth/server";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { InlineStatusSelect } from "@/components/admin/inline-status-select";
@@ -157,7 +157,7 @@ function OrderRow({
   canDelete: boolean;
   queuePosition?: number;
 }) {
-  const { order } = row;
+  const { order, payment } = row;
 
   return (
     <div className="order-row">
@@ -181,7 +181,10 @@ function OrderRow({
               <strong>{order.orderNumber}</strong>
               <span>{getOrderCustomerName(order)}</span>
             </div>
-            <span className="order-row-channel">{order.channel.replace("_", " ")}</span>
+            <span className="order-row-channel">
+              {order.channel.replace("_", " ")}
+              {payment ? ` · ${formatPaymentMethod(payment.method)}` : ""}
+            </span>
             <StatusPill kind="payment" value={order.paymentStatus} />
           </div>
         }

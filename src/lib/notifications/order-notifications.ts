@@ -5,7 +5,7 @@ import { isArkeselConfigured, sendSms } from "@/lib/notifications/arkesel";
 import { serverEnv } from "@/lib/env/server";
 import { signOrderFulfilToken } from "@/lib/admin/quick-action-token";
 
-export type OrderNotificationEvent = "CONFIRMED" | "READY_FOR_PICKUP" | "OUT_FOR_DELIVERY";
+export type OrderNotificationEvent = "CONFIRMED" | "READY_FOR_PICKUP" | "OUT_FOR_DELIVERY" | "POS_COMPLETED";
 
 /**
  * Best-effort SMS on key order events. Never throws — a notification
@@ -71,7 +71,11 @@ export async function notifyAdminOfNewOrder(order: Order): Promise<void> {
  */
 async function buildMessage(order: Order, event: OrderNotificationEvent): Promise<string> {
   const trackingLink = buildTrackingLink(order.orderNumber);
-  const placeholders: Record<string, string> = { orderNumber: order.orderNumber, trackingLink };
+  const placeholders: Record<string, string> = {
+    orderNumber: order.orderNumber,
+    trackingLink,
+    total: formatMoney(order.total)
+  };
 
   switch (event) {
     case "CONFIRMED": {
@@ -87,6 +91,10 @@ async function buildMessage(order: Order, event: OrderNotificationEvent): Promis
     }
     case "OUT_FOR_DELIVERY": {
       const template = await getContentValue("sms-out-for-delivery-template");
+      return fillTemplate(template, placeholders);
+    }
+    case "POS_COMPLETED": {
+      const template = await getContentValue("sms-pos-completed-template");
       return fillTemplate(template, placeholders);
     }
   }

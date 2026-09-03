@@ -1702,7 +1702,15 @@ export async function confirmPaystackPayment(
       return { order, payment, inventoryMovements: [], alreadyConfirmed: true };
     }
 
-    const updatedOrder: Order = { ...order, status: "PAID", paymentStatus: "PAID" };
+    const updatedOrder: Order = {
+      ...order,
+      status: "PAID",
+      paymentStatus: "PAID",
+      // This path also confirms POS mobile-money charges (shared with the
+      // online Paystack webhook/callback) — a confirmed POS momo sale is
+      // just as much "handed over at the counter" as a cash one.
+      fulfilmentStatus: order.channel === "POS" ? "FULFILLED" : order.fulfilmentStatus
+    };
     // allowOversell: the customer's money has already moved at Paystack by
     // this point — refusing to confirm the order over a stock shortfall
     // doesn't protect anything, it just leaves a paid customer with no
@@ -1740,7 +1748,7 @@ export async function confirmPaystackPayment(
   });
 
   if (!result.alreadyConfirmed) {
-    void notifyOrderEvent(result.order, "CONFIRMED");
+    void notifyOrderEvent(result.order, result.order.channel === "POS" ? "POS_COMPLETED" : "CONFIRMED");
     void notifyAdminOfNewOrder(result.order);
     if (result.order.promotionId) {
       void redeemPromotion(context, result.order.promotionId);
@@ -2185,7 +2193,7 @@ async function completeSale(
   });
 
   if (!result.idempotent) {
-    void notifyOrderEvent(result.order, "CONFIRMED");
+    void notifyOrderEvent(result.order, result.order.channel === "POS" ? "POS_COMPLETED" : "CONFIRMED");
     void notifyAdminOfNewOrder(result.order);
     if (result.order.promotionId) {
       void redeemPromotion(context, result.order.promotionId);
@@ -2216,7 +2224,12 @@ async function buildOrder(
     channel: input.channel,
     status: state.status,
     paymentStatus: state.paymentStatus,
-    fulfilmentStatus: "UNFULFILLED",
+    // A POS sale is handed to the customer at the counter the moment it's
+    // paid — there's nothing left to fulfil. Only branches once payment has
+    // actually cleared; a still-pending POS momo charge stays UNFULFILLED
+    // until confirmPaystackPayment marks it paid (see the matching branch
+    // there for that path).
+    fulfilmentStatus: input.channel === "POS" && state.paymentStatus === "PAID" ? "FULFILLED" : "UNFULFILLED",
     customerId: input.customerId ?? null,
     customerSnapshot: input.customerSnapshot ?? null,
     items,
