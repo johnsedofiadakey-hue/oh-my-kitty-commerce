@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true, confirmed: false });
   }
 
-  await confirmPaystackPayment(context, { orderId, providerReference: reference });
+  await confirmPaystackPayment(context, { orderId, providerReference: reference, channel: verified.channel });
 
   return NextResponse.json({ received: true, confirmed: true });
 }

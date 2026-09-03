@@ -78,6 +78,7 @@ import type {
   Order,
   OrderItem,
   Payment,
+  PaymentMethod,
   Product,
   ProductType,
   ProductVariant,
@@ -1682,7 +1683,7 @@ export async function createPendingOnlineOrder(
  */
 export async function confirmPaystackPayment(
   context: CommerceContext,
-  input: { orderId: string; providerReference: string }
+  input: { orderId: string; providerReference: string; channel?: string | null }
 ) {
   const actor = systemActor("paystack-webhook");
 
@@ -1726,6 +1727,11 @@ export async function confirmPaystackPayment(
     const updatedPayment: Payment = {
       ...payment,
       status: "PAID",
+      // The pending order was created before the customer picked a channel
+      // on Paystack's unified checkout — it's provisionally "card" until
+      // now. Correct it to what Paystack actually reports they paid with,
+      // so the recorded method matches reality rather than the guess.
+      method: paystackChannelToPaymentMethod(input.channel) ?? payment.method,
       providerReference: input.providerReference,
       updatedAt: getNow(context)
     };
@@ -2430,6 +2436,21 @@ function requiredEntity<T extends { id: string }>(entities: T[], id: string, lab
   }
 
   return entity;
+}
+
+/** Maps Paystack's reported `channel` (card, mobile_money, bank_transfer, ussd, qr, ...) onto our own PaymentMethod union. Unknown/unmapped channels return null so the caller can fall back to whatever was already recorded rather than overwriting it with a guess. */
+function paystackChannelToPaymentMethod(channel: string | null | undefined): PaymentMethod | null {
+  switch (channel) {
+    case "card":
+      return "card";
+    case "mobile_money":
+      return "mobile_money";
+    case "bank_transfer":
+    case "bank":
+      return "manual_transfer";
+    default:
+      return null;
+  }
 }
 
 function movementTypeForChannel(channel: SalesChannel): InventoryMovementType {

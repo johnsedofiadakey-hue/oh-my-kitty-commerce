@@ -107,7 +107,8 @@ async function resolvePayment(reference: string | undefined): Promise<ResolvedPa
 
     const confirmed = await confirmPaystackPayment(context, {
       orderId: order.id,
-      providerReference: reference
+      providerReference: reference,
+      channel: verified.channel
     });
 
     return { state: "success", orderNumber: confirmed.order.orderNumber, total: confirmed.order.total };

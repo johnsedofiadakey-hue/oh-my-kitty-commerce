@@ -4,6 +4,8 @@ import { isPaystackConfigured } from "@/lib/payments/paystack";
 import { requireAdminPermission } from "@/lib/auth/server";
 import { updateStoreSettingsAction } from "./actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminSettingsPage() {
   await requireAdminPermission("settings.view");
   const context = getCommerceServerContext();

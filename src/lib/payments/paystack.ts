@@ -15,6 +15,7 @@ export type PaystackVerifyResult = {
   amount: number;
   currency: string;
   paidAt: string | null;
+  channel: string | null;
 };
 
 export function isPaystackConfigured() {
@@ -169,7 +170,14 @@ export async function verifyPaystackTransaction(reference: string): Promise<Pays
   const payload = (await response.json()) as {
     status: boolean;
     message: string;
-    data?: { status: string; amount: number; currency: string; reference: string; paid_at: string | null };
+    data?: {
+      status: string;
+      amount: number;
+      currency: string;
+      reference: string;
+      paid_at: string | null;
+      channel?: string | null;
+    };
   };
 
   if (!response.ok || !payload.status || !payload.data) {
@@ -185,7 +193,8 @@ export async function verifyPaystackTransaction(reference: string): Promise<Pays
         : "unknown",
     amount: payload.data.amount,
     currency: payload.data.currency,
-    paidAt: payload.data.paid_at
+    paidAt: payload.data.paid_at,
+    channel: payload.data.channel ?? null
   };
 }
 
