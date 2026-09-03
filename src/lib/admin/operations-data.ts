@@ -16,6 +16,7 @@ import type {
   DeliveryRule,
   InventoryMovement,
   MediaAsset,
+  NotificationLog,
   Order,
   Payment,
   PosShift,
@@ -66,6 +67,7 @@ export type AdminOperationsData = {
   deliveryRules: DeliveryRule[];
   posShifts: PosShift[];
   auditLogs: AuditLog[];
+  notificationLogs: NotificationLog[];
   orderRows: AdminOrderRow[];
   inventoryRows: AdminInventoryRow[];
   channelTotals: AdminChannelTotal[];
@@ -103,7 +105,8 @@ export const getAdminOperationsData = cache(async (): Promise<AdminOperationsDat
       promotions,
       deliveryRules,
       posShifts,
-      auditLogs
+      auditLogs,
+      notificationLogs
     ] = await Promise.all([
       context.repo.listCustomers(),
       context.repo.listMedia(),
@@ -112,7 +115,8 @@ export const getAdminOperationsData = cache(async (): Promise<AdminOperationsDat
       context.repo.listPromotions(),
       context.repo.listDeliveryRules(),
       context.repo.listPosShifts(),
-      context.repo.listAuditLogs()
+      context.repo.listAuditLogs(),
+      context.repo.listNotificationLogs()
     ]);
     const inventoryMovements = await context.repo.listAllInventoryMovements();
 
@@ -122,6 +126,7 @@ export const getAdminOperationsData = cache(async (): Promise<AdminOperationsDat
       deliveryRules,
       inventoryMovements,
       media,
+      notificationLogs,
       orders,
       payments,
       posShifts,
@@ -152,6 +157,7 @@ function sampleOperationsData(sourceMessage: string): AdminOperationsData {
     deliveryRules: adminData.deliveryRules,
     inventoryMovements: adminData.inventoryMovements,
     media: adminData.media,
+    notificationLogs: adminData.notificationLogs,
     orders: adminData.orders,
     payments: adminData.payments,
     posShifts: adminData.posShifts,
@@ -177,6 +183,7 @@ function buildOperationsData(input: {
   deliveryRules: DeliveryRule[];
   posShifts: PosShift[];
   auditLogs: AuditLog[];
+  notificationLogs: NotificationLog[];
 }): AdminOperationsData {
   const inventoryRows = input.variants.map((variant) => {
     const product = input.products.find((entry) => entry.id === variant.productId) ?? null;

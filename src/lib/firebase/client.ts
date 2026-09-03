@@ -2,6 +2,7 @@ import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { connectAuthEmulator, getAuth, type Auth } from "firebase/auth";
 import { connectFirestoreEmulator, getFirestore, type Firestore } from "firebase/firestore";
 import { connectStorageEmulator, getStorage, type FirebaseStorage } from "firebase/storage";
+import { getMessaging, type Messaging } from "firebase/messaging";
 import {
   getFirebasePublicConfig,
   hasFirebasePublicConfig,
@@ -54,6 +55,21 @@ export function getClientStorage(): FirebaseStorage | null {
   const storage = getStorage(app);
   connectClientEmulators(undefined, undefined, storage);
   return storage;
+}
+
+/**
+ * Unlike Auth/Firestore/Storage above, `getMessaging()` throws outside a
+ * real browser (no `window`/`navigator.serviceWorker`) rather than just
+ * returning a client that fails on use — so this guards explicitly instead
+ * of relying on the usual "no app configured" null check alone.
+ */
+export function getClientMessaging(): Messaging | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const app = getFirebaseClientApp();
+  return app ? getMessaging(app) : null;
 }
 
 /**

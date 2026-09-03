@@ -7,6 +7,7 @@ import {
   sampleDeliveryRules,
   sampleInventoryMovements,
   sampleMedia,
+  sampleNotificationLogs,
   sampleOrders,
   samplePayments,
   samplePosShifts,
@@ -39,7 +40,8 @@ export const adminData = {
   posShifts: samplePosShifts,
   users: sampleUsers,
   roles: sampleRoles,
-  auditLogs: sampleAuditLogs
+  auditLogs: sampleAuditLogs,
+  notificationLogs: sampleNotificationLogs
 };
 
 export function getProductVariantRows() {

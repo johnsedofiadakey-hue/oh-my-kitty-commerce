@@ -1,6 +1,7 @@
 import { applicationDefault, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
+import { getMessaging, type Messaging } from "firebase-admin/messaging";
 import { getStorage, type Storage } from "firebase-admin/storage";
 import { publicEnv } from "@/lib/env/public";
 import { isProductionAppEnv, serverEnv } from "@/lib/env/server";
@@ -43,4 +44,9 @@ export function getAdminFirestore(): Firestore | null {
 export function getAdminStorage(): Storage | null {
   const app = getFirebaseAdminApp();
   return app ? getStorage(app) : null;
+}
+
+export function getAdminMessaging(): Messaging | null {
+  const app = getFirebaseAdminApp();
+  return app ? getMessaging(app) : null;
 }

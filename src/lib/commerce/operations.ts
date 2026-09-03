@@ -7,6 +7,7 @@ import {
   type UserAccess
 } from "@/lib/permissions/permissions";
 import { CommerceError } from "@/lib/commerce/errors";
+import { formatMoney } from "@/lib/commerce/format";
 import type { CommerceRepository, CommerceTransaction } from "@/lib/commerce/repository";
 import { createNoopTransaction } from "@/lib/commerce/repository";
 import {
@@ -75,6 +76,7 @@ import type {
   InventoryMovement,
   InventoryMovementType,
   MediaAsset,
+  NotificationLog,
   Order,
   OrderItem,
   Payment,
@@ -83,6 +85,8 @@ import type {
   ProductType,
   ProductVariant,
   Promotion,
+  PushSubscription,
+  PushSubscriptionPlatform,
   RawMaterial,
   RecipeItem,
   Routine,
@@ -90,7 +94,9 @@ import type {
   StaffUser,
   StoreSettings
 } from "@/lib/commerce/types";
-import { notifyAdminOfNewOrder, notifyOrderEvent } from "@/lib/notifications/order-notifications";
+import { notifyAdminOfNewOrder, notifyOrderEvent, summarizeItems } from "@/lib/notifications/order-notifications";
+import { getAdminMessaging } from "@/lib/firebase/server";
+import type { BatchResponse } from "firebase-admin/messaging";
 
 export type CommerceActor = UserAccess & {
   system?: boolean;
@@ -1756,6 +1762,7 @@ export async function confirmPaystackPayment(
   if (!result.alreadyConfirmed) {
     void notifyOrderEvent(result.order, result.order.channel === "POS" ? "POS_COMPLETED" : "CONFIRMED");
     void notifyAdminOfNewOrder(result.order);
+    void sendNewOrderPush(context, result.order);
     if (result.order.promotionId) {
       void redeemPromotion(context, result.order.promotionId);
     }
@@ -2129,6 +2136,142 @@ export async function writeAuditLog(
   return log;
 }
 
+export async function recordNewOrderNotification(
+  context: CommerceContext,
+  order: Order
+): Promise<NotificationLog> {
+  const customerName = order.customerSnapshot?.name ?? "a customer";
+  const log: NotificationLog = {
+    id: createId(context, "notif"),
+    type: "NEW_ONLINE_ORDER",
+    title: `New order ${order.orderNumber}`,
+    body: `${customerName} — ${summarizeItems(order.items)}. Total ${formatMoney(order.total)}.`,
+    entityType: "order",
+    entityId: order.id,
+    entityRef: order.orderNumber,
+    acknowledged: false,
+    createdAt: getNow(context)
+  };
+
+  await context.repo.saveNotificationLog(log);
+  return log;
+}
+
+/**
+ * Real-time Chrome push (desktop + Android) to every active, POS-enabled
+ * staff member when a customer places an order on the website. The owner
+ * already gets an SMS for this via notifyAdminOfNewOrder and isn't part of
+ * this audience. Same never-throws, fire-and-forget contract as
+ * notifyOrderEvent — never `await` this from a request handler.
+ */
+export async function sendNewOrderPush(context: CommerceContext, order: Order): Promise<void> {
+  if (order.channel !== "ONLINE") {
+    return;
+  }
+
+  try {
+    const log = await recordNewOrderNotification(context, order);
+
+    const [staff, subscriptions] = await Promise.all([
+      context.repo.listStaffUsers(),
+      context.repo.listPushSubscriptions()
+    ]);
+    const eligibleStaffIds = new Set(
+      staff
+        .filter((member) => member.status === "ACTIVE" && member.posEnabled === true)
+        .map((member) => member.id)
+    );
+    const tokens = subscriptions
+      .filter((subscription) => eligibleStaffIds.has(subscription.staffId))
+      .map((subscription) => subscription.token);
+
+    if (tokens.length === 0) {
+      return;
+    }
+
+    const messaging = getAdminMessaging();
+    if (!messaging) {
+      return;
+    }
+
+    const response = await messaging.sendEachForMulticast({
+      tokens,
+      notification: { title: log.title, body: log.body },
+      data: { url: "/admin/notifications", notificationId: log.id, orderId: order.id },
+      webpush: { fcmOptions: { link: "/admin/notifications" } }
+    });
+
+    await pruneDeadTokens(context, tokens, response);
+  } catch (error) {
+    console.error(`New-order push failed for order ${order.orderNumber}:`, error);
+  }
+}
+
+/** FCM reports per-token delivery failures rather than throwing — a token the OS/browser has revoked comes back as one of these two error codes and is safe to forget. */
+async function pruneDeadTokens(context: CommerceContext, tokens: string[], response: BatchResponse) {
+  const deadTokens = response.responses
+    .map((result, index) => ({ result, token: tokens[index] }))
+    .filter(
+      ({ result }) =>
+        !result.success &&
+        (result.error?.code === "messaging/registration-token-not-registered" ||
+          result.error?.code === "messaging/invalid-registration-token")
+    )
+    .map(({ token }) => token);
+
+  await Promise.all(deadTokens.map((token) => context.repo.deletePushSubscription(token)));
+}
+
+export type RegisterPushSubscriptionInput = {
+  token: string;
+  platform: PushSubscriptionPlatform;
+  userAgent: string;
+};
+
+/** Idempotent by design — re-registering the same device (token) just refreshes lastSeenAt rather than creating a duplicate row. No permission gate: any authenticated staff/admin actor registers their own device for their own alerts. */
+export async function registerPushSubscription(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: RegisterPushSubscriptionInput
+): Promise<void> {
+  const now = getNow(context);
+  const subscription: PushSubscription = {
+    id: input.token,
+    token: input.token,
+    staffId: actor.uid,
+    platform: input.platform,
+    userAgent: input.userAgent,
+    createdAt: now,
+    lastSeenAt: now
+  };
+
+  await context.repo.savePushSubscription(subscription);
+}
+
+export async function acknowledgeNotificationLog(
+  context: CommerceContext,
+  actor: CommerceActor,
+  id: string
+): Promise<NotificationLog> {
+  await assertCan(context, actor, "notifications.acknowledge");
+
+  const logs = await context.repo.listNotificationLogs();
+  const log = logs.find((entry) => entry.id === id);
+  if (!log) {
+    throw new CommerceError("NOT_FOUND", "Notification not found.");
+  }
+
+  const updated: NotificationLog = {
+    ...log,
+    acknowledged: true,
+    acknowledgedBy: actor.uid,
+    acknowledgedAt: getNow(context)
+  };
+
+  await context.repo.saveNotificationLog(updated);
+  return updated;
+}
+
 async function completeSale(
   context: CommerceContext,
   actor: CommerceActor,
@@ -2201,6 +2344,7 @@ async function completeSale(
   if (!result.idempotent) {
     void notifyOrderEvent(result.order, result.order.channel === "POS" ? "POS_COMPLETED" : "CONFIRMED");
     void notifyAdminOfNewOrder(result.order);
+    void sendNewOrderPush(context, result.order);
     if (result.order.promotionId) {
       void redeemPromotion(context, result.order.promotionId);
     }

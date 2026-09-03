@@ -11,6 +11,7 @@ import type {
   DeliveryRule,
   InventoryMovement,
   MediaAsset,
+  NotificationLog,
   Order,
   Payment,
   PosShift,
@@ -18,6 +19,7 @@ import type {
   ProductType,
   ProductVariant,
   Promotion,
+  PushSubscription,
   RawMaterial,
   Routine,
   StaffUser,
@@ -435,6 +437,37 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     this.rejectIfTransactional("listAuditLogs");
     const snapshot = await this.db.collection("auditLogs").get();
     return snapshot.docs.map((doc) => readDoc<AuditLog>(doc)).filter(isDefined);
+  }
+
+  async savePushSubscription(subscription: PushSubscription) {
+    this.rejectIfTransactional("savePushSubscription");
+    await this.db.collection("pushSubscriptions").doc(subscription.id).set(cleanFirestoreData(subscription), {
+      merge: true
+    });
+  }
+
+  async listPushSubscriptions() {
+    this.rejectIfTransactional("listPushSubscriptions");
+    const snapshot = await this.db.collection("pushSubscriptions").get();
+    return snapshot.docs.map((doc) => readDoc<PushSubscription>(doc)).filter(isDefined);
+  }
+
+  async deletePushSubscription(id: string) {
+    this.rejectIfTransactional("deletePushSubscription");
+    await this.db.collection("pushSubscriptions").doc(id).delete();
+  }
+
+  async saveNotificationLog(log: NotificationLog) {
+    this.rejectIfTransactional("saveNotificationLog");
+    await this.db.collection("notificationLogs").doc(log.id).set(cleanFirestoreData(log), {
+      merge: true
+    });
+  }
+
+  async listNotificationLogs() {
+    this.rejectIfTransactional("listNotificationLogs");
+    const snapshot = await this.db.collection("notificationLogs").orderBy("createdAt", "desc").limit(100).get();
+    return snapshot.docs.map((doc) => readDoc<NotificationLog>(doc)).filter(isDefined);
   }
 
   private variantCollection(productId: string) {

@@ -371,6 +371,35 @@ export type AuditLog = {
   createdAt: Date;
 };
 
+export type PushSubscriptionPlatform = "windows-chrome" | "android-chrome" | "other";
+
+/** id == the FCM token itself — an idempotent set, not a generated id, so re-registering the same device just refreshes lastSeenAt. */
+export type PushSubscription = {
+  id: string;
+  token: string;
+  staffId: string;
+  platform: PushSubscriptionPlatform;
+  userAgent: string;
+  createdAt: Date;
+  lastSeenAt: Date;
+};
+
+export type NotificationLogType = "NEW_ONLINE_ORDER";
+
+export type NotificationLog = {
+  id: string;
+  type: NotificationLogType;
+  title: string;
+  body: string;
+  entityType: "order";
+  entityId: string;
+  entityRef: string;
+  acknowledged: boolean;
+  acknowledgedBy?: string;
+  acknowledgedAt?: Date;
+  createdAt: Date;
+};
+
 export type SeoFields = {
   title?: string;
   description?: string;

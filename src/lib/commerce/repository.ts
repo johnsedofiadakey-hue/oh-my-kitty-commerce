@@ -9,6 +9,7 @@ import type {
   DeliveryRule,
   InventoryMovement,
   MediaAsset,
+  NotificationLog,
   Order,
   Payment,
   PosShift,
@@ -16,6 +17,7 @@ import type {
   ProductType,
   ProductVariant,
   Promotion,
+  PushSubscription,
   RawMaterial,
   Routine,
   StaffUser,
@@ -84,6 +86,11 @@ export type CommerceRepository = {
   saveStoreSettings(settings: StoreSettings): Promise<void>;
   saveAuditLog(log: AuditLog): Promise<void>;
   listAuditLogs(): Promise<AuditLog[]>;
+  savePushSubscription(subscription: PushSubscription): Promise<void>;
+  listPushSubscriptions(): Promise<PushSubscription[]>;
+  deletePushSubscription(id: string): Promise<void>;
+  saveNotificationLog(log: NotificationLog): Promise<void>;
+  listNotificationLogs(): Promise<NotificationLog[]>;
 };
 
 export type CommerceTransaction = <T>(operation: (repo: CommerceRepository) => Promise<T>) => Promise<T>;

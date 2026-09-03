@@ -55,7 +55,9 @@ export const permissions = [
   "roles.update",
   "settings.view",
   "settings.update",
-  "audit.view"
+  "audit.view",
+  "notifications.view",
+  "notifications.acknowledge"
 ] as const;
 
 export type Permission = (typeof permissions)[number];
@@ -169,7 +171,9 @@ export const defaultRoles: Role[] = [
       "pos.shift.open",
       "pos.shift.close",
       "pos.receipts.view",
-      "audit.view"
+      "audit.view",
+      "notifications.view",
+      "notifications.acknowledge"
     ],
     limits: {
       maxDiscountPercent: 20,

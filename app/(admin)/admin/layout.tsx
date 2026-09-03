@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdminNav, type AdminNavGroup } from "@/components/admin/admin-nav";
 import { AdminHelpWidget } from "@/components/admin/admin-help-widget";
+import { RegisterPushNotifications } from "@/components/admin/register-push-notifications";
 import type { AdminIconName } from "@/components/admin/admin-icons";
 import { getAdminOperationsData } from "@/lib/admin/operations-data";
 import { getRequiredAdminActor } from "@/lib/auth/server";
 import { canAccessAdmin, canAccessPos, hasPermission, type Permission } from "@/lib/permissions/permissions";
 import { getEffectiveRoles, type CommerceActor } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
+import { registerPushSubscriptionAction } from "./notifications/actions";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false }
@@ -18,7 +20,7 @@ type NavConfigItem = {
   href: string;
   icon: AdminIconName;
   requiredPermission: Permission;
-  badgeKey?: "orders" | "inventory";
+  badgeKey?: "orders" | "inventory" | "notifications";
 };
 
 type NavConfigGroup = {
@@ -73,7 +75,14 @@ const navConfig: NavConfigGroup[] = [
       { label: "Reports", href: "/admin/reports", icon: "reports", requiredPermission: "reports.view" },
       { label: "Financial", href: "/admin/financial", icon: "financial", requiredPermission: "reports.financial" },
       { label: "Raw Materials", href: "/admin/materials", icon: "materials", requiredPermission: "reports.financial" },
-      { label: "Audit log", href: "/admin/audit", icon: "audit", requiredPermission: "audit.view" }
+      { label: "Audit log", href: "/admin/audit", icon: "audit", requiredPermission: "audit.view" },
+      {
+        label: "Notifications",
+        href: "/admin/notifications",
+        icon: "notifications",
+        requiredPermission: "notifications.view",
+        badgeKey: "notifications"
+      }
     ]
   },
   {
@@ -133,7 +142,8 @@ export default async function AdminLayout({
         order.status !== "CANCELLED" &&
         (order.fulfilmentStatus === "UNFULFILLED" || order.fulfilmentStatus === "PROCESSING")
     ).length,
-    inventory: data.metrics.lowStock
+    inventory: data.metrics.lowStock,
+    notifications: data.notificationLogs.filter((log) => !log.acknowledged).length
   };
 
   const groups: AdminNavGroup[] = navConfig
@@ -181,6 +191,7 @@ export default async function AdminLayout({
         {children}
       </main>
       <AdminHelpWidget />
+      <RegisterPushNotifications registerAction={registerPushSubscriptionAction} />
     </div>
   );
 }

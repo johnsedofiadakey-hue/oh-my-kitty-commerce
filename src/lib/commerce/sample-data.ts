@@ -7,6 +7,7 @@ import type {
   DeliveryRule,
   InventoryMovement,
   MediaAsset,
+  NotificationLog,
   Order,
   Payment,
   PosShift,
@@ -1030,6 +1031,20 @@ export const sampleAuditLogs: AuditLog[] = [
     entityId: "order-pos-example",
     summary: "Completed POS sale",
     createdAt: new Date("2026-01-01T09:30:00.000Z")
+  }
+];
+
+export const sampleNotificationLogs: NotificationLog[] = [
+  {
+    id: "notif-seed-1",
+    type: "NEW_ONLINE_ORDER",
+    title: "New order OMK-SAMPLE1",
+    body: "Ama Owusu — 2x Slippery Elm. Total GHS 90.00.",
+    entityType: "order",
+    entityId: "order-pos-example",
+    entityRef: "OMK-SAMPLE1",
+    acknowledged: false,
+    createdAt: new Date("2026-01-01T10:05:00.000Z")
   }
 ];
 

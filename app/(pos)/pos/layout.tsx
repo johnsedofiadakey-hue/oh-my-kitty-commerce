@@ -5,6 +5,8 @@ import { canAccessAdmin, canAccessPos } from "@/lib/permissions/permissions";
 import { getEffectiveRoles, type CommerceActor } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { RegisterPosServiceWorker } from "@/components/pos/register-pos-service-worker";
+import { RegisterPushNotifications } from "@/components/admin/register-push-notifications";
+import { registerPushSubscriptionAction } from "../../(admin)/admin/notifications/actions";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false }
@@ -44,6 +46,7 @@ export default async function PosLayout({
   return (
     <div className="pos-shell">
       <RegisterPosServiceWorker />
+      <RegisterPushNotifications registerAction={registerPushSubscriptionAction} />
       {children}
     </div>
   );

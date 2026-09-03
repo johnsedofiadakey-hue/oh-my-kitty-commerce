@@ -10,6 +10,7 @@ import type {
   DeliveryRule,
   InventoryMovement,
   MediaAsset,
+  NotificationLog,
   Order,
   Payment,
   PosShift,
@@ -17,6 +18,7 @@ import type {
   ProductType,
   ProductVariant,
   Promotion,
+  PushSubscription,
   RawMaterial,
   Routine,
   StaffUser,
@@ -45,6 +47,8 @@ export class MemoryCommerceRepository implements CommerceRepository {
   staffUsers = new Map<string, StaffUser>();
   storeSettings: StoreSettings | null = null;
   auditLogs = new Map<string, AuditLog>();
+  pushSubscriptions = new Map<string, PushSubscription>();
+  notificationLogs = new Map<string, NotificationLog>();
 
   async listProducts() {
     return [...this.products.values()].sort((first, second) =>
@@ -297,6 +301,28 @@ export class MemoryCommerceRepository implements CommerceRepository {
 
   async listAuditLogs() {
     return [...this.auditLogs.values()];
+  }
+
+  async savePushSubscription(subscription: PushSubscription) {
+    this.pushSubscriptions.set(subscription.id, subscription);
+  }
+
+  async listPushSubscriptions() {
+    return [...this.pushSubscriptions.values()];
+  }
+
+  async deletePushSubscription(id: string) {
+    this.pushSubscriptions.delete(id);
+  }
+
+  async saveNotificationLog(log: NotificationLog) {
+    this.notificationLogs.set(log.id, log);
+  }
+
+  async listNotificationLogs() {
+    return [...this.notificationLogs.values()].sort(
+      (first, second) => second.createdAt.getTime() - first.createdAt.getTime()
+    );
   }
 }
 

@@ -45,6 +45,10 @@ const icons = {
   materials: [
     "M9 2h6M10 2v6l-5.2 9a2 2 0 0 0 1.7 3h11a2 2 0 0 0 1.7-3L14 8V2",
     "M6.5 15h11"
+  ],
+  notifications: [
+    "M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9Z",
+    "M10.3 21a1.7 1.7 0 0 0 3.4 0"
   ]
 } as const;
 

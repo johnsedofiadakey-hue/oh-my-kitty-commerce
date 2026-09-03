@@ -12,7 +12,8 @@ const publicEnvSchema = z.object({
   NEXT_PUBLIC_SITE_NAME: z.string().optional(),
   NEXT_PUBLIC_USE_FIREBASE_EMULATORS: z.string().optional(),
   NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: z.string().optional(),
-  NEXT_PUBLIC_BING_SITE_VERIFICATION: z.string().optional()
+  NEXT_PUBLIC_BING_SITE_VERIFICATION: z.string().optional(),
+  NEXT_PUBLIC_FIREBASE_VAPID_KEY: z.string().optional()
 });
 
 export const publicEnv = publicEnvSchema.parse({
@@ -28,7 +29,8 @@ export const publicEnv = publicEnvSchema.parse({
   NEXT_PUBLIC_SITE_NAME: process.env.NEXT_PUBLIC_SITE_NAME,
   NEXT_PUBLIC_USE_FIREBASE_EMULATORS: process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS,
   NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
-  NEXT_PUBLIC_BING_SITE_VERIFICATION: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+  NEXT_PUBLIC_BING_SITE_VERIFICATION: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION,
+  NEXT_PUBLIC_FIREBASE_VAPID_KEY: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
 });
 
 const requiredFirebaseKeys = [

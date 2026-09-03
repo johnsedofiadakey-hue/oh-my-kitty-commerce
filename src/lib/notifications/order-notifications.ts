@@ -120,7 +120,7 @@ function buildFulfilLink(orderNumber: string) {
 }
 
 /** Keeps the SMS to a couple of segments even for large carts — e.g. "2x Honey, 1x Kitty Oil +2 more". */
-function summarizeItems(items: Order["items"]) {
+export function summarizeItems(items: Order["items"]) {
   const MAX_SHOWN = 3;
   const shown = items.slice(0, MAX_SHOWN).map((item) => `${item.quantity}x ${item.productTitle}`);
   const remainder = items.length - MAX_SHOWN;

@@ -4475,6 +4475,54 @@ button {
   font-weight: 700;
 }
 
+.push-permission-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.push-permission-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.push-toast {
+  position: fixed;
+  z-index: 60;
+  top: 16px;
+  right: 16px;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 12px 16px;
+  border-radius: var(--radius-small);
+  color: var(--color-white-pure);
+  background: var(--color-near-black);
+  font-size: 0.88rem;
+  font-weight: 700;
+  box-shadow: 0 16px 40px rgb(17 17 17 / 22%);
+  animation: push-toast-life 5s ease forwards;
+}
+
+@keyframes push-toast-life {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  8% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  92% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
 .admin-alert.danger {
   border-color: rgb(156 36 55 / 28%);
   color: #9c2437;
