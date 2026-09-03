@@ -1,6 +1,7 @@
 import { getAdminOperationsData } from "@/lib/admin/operations-data";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { CreatePromotionForm } from "@/components/admin/promotion-form";
+import { PromotionRow } from "@/components/admin/promotion-row";
 import { requireAdminPermission } from "@/lib/auth/server";
 import { createPromotionAction, updatePromotionAction } from "./actions";
 
@@ -34,44 +35,18 @@ export default async function AdminPromotionsPage() {
         </div>
         <div className="quick-edit-list">
           {data.promotions.map((promotion) => (
-            <form action={updatePromotionAction} className="quick-edit-row" key={promotion.id}>
-              <input name="id" type="hidden" value={promotion.id} />
-              <label className="admin-field">
-                <span>Code</span>
-                <input disabled value={promotion.code} />
-              </label>
-              <label className="admin-field">
-                <span>Channels</span>
-                <input disabled value={promotion.channelRestrictions.join(", ") || "All"} />
-              </label>
-              <label className="admin-field">
-                <span>Value {promotion.type === "PERCENT" ? "(%)" : "(GHS)"}</span>
-                <input
-                  defaultValue={promotion.value}
-                  disabled={disabled}
-                  inputMode="decimal"
-                  min="0"
-                  name="value"
-                  required
-                />
-              </label>
-              <label className="admin-field checkbox">
-                <input defaultChecked={promotion.active} disabled={disabled} name="active" type="checkbox" />
-                <span>Active</span>
-              </label>
-              <label className="admin-field checkbox">
-                <input
-                  defaultChecked={promotion.requiresManagerApproval}
-                  disabled={disabled}
-                  name="requiresManagerApproval"
-                  type="checkbox"
-                />
-                <span>Requires approval</span>
-              </label>
-              <button className="admin-action" disabled={disabled} type="submit">
-                Save
-              </button>
-            </form>
+            <PromotionRow
+              active={promotion.active}
+              channelRestrictions={promotion.channelRestrictions}
+              code={promotion.code}
+              disabled={disabled}
+              id={promotion.id}
+              key={promotion.id}
+              requiresManagerApproval={promotion.requiresManagerApproval}
+              type={promotion.type}
+              updatePromotionAction={updatePromotionAction}
+              value={promotion.value}
+            />
           ))}
           {data.promotions.length === 0 ? <p className="admin-help">Nothing here yet.</p> : null}
         </div>

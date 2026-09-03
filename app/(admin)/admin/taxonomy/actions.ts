@@ -80,46 +80,61 @@ export async function createRoutineAction(
   });
 }
 
-export async function quickEditConcernAction(formData: FormData): Promise<void> {
-  const context = requireCommerceContext();
-  const actor = await getRequiredAdminActor();
+export async function quickEditConcernAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  return runTaxonomyAction(async () => {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
 
-  await updateConcern(context, actor, {
-    id: formString(formData, "id"),
-    title: formString(formData, "title"),
-    sortOrder: formInteger(formData, "sortOrder", 0),
-    active: formData.get("active") === "on"
+    const concern = await updateConcern(context, actor, {
+      id: formString(formData, "id"),
+      title: formString(formData, "title"),
+      sortOrder: formInteger(formData, "sortOrder", 0),
+      active: formData.get("active") === "on"
+    });
+
+    return `Saved ${concern.title}.`;
   });
-
-  revalidatePath("/admin/taxonomy");
 }
 
-export async function quickEditProductTypeAction(formData: FormData): Promise<void> {
-  const context = requireCommerceContext();
-  const actor = await getRequiredAdminActor();
+export async function quickEditProductTypeAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  return runTaxonomyAction(async () => {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
 
-  await updateProductType(context, actor, {
-    id: formString(formData, "id"),
-    title: formString(formData, "title"),
-    sortOrder: formInteger(formData, "sortOrder", 0),
-    active: formData.get("active") === "on"
+    const productType = await updateProductType(context, actor, {
+      id: formString(formData, "id"),
+      title: formString(formData, "title"),
+      sortOrder: formInteger(formData, "sortOrder", 0),
+      active: formData.get("active") === "on"
+    });
+
+    return `Saved ${productType.title}.`;
   });
-
-  revalidatePath("/admin/taxonomy");
 }
 
-export async function quickEditRoutineAction(formData: FormData): Promise<void> {
-  const context = requireCommerceContext();
-  const actor = await getRequiredAdminActor();
+export async function quickEditRoutineAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  return runTaxonomyAction(async () => {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
 
-  await updateRoutine(context, actor, {
-    id: formString(formData, "id"),
-    title: formString(formData, "title"),
-    sortOrder: formInteger(formData, "sortOrder", 0),
-    active: formData.get("active") === "on"
+    const routine = await updateRoutine(context, actor, {
+      id: formString(formData, "id"),
+      title: formString(formData, "title"),
+      sortOrder: formInteger(formData, "sortOrder", 0),
+      active: formData.get("active") === "on"
+    });
+
+    return `Saved ${routine.title}.`;
   });
-
-  revalidatePath("/admin/taxonomy");
 }
 
 async function runTaxonomyAction(operation: () => Promise<string>): Promise<AdminActionState> {

@@ -84,39 +84,47 @@ export async function inviteStaffAction(
   }
 }
 
-export async function updateStaffAccessAction(formData: FormData): Promise<void> {
-  const context = requireCommerceContext();
-  const actor = await getRequiredAdminActor();
-  await requirePermission(context, actor, "users.update");
-  const auth = requireAdminAuth();
+export async function updateStaffAccessAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+    await requirePermission(context, actor, "users.update");
+    const auth = requireAdminAuth();
 
-  const id = formString(formData, "id");
-  const roleIds = formData.getAll("roleIds").map(String);
-  const status = formData.get("status") === "DEACTIVATED" ? "DEACTIVATED" : "ACTIVE";
-  const posEnabled = formData.get("posEnabled") === "on";
+    const id = formString(formData, "id");
+    const roleIds = formData.getAll("roleIds").map(String);
+    const status = formData.get("status") === "DEACTIVATED" ? "DEACTIVATED" : "ACTIVE";
+    const posEnabled = formData.get("posEnabled") === "on";
 
-  if (roleIds.length === 0) {
-    throw new CommerceError("VALIDATION_ERROR", "Choose at least one role.");
+    if (roleIds.length === 0) {
+      throw new CommerceError("VALIDATION_ERROR", "Choose at least one role.");
+    }
+
+    const staffUser = await updateStaffUser(context, actor, {
+      id,
+      roleIds,
+      status,
+      posEnabled
+    });
+
+    // Deactivating clears isStaff so the account can no longer obtain a
+    // session at all, not just lose permissions within one. Claims changes
+    // take effect the next time the staff member signs in, not immediately.
+    await auth.setCustomUserClaims(id, {
+      isStaff: status === "ACTIVE",
+      roleIds,
+      posEnabled,
+      permissionsVersion: 1
+    });
+
+    revalidatePath("/admin/users");
+    return { status: "success", message: `Saved ${staffUser.displayName ?? staffUser.email}.` };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
   }
-
-  await updateStaffUser(context, actor, {
-    id,
-    roleIds,
-    status,
-    posEnabled
-  });
-
-  // Deactivating clears isStaff so the account can no longer obtain a
-  // session at all, not just lose permissions within one. Claims changes
-  // take effect the next time the staff member signs in, not immediately.
-  await auth.setCustomUserClaims(id, {
-    isStaff: status === "ACTIVE",
-    roleIds,
-    posEnabled,
-    permissionsVersion: 1
-  });
-
-  revalidatePath("/admin/users");
 }
 
 export async function deleteStaffUserAction(staffId: string): Promise<AdminActionState> {
@@ -228,13 +236,21 @@ export async function updateRoleAction(
   }
 }
 
-export async function deleteRoleAction(formData: FormData): Promise<void> {
-  const context = requireCommerceContext();
-  const actor = await getRequiredAdminActor();
-  await requirePermission(context, actor, "roles.update");
+export async function deleteRoleAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+    await requirePermission(context, actor, "roles.update");
 
-  await deleteRole(context, actor, formString(formData, "id"));
-  revalidatePath("/admin/users");
+    await deleteRole(context, actor, formString(formData, "id"));
+    revalidatePath("/admin/users");
+    return { status: "success", message: "Role deleted." };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
 }
 
 function parseRoleLimits(formData: FormData) {

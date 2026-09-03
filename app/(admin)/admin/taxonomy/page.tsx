@@ -1,8 +1,10 @@
 import { getAdminTaxonomyData } from "@/lib/admin/taxonomy";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { TaxonomyManagementForms } from "@/components/admin/taxonomy-management-forms";
+import { TaxonomyRow } from "@/components/admin/taxonomy-row";
 import { requireAdminPermission } from "@/lib/auth/server";
 import type { Concern, ProductType, Routine } from "@/lib/commerce/types";
+import type { AdminFormAction } from "@/lib/admin/product-form";
 import {
   createConcernAction,
   createProductTypeAction,
@@ -74,7 +76,7 @@ function TaxonomyTable({
   subtitle,
   title
 }: {
-  action: (formData: FormData) => Promise<void>;
+  action: AdminFormAction;
   disabled: boolean;
   entries: (Concern | ProductType | Routine)[];
   subtitle: string;
@@ -88,34 +90,16 @@ function TaxonomyTable({
       </div>
       <div className="quick-edit-list">
         {entries.map((entry) => (
-          <form action={action} className="quick-edit-row" key={entry.id}>
-            <input name="id" type="hidden" value={entry.id} />
-            <label className="admin-field">
-              <span>Title</span>
-              <input defaultValue={entry.title} disabled={disabled} name="title" required />
-            </label>
-            <label className="admin-field">
-              <span>Slug</span>
-              <input disabled value={entry.slug} />
-            </label>
-            <label className="admin-field">
-              <span>Sort order</span>
-              <input
-                defaultValue={entry.sortOrder}
-                disabled={disabled}
-                inputMode="numeric"
-                min="0"
-                name="sortOrder"
-              />
-            </label>
-            <label className="admin-field checkbox">
-              <input defaultChecked={entry.active} disabled={disabled} name="active" type="checkbox" />
-              <span>Active</span>
-            </label>
-            <button className="admin-action" disabled={disabled} type="submit">
-              Save
-            </button>
-          </form>
+          <TaxonomyRow
+            action={action}
+            active={entry.active}
+            disabled={disabled}
+            id={entry.id}
+            key={entry.id}
+            slug={entry.slug}
+            sortOrder={entry.sortOrder}
+            title={entry.title}
+          />
         ))}
         {entries.length === 0 ? <p className="admin-help">Nothing here yet.</p> : null}
       </div>

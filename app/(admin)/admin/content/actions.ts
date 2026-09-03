@@ -7,20 +7,28 @@ import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getRequiredAdminActor } from "@/lib/auth/server";
 import { formString, type AdminActionState } from "@/lib/admin/product-form";
 
-export async function updateContentBlockAction(formData: FormData): Promise<void> {
-  const context = requireCommerceContext();
-  const actor = await getRequiredAdminActor();
+export async function updateContentBlockAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
 
-  await updateContentBlock(context, actor, {
-    key: formString(formData, "key"),
-    value: formString(formData, "value")
-  });
+    await updateContentBlock(context, actor, {
+      key: formString(formData, "key"),
+      value: formString(formData, "value")
+    });
 
-  revalidatePath("/admin/content");
-  revalidatePath("/contact");
-  revalidatePath("/delivery");
-  revalidatePath("/faq");
-  revalidatePath("/returns");
+    revalidatePath("/admin/content");
+    revalidatePath("/contact");
+    revalidatePath("/delivery");
+    revalidatePath("/faq");
+    revalidatePath("/returns");
+    return { status: "success", message: "Saved." };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
 }
 
 export async function uploadGeneralMediaAction(input: {
@@ -40,12 +48,20 @@ export async function uploadGeneralMediaAction(input: {
   }
 }
 
-export async function deleteMediaAssetAction(formData: FormData): Promise<void> {
-  const context = requireCommerceContext();
-  const actor = await getRequiredAdminActor();
+export async function deleteMediaAssetAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
 
-  await deleteMediaAsset(context, actor, formString(formData, "id"));
-  revalidatePath("/admin/content");
+    await deleteMediaAsset(context, actor, formString(formData, "id"));
+    revalidatePath("/admin/content");
+    return { status: "success", message: "Deleted." };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
 }
 
 function getActionErrorMessage(error: unknown) {

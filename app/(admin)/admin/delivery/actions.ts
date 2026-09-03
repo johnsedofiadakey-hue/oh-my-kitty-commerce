@@ -37,22 +37,30 @@ export async function createDeliveryRuleAction(
   }
 }
 
-export async function quickEditDeliveryRuleAction(formData: FormData): Promise<void> {
-  const context = requireCommerceContext();
-  const actor = await getRequiredAdminActor();
+export async function quickEditDeliveryRuleAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
 
-  await updateDeliveryRule(context, actor, {
-    id: formString(formData, "id"),
-    name: formString(formData, "name"),
-    fee: formMoneyMinorUnit(formData, "fee"),
-    estimate: formOptionalString(formData, "estimate"),
-    sortOrder: formInteger(formData, "sortOrder", 0),
-    active: formData.get("active") === "on"
-  });
+    const rule = await updateDeliveryRule(context, actor, {
+      id: formString(formData, "id"),
+      name: formString(formData, "name"),
+      fee: formMoneyMinorUnit(formData, "fee"),
+      estimate: formOptionalString(formData, "estimate"),
+      sortOrder: formInteger(formData, "sortOrder", 0),
+      active: formData.get("active") === "on"
+    });
 
-  revalidatePath("/admin/delivery");
-  revalidatePath("/cart");
-  revalidatePath("/checkout");
+    revalidatePath("/admin/delivery");
+    revalidatePath("/cart");
+    revalidatePath("/checkout");
+    return { status: "success", message: `Saved ${rule.name}.` };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
 }
 
 function formDeliveryType(formData: FormData): "PICKUP" | "LOCAL_DELIVERY" | "NATIONWIDE_DELIVERY" {

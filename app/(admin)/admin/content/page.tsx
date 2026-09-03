@@ -2,6 +2,8 @@ import { getAdminOperationsData } from "@/lib/admin/operations-data";
 import { requireAdminPermission } from "@/lib/auth/server";
 import { CONTENT_REGISTRY, getContentBlocks, isSelectContentKey, type ContentKey } from "@/lib/storefront/content";
 import { GeneralMediaUploader } from "@/components/admin/general-media-uploader";
+import { ContentBlockRow } from "@/components/admin/content-block-row";
+import { DeleteMediaButton } from "@/components/admin/delete-media-button";
 import { deleteMediaAssetAction, updateContentBlockAction, uploadGeneralMediaAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -34,30 +36,16 @@ export default async function AdminContentPage() {
           {keys.map((key) => {
             const entry = CONTENT_REGISTRY[key];
             return (
-              <form action={updateContentBlockAction} className="quick-edit-row" key={key}>
-                <input name="key" type="hidden" value={key} />
-                <label className="admin-field">
-                  <span>{entry.label}</span>
-                  {isSelectContentKey(key) && "options" in entry ? (
-                    <select defaultValue={content[key]} disabled={disabled} name="value" required>
-                      {entry.options.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input defaultValue={content[key]} disabled={disabled} name="value" required />
-                  )}
-                </label>
-                <label className="admin-field">
-                  <span>Used on</span>
-                  <input disabled value={entry.group} />
-                </label>
-                <button className="admin-action" disabled={disabled} type="submit">
-                  Save
-                </button>
-              </form>
+              <ContentBlockRow
+                contentKey={key}
+                disabled={disabled}
+                group={entry.group}
+                key={key}
+                label={entry.label}
+                options={isSelectContentKey(key) && "options" in entry ? entry.options : undefined}
+                updateContentBlockAction={updateContentBlockAction}
+                value={content[key]}
+              />
             );
           })}
         </div>
@@ -82,12 +70,7 @@ export default async function AdminContentPage() {
               <a href={media.url} rel="noreferrer" target="_blank">
                 {media.url}
               </a>
-              <form action={deleteMediaAssetAction}>
-                <input name="id" type="hidden" value={media.id} />
-                <button className="admin-action ghost small" disabled={disabled} type="submit">
-                  Delete
-                </button>
-              </form>
+              <DeleteMediaButton deleteMediaAssetAction={deleteMediaAssetAction} disabled={disabled} mediaId={media.id} />
             </div>
           ))}
           {data.media.length === 0 ? <p className="admin-help">No media uploaded yet.</p> : null}

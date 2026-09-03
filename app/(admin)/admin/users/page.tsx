@@ -4,6 +4,8 @@ import { StaffManagementForms } from "@/components/admin/staff-management-forms"
 import { RoleManagementForm } from "@/components/admin/role-management-form";
 import { ResetStaffPasswordButton } from "@/components/admin/reset-staff-password-button";
 import { DeleteStaffButton } from "@/components/admin/delete-staff-button";
+import { StaffAccessForm } from "@/components/admin/staff-access-form";
+import { DeleteRoleButton } from "@/components/admin/delete-role-button";
 import { requireAdminPermission } from "@/lib/auth/server";
 import {
   createRoleAction,
@@ -55,46 +57,17 @@ export default async function AdminUsersPage() {
         <div className="quick-edit-list">
           {data.users.map((user) => (
             <div key={user.id}>
-              <form action={updateStaffAccessAction} className="quick-edit-row">
-                <input name="id" type="hidden" value={user.id} />
-                <label className="admin-field">
-                  <span>Name</span>
-                  <input disabled value={user.displayName} />
-                </label>
-                <label className="admin-field">
-                  <span>Email</span>
-                  <input disabled value={user.email} />
-                </label>
-                <label className="admin-field">
-                  <span>Roles</span>
-                  <select defaultValue={user.roleIds} disabled={disabled} multiple name="roleIds" required>
-                    {data.roles.map((role) => (
-                      <option key={role.id} value={role.id}>
-                        {role.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="admin-field">
-                  <span>Status</span>
-                  <select defaultValue={user.status} disabled={disabled} name="status">
-                    <option value="ACTIVE">Active</option>
-                    <option value="DEACTIVATED">Deactivated</option>
-                  </select>
-                </label>
-                <label className="admin-field checkbox">
-                  <input
-                    defaultChecked={user.posEnabled}
-                    disabled={disabled}
-                    name="posEnabled"
-                    type="checkbox"
-                  />
-                  <span>Can use POS</span>
-                </label>
-                <button className="admin-action" disabled={disabled} type="submit">
-                  Save
-                </button>
-              </form>
+              <StaffAccessForm
+                disabled={disabled}
+                displayName={user.displayName}
+                email={user.email}
+                posEnabled={user.posEnabled}
+                roleIds={user.roleIds}
+                roles={data.roles.map((role) => ({ id: role.id, name: role.name }))}
+                status={user.status}
+                updateStaffAccessAction={updateStaffAccessAction}
+                userId={user.id}
+              />
               <ResetStaffPasswordButton action={resetStaffPasswordAction} disabled={disabled} userId={user.id} />
               {user.id !== actor.uid ? (
                 <DeleteStaffButton
@@ -130,12 +103,7 @@ export default async function AdminUsersPage() {
                   >
                     <RoleManagementForm action={updateRoleAction} disabled={disabled} role={role} />
                   </AdminDrawer>
-                  <form action={deleteRoleAction}>
-                    <input name="id" type="hidden" value={role.id} />
-                    <button className="admin-action ghost small" disabled={disabled} type="submit">
-                      Delete
-                    </button>
-                  </form>
+                  <DeleteRoleButton deleteRoleAction={deleteRoleAction} disabled={disabled} roleId={role.id} />
                 </div>
               )}
             </div>

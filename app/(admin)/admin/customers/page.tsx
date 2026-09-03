@@ -1,6 +1,7 @@
 import { formatMoney, getAdminOperationsData } from "@/lib/admin/operations-data";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { CreateCustomerForm } from "@/components/admin/customer-form";
+import { CustomerRow } from "@/components/admin/customer-row";
 import { requireAdminPermission } from "@/lib/auth/server";
 import { createCustomerAction, updateCustomerAction } from "./actions";
 
@@ -38,32 +39,18 @@ export default async function AdminCustomersPage() {
             const total = orders.reduce((sum, order) => sum + order.total, 0);
 
             return (
-              <form action={updateCustomerAction} className="quick-edit-row" key={customer.id}>
-                <input name="id" type="hidden" value={customer.id} />
-                <label className="admin-field">
-                  <span>Name</span>
-                  <input defaultValue={customer.name ?? ""} disabled={disabled} name="name" />
-                </label>
-                <label className="admin-field">
-                  <span>Phone</span>
-                  <input defaultValue={customer.phone ?? ""} disabled={disabled} name="phone" />
-                </label>
-                <label className="admin-field">
-                  <span>Email</span>
-                  <input defaultValue={customer.email ?? ""} disabled={disabled} name="email" type="email" />
-                </label>
-                <label className="admin-field">
-                  <span>Source</span>
-                  <input disabled value={customer.createdFrom} />
-                </label>
-                <label className="admin-field">
-                  <span>Orders</span>
-                  <input disabled value={`${orders.length} / ${formatMoney(total)}`} />
-                </label>
-                <button className="admin-action" disabled={disabled} type="submit">
-                  Save
-                </button>
-              </form>
+              <CustomerRow
+                createdFrom={customer.createdFrom}
+                disabled={disabled}
+                email={customer.email}
+                id={customer.id}
+                key={customer.id}
+                name={customer.name}
+                orderCount={orders.length}
+                orderTotalLabel={formatMoney(total)}
+                phone={customer.phone}
+                updateCustomerAction={updateCustomerAction}
+              />
             );
           })}
           {data.customers.length === 0 ? <p className="admin-help">Nothing here yet.</p> : null}

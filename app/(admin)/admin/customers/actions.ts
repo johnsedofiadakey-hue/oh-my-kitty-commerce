@@ -33,18 +33,26 @@ export async function createCustomerAction(
   }
 }
 
-export async function updateCustomerAction(formData: FormData): Promise<void> {
-  const context = requireCommerceContext();
-  const actor = await getRequiredAdminActor();
+export async function updateCustomerAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
 
-  await updateCustomer(context, actor, {
-    id: formString(formData, "id"),
-    name: formOptionalString(formData, "name"),
-    email: formOptionalString(formData, "email"),
-    phone: formOptionalString(formData, "phone")
-  });
+    const customer = await updateCustomer(context, actor, {
+      id: formString(formData, "id"),
+      name: formOptionalString(formData, "name"),
+      email: formOptionalString(formData, "email"),
+      phone: formOptionalString(formData, "phone")
+    });
 
-  revalidatePath("/admin/customers");
+    revalidatePath("/admin/customers");
+    return { status: "success", message: `Saved ${customer.name ?? "customer"}.` };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
 }
 
 function requireCommerceContext() {

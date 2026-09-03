@@ -38,20 +38,28 @@ export async function createCategoryAction(
   }
 }
 
-export async function quickEditCategoryAction(formData: FormData): Promise<void> {
-  const context = requireCommerceContext();
-  const actor = await getRequiredAdminActor();
+export async function quickEditCategoryAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
 
-  await updateCategory(context, actor, {
-    id: formString(formData, "id"),
-    title: formString(formData, "title"),
-    sortOrder: formInteger(formData, "sortOrder", 0),
-    active: formData.get("active") === "on"
-  });
+    const category = await updateCategory(context, actor, {
+      id: formString(formData, "id"),
+      title: formString(formData, "title"),
+      sortOrder: formInteger(formData, "sortOrder", 0),
+      active: formData.get("active") === "on"
+    });
 
-  revalidatePath("/admin/categories");
-  revalidatePath("/");
-  revalidatePath("/shop");
+    revalidatePath("/admin/categories");
+    revalidatePath("/");
+    revalidatePath("/shop");
+    return { status: "success", message: `Saved ${category.title}.` };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
 }
 
 export async function attachCategoryImageAction(input: {

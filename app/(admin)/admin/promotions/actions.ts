@@ -29,18 +29,26 @@ export async function createPromotionAction(
   }
 }
 
-export async function updatePromotionAction(formData: FormData): Promise<void> {
-  const context = requireCommerceContext();
-  const actor = await getRequiredAdminActor();
+export async function updatePromotionAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
 
-  await updatePromotion(context, actor, {
-    id: formString(formData, "id"),
-    value: formValue(formData),
-    active: formData.get("active") === "on",
-    requiresManagerApproval: formData.get("requiresManagerApproval") === "on"
-  });
+    const promotion = await updatePromotion(context, actor, {
+      id: formString(formData, "id"),
+      value: formValue(formData),
+      active: formData.get("active") === "on",
+      requiresManagerApproval: formData.get("requiresManagerApproval") === "on"
+    });
 
-  revalidatePath("/admin/promotions");
+    revalidatePath("/admin/promotions");
+    return { status: "success", message: `Saved ${promotion.code}.` };
+  } catch (error) {
+    return { status: "error", message: getActionErrorMessage(error) };
+  }
 }
 
 function formPromotionType(formData: FormData): "PERCENT" | "AMOUNT" {

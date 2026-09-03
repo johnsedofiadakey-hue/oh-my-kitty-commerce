@@ -1,9 +1,8 @@
 import { getAdminCategoriesData } from "@/lib/admin/categories";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { CategoryManagementForm } from "@/components/admin/category-management-form";
-import { CategoryImageUploader } from "@/components/admin/category-image-uploader";
+import { CategoryRow } from "@/components/admin/category-row";
 import { requireAdminPermission } from "@/lib/auth/server";
-import type { Category, MediaAsset } from "@/lib/commerce/types";
 import { attachCategoryImageAction, createCategoryAction, quickEditCategoryAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -41,10 +40,16 @@ export default async function AdminCategoriesPage() {
         <div className="quick-edit-list">
           {categories.map((category) => (
             <CategoryRow
-              category={category}
+              active={category.active}
+              attachCategoryImageAction={attachCategoryImageAction}
               disabled={disabled}
-              image={category.mediaId ? mediaById.get(category.mediaId) : undefined}
+              id={category.id}
+              imageUrl={category.mediaId ? mediaById.get(category.mediaId)?.url : undefined}
               key={category.id}
+              quickEditCategoryAction={quickEditCategoryAction}
+              slug={category.slug}
+              sortOrder={category.sortOrder}
+              title={category.title}
             />
           ))}
           {categories.length === 0 ? (
@@ -55,53 +60,5 @@ export default async function AdminCategoriesPage() {
         </div>
       </section>
     </>
-  );
-}
-
-function CategoryRow({
-  category,
-  disabled,
-  image
-}: {
-  category: Category;
-  disabled: boolean;
-  image?: MediaAsset;
-}) {
-  return (
-    <form action={quickEditCategoryAction} className="quick-edit-row">
-      <input name="id" type="hidden" value={category.id} />
-      <CategoryImageUploader
-        alt={category.title}
-        categoryId={category.id}
-        currentImageUrl={image?.url}
-        disabled={disabled}
-        onAttach={attachCategoryImageAction}
-      />
-      <label className="admin-field">
-        <span>Title</span>
-        <input defaultValue={category.title} disabled={disabled} name="title" required />
-      </label>
-      <label className="admin-field">
-        <span>Slug</span>
-        <input disabled value={category.slug} />
-      </label>
-      <label className="admin-field">
-        <span>Sort order</span>
-        <input
-          defaultValue={category.sortOrder}
-          disabled={disabled}
-          inputMode="numeric"
-          min="0"
-          name="sortOrder"
-        />
-      </label>
-      <label className="admin-field checkbox">
-        <input defaultChecked={category.active} disabled={disabled} name="active" type="checkbox" />
-        <span>Active</span>
-      </label>
-      <button className="admin-action" disabled={disabled} type="submit">
-        Save
-      </button>
-    </form>
   );
 }
