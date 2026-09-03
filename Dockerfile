@@ -29,10 +29,10 @@ ARG NEXT_PUBLIC_USE_FIREBASE_EMULATORS=false
 # the layout omits the verification meta tag entirely while these are unset.
 ARG NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION="xIVp48knuGbSkvYtDejhJ39WH_rZKm0H9U-J1cgKtC8"
 ARG NEXT_PUBLIC_BING_SITE_VERIFICATION=""
-# Empty until generated in Firebase Console (Project Settings > Cloud
-# Messaging > Web Push certificates) — push notifications are an optional
-# enhancement, so an empty key just means RegisterPushNotifications no-ops.
-ARG NEXT_PUBLIC_FIREBASE_VAPID_KEY=""
+# Generated in Firebase Console (Project Settings > Cloud Messaging > Web
+# Push certificates). Public by design (sent to every client that requests
+# a push token) — not a secret, same trust level as the Firebase API key.
+ARG NEXT_PUBLIC_FIREBASE_VAPID_KEY="BAyAjxkv4imDlnRcnrK2bX0rM4zSneOlRVJoN-49tIjx1usc7h9DhFIx_ZwSpyA621_PwL51AT2TEXSdzVsg_-s"
 ARG APP_ENV=production
 ENV NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY \
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN \
