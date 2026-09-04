@@ -476,9 +476,12 @@ function ProductEditDrawer({
               </span>
               {catalogue.variants
                 .filter((other) => other.id !== variant.id)
-                .map((other) => {
-                  const otherProductTitle =
-                    catalogue.products.find((p) => p.id === other.productId)?.title ?? "Unknown product";
+                .map((other) => ({
+                  other,
+                  otherProductTitle: catalogue.products.find((p) => p.id === other.productId)?.title ?? "Unknown product"
+                }))
+                .sort((a, b) => a.otherProductTitle.localeCompare(b.otherProductTitle) || a.other.title.localeCompare(b.other.title))
+                .map(({ other, otherProductTitle }) => {
                   const existing = variant.bundleComponents?.find((item) => item.variantId === other.id);
                   return (
                     <label className="admin-field recipe-field" key={other.id}>
