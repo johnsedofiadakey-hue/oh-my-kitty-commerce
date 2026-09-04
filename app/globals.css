@@ -5466,6 +5466,14 @@ button {
   opacity: 0.56;
 }
 
+a.pos-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  text-decoration: none;
+}
+
 .pos-reversal-row {
   display: flex;
   align-items: center;
@@ -5696,6 +5704,16 @@ button {
   border-radius: var(--radius-small);
   padding: 12px;
   background: #fffaf7;
+}
+
+.pos-total.secondary {
+  border-style: dashed;
+  background: transparent;
+  font-size: 0.86rem;
+}
+
+.pos-total.secondary strong {
+  font-weight: 700;
 }
 
 .pos-receipt {

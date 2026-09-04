@@ -8,6 +8,7 @@ import {
 } from "@/lib/permissions/permissions";
 import { CommerceError } from "@/lib/commerce/errors";
 import { formatMoney } from "@/lib/commerce/format";
+import { calculatePaystackFee } from "@/lib/payments/fee";
 import type { CommerceRepository, CommerceTransaction } from "@/lib/commerce/repository";
 import { createNoopTransaction } from "@/lib/commerce/repository";
 import {
@@ -2276,7 +2277,9 @@ async function buildOrder(
   const items = await buildOrderItems(context, input.items, repo);
   const subtotal = items.reduce((total, item) => total + item.unitPrice * item.quantity, 0);
   const discountTotal = items.reduce((total, item) => total + item.discountTotal, 0);
-  const total = subtotal - discountTotal + input.deliveryTotal + input.taxTotal;
+  const preFeeTotal = subtotal - discountTotal + input.deliveryTotal + input.taxTotal;
+  const paymentFeeTotal = input.chargePaystackFee ? calculatePaystackFee(preFeeTotal) : 0;
+  const total = preFeeTotal + paymentFeeTotal;
 
   if (total < 0) {
     throw new CommerceError("VALIDATION_ERROR", "Order total cannot be negative.");
@@ -2301,6 +2304,7 @@ async function buildOrder(
     discountTotal,
     deliveryTotal: input.deliveryTotal,
     taxTotal: input.taxTotal,
+    paymentFeeTotal,
     total,
     currency: "GHS",
     createdBy: input.createdBy ?? null,

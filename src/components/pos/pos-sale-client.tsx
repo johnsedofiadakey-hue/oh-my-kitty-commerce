@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import { formatMoney } from "@/lib/commerce/format";
+import { calculatePaystackFee } from "@/lib/payments/fee";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 import {
   enqueueSale,
@@ -36,14 +37,6 @@ type PosReceipt = {
 };
 
 type PaymentMethod = "cash" | "mobile_money" | "card" | "manual_transfer";
-
-type MomoProvider = "mtn" | "vod" | "atl";
-
-const MOMO_PROVIDERS: { value: MomoProvider; label: string }[] = [
-  { value: "mtn", label: "MTN Mobile Money" },
-  { value: "vod", label: "Vodafone Cash" },
-  { value: "atl", label: "AirtelTigo Money" }
-];
 
 type MomoStage = "idle" | "waiting" | "failed";
 
@@ -92,11 +85,11 @@ export function PosSaleClient({
   const [promoCode, setPromoCode] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [cashReceived, setCashReceived] = useState("");
-  const [momoProvider, setMomoProvider] = useState<MomoProvider>("mtn");
   const [momoStage, setMomoStage] = useState<MomoStage>("idle");
   const [momoMessage, setMomoMessage] = useState("");
   const [momoElapsedMs, setMomoElapsedMs] = useState(0);
   const [momoReference, setMomoReference] = useState<string | null>(null);
+  const [momoAuthUrl, setMomoAuthUrl] = useState<string | null>(null);
   const momoPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const momoCancelledRef = useRef(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -159,6 +152,10 @@ export function PosSaleClient({
     [normalizedQuery, products]
   );
   const subtotal = cart.reduce((total, line) => total + line.price * line.quantity, 0);
+  // Only mobile money actually goes through Paystack right now — POS "card"
+  // is a manual record of an external card machine, no fee incurred there.
+  const paymentFee = paymentMethod === "mobile_money" ? calculatePaystackFee(subtotal) : 0;
+  const displayTotal = subtotal + paymentFee;
   const amountReceived = paymentMethod === "cash" ? parseMoneyInput(cashReceived) : undefined;
   const cashReceivedMinor = amountReceived ?? 0;
   const changeDue =
@@ -265,6 +262,7 @@ export function PosSaleClient({
     setMomoMessage("");
     setMomoElapsedMs(0);
     setMomoReference(null);
+    setMomoAuthUrl(null);
     setReceipt({ changeDue: 0, orderId, orderNumber, total, pending: false });
     clearCart();
   }
@@ -280,6 +278,7 @@ export function PosSaleClient({
     setMomoMessage("");
     setMomoElapsedMs(0);
     setMomoReference(null);
+    setMomoAuthUrl(null);
     setSubmitting(false);
     try {
       await fetch(`/api/pos/momo/charge/${encodeURIComponent(reference)}/cancel`, { method: "POST" });
@@ -323,7 +322,7 @@ export function PosSaleClient({
         };
 
         if (payload.status === "success" && payload.orderId && payload.orderNumber) {
-          settleMomoSale(payload.orderId, payload.orderNumber, payload.total ?? subtotal);
+          settleMomoSale(payload.orderId, payload.orderNumber, payload.total ?? displayTotal);
           setSubmitting(false);
         } else if (payload.status === "failed" || payload.status === "cancelled") {
           stopMomoPolling();
@@ -349,6 +348,7 @@ export function PosSaleClient({
     setMomoStage("waiting");
     setMomoMessage("Starting charge...");
     setMomoElapsedMs(0);
+    setMomoAuthUrl(null);
 
     try {
       const response = await fetch("/api/pos/momo/charge", {
@@ -361,7 +361,6 @@ export function PosSaleClient({
             variantId: line.variantId,
             quantity: line.quantity
           })),
-          provider: momoProvider,
           posShiftId: shift.id,
           promoCode: promoCode.trim() || undefined,
           idempotencyKey: crypto.randomUUID()
@@ -373,21 +372,32 @@ export function PosSaleClient({
         orderNumber?: string;
         total?: number;
         reference?: string;
-        chargeStatus?: string;
-        displayText?: string | null;
+        alreadyPaid?: boolean;
+        authorizationUrl?: string;
       };
 
       if (!response.ok || !payload.orderId || !payload.orderNumber || !payload.reference) {
         throw new Error(payload.message ?? "Could not start the mobile money charge.");
       }
 
-      if (payload.chargeStatus === "success") {
-        settleMomoSale(payload.orderId, payload.orderNumber, payload.total ?? subtotal);
+      if (payload.alreadyPaid) {
+        settleMomoSale(payload.orderId, payload.orderNumber, payload.total ?? displayTotal);
         setSubmitting(false);
         return;
       }
 
-      setMomoMessage(payload.displayText || "Ask the customer to check their phone and approve the payment.");
+      if (!payload.authorizationUrl) {
+        throw new Error("Paystack didn't return a payment link.");
+      }
+
+      // Opened on this device — the customer completes the mobile-money
+      // provider prompt and PIN entry right there with the staff, same as
+      // Paystack's own hosted checkout does for online orders. Popup
+      // blockers can swallow this silently, so momoAuthUrl also renders a
+      // clickable fallback in the waiting panel below.
+      setMomoAuthUrl(payload.authorizationUrl);
+      window.open(payload.authorizationUrl, "_blank", "noopener,noreferrer");
+      setMomoMessage("Complete the payment in the Paystack tab that just opened, then come back here.");
       startMomoPolling(payload.reference);
     } catch (error) {
       setMomoStage("failed");
@@ -708,21 +718,6 @@ export function PosSaleClient({
               />
             </label>
           ) : null}
-          {paymentMethod === "mobile_money" ? (
-            <label className="admin-field">
-              <span>Network</span>
-              <select
-                onChange={(event) => setMomoProvider(event.target.value as MomoProvider)}
-                value={momoProvider}
-              >
-                {MOMO_PROVIDERS.map((provider) => (
-                  <option key={provider.value} value={provider.value}>
-                    {provider.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
           <label className="admin-field">
             <span>Promo code (optional)</span>
             <input
@@ -731,9 +726,15 @@ export function PosSaleClient({
               value={promoCode}
             />
           </label>
+          {paymentMethod === "mobile_money" ? (
+            <div className="pos-total secondary">
+              <span>Mobile money fee (1.95%)</span>
+              <strong>{formatMoney(paymentFee)}</strong>
+            </div>
+          ) : null}
           <div className="pos-total">
             <span>Total</span>
-            <strong>{formatMoney(subtotal)}</strong>
+            <strong>{formatMoney(displayTotal)}</strong>
           </div>
           {momoStage === "waiting" ? (
             <div className="pos-momo-waiting" role="status">
@@ -741,6 +742,11 @@ export function PosSaleClient({
               <strong>{momoMessage}</strong>
               <span>{customerPhone}</span>
               <small>{Math.max(0, Math.round((MOMO_TIMEOUT_MS - momoElapsedMs) / 1000))}s left</small>
+              {momoAuthUrl ? (
+                <a className="pos-secondary-button" href={momoAuthUrl} rel="noreferrer" target="_blank">
+                  Didn&apos;t open? Open Paystack
+                </a>
+              ) : null}
               <button
                 className="pos-secondary-button"
                 onClick={() => void cancelMomoCharge(momoReference)}

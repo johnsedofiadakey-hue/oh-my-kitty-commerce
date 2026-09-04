@@ -226,6 +226,10 @@ export type Order = {
   discountTotal: MoneyMinorUnit;
   deliveryTotal: MoneyMinorUnit;
   taxTotal: MoneyMinorUnit;
+  // Card/mobile-money processing fee passed on to the customer, already
+  // folded into `total` — 0 for cash, manual transfer, and POS's manual
+  // card flow, since no Paystack fee is actually incurred on those.
+  paymentFeeTotal: MoneyMinorUnit;
   total: MoneyMinorUnit;
   currency: CurrencyCode;
   createdBy?: string | null;

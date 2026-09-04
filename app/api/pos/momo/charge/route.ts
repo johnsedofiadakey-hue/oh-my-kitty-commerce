@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getRequiredPosActor } from "@/lib/auth/pos-server";
 import { CommerceError } from "@/lib/commerce/errors";
 import {
-  confirmPaystackPayment,
   createPendingPosMomoOrder,
   evaluatePromotionCode,
   getEffectiveRoles,
@@ -11,13 +10,7 @@ import {
 } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { hasPermission } from "@/lib/permissions/permissions";
-import {
-  chargePaystackMobileMoney,
-  isPaystackConfigured,
-  placeholderEmailForPhone,
-  verifyPaystackTransaction,
-  type MobileMoneyProvider
-} from "@/lib/payments/paystack";
+import { initializePaystackTransaction, isPaystackConfigured, placeholderEmailForPhone } from "@/lib/payments/paystack";
 
 type PosLineInput = {
   productId?: unknown;
@@ -33,11 +26,8 @@ type MomoChargeRequestBody = {
   idempotencyKey?: unknown;
   items?: unknown;
   posShiftId?: unknown;
-  provider?: unknown;
   promoCode?: unknown;
 };
-
-const KNOWN_PROVIDERS: MobileMoneyProvider[] = ["mtn", "vod", "atl"];
 
 export async function POST(request: Request) {
   try {
@@ -60,7 +50,6 @@ export async function POST(request: Request) {
       throw new CommerceError("VALIDATION_ERROR", "A customer phone number is required for mobile money.");
     }
 
-    const provider = parseProvider(body.provider);
     const posShiftId = normalizeOptionalString(body.posShiftId);
     if (!posShiftId) {
       throw new CommerceError("INVALID_STATE", "POS sale requires an open shift.");
@@ -80,6 +69,7 @@ export async function POST(request: Request) {
       },
       deliveryTotal: 0,
       taxTotal: 0,
+      chargePaystackFee: true,
       idempotencyKey,
       items,
       posShiftId,
@@ -93,47 +83,25 @@ export async function POST(request: Request) {
         orderNumber: pending.order.orderNumber,
         total: pending.order.total,
         reference: idempotencyKey,
-        chargeStatus: "success",
-        displayText: null
+        alreadyPaid: true
       });
     }
 
     const email = placeholderEmailForPhone(phone);
-    const charge = await chargePaystackMobileMoney({
+    const init = await initializePaystackTransaction({
       amountMinorUnit: pending.order.total,
       email,
       reference: pending.order.idempotencyKey,
-      phone,
-      provider,
+      callbackUrl: `${getSiteUrl()}/pos/paystack/callback`,
       metadata: { orderId: pending.order.id, orderNumber: pending.order.orderNumber }
     });
-
-    // Some networks/test-mode configs settle synchronously on the initial
-    // charge call itself rather than requiring the client to poll — never
-    // trust that status directly, though: re-verify with Paystack before
-    // confirming, same as the poll route and the webhook handler do. If
-    // Paystack's own charge response and verify disagree, report "pending"
-    // so the client falls back to polling instead of settling prematurely.
-    let confirmedStatus = charge.status;
-    if (charge.status === "success") {
-      const verified = await verifyPaystackTransaction(charge.reference);
-      if (verified.status === "success") {
-        await confirmPaystackPayment(context, {
-          orderId: pending.order.id,
-          providerReference: charge.reference
-        });
-      } else {
-        confirmedStatus = "pending";
-      }
-    }
 
     return NextResponse.json({
       orderId: pending.order.id,
       orderNumber: pending.order.orderNumber,
       total: pending.order.total,
-      reference: charge.reference,
-      chargeStatus: confirmedStatus,
-      displayText: charge.displayText
+      reference: init.reference,
+      authorizationUrl: init.authorizationUrl
     });
   } catch (error) {
     return NextResponse.json(
@@ -195,12 +163,8 @@ async function applyPromoCode(
   };
 }
 
-function parseProvider(value: unknown): MobileMoneyProvider {
-  if (typeof value === "string" && KNOWN_PROVIDERS.includes(value as MobileMoneyProvider)) {
-    return value as MobileMoneyProvider;
-  }
-
-  throw new CommerceError("VALIDATION_ERROR", "Choose a mobile money network.");
+function getSiteUrl() {
+  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 }
 
 function parsePosLines(value: unknown) {

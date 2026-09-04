@@ -6,6 +6,7 @@ import { useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
 import { onCartChanged, readCartLines, type CartLine } from "@/components/storefront/add-to-bag-button";
 import { BagIcon } from "@/components/storefront/icons";
 import { formatMoney } from "@/lib/commerce/format";
+import { calculatePaystackFee } from "@/lib/payments/fee";
 import type { StorefrontDeliveryOption } from "@/lib/storefront/delivery";
 
 type CheckoutClientProps = {
@@ -54,7 +55,9 @@ export function CheckoutClient({
   const selectedDelivery = deliveryOptions.find((option) => option.id === deliveryId);
   const deliveryFee = selectedDelivery?.fee ?? 0;
   const discountTotal = appliedPromo?.discountTotal ?? 0;
-  const total = Math.max(0, subtotal + deliveryFee - discountTotal);
+  const preFeeTotal = Math.max(0, subtotal + deliveryFee - discountTotal);
+  const paymentFee = calculatePaystackFee(preFeeTotal);
+  const total = preFeeTotal + paymentFee;
   const isPickup = selectedDelivery?.type === "PICKUP";
 
   async function applyPromoCode() {
@@ -356,6 +359,10 @@ export function CheckoutClient({
           <div>
             <span>Delivery</span>
             <strong>{deliveryFee === 0 ? "Free" : formatMoney(deliveryFee)}</strong>
+          </div>
+          <div>
+            <span>Card/mobile money fee (1.95%)</span>
+            <strong>{formatMoney(paymentFee)}</strong>
           </div>
           <div className="checkout-grand-total">
             <span>Total</span>

@@ -3,6 +3,8 @@ import { serverEnv } from "@/lib/env/server";
 
 const PAYSTACK_API_BASE = "https://api.paystack.co";
 
+export { PAYSTACK_FEE_RATE, calculatePaystackFee } from "@/lib/payments/fee";
+
 export type PaystackInitResult = {
   authorizationUrl: string;
   accessCode: string;

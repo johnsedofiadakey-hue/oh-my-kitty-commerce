@@ -83,6 +83,7 @@ export async function POST(request: Request) {
       },
       deliveryTotal,
       taxTotal: 0,
+      chargePaystackFee: true,
       idempotencyKey,
       items: itemsWithDiscounts,
       paymentMethod: "card",

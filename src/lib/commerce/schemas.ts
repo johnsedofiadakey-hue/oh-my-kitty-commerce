@@ -161,6 +161,10 @@ export const createOrderDraftInputSchema = z.object({
   items: z.array(orderItemInputSchema).min(1),
   deliveryTotal: moneySchema.default(0),
   taxTotal: moneySchema.default(0),
+  // When true, buildOrder adds a Paystack processing-fee surcharge into the
+  // total — only the online checkout and POS mobile-money flows set this,
+  // since those are the only paths that actually incur the fee.
+  chargePaystackFee: z.boolean().default(false),
   createdBy: z.string().nullable().optional(),
   staffId: z.string().nullable().optional(),
   posShiftId: z.string().nullable().optional(),
