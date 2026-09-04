@@ -3127,7 +3127,8 @@ button {
 }
 
 .cart-item-figure img {
-  object-fit: cover;
+  object-fit: contain;
+  padding: 6px;
 }
 
 .cart-item-copy {
@@ -7683,11 +7684,15 @@ button {
   box-shadow: 0 8px 22px rgb(88 43 52 / 10%);
 }
 
-.cart-item-figure img,
 .cart-recommendation-figure img,
 .sheet-related-figure img,
 .track-result-thumb img {
   object-fit: cover;
+}
+
+.cart-item-figure img {
+  object-fit: contain;
+  padding: 6px;
 }
 
 .quantity-stepper,
