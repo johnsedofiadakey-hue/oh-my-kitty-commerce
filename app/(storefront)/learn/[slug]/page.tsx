@@ -1,8 +1,6 @@
-import Image from "next/image";
-import Link from "next/link";
-import type { Route } from "next";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { GuideExperience } from "@/components/storefront/learn-experience";
 import { getGuideBySlug, guides } from "@/lib/storefront/guides";
 import { buildArticleJsonLd } from "@/lib/seo/structured-data";
 
@@ -36,7 +34,7 @@ export default async function GuidePage({ params }: GuidePageParams) {
   }
 
   return (
-    <main className="legal-page">
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -45,35 +43,7 @@ export default async function GuidePage({ params }: GuidePageParams) {
           )
         }}
       />
-      <div className="legal-page-botanical" aria-hidden="true">
-        <Image alt="" fill sizes="260px" src="/hero/botanicals/leaf-foreground-01.svg" />
-      </div>
-      <section className="legal-shell">
-        <Link className="brand-mark" href="/">
-          Oh My Kitty
-        </Link>
-        <span className="scene-kicker">{guide.kicker}</span>
-        <h1>{guide.title}</h1>
-        <div className="legal-card">
-          {guide.sections.map((section, index) => (
-            <section data-section-number={String(index + 1).padStart(2, "0")} key={section.heading}>
-              <h2>{section.heading}</h2>
-              {section.body.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </section>
-          ))}
-        </div>
-        <div className="learn-guide-actions">
-          <Link className="portal-cta" href={"/shop" as Route}>
-            <span>{guide.shopCtaLabel}</span>
-            <i aria-hidden="true" />
-          </Link>
-          <Link className="portal-cta-secondary" href="/learn">
-            More guides
-          </Link>
-        </div>
-      </section>
-    </main>
+      <GuideExperience guide={guide} relatedGuides={guides.filter((entry) => entry.slug !== guide.slug)} />
+    </>
   );
 }

@@ -9,6 +9,14 @@ type StorefrontFooterProps = {
 
 type SocialIcon = "instagram" | "tiktok" | "facebook" | "snapchat" | "whatsapp";
 
+const SUPPORT_LINKS = [
+  { href: "/faq", label: "FAQ" },
+  { href: "/contact", label: "Contact" },
+  { href: "/delivery", label: "Delivery" },
+  { href: "/returns", label: "Returns" },
+  { href: "/track", label: "Track order" }
+];
+
 export function StorefrontFooter({ variant = "full", whatsappNumber }: StorefrontFooterProps) {
   const socialButtons = [
     {
@@ -40,58 +48,22 @@ export function StorefrontFooter({ variant = "full", whatsappNumber }: Storefron
 
   return (
     <footer className="storefront-footer">
-      {/* Cinematic final brand scene — full-screen, product overlapping the
-          wordmark. Dissolves into the minimal functional footer below.
-          Skipped on transactional pages (cart/checkout) so the flow stays
-          short — the brand moment belongs to browsing, not to checkout. */}
-      {variant === "full" ? (
-        <section className="footer-cinematic" aria-hidden="true">
-          <div className="footer-scene">
-            <Image alt="" fill sizes="900px" src="/hero/architecture/peach-portal.svg" />
-          </div>
-          <div className="footer-botanical" aria-hidden="true">
-            <Image alt="" fill sizes="220px" src="/hero/botanicals/leaf-foreground-01.svg" />
-          </div>
-          <div className="footer-wordmark">
-            <span>OH MY</span>
-            <span>KITTY</span>
-          </div>
-          <div className="footer-scene-bottle">
-            <Image alt="" fill sizes="280px" src="/hero/products/slippery-elm.png" />
-          </div>
-          <p className="footer-closing-line">Made for every version of her.</p>
-        </section>
-      ) : null}
-
-      <div className="footer-minimal">
-        <div className="footer-minimal-inner">
-          <Link className="brand-lockup" href="/">
-            <span aria-hidden="true" className="brand-lockup-icon">
+      <div className="footer-dock-shell">
+        <div className="footer-dock">
+          <Link aria-label="Oh My Kitty home" className="footer-dock-brand" href="/">
+            <span aria-hidden="true" className="footer-dock-logo">
               <Image
                 alt=""
                 fill
-                sizes="40px"
+                sizes="34px"
                 src="/brand/oh-my-kitty-logo.jpeg"
                 style={{ objectFit: "cover", transform: "scale(2) translate(-2%, -10%)" }}
               />
             </span>
-            <span className="brand-lockup-text">
-              <strong>Oh My Kitty</strong>
-              <small>intimate care</small>
-            </span>
+            <span className="footer-dock-brand-text">Oh My Kitty</span>
           </Link>
 
-          <nav className="footer-legal-links" aria-label="Support">
-            <a href="/faq">FAQ</a>
-            <a href="/contact">Contact</a>
-            <a href="/delivery">Delivery</a>
-            <a href="/returns">Returns</a>
-            <a href="/track">Track order</a>
-            <a href="/privacy">Privacy</a>
-            <a href="/terms">Terms</a>
-          </nav>
-
-          <div className="footer-socials" aria-label="Social media links">
+          <div className="footer-dock-socials" aria-label="Social media links">
             {socialButtons.map((social) => (
               <a
                 aria-label={social.label}
@@ -107,18 +79,35 @@ export function StorefrontFooter({ variant = "full", whatsappNumber }: Storefron
             ))}
           </div>
 
-          <Link className="footer-admin-peek" href="/admin/login">
-            <span aria-hidden="true" className="footer-admin-lock" />
-            <strong>Admin</strong>
-          </Link>
+          <div className="footer-dock-tail">
+            <nav className="footer-dock-legal" aria-label="Legal">
+              <a href="/privacy">Privacy</a>
+              <a href="/terms">Terms</a>
+            </nav>
 
-          <p className="footer-credit">
-            Built and powered by{" "}
-            <a href="https://stormglide.io" rel="noreferrer" target="_blank">
-              stormglide.io
-            </a>
-          </p>
+            <Link aria-label="Admin login" className="footer-admin-peek" href="/admin/login">
+              <span aria-hidden="true" className="footer-admin-lock" />
+              <strong>Admin</strong>
+            </Link>
+          </div>
         </div>
+
+        {variant === "full" ? (
+          <nav className="footer-support-row" aria-label="Support">
+            {SUPPORT_LINKS.map((link) => (
+              <a href={link.href} key={link.href}>
+                {link.label}
+              </a>
+            ))}
+          </nav>
+        ) : null}
+
+        <p className="footer-credit">
+          Built and powered by{" "}
+          <a href="https://stormglide.io" rel="noreferrer" target="_blank">
+            stormglide.io
+          </a>
+        </p>
       </div>
     </footer>
   );
