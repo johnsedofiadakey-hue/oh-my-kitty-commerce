@@ -35,7 +35,7 @@ function buildPeriodReport(
   const stockByProductId = new Map<string, number>();
   for (const row of inventoryRows) {
     const productId = row.variant.productId;
-    stockByProductId.set(productId, (stockByProductId.get(productId) ?? 0) + row.variant.stockAvailable);
+    stockByProductId.set(productId, (stockByProductId.get(productId) ?? 0) + row.availableStock);
   }
 
   const byProduct = new Map<

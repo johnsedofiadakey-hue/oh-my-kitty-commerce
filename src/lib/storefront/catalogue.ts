@@ -17,6 +17,7 @@ import type {
   Routine
 } from "@/lib/commerce/types";
 import { formatMoney } from "@/lib/commerce/format";
+import { computeAvailableStock } from "@/lib/commerce/inventory";
 
 export type StorefrontCatalogueSource = "live" | "sample";
 
@@ -34,6 +35,10 @@ export type StorefrontCatalogue = {
   sourceMessage?: string;
   cards: StorefrontProductCard[];
   media: MediaAsset[];
+  // Every variant, not just cards' own — needed to resolve a set's
+  // components (which can belong to a different product) when computing
+  // how many of it are actually available to sell.
+  variantsById: Map<string, ProductVariant>;
 };
 
 export type StorefrontProductView = {
@@ -86,9 +91,9 @@ export const getStorefrontCatalogue = cache(async (): Promise<StorefrontCatalogu
       (product) => product.status === "ACTIVE"
     );
     const productIds = new Set(products.map((product) => product.id));
-    const variants = (await context.repo.listAllVariants()).filter(
-      (variant) => variant.active && productIds.has(variant.productId)
-    );
+    const allVariants = await context.repo.listAllVariants();
+    const variantsById = new Map(allVariants.map((variant) => [variant.id, variant]));
+    const variants = allVariants.filter((variant) => variant.active && productIds.has(variant.productId));
 
     const [media, concerns, productTypes, routines] = await Promise.all([
       context.repo.listMedia(),
@@ -106,14 +111,16 @@ export const getStorefrontCatalogue = cache(async (): Promise<StorefrontCatalogu
         source: "live",
         sourceMessage: "We're restocking — new products are on their way.",
         cards: [],
-        media
+        media,
+        variantsById
       };
     }
 
     return {
       source: "live",
       cards,
-      media
+      media,
+      variantsById
     };
   } catch {
     return sampleStorefrontCatalogue("Firestore is not ready yet. Showing starter catalogue.");
@@ -133,7 +140,8 @@ function sampleStorefrontCatalogue(sourceMessage: string): StorefrontCatalogue {
       sampleProductTypes.filter((productType) => productType.active),
       sampleRoutines.filter((routine) => routine.active)
     ),
-    media
+    media,
+    variantsById: new Map(sampleVariants.map((variant) => [variant.id, variant]))
   };
 }
 
@@ -213,7 +221,7 @@ export function toStorefrontProductViews(catalogue: StorefrontCatalogue): Storef
         variant.compareAtPrice && variant.compareAtPrice > variant.price
           ? formatStorefrontMoney(variant.compareAtPrice)
           : undefined,
-      stockAvailable: variant.stockAvailable,
+      stockAvailable: computeAvailableStock(variant, catalogue.variantsById),
       imageUrl: media?.url,
       imageAlt: media?.alt,
       concernLabels: concerns.map((concern) => concern.title),

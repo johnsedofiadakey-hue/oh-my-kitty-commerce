@@ -192,6 +192,80 @@ describe("commerce operations", () => {
     expect(context.repo.orders.size).toBe(1);
   });
 
+  it("selling a set draws from its components instead of its own stock", async () => {
+    const context = createTestContext();
+    const { component, kit } = await seedSetAndComponent(context);
+
+    const sale = await completePosSale(context, salesStaff, {
+      channel: "POS",
+      idempotencyKey: "pos-sale-set-0001",
+      items: [{ productId: kit.productId, variantId: kit.id, quantity: 1 }],
+      paymentMethod: "cash",
+      paymentProvider: "CASH",
+      amountReceived: kit.price
+    });
+
+    expect(sale.inventoryMovements).toHaveLength(1);
+    expect(sale.inventoryMovements[0]).toMatchObject({
+      variantId: component.id,
+      type: "BUNDLE_CONSUMED",
+      quantityDelta: -2
+    });
+
+    // The set itself never had stock to begin with — selling one must not touch it.
+    await expect(context.repo.getVariant(kit.productId, kit.id)).resolves.toMatchObject({
+      stockAvailable: kit.stockAvailable
+    });
+    await expect(context.repo.getVariant(component.productId, component.id)).resolves.toMatchObject({
+      stockAvailable: component.stockAvailable - 2
+    });
+  });
+
+  it("blocks a set sale when a component can't cover it, without touching either variant's stock", async () => {
+    const context = createTestContext();
+    const { component, kit } = await seedSetAndComponent(context, { componentStock: 1 });
+
+    await expect(
+      completePosSale(context, salesStaff, {
+        channel: "POS",
+        idempotencyKey: "pos-sale-set-shortfall",
+        items: [{ productId: kit.productId, variantId: kit.id, quantity: 1 }],
+        paymentMethod: "cash",
+        paymentProvider: "CASH",
+        amountReceived: kit.price
+      })
+    ).rejects.toThrow(/does not have enough stock/);
+
+    await expect(context.repo.getVariant(component.productId, component.id)).resolves.toMatchObject({
+      stockAvailable: 1
+    });
+  });
+
+  it("aggregates a shared component across order lines before checking stock, instead of validating each line alone", async () => {
+    const context = createTestContext();
+    // 2 per set, buying 2 sets = 4, plus 3 bought loose in the same order = 7 needed.
+    const { component, kit } = await seedSetAndComponent(context, { componentStock: 7 });
+
+    const sale = await completePosSale(context, salesStaff, {
+      channel: "POS",
+      idempotencyKey: "pos-sale-set-shared",
+      items: [
+        { productId: kit.productId, variantId: kit.id, quantity: 2 },
+        { productId: component.productId, variantId: component.id, quantity: 3 }
+      ],
+      paymentMethod: "cash",
+      paymentProvider: "CASH",
+      amountReceived: kit.price * 2 + component.price * 3
+    });
+
+    // One movement for the set's draw (4) and one for the direct line (3) — not
+    // silently merged, but the resulting stock reflects the combined total.
+    expect(sale.inventoryMovements).toHaveLength(2);
+    await expect(context.repo.getVariant(component.productId, component.id)).resolves.toMatchObject({
+      stockAvailable: 0
+    });
+  });
+
   it("blocks POS discounts when the staff role lacks discount permission", async () => {
     const context = createTestContext();
     const { variant } = await seedProductAndVariant(context);
@@ -483,6 +557,52 @@ async function seedProductAndVariant(context: CommerceContext) {
   });
 
   return { product, variant };
+}
+
+/** A "set" (Chronic Infection Set-style) that needs 2 of one component per unit sold. */
+async function seedSetAndComponent(context: CommerceContext, options: { componentStock?: number } = {}) {
+  const componentProduct = await createProduct(context, owner, {
+    title: "Feminine Wash",
+    slug: "feminine-wash",
+    status: "ACTIVE",
+    collectionIds: [],
+    tags: [],
+    mediaIds: [],
+    featured: false
+  });
+  const component = await createVariant(context, owner, {
+    productId: componentProduct.id,
+    title: "Standard",
+    sku: "OMK-WASH",
+    optionValues: {},
+    price: 9000,
+    currency: "GHS",
+    stockOnHand: options.componentStock ?? 10,
+    lowStockThreshold: 5
+  });
+
+  const kitProduct = await createProduct(context, owner, {
+    title: "Chronic Infection Set",
+    slug: "chronic-infection-set",
+    status: "ACTIVE",
+    collectionIds: [],
+    tags: [],
+    mediaIds: [],
+    featured: false
+  });
+  const kit = await createVariant(context, owner, {
+    productId: kitProduct.id,
+    title: "Standard",
+    sku: "OMK-SET",
+    optionValues: {},
+    price: 69000,
+    currency: "GHS",
+    bundleComponents: [{ variantId: component.id, quantity: 2 }],
+    stockOnHand: 0,
+    lowStockThreshold: 5
+  });
+
+  return { componentProduct, component, kitProduct, kit };
 }
 
 async function sellTwoUnits(context: CommerceContext, actor: CommerceActor) {

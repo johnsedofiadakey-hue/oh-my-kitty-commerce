@@ -10,6 +10,7 @@ import {
   toSortableMillis
 } from "@/lib/admin/sample-admin-data";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
+import { computeAvailableStock, isSetVariant } from "@/lib/commerce/inventory";
 import type {
   AuditLog,
   Customer,
@@ -36,6 +37,8 @@ export type AdminOrderRow = {
 export type AdminInventoryRow = {
   product: Product | null;
   variant: ProductVariant;
+  isSet: boolean;
+  availableStock: number;
   lowStock: boolean;
   movements: InventoryMovement[];
 };
@@ -185,13 +188,23 @@ function buildOperationsData(input: {
   auditLogs: AuditLog[];
   notificationLogs: NotificationLog[];
 }): AdminOperationsData {
+  const variantsById = new Map(input.variants.map((variant) => [variant.id, variant]));
   const inventoryRows = input.variants.map((variant) => {
     const product = input.products.find((entry) => entry.id === variant.productId) ?? null;
-    const lowStock = variant.trackInventory && variant.stockAvailable <= variant.lowStockThreshold;
+    const isSet = isSetVariant(variant);
+    const availableStock = computeAvailableStock(variant, variantsById);
+    // A set's own lowStockThreshold is meaningless (it has no stock of its
+    // own to threshold) — low-stock there just means the computed
+    // availability has hit the same bar as any other product.
+    const lowStock = isSet
+      ? availableStock <= variant.lowStockThreshold
+      : variant.trackInventory && variant.stockAvailable <= variant.lowStockThreshold;
 
     return {
       product,
       variant,
+      isSet,
+      availableStock,
       lowStock,
       movements: input.inventoryMovements.filter((movement) => movement.variantId === variant.id)
     };

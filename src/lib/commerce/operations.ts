@@ -9,11 +9,11 @@ import {
 import { CommerceError } from "@/lib/commerce/errors";
 import { formatMoney } from "@/lib/commerce/format";
 import { calculatePaystackFee } from "@/lib/payments/fee";
+import { isSetVariant } from "@/lib/commerce/inventory";
 import type { CommerceRepository, CommerceTransaction } from "@/lib/commerce/repository";
 import { createNoopTransaction } from "@/lib/commerce/repository";
 import {
   adjustInventoryInputSchema,
-  assembleBundleInputSchema,
   completeSaleInputSchema,
   createConcernInputSchema,
   createCustomerInputSchema,
@@ -45,7 +45,6 @@ import {
   updateRoutineInputSchema,
   updateVariantInputSchema,
   type AdjustInventoryInput,
-  type AssembleBundleInput,
   type CompleteSaleInput,
   type CreateCustomerInput,
   type CreateOrderDraftInput,
@@ -361,116 +360,6 @@ export async function adjustInventory(
     );
 
     return { variant: updatedVariant, movement };
-  });
-}
-
-/**
- * Moves stock from a kit's declared components into the kit itself — the
- * deliberate "I just physically assembled N of these" action. Selling the
- * kit afterward works exactly like selling any other product (decrements
- * its own stock directly via decrementInventoryForOrder); this is the only
- * place component stock is ever touched. Existing stock on the kit is left
- * alone — this only ever adds N new units, it's not a reconciliation tool.
- */
-export async function assembleBundle(
-  context: CommerceContext,
-  actor: CommerceActor,
-  input: AssembleBundleInput
-) {
-  await assertCan(context, actor, "inventory.adjust");
-  const parsed = assembleBundleInputSchema.parse(input);
-
-  return withTransaction(context, async (repo) => {
-    const kit = await requiredVariant(context, parsed.productId, parsed.variantId, repo);
-    if (!kit.bundleComponents || kit.bundleComponents.length === 0) {
-      throw new CommerceError("VALIDATION_ERROR", `${kit.sku} has no bundle contents defined.`);
-    }
-
-    const allVariants = await repo.listAllVariants();
-    const variantsById = new Map(allVariants.map((variant) => [variant.id, variant]));
-
-    const components = kit.bundleComponents.map((item) => {
-      const component = variantsById.get(item.variantId);
-      if (!component) {
-        throw new CommerceError("NOT_FOUND", `Bundle component not found: ${item.variantId}`);
-      }
-      if (component.bundleComponents && component.bundleComponents.length > 0) {
-        throw new CommerceError(
-          "INVALID_STATE",
-          `${component.sku} is itself a kit — nesting kits inside kits isn't supported.`
-        );
-      }
-      return { component, neededQuantity: item.quantity * parsed.quantity };
-    });
-
-    for (const { component, neededQuantity } of components) {
-      if (component.stockAvailable < neededQuantity) {
-        throw new CommerceError(
-          "OUT_OF_STOCK",
-          `Not enough stock of ${component.sku} to assemble ${parsed.quantity} × ${kit.sku} (need ${neededQuantity}, have ${component.stockAvailable}).`
-        );
-      }
-    }
-
-    const movements: InventoryMovement[] = [];
-    for (const { component, neededQuantity } of components) {
-      const stockOnHand = component.stockOnHand - neededQuantity;
-      const stockAvailable = component.stockAvailable - neededQuantity;
-      const updatedComponent: ProductVariant = { ...component, stockOnHand, stockAvailable };
-      const movement: InventoryMovement = {
-        id: createId(context, "movement"),
-        productId: component.productId,
-        variantId: component.id,
-        type: "BUNDLE_CONSUMED",
-        quantityDelta: neededQuantity * -1,
-        stockAfter: stockAvailable,
-        reason: `Assembled ${parsed.quantity} × ${kit.sku}: ${parsed.reason}`,
-        actorId: actor.uid,
-        createdAt: getNow(context)
-      };
-
-      await repo.saveVariant(updatedComponent);
-      await repo.saveInventoryMovement(movement);
-      movements.push(movement);
-    }
-
-    const kitStockOnHand = kit.stockOnHand + parsed.quantity;
-    const kitStockAvailable = kit.stockAvailable + parsed.quantity;
-    const updatedKit: ProductVariant = {
-      ...kit,
-      stockOnHand: kitStockOnHand,
-      stockAvailable: kitStockAvailable
-    };
-    const kitMovement: InventoryMovement = {
-      id: createId(context, "movement"),
-      productId: parsed.productId,
-      variantId: parsed.variantId,
-      type: "BUNDLE_ASSEMBLED",
-      quantityDelta: parsed.quantity,
-      stockAfter: kitStockAvailable,
-      reason: parsed.reason,
-      actorId: actor.uid,
-      createdAt: getNow(context)
-    };
-
-    await repo.saveVariant(updatedKit);
-    await repo.saveInventoryMovement(kitMovement);
-    movements.push(kitMovement);
-
-    await writeAuditLog(
-      context,
-      actor,
-      {
-        action: "inventory.assemble",
-        entityType: "inventoryMovement",
-        entityId: kitMovement.id,
-        summary: `Assembled ${parsed.quantity} × ${kit.sku} from ${components.length} component(s)`,
-        reason: parsed.reason
-      },
-      repo
-    );
-
-    return { variant: updatedKit, movements };
   });
 }
 
@@ -2435,46 +2324,90 @@ async function decrementInventoryForOrder(
   // Firestore transactions require every read before any write, so the
   // per-item read, validate, and write phases are kept fully separate here
   // rather than interleaved in one loop.
-  const variants: ProductVariant[] = [];
+  const soldVariants: ProductVariant[] = [];
   for (const item of order.items) {
-    variants.push(await requiredVariant(context, item.productId, item.variantId, repo));
+    soldVariants.push(await requiredVariant(context, item.productId, item.variantId, repo));
   }
 
-  for (const [index, item] of order.items.entries()) {
-    const variant = variants[index];
-    if (!variant.trackInventory) {
-      continue;
-    }
+  // A "set" line has no stock of its own — selling it draws straight from
+  // its components, in whatever quantities its recipe calls for. Every
+  // order line is expanded into the leaf variant(s) it actually needs, and
+  // needs are summed across lines so the same component shared by two sets
+  // (or bought both loose and inside a set) in one order is checked and
+  // decremented as a single combined amount rather than two independent,
+  // individually-fine-looking ones.
+  const allVariants = await repo.listAllVariants();
+  const variantsById = new Map(allVariants.map((variant) => [variant.id, variant]));
+  for (const variant of soldVariants) {
+    variantsById.set(variant.id, variant);
+  }
 
-    const insufficientStock = variant.stockAvailable < item.quantity || variant.stockOnHand < item.quantity;
+  type Draw = { variant: ProductVariant; quantity: number; via: ProductVariant | null };
+  const draws: Draw[] = [];
+
+  for (const [index, item] of order.items.entries()) {
+    const variant = soldVariants[index];
+
+    if (isSetVariant(variant)) {
+      for (const component of variant.bundleComponents ?? []) {
+        const componentVariant = variantsById.get(component.variantId);
+        if (!componentVariant) {
+          throw new CommerceError(
+            "NOT_FOUND",
+            `${variant.sku}'s set includes a product that no longer exists: ${component.variantId}`
+          );
+        }
+        if (isSetVariant(componentVariant)) {
+          throw new CommerceError(
+            "INVALID_STATE",
+            `${componentVariant.sku} is itself a set — nested sets aren't supported.`
+          );
+        }
+        if (!componentVariant.trackInventory) {
+          continue;
+        }
+
+        draws.push({ variant: componentVariant, quantity: component.quantity * item.quantity, via: variant });
+      }
+    } else if (variant.trackInventory) {
+      draws.push({ variant, quantity: item.quantity, via: null });
+    }
+  }
+
+  const neededByVariantId = new Map<string, number>();
+  for (const draw of draws) {
+    neededByVariantId.set(draw.variant.id, (neededByVariantId.get(draw.variant.id) ?? 0) + draw.quantity);
+  }
+
+  for (const [variantId, needed] of neededByVariantId) {
+    const variant = variantsById.get(variantId)!;
+    const insufficientStock = variant.stockAvailable < needed || variant.stockOnHand < needed;
     if (insufficientStock && !options.allowOversell) {
       throw new CommerceError("OUT_OF_STOCK", `${variant.sku} does not have enough stock.`);
     }
   }
 
   const movements: InventoryMovement[] = [];
-  for (const [index, item] of order.items.entries()) {
-    const variant = variants[index];
-    if (!variant.trackInventory) {
-      continue;
-    }
-
-    const stockOnHand = variant.stockOnHand - item.quantity;
-    const stockAvailable = variant.stockAvailable - item.quantity;
+  for (const draw of draws) {
+    const current = variantsById.get(draw.variant.id)!;
+    const stockOnHand = current.stockOnHand - draw.quantity;
+    const stockAvailable = current.stockAvailable - draw.quantity;
     const updatedVariant: ProductVariant = {
-      ...variant,
+      ...current,
       stockOnHand,
       stockAvailable
     };
+    variantsById.set(draw.variant.id, updatedVariant);
+
     const movement: InventoryMovement = {
       id: createId(context, "movement"),
-      productId: item.productId,
-      variantId: item.variantId,
-      type: movementTypeForChannel(order.channel),
-      quantityDelta: item.quantity * -1,
+      productId: draw.variant.productId,
+      variantId: draw.variant.id,
+      type: draw.via ? "BUNDLE_CONSUMED" : movementTypeForChannel(order.channel),
+      quantityDelta: draw.quantity * -1,
       stockAfter: stockAvailable,
       orderId: order.id,
-      reason: `${order.channel} sale`,
+      reason: draw.via ? `${order.channel} sale of ${draw.via.sku} (set)` : `${order.channel} sale`,
       actorId: actor.uid,
       channel: order.channel,
       createdAt: getNow(context)

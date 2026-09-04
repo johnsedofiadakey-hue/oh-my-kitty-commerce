@@ -5,6 +5,7 @@ import {
   getVariantLabel
 } from "@/lib/admin/sample-admin-data";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
+import { computeAvailableStock, isSetVariant } from "@/lib/commerce/inventory";
 import type {
   Collection,
   Concern,
@@ -21,6 +22,8 @@ export type AdminCatalogueSource = "live" | "sample";
 export type AdminProductRow = {
   product: Product | null;
   variant: ProductVariant;
+  isSet: boolean;
+  availableStock: number;
   lowStock: boolean;
 };
 
@@ -103,13 +106,21 @@ function sampleCatalogue(sourceMessage: string): AdminCatalogueData {
 }
 
 function createRows(products: Product[], variants: ProductVariant[]): AdminProductRow[] {
+  const variantsById = new Map(variants.map((variant) => [variant.id, variant]));
+
   return variants.map((variant) => {
     const product = products.find((entry) => entry.id === variant.productId) ?? null;
-    const lowStock = variant.trackInventory && variant.stockAvailable <= variant.lowStockThreshold;
+    const isSet = isSetVariant(variant);
+    const availableStock = computeAvailableStock(variant, variantsById);
+    const lowStock = isSet
+      ? availableStock <= variant.lowStockThreshold
+      : variant.trackInventory && variant.stockAvailable <= variant.lowStockThreshold;
 
     return {
       product,
       variant,
+      isSet,
+      availableStock,
       lowStock
     };
   });

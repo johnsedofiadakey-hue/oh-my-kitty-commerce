@@ -9,7 +9,7 @@ import { requireAdminPermission } from "@/lib/auth/server";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import type { AdminInventoryRow } from "@/lib/admin/operations-data";
 import type { Product, ProductVariant } from "@/lib/commerce/types";
-import { adjustInventoryAction, assembleBundleAction } from "./actions";
+import { adjustInventoryAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +34,10 @@ export default async function AdminInventoryPage() {
       <div className="page-heading">
         <div>
           <h1 className="app-title">Inventory</h1>
-          <p className="app-subtitle">Stock on hand for every product. Tap one to restock or adjust it.</p>
+          <p className="app-subtitle">
+            Stock on hand for every product. Sets have no stock of their own — they show how many can be sold
+            right now based on their components.
+          </p>
         </div>
       </div>
       {data.sourceMessage ? (
@@ -67,7 +70,7 @@ function InventoryRow({
   disabled: boolean;
   variantLookup: Map<string, VariantLookupEntry>;
 }) {
-  const { product, variant, lowStock } = row;
+  const { product, variant, isSet, availableStock, lowStock } = row;
 
   return (
     <AdminDrawer
@@ -76,7 +79,10 @@ function InventoryRow({
         <div className="inventory-row">
           <div className="inventory-row-main">
             <strong>{getProductTitle(product)}</strong>
-            <span>{getVariantLabel(variant)}</span>
+            <span>
+              {getVariantLabel(variant)}
+              {isSet ? " · Set" : ""}
+            </span>
           </div>
           <span className="order-status-pill inventory-row-sku" title={variant.sku}>
             SKU {variant.sku}
@@ -84,7 +90,7 @@ function InventoryRow({
           <span className={lowStock ? "order-status-pill urgent" : "order-status-pill good"}>
             {lowStock ? "Low stock" : "Healthy"}
           </span>
-          <strong className="inventory-row-stock">{variant.stockAvailable} in stock</strong>
+          <strong className="inventory-row-stock">{availableStock} in stock</strong>
         </div>
       }
     >
@@ -102,7 +108,7 @@ function InventoryDetail({
   disabled: boolean;
   variantLookup: Map<string, VariantLookupEntry>;
 }) {
-  const { variant, movements } = row;
+  const { variant, isSet, availableStock, movements } = row;
   const recentMovements = [...movements]
     .sort((a, b) => toSortableMillis(b.createdAt) - toSortableMillis(a.createdAt))
     .slice(0, 8);
@@ -112,10 +118,6 @@ function InventoryDetail({
     .filter((row): row is { item: { variantId: string; quantity: number }; entry: VariantLookupEntry } =>
       Boolean(row.entry)
     );
-  const buildableNow =
-    components.length > 0
-      ? Math.min(...components.map(({ item, entry }) => Math.floor(entry.variant.stockAvailable / item.quantity)))
-      : 0;
 
   const usedIn = [...variantLookup.values()].filter(({ variant: candidate }) =>
     candidate.bundleComponents?.some((item) => item.variantId === variant.id)
@@ -126,13 +128,13 @@ function InventoryDetail({
       <section className="order-detail-section">
         <div className="order-detail-meta">
           <span>SKU {variant.sku}</span>
-          <span>{variant.stockAvailable} currently in stock</span>
+          <span>{availableStock} currently in stock</span>
         </div>
       </section>
 
       {components.length > 0 ? (
         <section className="order-detail-section">
-          <h3>Bundle contents</h3>
+          <h3>Made from</h3>
           <div className="stack-list">
             {components.map(({ item, entry }) => (
               <div className="stack-row" key={item.variantId}>
@@ -143,7 +145,10 @@ function InventoryDetail({
               </div>
             ))}
           </div>
-          <p className="admin-help">Enough in stock to assemble {buildableNow} more right now.</p>
+          <p className="admin-help">
+            This set has no stock of its own — selling one draws straight from the components above, and{" "}
+            {availableStock} is how many full sets they can currently cover.
+          </p>
         </section>
       ) : null}
 
@@ -161,65 +166,48 @@ function InventoryDetail({
               );
             })}
           </div>
+          <p className="admin-help">Selling any of these draws from this item&apos;s stock too.</p>
         </section>
       ) : null}
 
-      {components.length > 0 ? (
+      {isSet ? (
         <section className="order-detail-section">
-          <h3>Assemble this set</h3>
-          <form action={assembleBundleAction} className="admin-form">
+          <h3>Adjust stock</h3>
+          <p className="admin-help">
+            Sets aren&apos;t adjusted directly — restock or correct the components listed above instead.
+          </p>
+        </section>
+      ) : (
+        <section className="order-detail-section">
+          <h3>Adjust stock</h3>
+          <form action={adjustInventoryAction} className="admin-form">
             <input name="productId" type="hidden" value={variant.productId} />
             <input name="variantId" type="hidden" value={variant.id} />
             <fieldset disabled={disabled}>
               <label className="admin-field">
-                <span>How many are you assembling?</span>
-                <input inputMode="numeric" min="1" name="quantity" placeholder="e.g. 3" required type="number" />
+                <span>What happened</span>
+                <select defaultValue="MANUAL_ADJUSTMENT" name="type">
+                  <option value="STOCK_RECEIVED">Stock received (restock)</option>
+                  <option value="MANUAL_ADJUSTMENT">Manual adjustment</option>
+                  <option value="DAMAGE">Damaged</option>
+                  <option value="LOSS">Lost</option>
+                </select>
+              </label>
+              <label className="admin-field">
+                <span>Quantity change</span>
+                <input name="quantityDelta" placeholder="e.g. 10 to add, -2 to remove" required type="number" />
               </label>
               <label className="admin-field">
                 <span>Reason</span>
-                <input minLength={3} name="reason" placeholder="Assembled from shelf stock" required />
+                <input minLength={3} name="reason" placeholder="Restock delivery" required />
               </label>
-              <p className="admin-help">
-                This adds new units to {variant.sku}&apos;s stock and deducts the components above — it doesn&apos;t
-                audit or correct existing stock.
-              </p>
               <button className="admin-action" type="submit">
-                Assemble
+                Save adjustment
               </button>
             </fieldset>
           </form>
         </section>
-      ) : null}
-
-      <section className="order-detail-section">
-        <h3>Adjust stock</h3>
-        <form action={adjustInventoryAction} className="admin-form">
-          <input name="productId" type="hidden" value={variant.productId} />
-          <input name="variantId" type="hidden" value={variant.id} />
-          <fieldset disabled={disabled}>
-            <label className="admin-field">
-              <span>What happened</span>
-              <select defaultValue="MANUAL_ADJUSTMENT" name="type">
-                <option value="STOCK_RECEIVED">Stock received (restock)</option>
-                <option value="MANUAL_ADJUSTMENT">Manual adjustment</option>
-                <option value="DAMAGE">Damaged</option>
-                <option value="LOSS">Lost</option>
-              </select>
-            </label>
-            <label className="admin-field">
-              <span>Quantity change</span>
-              <input name="quantityDelta" placeholder="e.g. 10 to add, -2 to remove" required type="number" />
-            </label>
-            <label className="admin-field">
-              <span>Reason</span>
-              <input minLength={3} name="reason" placeholder="Restock delivery" required />
-            </label>
-            <button className="admin-action" type="submit">
-              Save adjustment
-            </button>
-          </fieldset>
-        </form>
-      </section>
+      )}
 
       <section className="order-detail-section">
         <h3>Recent history</h3>

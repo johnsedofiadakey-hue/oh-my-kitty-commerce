@@ -169,12 +169,12 @@ export default async function AdminDashboardPage() {
                   </div>
                 );
               })}
-              {lowStockRows.map(({ product, variant }) => (
+              {lowStockRows.map(({ product, variant, availableStock }) => (
                 <div className="attention-row" key={variant.id}>
                   <span className="attention-stripe warn" />
                   <div className="attention-body">
                     <strong>
-                      {product?.title ?? "Product"} &mdash; {variant.stockAvailable} left
+                      {product?.title ?? "Product"} &mdash; {availableStock} left
                     </strong>
                     <span>Below threshold of {variant.lowStockThreshold}</span>
                   </div>

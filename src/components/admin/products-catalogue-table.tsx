@@ -228,7 +228,7 @@ function ProductRow({
   deleteProductAction: ProductsCatalogueTableProps["deleteProductAction"];
   quickEditCatalogueItemAction: ProductsCatalogueTableProps["quickEditCatalogueItemAction"];
 }) {
-  const { product, variant, lowStock } = row;
+  const { product, variant, availableStock, lowStock } = row;
 
   return (
     <div className="admin-table-row">
@@ -251,7 +251,7 @@ function ProductRow({
       </span>
       <span>{variant.title}</span>
       <span>GHS {(variant.price / 100).toFixed(2)}</span>
-      <span className={lowStock ? "status danger" : "status"}>{variant.stockAvailable}</span>
+      <span className={lowStock ? "status danger" : "status"}>{availableStock}</span>
       <span className="catalogue-status-cell">
         <span className={product?.status === "ACTIVE" ? "status" : "status neutral"}>
           {product?.status ?? "—"}
@@ -500,10 +500,16 @@ function ProductEditDrawer({
                 })}
             </div>
           ) : null}
-          <label className="admin-field">
-            <span>Adjust stock (+/-)</span>
-            <input defaultValue="0" inputMode="numeric" name="stockDelta" />
-          </label>
+          {variant.bundleComponents && variant.bundleComponents.length > 0 ? (
+            <p className="admin-help">
+              This is a set — it has no stock of its own. Restock or adjust the components above instead.
+            </p>
+          ) : (
+            <label className="admin-field">
+              <span>Adjust stock (+/-)</span>
+              <input defaultValue="0" inputMode="numeric" name="stockDelta" />
+            </label>
+          )}
           <label className="admin-field">
             <span>Shop position (lower shows first — leave blank for A–Z order)</span>
             <input

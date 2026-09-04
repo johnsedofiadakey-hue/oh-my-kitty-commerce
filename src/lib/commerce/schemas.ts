@@ -188,13 +188,6 @@ export const adjustInventoryInputSchema = z.object({
   reason: z.string().min(3)
 });
 
-export const assembleBundleInputSchema = z.object({
-  productId: z.string().min(1),
-  variantId: z.string().min(1),
-  quantity: z.number().int().min(1),
-  reason: z.string().min(3)
-});
-
 export const createMediaAssetInputSchema = z.object({
   storagePath: z.string().min(1),
   url: z.string().min(1),
@@ -395,7 +388,6 @@ export type CreateRawMaterialInput = z.input<typeof createRawMaterialInputSchema
 export type UpdateRawMaterialInput = z.input<typeof updateRawMaterialInputSchema>;
 export type UpdateStoreSettingsInput = z.input<typeof updateStoreSettingsInputSchema>;
 export type AdjustInventoryInput = z.input<typeof adjustInventoryInputSchema>;
-export type AssembleBundleInput = z.input<typeof assembleBundleInputSchema>;
 export type CreateCustomerInput = z.input<typeof createCustomerInputSchema>;
 export type UpdateCustomerInput = z.input<typeof updateCustomerInputSchema>;
 export type CreatePromotionInput = z.input<typeof createPromotionInputSchema>;
