@@ -42,6 +42,24 @@ export function buildFaqJsonLd(entries: { question: string; answer: string }[]) 
   };
 }
 
+export function buildArticleJsonLd(article: { title: string; description: string; slug: string }) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description: article.description,
+    url: `${SITE_URL}/learn/${article.slug}`,
+    publisher: {
+      "@type": "Organization",
+      name: "Oh My Kitty",
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/brand/oh-my-kitty-logo.jpeg`
+      }
+    }
+  };
+}
+
 export function buildProductJsonLd(product: {
   title: string;
   description?: string;

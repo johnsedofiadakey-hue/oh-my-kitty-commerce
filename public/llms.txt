@@ -7,6 +7,7 @@ Oh My Kitty is an online and in-person store serving customers in Ghana with fem
 ## Key pages
 
 - [Shop](https://ohmykittygh.com/shop): full product catalogue
+- [Guides & Answers](https://ohmykittygh.com/learn): plain-language guides on infections, boric acid, odor, and everyday intimate care
 - [FAQ](https://ohmykittygh.com/faq): ordering, pickup, delivery, and payment questions
 - [Delivery & Pickup](https://ohmykittygh.com/delivery): delivery areas and pickup details
 - [Contact](https://ohmykittygh.com/contact): how to reach the store

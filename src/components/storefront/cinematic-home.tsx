@@ -187,8 +187,8 @@ function buildHeroTimeline(gsap: any, cfg: HeroBreakpointConfig) {
   tl.to(".hero-scene-bottle", { x: cfg.bottleOrbitX, rotateZ: cfg.bottleRotate, duration: 13, ease: "power1.inOut" }, 55)
     .to(".hero-scene-pouch", { x: cfg.pouchOrbitX, scale: 0.55, duration: 13, ease: "power1.inOut" }, 55);
 
-  // Phase 05 — SEPARATION (68-78%): products separate; darkness becomes visible
-  // through the portal's opening rather than a simple background fade.
+  // Phase 05 — SEPARATION (68-78%): products separate; a soft bloom becomes
+  // visible through the portal's opening rather than a simple background fade.
   tl.to(".hero-scene-bottle", { x: cfg.bottleSeparationX, scale: cfg.bottlePush + 0.15, duration: 10, ease: "power1.inOut" }, 68)
     .to(
       ".hero-scene-pouch",
@@ -196,32 +196,34 @@ function buildHeroTimeline(gsap: any, cfg: HeroBreakpointConfig) {
       68
     )
     .to(".hero-scene-portal", { scale: cfg.portalAnticipate * 0.72, duration: 10, ease: "power1.inOut" }, 68)
-    .to(".hero-scene-blackworld", { clipPath: "circle(16% at 50% 50%)", duration: 10, ease: "power1.inOut" }, 68);
+    .to(".hero-scene-bloomworld", { clipPath: "circle(16% at 50% 50%)", duration: 10, ease: "power1.inOut" }, 68);
 
   // Phase 06 — PORTAL ANTICIPATION (78-88%): a deliberate slow beat before pass-through.
   tl.to(".hero-scene-portal", { scale: cfg.portalAnticipate, duration: 10, ease: "sine.inOut" }, 78)
-    .to(".hero-scene-blackworld", { clipPath: "circle(26% at 50% 50%)", duration: 10, ease: "sine.inOut" }, 78)
+    .to(".hero-scene-bloomworld", { clipPath: "circle(26% at 50% 50%)", duration: 10, ease: "sine.inOut" }, 78)
     .to(".hero-scene-bottle", { scale: cfg.bottlePush + 0.3, duration: 10, ease: "sine.inOut" }, 78)
     .to(".hero-scene-petals", { scale: 1.2, duration: 10, ease: "sine.inOut" }, 78);
 
   // Phase 07 — PORTAL ACCELERATION / TRUE PASS-THROUGH (88-95%): the circle exceeds
   // the viewport — no hard cut, no simple opacity fade, a real camera transition.
   tl.to(".hero-scene-portal", { scale: cfg.portalZoom, opacity: 0, duration: 7, ease: "power3.in" }, 88)
-    .to(".hero-scene-blackworld", { clipPath: "circle(150% at 50% 50%)", duration: 7, ease: "power3.in" }, 88)
+    .to(".hero-scene-bloomworld", { clipPath: "circle(150% at 50% 50%)", duration: 7, ease: "power3.in" }, 88)
     .to(".hero-scene-pouch", { opacity: 0, filter: "blur(10px)", duration: 5, ease: "power2.in" }, 88)
     .to(".hero-scene-petals", { opacity: 0, filter: "blur(10px)", duration: 5, ease: "power2.in" }, 88);
 
-  // Phase 08 — BLACK WORLD ARRIVAL (95-98%): dramatic arrival, restrained composition.
-  tl.to(".hero-scene-copy-black", { opacity: 1, duration: 3, ease: "power1.out" }, 95)
+  // Phase 08 — BLOOM ARRIVAL (95-98%): dramatic arrival, restrained composition.
+  tl.to(".hero-scene-copy-bloom", { opacity: 1, duration: 3, ease: "power1.out" }, 95)
     .to(".hero-scene-bottle", { x: 0, scale: 1.1, rotateZ: 0, opacity: 1, duration: 3, ease: "power1.inOut" }, 95);
 
   // Phase 09 — TRANSFORM INTO DISCOVERY (98-100%): no visible section cut — the hero
-  // itself becomes the next (dark spatial gallery) scene as the pin releases.
-  tl.to(".hero-scene-copy-black", { opacity: 0, duration: 2, ease: "power1.in" }, 98).to(
-    ".hero-scene-bottle",
-    { scale: 0.9, y: -30, duration: 2, ease: "power1.inOut" },
-    98
-  );
+  // itself dissolves into the next gallery scene as the pin releases.
+  tl.to(".hero-scene-copy-bloom", { opacity: 0, duration: 2, ease: "power1.in" }, 98)
+    .to(".hero-scene-bloomworld", { opacity: 0, duration: 2, ease: "power1.in" }, 98)
+    .to(
+      ".hero-scene-bottle",
+      { scale: 0.9, y: -30, duration: 2, ease: "power1.inOut" },
+      98
+    );
 
   return tl;
 }
@@ -234,7 +236,10 @@ export function CinematicHome({ categories, products, consultWhatsappNumber, sou
   const peekingSellers = bestSellers.slice(1, 4);
   const worldProducts = products.slice(0, 10);
   const ingredientProduct =
-    products.find((product) => product.slug === "slippery-elms-dietary-supplement") ?? products[0];
+    products.find((product) => product.slug === "slippery-elms-dietary-supplement") ??
+    products.find((product) => product.slug.includes("slippery")) ??
+    products.find((product) => product.title.toLowerCase().includes("slippery")) ??
+    products[0];
   const reviewAccentA = products[3];
   const reviewAccentB = products[6];
 
@@ -479,10 +484,10 @@ export function CinematicHome({ categories, products, consultWhatsappNumber, sou
 
             <span className="hero-scene-microcopy">Natural</span>
 
-            <div className="hero-scene-blackworld" />
+            <div className="hero-scene-bloomworld" />
 
-            <div className="hero-scene-copy-black">
-              <h2>Care differently.</h2>
+            <div className="hero-scene-copy-bloom">
+              <h2>Soft care. Naturally.</h2>
             </div>
           </div>
 
@@ -546,11 +551,11 @@ export function CinematicHome({ categories, products, consultWhatsappNumber, sou
                 </Link>
               );
             })}
-            <Link className="exhibition-panel exhibition-finale" data-variant="e" href="/shop">
+            <Link className="exhibition-panel exhibition-finale" data-variant="e" href="/learn">
               <div className="exhibition-panel-copy">
-                <span>Full catalogue</span>
-                <h2>Shop now.</h2>
-                <p>See everything we sell.</p>
+                <span>Guides &amp; answers</span>
+                <h2>Know your body.</h2>
+                <p>Straight answers on infections, odor, and care — no shame, just facts.</p>
               </div>
             </Link>
           </div>
