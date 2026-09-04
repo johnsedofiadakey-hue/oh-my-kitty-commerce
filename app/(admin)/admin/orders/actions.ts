@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { CommerceError } from "@/lib/commerce/errors";
-import { deleteOrder, deleteOrders, updateOrderFulfilment } from "@/lib/commerce/operations";
+import { deleteOrder, deleteOrders, updateOrderFulfilment, updateOrdersFulfilment } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getRequiredAdminActor } from "@/lib/auth/server";
 import { formString, type AdminActionState } from "@/lib/admin/product-form";
@@ -69,6 +69,42 @@ export async function deleteOrdersAction(orderIds: string[]): Promise<AdminActio
     return {
       status: "error",
       message: error instanceof CommerceError ? error.message : "Delete failed."
+    };
+  }
+}
+
+export async function updateOrdersFulfilmentAction(
+  orderIds: string[],
+  fulfilmentStatus: FulfilmentStatus
+): Promise<AdminActionState> {
+  try {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+    const match = fulfilmentStatuses.find((status) => status === fulfilmentStatus);
+    if (!match) {
+      throw new CommerceError("VALIDATION_ERROR", "Choose a valid fulfilment status.");
+    }
+
+    const result = await updateOrdersFulfilment(context, actor, orderIds, match);
+
+    revalidatePath("/admin/orders");
+
+    if (result.failed.length === 0) {
+      return {
+        status: "success",
+        message: `Updated ${result.updatedCount} order${result.updatedCount === 1 ? "" : "s"} to ${match.replaceAll("_", " ").toLowerCase()}.`
+      };
+    }
+
+    const failureDetail = result.failed.map((entry) => entry.message).join("; ");
+    return {
+      status: result.updatedCount > 0 ? "success" : "error",
+      message: `Updated ${result.updatedCount} of ${orderIds.length}. ${result.failed.length} failed: ${failureDetail}`
+    };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof CommerceError ? error.message : "Update failed."
     };
   }
 }

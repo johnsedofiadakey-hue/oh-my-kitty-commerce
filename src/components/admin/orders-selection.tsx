@@ -3,6 +3,17 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { AdminActionState } from "@/lib/admin/product-form";
+import { formatFulfilmentStatus } from "@/lib/commerce/format";
+import type { FulfilmentStatus } from "@/lib/commerce/types";
+
+const FULFILMENT_STATUSES: FulfilmentStatus[] = [
+  "UNFULFILLED",
+  "PROCESSING",
+  "READY_FOR_PICKUP",
+  "OUT_FOR_DELIVERY",
+  "FULFILLED",
+  "CANCELLED"
+];
 
 type SelectionContextValue = {
   selected: Set<string>;
@@ -70,12 +81,14 @@ export function OrdersBulkBar({
   disabled,
   allOrderIds,
   orderNumberById,
-  deleteOrdersAction
+  deleteOrdersAction,
+  updateOrdersFulfilmentAction
 }: {
   disabled: boolean;
   allOrderIds: string[];
   orderNumberById: Record<string, string>;
   deleteOrdersAction: (orderIds: string[]) => Promise<AdminActionState>;
+  updateOrdersFulfilmentAction?: (orderIds: string[], status: FulfilmentStatus) => Promise<AdminActionState>;
 }) {
   const router = useRouter();
   const { selected, toggle, clear } = useSelection();
@@ -83,6 +96,9 @@ export function OrdersBulkBar({
   const [typedConfirm, setTypedConfirm] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [statusToApply, setStatusToApply] = useState<FulfilmentStatus>("PROCESSING");
+  const [statusBusy, setStatusBusy] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
 
   const allSelected = allOrderIds.length > 0 && allOrderIds.every((id) => selected.has(id));
 
@@ -116,6 +132,23 @@ export function OrdersBulkBar({
     setBusy(false);
   }
 
+  async function handleBulkStatusUpdate() {
+    if (!updateOrdersFulfilmentAction) {
+      return;
+    }
+
+    setStatusBusy(true);
+    setStatusMessage("");
+
+    const result = await updateOrdersFulfilmentAction(Array.from(selected), statusToApply);
+    setStatusMessage(result.message);
+    if (result.status === "success") {
+      clear();
+      router.refresh();
+    }
+    setStatusBusy(false);
+  }
+
   if (allOrderIds.length === 0) {
     return null;
   }
@@ -133,6 +166,30 @@ export function OrdersBulkBar({
             <strong>{selected.size}</strong> order{selected.size === 1 ? "" : "s"} selected
           </span>
           <div className="admin-bulk-action-bar-actions">
+            {updateOrdersFulfilmentAction ? (
+              <>
+                <select
+                  aria-label="Status to apply"
+                  disabled={disabled || statusBusy}
+                  onChange={(event) => setStatusToApply(event.target.value as FulfilmentStatus)}
+                  value={statusToApply}
+                >
+                  {FULFILMENT_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {formatFulfilmentStatus(status)}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  className="admin-action ghost small"
+                  disabled={disabled || statusBusy}
+                  onClick={() => void handleBulkStatusUpdate()}
+                  type="button"
+                >
+                  {statusBusy ? "Updating..." : "Update status"}
+                </button>
+              </>
+            ) : null}
             <button className="admin-action ghost small" onClick={clear} type="button">
               Clear
             </button>
@@ -149,6 +206,7 @@ export function OrdersBulkBar({
               Delete selected
             </button>
           </div>
+          {statusMessage ? <p className="admin-help">{statusMessage}</p> : null}
         </div>
       ) : null}
 

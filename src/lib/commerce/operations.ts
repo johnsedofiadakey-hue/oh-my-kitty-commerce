@@ -75,6 +75,7 @@ import type {
   NotificationLog,
   Order,
   OrderItem,
+  FulfilmentStatus,
   Payment,
   PaymentMethod,
   Product,
@@ -1850,6 +1851,39 @@ export async function deleteOrders(
       result.failed.push({
         orderId,
         message: error instanceof CommerceError ? error.message : "Delete failed."
+      });
+    }
+  }
+
+  return result;
+}
+
+export type BulkUpdateFulfilmentResult = {
+  updatedCount: number;
+  failed: { orderId: string; message: string }[];
+};
+
+/**
+ * Sets the same fulfilment status on many orders in one call — each order
+ * updated independently, same reasoning as deleteOrders: one failing (e.g.
+ * already deleted mid-batch) doesn't abort the rest.
+ */
+export async function updateOrdersFulfilment(
+  context: CommerceContext,
+  actor: CommerceActor,
+  orderIds: string[],
+  fulfilmentStatus: FulfilmentStatus
+): Promise<BulkUpdateFulfilmentResult> {
+  const result: BulkUpdateFulfilmentResult = { updatedCount: 0, failed: [] };
+
+  for (const orderId of orderIds) {
+    try {
+      await updateOrderFulfilment(context, actor, { id: orderId, fulfilmentStatus });
+      result.updatedCount += 1;
+    } catch (error) {
+      result.failed.push({
+        orderId,
+        message: error instanceof CommerceError ? error.message : "Update failed."
       });
     }
   }

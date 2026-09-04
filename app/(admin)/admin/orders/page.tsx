@@ -22,7 +22,12 @@ import type { Order } from "@/lib/commerce/types";
 import { getEffectiveRoles } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { hasPermission } from "@/lib/permissions/permissions";
-import { deleteOrderAction, deleteOrdersAction, updateOrderFulfilmentAction } from "./actions";
+import {
+  deleteOrderAction,
+  deleteOrdersAction,
+  updateOrderFulfilmentAction,
+  updateOrdersFulfilmentAction
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -114,6 +119,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
           deleteOrdersAction={deleteOrdersAction}
           disabled={disabled}
           orderNumberById={orderNumberById}
+          updateOrdersFulfilmentAction={updateOrdersFulfilmentAction}
         />
       ) : null}
 
