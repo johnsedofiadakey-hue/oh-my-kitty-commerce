@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ClearCartOnMount } from "@/components/storefront/clear-cart-on-mount";
+import { SaveOrderToHistoryOnMount } from "@/components/storefront/save-order-to-history-on-mount";
 import { confirmPaystackPayment } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { verifyPaystackTransaction } from "@/lib/payments/paystack";
@@ -51,6 +52,7 @@ export default async function PaystackCallbackPage({ searchParams }: PageProps) 
         {result.state === "success" ? (
           <>
             <ClearCartOnMount />
+            <SaveOrderToHistoryOnMount orderNumber={result.orderNumber} total={result.total} />
             <span className="scene-kicker">Order confirmed</span>
             <h1>{result.orderNumber}</h1>
             <p>Total: {formatMoney(result.total)}</p>

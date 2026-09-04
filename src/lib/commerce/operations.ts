@@ -68,6 +68,7 @@ import type {
   Concern,
   ContentBlock,
   Customer,
+  CustomerSnapshot,
   DeliveryRule,
   InventoryMovement,
   InventoryMovementType,
@@ -1356,6 +1357,8 @@ export async function createOrderDraft(
     return existingOrder;
   }
 
+  parsed.customerId ??= await resolveCustomerId(context, parsed.channel, parsed.customerSnapshot);
+
   const order = await buildOrder(context, parsed, {
     status: "DRAFT",
     paymentStatus: "PENDING"
@@ -1420,6 +1423,8 @@ export async function createPendingPosMomoOrder(
   if (!shift || shift.status !== "OPEN") {
     throw new CommerceError("INVALID_STATE", "POS sale requires an open shift.");
   }
+
+  parsed.customerId ??= await resolveCustomerId(context, parsed.channel, parsed.customerSnapshot);
 
   return withTransaction(context, async (repo) => {
     const existingOrder = await repo.findOrderByIdempotencyKey(parsed.idempotencyKey);
@@ -1542,6 +1547,8 @@ export async function createPendingOnlineOrder(
 ) {
   const parsed = createOrderDraftInputSchema.parse({ ...input, channel: "ONLINE" });
   const actor = systemActor("online-checkout-paystack");
+
+  parsed.customerId ??= await resolveCustomerId(context, parsed.channel, parsed.customerSnapshot);
 
   return withTransaction(context, async (repo) => {
     const existingOrder = await repo.findOrderByIdempotencyKey(parsed.idempotencyKey);
@@ -2194,6 +2201,8 @@ async function completeSale(
 ): Promise<CompletedSale> {
   const parsed = completeSaleInputSchema.parse(input);
 
+  parsed.customerId ??= await resolveCustomerId(context, parsed.channel, parsed.customerSnapshot);
+
   const result = await withTransaction(context, async (repo) => {
     const existingOrder = await repo.findOrderByIdempotencyKey(parsed.idempotencyKey);
     if (existingOrder) {
@@ -2266,6 +2275,62 @@ async function completeSale(
   }
 
   return result;
+}
+
+/**
+ * Finds an existing customer by phone (checked first) or email, or creates
+ * one from the order's contact details — so repeat customers accumulate real
+ * order history automatically instead of every checkout/POS sale leaving
+ * just a disconnected snapshot on the order and nothing in the Customers
+ * list. Matches on phone/email only, since that's the one piece of contact
+ * info that's actually stable across a guest's visits.
+ *
+ * Must run BEFORE any withTransaction block — listCustomers/saveCustomer
+ * both reject being called inside one (see firestore-repository.ts).
+ */
+async function resolveCustomerId(
+  context: CommerceContext,
+  channel: SalesChannel,
+  snapshot: CustomerSnapshot | null | undefined
+): Promise<string | null> {
+  const phone = snapshot?.phone?.trim() || null;
+  const email = snapshot?.email?.trim().toLowerCase() || null;
+
+  if (!phone && !email) {
+    return null;
+  }
+
+  const customers = await context.repo.listCustomers();
+  const existing = customers.find(
+    (customer) =>
+      (phone && customer.phone?.trim() === phone) || (email && customer.email?.trim().toLowerCase() === email)
+  );
+
+  if (existing) {
+    const merged: Customer = {
+      ...existing,
+      name: existing.name || snapshot?.name || existing.name,
+      email: existing.email ?? email,
+      phone: existing.phone ?? phone
+    };
+
+    if (merged.name !== existing.name || merged.email !== existing.email || merged.phone !== existing.phone) {
+      await context.repo.saveCustomer(merged);
+    }
+
+    return existing.id;
+  }
+
+  const customer: Customer = {
+    id: createId(context, "customer"),
+    name: snapshot?.name || undefined,
+    email,
+    phone,
+    createdFrom: channel
+  };
+
+  await context.repo.saveCustomer(customer);
+  return customer.id;
 }
 
 async function buildOrder(

@@ -14,7 +14,8 @@ const SUPPORT_LINKS = [
   { href: "/contact", label: "Contact" },
   { href: "/delivery", label: "Delivery" },
   { href: "/returns", label: "Returns" },
-  { href: "/track", label: "Track order" }
+  { href: "/track", label: "Track order" },
+  { href: "/orders", label: "Your orders" }
 ];
 
 export function StorefrontFooter({ variant = "full", whatsappNumber }: StorefrontFooterProps) {
