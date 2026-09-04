@@ -3,7 +3,6 @@ import type { Role } from "@/lib/permissions/permissions";
 import type { CommerceRepository } from "@/lib/commerce/repository";
 import type {
   AuditLog,
-  Category,
   Collection,
   Concern,
   ContentBlock,
@@ -91,19 +90,6 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     const query = this.db.collectionGroup("variants");
     const snapshot = this.tx ? await this.tx.get(query) : await query.get();
     return snapshot.docs.map((doc) => readDoc<ProductVariant>(doc)).filter(isDefined);
-  }
-
-  async listCategories() {
-    this.rejectIfTransactional("listCategories");
-    const snapshot = await this.db.collection("categories").orderBy("sortOrder").get();
-    return snapshot.docs.map((doc) => readDoc<Category>(doc)).filter(isDefined);
-  }
-
-  async saveCategory(category: Category) {
-    this.rejectIfTransactional("saveCategory");
-    await this.db.collection("categories").doc(category.id).set(cleanFirestoreData(category), {
-      merge: true
-    });
   }
 
   async listCollections() {

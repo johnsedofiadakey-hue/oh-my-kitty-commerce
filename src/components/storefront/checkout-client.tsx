@@ -181,6 +181,12 @@ export function CheckoutClient({
         </div>
       </div>
 
+      <div className="checkout-flow-rail" aria-label="Checkout progress">
+        <span data-active="true">Details</span>
+        <span data-active={deliveryId ? "true" : "false"}>Delivery</span>
+        <span data-active={paystackEnabled ? "true" : "false"}>Payment</span>
+      </div>
+
       <div className="checkout-order-summary">
         {lines.map((line) => (
           <article className="cart-item" key={line.variantId}>
@@ -194,7 +200,7 @@ export function CheckoutClient({
             <div className="cart-item-copy">
               <strong>{line.productTitle}</strong>
               <span>
-                {line.variantTitle} × {line.quantity}
+                {displayVariant(line)} × {line.quantity}
               </span>
             </div>
             <div className="cart-item-total">
@@ -365,6 +371,12 @@ export function CheckoutClient({
           <p className="checkout-payment-note">Pay safely with Mobile Money or Card.</p>
         )}
 
+        <div className="checkout-assurance-row" aria-label="Checkout assurance">
+          <span>Private checkout</span>
+          <span>Mobile Money or card</span>
+          <span>Delivery confirmed</span>
+        </div>
+
         {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
         <button className="checkout-cta" disabled={submitting || !paystackEnabled} type="submit">
           <span>{submitting ? "Taking you to payment..." : "Pay now"}</span>
@@ -373,6 +385,10 @@ export function CheckoutClient({
       </form>
     </section>
   );
+}
+
+function displayVariant(line: CartLine) {
+  return line.variantTitle.toLowerCase() === "default" ? "Standard" : line.variantTitle;
 }
 
 function subscribeToCart(listener: () => void) {

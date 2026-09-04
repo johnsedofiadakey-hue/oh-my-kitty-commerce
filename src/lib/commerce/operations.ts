@@ -13,9 +13,7 @@ import { createNoopTransaction } from "@/lib/commerce/repository";
 import {
   adjustInventoryInputSchema,
   assembleBundleInputSchema,
-  attachCategoryImageInputSchema,
   completeSaleInputSchema,
-  createCategoryInputSchema,
   createConcernInputSchema,
   createCustomerInputSchema,
   createDeliveryRuleInputSchema,
@@ -40,7 +38,6 @@ import {
   createVariantInputSchema,
   createRawMaterialInputSchema,
   updateRawMaterialInputSchema,
-  updateCategoryInputSchema,
   updateConcernInputSchema,
   updateProductInputSchema,
   updateProductTypeInputSchema,
@@ -48,7 +45,6 @@ import {
   updateVariantInputSchema,
   type AdjustInventoryInput,
   type AssembleBundleInput,
-  type AttachCategoryImageInput,
   type CompleteSaleInput,
   type CreateCustomerInput,
   type CreateOrderDraftInput,
@@ -68,7 +64,6 @@ import {
 } from "@/lib/commerce/schemas";
 import type {
   AuditLog,
-  Category,
   Concern,
   ContentBlock,
   Customer,
@@ -632,21 +627,9 @@ export async function evaluatePromotionCode(
     throw new CommerceError("VALIDATION_ERROR", "That code isn't valid for this order type.");
   }
 
-  let categoriesByProductId: Map<string, string[]> | null = null;
-  if (promotion.categoryRestrictions.length > 0) {
-    const products = await context.repo.listProducts();
-    categoriesByProductId = new Map(products.map((product) => [product.id, product.categoryIds ?? []]));
-  }
-
   const matchingItems = input.items.filter((item) => {
     if (promotion.productRestrictions.length > 0 && !promotion.productRestrictions.includes(item.productId)) {
       return false;
-    }
-    if (promotion.categoryRestrictions.length > 0) {
-      const productCategories = categoriesByProductId?.get(item.productId) ?? [];
-      if (!productCategories.some((categoryId) => promotion.categoryRestrictions.includes(categoryId))) {
-        return false;
-      }
     }
     return true;
   });
@@ -795,68 +778,6 @@ export async function updateRoutine(context: CommerceContext, actor: CommerceAct
   });
 
   return routine;
-}
-
-export async function createCategory(context: CommerceContext, actor: CommerceActor, input: unknown) {
-  await assertCan(context, actor, "products.update");
-  const parsed = createCategoryInputSchema.parse(input);
-  const category: Category = { ...parsed, id: createSlugId("category", parsed.slug) };
-
-  await context.repo.saveCategory(category);
-  await writeAuditLog(context, actor, {
-    action: "categories.create",
-    entityType: "category",
-    entityId: category.id,
-    summary: `Created category ${category.title}`
-  });
-
-  return category;
-}
-
-export async function updateCategory(context: CommerceContext, actor: CommerceActor, input: unknown) {
-  await assertCan(context, actor, "products.update");
-  const parsed = updateCategoryInputSchema.parse(input);
-  const existing = await requiredEntity(await context.repo.listCategories(), parsed.id, "Category");
-  const category: Category = { ...existing, ...parsed, id: existing.id };
-
-  await context.repo.saveCategory(category);
-  await writeAuditLog(context, actor, {
-    action: "categories.update",
-    entityType: "category",
-    entityId: category.id,
-    summary: `Updated category ${category.title}`
-  });
-
-  return category;
-}
-
-export async function attachCategoryImage(
-  context: CommerceContext,
-  actor: CommerceActor,
-  input: AttachCategoryImageInput
-) {
-  await assertCan(context, actor, "media.upload");
-  await assertCan(context, actor, "products.update");
-  const parsed = attachCategoryImageInputSchema.parse(input);
-
-  const category = await requiredEntity(await context.repo.listCategories(), parsed.categoryId, "Category");
-  const asset = await createMediaAsset(context, actor, {
-    storagePath: parsed.storagePath,
-    url: parsed.url,
-    alt: parsed.alt,
-    usage: ["category"]
-  });
-
-  const updatedCategory: Category = { ...category, mediaId: asset.id };
-  await context.repo.saveCategory(updatedCategory);
-  await writeAuditLog(context, actor, {
-    action: "categories.attach_image",
-    entityType: "category",
-    entityId: category.id,
-    summary: `Set image for ${category.title}`
-  });
-
-  return { asset, category: updatedCategory };
 }
 
 export async function createDeliveryRule(
@@ -1288,22 +1209,15 @@ export async function createMediaAsset(
 export async function deleteMediaAsset(context: CommerceContext, actor: CommerceActor, mediaId: string) {
   await assertCan(context, actor, "media.delete");
 
-  const [products, categories] = await Promise.all([
-    context.repo.listProducts(),
-    context.repo.listCategories()
-  ]);
+  const products = await context.repo.listProducts();
   const variants = await context.repo.listAllVariants();
 
   const stillReferenced =
     products.some((product) => product.mediaIds.includes(mediaId)) ||
-    variants.some((variant) => variant.mediaIds.includes(mediaId)) ||
-    categories.some((category) => category.mediaId === mediaId);
+    variants.some((variant) => variant.mediaIds.includes(mediaId));
 
   if (stillReferenced) {
-    throw new CommerceError(
-      "VALIDATION_ERROR",
-      "This image is still used by a product or category — replace it there first."
-    );
+    throw new CommerceError("VALIDATION_ERROR", "This image is still used by a product — replace it there first.");
   }
 
   await context.repo.deleteMedia(mediaId);

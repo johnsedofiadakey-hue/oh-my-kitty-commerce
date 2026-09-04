@@ -1,6 +1,5 @@
 import type {
   AuditLog,
-  Category,
   Collection,
   Concern,
   Customer,
@@ -19,93 +18,6 @@ import type {
   StaffUser
 } from "@/lib/commerce/types";
 import { defaultRoles } from "@/lib/permissions/permissions";
-
-export const sampleCategories: Category[] = [
-  {
-    id: "cat-infection-sets",
-    title: "Infection Sets",
-    slug: "infection-sets",
-    sortOrder: 1,
-    active: true
-  },
-  {
-    id: "cat-period-care-sets",
-    title: "Period Care Sets",
-    slug: "period-care-sets",
-    sortOrder: 2,
-    active: true
-  },
-  {
-    id: "cat-boric-dripping-care",
-    title: "Boric Acid & Dripping Pills",
-    slug: "boric-acid-dripping-pills",
-    sortOrder: 3,
-    active: true
-  },
-  {
-    id: "cat-genital-warts-care",
-    title: "Genital Warts Care",
-    slug: "genital-warts-care",
-    sortOrder: 4,
-    active: true
-  },
-  {
-    id: "cat-dark-inner-thigh-care",
-    title: "Dark Inner Thigh Care",
-    slug: "dark-inner-thigh-care",
-    sortOrder: 5,
-    active: true
-  },
-  {
-    id: "cat-razor-bumps-care",
-    title: "Razor Bumps & Ingrown Hair",
-    slug: "razor-bumps-ingrown-hair",
-    sortOrder: 6,
-    active: true
-  },
-  {
-    id: "cat-daily-intimate-care",
-    title: "Daily Intimate Care",
-    slug: "daily-intimate-care",
-    sortOrder: 7,
-    active: true
-  },
-  {
-    id: "cat-libido-support",
-    title: "Libido Support",
-    slug: "libido-support",
-    sortOrder: 8,
-    active: true
-  },
-  {
-    id: "cat-herbs-supplements",
-    title: "Herbs & Supplements",
-    slug: "herbs-supplements",
-    sortOrder: 9,
-    active: true
-  },
-  {
-    id: "cat-honey-drinks",
-    title: "Honey & Drinks",
-    slug: "honey-drinks",
-    sortOrder: 10,
-    active: true
-  },
-  {
-    id: "cat-accessories-tests",
-    title: "Accessories & Tests",
-    slug: "accessories-tests",
-    sortOrder: 11,
-    active: true
-  },
-  {
-    id: "cat-home-care",
-    title: "Home Care",
-    slug: "home-care",
-    sortOrder: 12,
-    active: true
-  }
-];
 
 export const sampleConcerns: Concern[] = [
   { id: "concern-daily-intimate-care", title: "Daily intimate care", slug: "daily-intimate-care", sortOrder: 1, active: true },
@@ -212,7 +124,6 @@ type ProductSeed = {
   title: string;
   slug: string;
   shortCopy: string;
-  categoryIds: string[];
   tags: string[];
   image: string;
   variantId?: string;
@@ -234,7 +145,6 @@ const productSeeds: ProductSeed[] = [
     title: "Normal Infection Set",
     slug: "normal-infection-set",
     shortCopy: "Starter care bundle with boric support, honey, wash, kitty oil and delivery.",
-    categoryIds: ["cat-infection-sets"],
     tags: ["set", "infection-care", "hero"],
     image: "normal-infection-set.png",
     variantTitle: "Bundle",
@@ -251,7 +161,6 @@ const productSeeds: ProductSeed[] = [
     title: "Dark Inner Thigh Set",
     slug: "dark-inner-thigh-set",
     shortCopy: "Oil and cream duo for inner thigh tone care.",
-    categoryIds: ["cat-dark-inner-thigh-care"],
     tags: ["set", "tone-care", "hero"],
     image: "dark-inner-thigh-set.png",
     variantTitle: "Oil + Cream",
@@ -268,7 +177,6 @@ const productSeeds: ProductSeed[] = [
     title: "Razor Bumps & Ingrown Hair Set",
     slug: "razor-bumps-ingrown-hair-set",
     shortCopy: "Scrub and serum set for shaving-area care.",
-    categoryIds: ["cat-razor-bumps-care"],
     tags: ["set", "shaving-care", "hero"],
     image: "razor-bumps-ingrown-hair-set.png",
     variantTitle: "Scrub + Serum",
@@ -285,7 +193,6 @@ const productSeeds: ProductSeed[] = [
     title: "pH Balanced Kitty Mist",
     slug: "ph-balanced-kitty-mist",
     shortCopy: "Intimate freshness mist for external use.",
-    categoryIds: ["cat-daily-intimate-care"],
     tags: ["freshness", "mist", "hero"],
     image: "ph-balanced-kitty-mist.png",
     variantTitle: "100ml",
@@ -302,7 +209,6 @@ const productSeeds: ProductSeed[] = [
     title: "Feminine Wash",
     slug: "feminine-wash",
     shortCopy: "pH balanced gentle wash for daily intimate care.",
-    categoryIds: ["cat-daily-intimate-care"],
     tags: ["wash", "daily-care", "hero"],
     image: "feminine-wash.png",
     variantTitle: "100ml",
@@ -319,7 +225,6 @@ const productSeeds: ProductSeed[] = [
     title: "Kitty Oil",
     slug: "kitty-oil",
     shortCopy: "Intimate body oil for soft daily care.",
-    categoryIds: ["cat-daily-intimate-care"],
     tags: ["oil", "daily-care", "hero"],
     image: "kitty-oil.png",
     variantId: "variant-intimate-oil-default",
@@ -337,7 +242,6 @@ const productSeeds: ProductSeed[] = [
     title: "Iced Libido Boosting Sobolo",
     slug: "iced-libido-boosting-sobolo",
     shortCopy: "Hibiscus drink positioned for energy and desire support.",
-    categoryIds: ["cat-honey-drinks", "cat-libido-support"],
     tags: ["drink", "libido", "hero"],
     image: "iced-libido-boosting-sobolo.png",
     variantTitle: "500ml",
@@ -354,7 +258,6 @@ const productSeeds: ProductSeed[] = [
     title: "Slippery Elms Dietary Supplement",
     slug: "slippery-elms-dietary-supplement",
     shortCopy: "Botanical supplement for feminine and body care.",
-    categoryIds: ["cat-herbs-supplements"],
     tags: ["supplement", "botanical", "hero"],
     image: "slippery-elms.png",
     variantId: "variant-slippery-elm-30",
@@ -372,7 +275,6 @@ const productSeeds: ProductSeed[] = [
     title: "Chronic Infection Set",
     slug: "chronic-infection-set",
     shortCopy: "Expanded bundle with herbs, boric support, honey, wash and kitty oil.",
-    categoryIds: ["cat-infection-sets"],
     tags: ["set", "infection-care"],
     image: "chronic-infection-set.png",
     variantTitle: "Bundle",
@@ -386,7 +288,6 @@ const productSeeds: ProductSeed[] = [
     title: "Menstrual Flow Set",
     slug: "menstrual-flow-set",
     shortCopy: "Herbal and slippery elms support set with delivery.",
-    categoryIds: ["cat-period-care-sets"],
     tags: ["set", "period-care"],
     image: "intense-infection-flusher-herbs.png",
     variantTitle: "Bundle",
@@ -400,7 +301,6 @@ const productSeeds: ProductSeed[] = [
     title: "After Period Care Set",
     slug: "after-period-care-set",
     shortCopy: "Boric support, wash, kitty oil and delivery care bundle.",
-    categoryIds: ["cat-period-care-sets"],
     tags: ["set", "period-care"],
     image: "after-period-care-set.png",
     variantTitle: "Bundle",
@@ -416,7 +316,6 @@ const productSeeds: ProductSeed[] = [
     title: "Boric Acid",
     slug: "boric-acid",
     shortCopy: "Boric acid support pack, available in small and big sizes.",
-    categoryIds: ["cat-boric-dripping-care"],
     tags: ["boric-acid"],
     image: "normal-infection-set.png",
     variantTitle: "Small Pack",
@@ -441,7 +340,6 @@ const productSeeds: ProductSeed[] = [
     title: "Dripping Pills",
     slug: "dripping-pills",
     shortCopy: "Dripping pills support pack, available in small and big sizes.",
-    categoryIds: ["cat-boric-dripping-care"],
     tags: ["dripping-pills"],
     image: "normal-infection-set.png",
     variantTitle: "Small Pack",
@@ -464,7 +362,6 @@ const productSeeds: ProductSeed[] = [
     title: "Genital Warts Burn Off Set",
     slug: "genital-warts-burn-off-set",
     shortCopy: "Botanical wart remover and immune booster herbs bundle.",
-    categoryIds: ["cat-genital-warts-care"],
     tags: ["set", "botanical"],
     image: "genital-warts-burn-off-set.png",
     variantTitle: "Bundle",
@@ -478,7 +375,6 @@ const productSeeds: ProductSeed[] = [
     title: "Dark Inner Thigh Oil",
     slug: "dark-inner-thigh-oil",
     shortCopy: "Radiant and even-tone oil for inner thigh care.",
-    categoryIds: ["cat-dark-inner-thigh-care"],
     tags: ["tone-care", "oil"],
     image: "dark-inner-thigh-set.png",
     variantTitle: "50ml",
@@ -492,7 +388,6 @@ const productSeeds: ProductSeed[] = [
     title: "Dark Inner Thigh Cream",
     slug: "dark-inner-thigh-cream",
     shortCopy: "Cream for inner thigh tone, brightness and smoothness care.",
-    categoryIds: ["cat-dark-inner-thigh-care"],
     tags: ["tone-care", "cream"],
     image: "dark-inner-thigh-set.png",
     variantTitle: "50g",
@@ -506,7 +401,6 @@ const productSeeds: ProductSeed[] = [
     title: "Razor Bumps & Ingrown Hair Scrub",
     slug: "razor-bumps-ingrown-hair-scrub",
     shortCopy: "Exfoliating scrub for shaving-area care.",
-    categoryIds: ["cat-razor-bumps-care"],
     tags: ["scrub", "shaving-care"],
     image: "razor-bumps-ingrown-hair-set.png",
     variantTitle: "100ml",
@@ -520,7 +414,6 @@ const productSeeds: ProductSeed[] = [
     title: "Razor Bumps & Ingrown Hair Serum",
     slug: "razor-bumps-ingrown-hair-serum",
     shortCopy: "Serum for bumps, ingrown hair and irritation care.",
-    categoryIds: ["cat-razor-bumps-care"],
     tags: ["serum", "shaving-care"],
     image: "razor-bumps-ingrown-hair-set.png",
     variantTitle: "50ml",
@@ -534,7 +427,6 @@ const productSeeds: ProductSeed[] = [
     title: "Applicator",
     slug: "applicator",
     shortCopy: "Clean, precise and comfortable applicator.",
-    categoryIds: ["cat-accessories-tests"],
     tags: ["accessory"],
     image: "applicator.png",
     variantTitle: "Single",
@@ -548,7 +440,6 @@ const productSeeds: ProductSeed[] = [
     title: "Wetness Pills",
     slug: "wetness-pills",
     shortCopy: "Natural wetness support supplement.",
-    categoryIds: ["cat-herbs-supplements"],
     tags: ["supplement", "wetness"],
     image: "wetness-pills.png",
     variantTitle: "Bottle",
@@ -562,7 +453,6 @@ const productSeeds: ProductSeed[] = [
     title: "Intense Infection Flusher Herbs",
     slug: "intense-infection-flusher-herbs",
     shortCopy: "Herbal tea blend with twelve tea bags.",
-    categoryIds: ["cat-herbs-supplements"],
     tags: ["herbs", "tea"],
     image: "intense-infection-flusher-herbs.png",
     variantTitle: "150g",
@@ -576,7 +466,6 @@ const productSeeds: ProductSeed[] = [
     title: "Honey",
     slug: "honey",
     shortCopy: "Madurasa pure natural honey sachet.",
-    categoryIds: ["cat-honey-drinks"],
     tags: ["honey"],
     image: "madurasa-honey.png",
     variantTitle: "25g",
@@ -590,7 +479,6 @@ const productSeeds: ProductSeed[] = [
     title: "Wild Honey Libido Boosting Honey",
     slug: "wild-honey-libido-boosting-honey",
     shortCopy: "Libido boosting honey from the intimate care range.",
-    categoryIds: ["cat-honey-drinks", "cat-libido-support"],
     tags: ["honey", "libido"],
     image: "libido-set.png",
     variantTitle: "Bottle",
@@ -604,7 +492,6 @@ const productSeeds: ProductSeed[] = [
     title: "Libido Set",
     slug: "libido-set",
     shortCopy: "Mixed libido support set with honey, drops, syrup and herbs.",
-    categoryIds: ["cat-libido-support"],
     tags: ["set", "libido"],
     image: "libido-set.png",
     variantTitle: "Bundle",
@@ -618,7 +505,6 @@ const productSeeds: ProductSeed[] = [
     title: "Cloud 9 Syrup",
     slug: "cloud-9-syrup",
     shortCopy: "Libido syrup from the desire support range.",
-    categoryIds: ["cat-libido-support"],
     tags: ["syrup", "libido"],
     image: "libido-set.png",
     variantTitle: "Bottle",
@@ -632,7 +518,6 @@ const productSeeds: ProductSeed[] = [
     title: "Gold Fly Sex Drops",
     slug: "gold-fly-sex-drops",
     shortCopy: "Sex drops from the libido support range.",
-    categoryIds: ["cat-libido-support"],
     tags: ["drops", "libido"],
     image: "libido-set.png",
     variantTitle: "Bottle",
@@ -646,7 +531,6 @@ const productSeeds: ProductSeed[] = [
     title: "Libido Boosting Herbs",
     slug: "libido-boosting-herbs",
     shortCopy: "Traditional herbal blend for libido support.",
-    categoryIds: ["cat-libido-support", "cat-herbs-supplements"],
     tags: ["herbs", "libido"],
     image: "libido-set.png",
     variantTitle: "Jar",
@@ -660,7 +544,6 @@ const productSeeds: ProductSeed[] = [
     title: "Botanical Wart Remover",
     slug: "botanical-wart-remover",
     shortCopy: "Botanical formula from the wart care set.",
-    categoryIds: ["cat-genital-warts-care"],
     tags: ["botanical", "wart-care"],
     image: "genital-warts-burn-off-set.png",
     variantTitle: "100ml",
@@ -674,7 +557,6 @@ const productSeeds: ProductSeed[] = [
     title: "WC Sanitizer",
     slug: "wc-sanitizer",
     shortCopy: "Toilet cleaner, natural deodorizer and freshness spray.",
-    categoryIds: ["cat-home-care"],
     tags: ["sanitizer", "home-care"],
     image: "wc-sanitizer.png",
     variantTitle: "100ml",
@@ -688,7 +570,6 @@ const productSeeds: ProductSeed[] = [
     title: "Self-Test Card",
     slug: "self-test-card",
     shortCopy: "Private self-test card from the care accessories range.",
-    categoryIds: ["cat-accessories-tests"],
     tags: ["test-card", "accessory"],
     image: "self-test-card.png",
     variantTitle: "Single",
@@ -705,7 +586,6 @@ export const sampleProducts: Product[] = productSeeds.map((product) => ({
   slug: product.slug,
   shortCopy: product.shortCopy,
   status: "ACTIVE",
-  categoryIds: product.categoryIds,
   collectionIds: [
     "collection-all-products",
     ...(product.featured ? ["collection-hero"] : []),
@@ -958,7 +838,6 @@ export const samplePromotions: Promotion[] = [
     active: true,
     channelRestrictions: ["ONLINE"],
     productRestrictions: [],
-    categoryRestrictions: [],
     startsAt: null,
     endsAt: null,
     usageLimit: 100,

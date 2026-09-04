@@ -46,13 +46,14 @@ export default async function ProductDetailPage({ params }: ProductPageParams) {
     notFound();
   }
 
+  // No shared taxonomy signal to match on (categories are gone, and
+  // concern/product-type/routine tags aren't populated on real products
+  // either) — best-sellers first, then just other products, is an honest
+  // "you might also like" that actually shows something with real data.
   const relatedProducts = products
-    .filter(
-      (entry) =>
-        entry.slug !== product.slug &&
-        entry.categorySlugs.some((categorySlug) => product.categorySlugs.includes(categorySlug))
-    )
+    .filter((entry) => entry.slug !== product.slug)
     .filter((entry, index, all) => all.findIndex((other) => other.slug === entry.slug) === index)
+    .sort((first, second) => Number(second.bestSeller) - Number(first.bestSeller))
     .slice(0, 4);
 
   return (
@@ -67,23 +68,23 @@ export default async function ProductDetailPage({ params }: ProductPageParams) {
 
       <section className="product-detail-info" aria-label="Product details">
         <article>
-          <span>Variant</span>
-          <strong>{product.variantTitle}</strong>
-          <p>{product.sku}</p>
+          <span>Format</span>
+          <strong>{product.variantTitle.toLowerCase() === "default" ? "Standard" : product.variantTitle}</strong>
+          <p>Product code {product.sku.toUpperCase()}</p>
         </article>
         <article>
           <span>How to use</span>
-          <strong>{product.care?.usage ?? "Follow the instructions on the product packaging."}</strong>
+          <strong>{product.care?.usage ?? "Use only as directed on the product packaging."}</strong>
         </article>
         <article>
           <span>Ingredients</span>
-          <strong>{product.care?.ingredients ?? "Ingredient details will be confirmed by admin."}</strong>
+          <strong>{product.care?.ingredients ?? "Please check the product package for the latest ingredient details."}</strong>
         </article>
         <article>
           <span>Safety</span>
           <strong>
             {product.care?.warnings ??
-              "External-use and supplement guidance should follow the package label."}
+              "Follow the package label and seek professional advice where needed."}
           </strong>
         </article>
       </section>
@@ -101,8 +102,8 @@ export default async function ProductDetailPage({ params }: ProductPageParams) {
       {relatedProducts.length > 0 ? (
         <section className="related-products">
           <div className="front-product-intro">
-            <span className="scene-kicker">Related</span>
-            <h2>More from this care world.</h2>
+            <span className="scene-kicker">You might also like</span>
+            <h2>More from Oh My Kitty.</h2>
           </div>
           <div className="showcase-grid">
             {relatedProducts.map((entry) => (
@@ -115,7 +116,7 @@ export default async function ProductDetailPage({ params }: ProductPageParams) {
                   {entry.imageUrl ? <Image alt="" fill sizes="220px" src={entry.imageUrl} /> : null}
                 </div>
                 <div>
-                  <span>{entry.primaryCategory}</span>
+                  {entry.bestSeller ? <span>Best seller</span> : null}
                   <h3>{entry.title}</h3>
                   <p>{entry.shortCopy}</p>
                   <strong>{entry.formattedPrice}</strong>

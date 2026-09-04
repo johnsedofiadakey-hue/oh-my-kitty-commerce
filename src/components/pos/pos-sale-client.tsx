@@ -154,16 +154,7 @@ export function PosSaleClient({
   const visibleProducts = useMemo(
     () =>
       products.filter((product) =>
-        [
-          product.title,
-          product.sku,
-          product.variantTitle,
-          product.primaryCategory,
-          ...product.categoryLabels
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(normalizedQuery)
+        [product.title, product.sku, product.variantTitle].join(" ").toLowerCase().includes(normalizedQuery)
       ),
     [normalizedQuery, products]
   );
@@ -523,7 +514,6 @@ export function PosSaleClient({
             >
               <strong>{product.title}</strong>
               <span>{product.sku}</span>
-              <small>{product.primaryCategory}</small>
               <b>{product.formattedPrice}</b>
               <em>{product.stockAvailable} in stock</em>
             </button>

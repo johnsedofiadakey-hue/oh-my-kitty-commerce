@@ -1,7 +1,6 @@
 import { cache } from "react";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import {
-  sampleCategories,
   sampleConcerns,
   sampleMedia,
   sampleProducts,
@@ -10,7 +9,6 @@ import {
   sampleVariants
 } from "@/lib/commerce/sample-data";
 import type {
-  Category,
   Concern,
   MediaAsset,
   Product,
@@ -26,7 +24,6 @@ export type StorefrontProductCard = {
   product: Product;
   variant: ProductVariant;
   media: MediaAsset | null;
-  categories: Category[];
   concerns: Concern[];
   productTypes: ProductType[];
   routines: Routine[];
@@ -55,10 +52,6 @@ export type StorefrontProductView = {
   stockAvailable: number;
   imageUrl?: string;
   imageAlt?: string;
-  primaryCategory: string;
-  primaryCategorySlug: string;
-  categoryLabels: string[];
-  categorySlugs: string[];
   concernLabels: string[];
   concernSlugs: string[];
   productTypeLabels: string[];
@@ -75,15 +68,6 @@ export type StorefrontProductCare = {
   usage?: string;
   ingredients?: string;
   warnings?: string;
-};
-
-export type StorefrontCategorySummary = {
-  id: string;
-  title: string;
-  slug: string;
-  productCount: number;
-  imageUrl?: string;
-  tone: StorefrontProductView["tone"];
 };
 
 /**
@@ -106,14 +90,13 @@ export const getStorefrontCatalogue = cache(async (): Promise<StorefrontCatalogu
       (variant) => variant.active && productIds.has(variant.productId)
     );
 
-    const [media, categories, concerns, productTypes, routines] = await Promise.all([
+    const [media, concerns, productTypes, routines] = await Promise.all([
       context.repo.listMedia(),
-      context.repo.listCategories(),
       context.repo.listConcerns(),
       context.repo.listProductTypes(),
       context.repo.listRoutines()
     ]);
-    const cards = createCards(products, variants, media, categories, concerns, productTypes, routines);
+    const cards = createCards(products, variants, media, concerns, productTypes, routines);
     if (cards.length === 0) {
       // Genuinely live and working, just nothing published yet (e.g. mid
       // re-upload after a catalogue clear-out) — show that honestly rather
@@ -146,7 +129,6 @@ function sampleStorefrontCatalogue(sourceMessage: string): StorefrontCatalogue {
       sampleProducts.filter((product) => product.status === "ACTIVE"),
       sampleVariants.filter((variant) => variant.active),
       media,
-      sampleCategories.filter((category) => category.active),
       sampleConcerns.filter((concern) => concern.active),
       sampleProductTypes.filter((productType) => productType.active),
       sampleRoutines.filter((routine) => routine.active)
@@ -159,13 +141,11 @@ function createCards(
   products: Product[],
   variants: ProductVariant[],
   media: MediaAsset[],
-  categories: Category[],
   concerns: Concern[],
   productTypes: ProductType[],
   routines: Routine[]
 ) {
   const mediaById = new Map(media.map((asset) => [asset.id, asset]));
-  const categoriesById = new Map(categories.map((category) => [category.id, category]));
   const concernsById = new Map(concerns.map((concern) => [concern.id, concern]));
   const productTypesById = new Map(productTypes.map((productType) => [productType.id, productType]));
   const routinesById = new Map(routines.map((routine) => [routine.id, routine]));
@@ -183,9 +163,6 @@ function createCards(
             product,
             variant,
             media: mediaId ? (mediaById.get(mediaId) ?? null) : null,
-            categories: (product.categoryIds ?? [])
-              .map((categoryId) => categoriesById.get(categoryId))
-              .filter((category): category is Category => category !== undefined),
             concerns: (product.concernIds ?? [])
               .map((concernId) => concernsById.get(concernId))
               .filter((concern): concern is Concern => concern !== undefined),
@@ -216,7 +193,7 @@ export function toStorefrontProductViews(catalogue: StorefrontCatalogue): Storef
   const tones: StorefrontProductView["tone"][] = ["peach", "green", "ivory"];
 
   return catalogue.cards.map(
-    ({ product, variant, media, categories, concerns, productTypes, routines }, index) => ({
+    ({ product, variant, media, concerns, productTypes, routines }, index) => ({
       id: product.id,
       slug: product.slug,
       title: product.title,
@@ -239,10 +216,6 @@ export function toStorefrontProductViews(catalogue: StorefrontCatalogue): Storef
       stockAvailable: variant.stockAvailable,
       imageUrl: media?.url,
       imageAlt: media?.alt,
-      primaryCategory: categories[0]?.title ?? "Care",
-      primaryCategorySlug: categories[0]?.slug ?? "care",
-      categoryLabels: categories.map((category) => category.title),
-      categorySlugs: categories.map((category) => category.slug),
       concernLabels: concerns.map((concern) => concern.title),
       concernSlugs: concerns.map((concern) => concern.slug),
       productTypeLabels: productTypes.map((productType) => productType.title),
@@ -257,44 +230,3 @@ export function toStorefrontProductViews(catalogue: StorefrontCatalogue): Storef
   );
 }
 
-export function toStorefrontCategorySummaries(
-  catalogue: StorefrontCatalogue
-): StorefrontCategorySummary[] {
-  const tones: StorefrontProductView["tone"][] = ["peach", "green", "ivory"];
-  const mediaById = new Map(catalogue.media.map((asset) => [asset.id, asset]));
-  const bySlug = new Map<string, { category: Category; productCount: number; imageUrl?: string }>();
-
-  for (const card of catalogue.cards) {
-    for (const category of card.categories) {
-      // A category's own uploaded photo (set on the Categories admin page)
-      // always wins — falling back to a product's photo only when the
-      // category itself has none, so the tile isn't blank.
-      const categoryImageUrl = category.mediaId ? mediaById.get(category.mediaId)?.url : undefined;
-
-      const existing = bySlug.get(category.slug);
-      if (existing) {
-        existing.productCount += 1;
-        if (!existing.imageUrl && (categoryImageUrl ?? card.media?.url)) {
-          existing.imageUrl = categoryImageUrl ?? card.media?.url;
-        }
-      } else {
-        bySlug.set(category.slug, {
-          category,
-          productCount: 1,
-          imageUrl: categoryImageUrl ?? card.media?.url
-        });
-      }
-    }
-  }
-
-  return Array.from(bySlug.values())
-    .sort((first, second) => first.category.sortOrder - second.category.sortOrder)
-    .map((entry, index) => ({
-      id: entry.category.id,
-      title: entry.category.title,
-      slug: entry.category.slug,
-      productCount: entry.productCount,
-      imageUrl: entry.imageUrl,
-      tone: tones[index % tones.length] ?? "peach"
-    }));
-}

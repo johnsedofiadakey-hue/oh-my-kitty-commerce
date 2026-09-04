@@ -1,7 +1,6 @@
 import type { Role } from "@/lib/permissions/permissions";
 import type {
   AuditLog,
-  Category,
   Collection,
   Concern,
   ContentBlock,
@@ -34,8 +33,6 @@ export type CommerceRepository = {
   deleteVariant(productId: string, variantId: string): Promise<void>;
   listVariants(productId: string): Promise<ProductVariant[]>;
   listAllVariants(): Promise<ProductVariant[]>;
-  listCategories(): Promise<Category[]>;
-  saveCategory(category: Category): Promise<void>;
   listCollections(): Promise<Collection[]>;
   saveCollection(collection: Collection): Promise<void>;
   listConcerns(): Promise<Concern[]>;

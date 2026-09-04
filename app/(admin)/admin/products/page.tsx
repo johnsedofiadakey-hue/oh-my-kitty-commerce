@@ -68,7 +68,7 @@ export default async function AdminProductsPage() {
           quickEditCatalogueItemAction={quickEditCatalogueItemAction}
         />
       </section>
-      <section className="admin-grid two">
+      <section className="admin-grid">
         <div className="admin-panel">
           <div className="panel-header">
             <h2>Collections</h2>
@@ -79,20 +79,6 @@ export default async function AdminProductsPage() {
               <div className="stack-row" key={collection.id}>
                 <strong>{collection.title}</strong>
                 <span>{collection.productIds.length} products</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="admin-panel">
-          <div className="panel-header">
-            <h2>Categories</h2>
-            <span>{catalogue.categories.length} categories</span>
-          </div>
-          <div className="stack-list">
-            {catalogue.categories.map((category) => (
-              <div className="stack-row" key={category.id}>
-                <strong>{category.title}</strong>
-                <span>{category.active ? "Active" : "Inactive"}</span>
               </div>
             ))}
           </div>

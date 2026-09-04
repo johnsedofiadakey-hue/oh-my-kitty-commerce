@@ -70,7 +70,6 @@ describe("commerce operations", () => {
     });
 
     expect(updated.status).toBe("ACTIVE");
-    expect(updated.categoryIds).toEqual(["cat-wellness"]);
     expect(updated.collectionIds).toEqual(["collection-hero"]);
     expect(updated.tags).toEqual(["botanical"]);
     expect(updated.featured).toBe(true);
@@ -467,7 +466,6 @@ async function seedProductAndVariant(context: CommerceContext) {
     title: "Slippery Elm",
     slug: "slippery-elm",
     status: "ACTIVE",
-    categoryIds: ["cat-wellness"],
     collectionIds: ["collection-hero"],
     tags: ["botanical"],
     mediaIds: [],

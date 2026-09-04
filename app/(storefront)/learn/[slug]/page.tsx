@@ -65,8 +65,8 @@ export default async function GuidePage({ params }: GuidePageParams) {
           ))}
         </div>
         <div className="learn-guide-actions">
-          <Link className="portal-cta" href={`/categories/${guide.relatedCategorySlug}` as Route}>
-            <span>{guide.relatedCategoryLabel}</span>
+          <Link className="portal-cta" href={"/shop" as Route}>
+            <span>{guide.shopCtaLabel}</span>
             <i aria-hidden="true" />
           </Link>
           <Link className="portal-cta-secondary" href="/learn">

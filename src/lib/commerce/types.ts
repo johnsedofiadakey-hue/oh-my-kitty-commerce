@@ -63,7 +63,6 @@ export type Product = {
   shortCopy?: string;
   description?: string;
   status: ProductStatus;
-  categoryIds: string[];
   collectionIds: string[];
   concernIds: string[];
   productTypeIds: string[];
@@ -128,17 +127,6 @@ export type RawMaterial = {
   supplier?: string;
   createdAt?: Date;
   updatedAt?: Date;
-};
-
-export type Category = {
-  id: string;
-  title: string;
-  slug: string;
-  description?: string;
-  mediaId?: string;
-  sortOrder: number;
-  active: boolean;
-  seo?: SeoFields;
 };
 
 export type Concern = {
@@ -293,7 +281,6 @@ export type Promotion = {
   active: boolean;
   channelRestrictions: SalesChannel[];
   productRestrictions: string[];
-  categoryRestrictions: string[];
   startsAt?: Date | null;
   endsAt?: Date | null;
   usageLimit?: number | null;

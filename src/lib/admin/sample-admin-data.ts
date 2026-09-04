@@ -1,6 +1,5 @@
 import {
   sampleAuditLogs,
-  sampleCategories,
   sampleCollections,
   sampleConcerns,
   sampleCustomers,
@@ -25,7 +24,6 @@ import { formatMoney as formatCommerceMoney } from "@/lib/commerce/format";
 export const adminData = {
   products: sampleProducts,
   variants: sampleVariants,
-  categories: sampleCategories,
   collections: sampleCollections,
   concerns: sampleConcerns,
   productTypes: sampleProductTypes,

@@ -6,7 +6,6 @@ import {
 } from "@/lib/admin/sample-admin-data";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import type {
-  Category,
   Collection,
   Concern,
   MediaAsset,
@@ -31,7 +30,6 @@ export type AdminCatalogueData = {
   products: Product[];
   variants: ProductVariant[];
   rows: AdminProductRow[];
-  categories: Category[];
   collections: Collection[];
   concerns: Concern[];
   productTypes: ProductType[];
@@ -49,8 +47,7 @@ export async function getAdminCatalogueData(): Promise<AdminCatalogueData> {
   try {
     const products = await context.repo.listProducts();
     const variants = await context.repo.listAllVariants();
-    const [categories, collections, concerns, productTypes, routines, media, rawMaterials] = await Promise.all([
-      context.repo.listCategories(),
+    const [collections, concerns, productTypes, routines, media, rawMaterials] = await Promise.all([
       context.repo.listCollections(),
       context.repo.listConcerns(),
       context.repo.listProductTypes(),
@@ -63,7 +60,6 @@ export async function getAdminCatalogueData(): Promise<AdminCatalogueData> {
       products,
       variants,
       rows: createRows(products, variants),
-      categories,
       collections,
       concerns,
       productTypes,
@@ -97,7 +93,6 @@ function sampleCatalogue(sourceMessage: string): AdminCatalogueData {
     products: adminData.products,
     variants: adminData.variants,
     rows: createRows(adminData.products, adminData.variants),
-    categories: adminData.categories,
     collections: adminData.collections,
     concerns: adminData.concerns,
     productTypes: adminData.productTypes,

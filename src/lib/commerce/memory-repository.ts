@@ -2,7 +2,6 @@ import type { Role } from "@/lib/permissions/permissions";
 import type { CommerceRepository } from "@/lib/commerce/repository";
 import type {
   AuditLog,
-  Category,
   Collection,
   Concern,
   ContentBlock,
@@ -28,7 +27,6 @@ import type {
 export class MemoryCommerceRepository implements CommerceRepository {
   products = new Map<string, Product>();
   variants = new Map<string, ProductVariant>();
-  categories = new Map<string, Category>();
   collections = new Map<string, Collection>();
   concerns = new Map<string, Concern>();
   productTypes = new Map<string, ProductType>();
@@ -87,14 +85,6 @@ export class MemoryCommerceRepository implements CommerceRepository {
 
   async listAllVariants() {
     return [...this.variants.values()];
-  }
-
-  async listCategories() {
-    return [...this.categories.values()].sort((first, second) => first.sortOrder - second.sortOrder);
-  }
-
-  async saveCategory(category: Category) {
-    this.categories.set(category.id, category);
   }
 
   async listCollections() {

@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
 import { CinematicHome } from "@/components/storefront/cinematic-home";
-import {
-  getStorefrontCatalogue,
-  toStorefrontCategorySummaries,
-  toStorefrontProductViews
-} from "@/lib/storefront/catalogue";
+import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefront/catalogue";
 import { getContentBlocks } from "@/lib/storefront/content";
 
 export const metadata: Metadata = {
@@ -20,7 +16,6 @@ export default async function StorefrontHomePage() {
   const [catalogue, content] = await Promise.all([getStorefrontCatalogue(), getContentBlocks()]);
   return (
     <CinematicHome
-      categories={toStorefrontCategorySummaries(catalogue)}
       products={toStorefrontProductViews(catalogue)}
       consultWhatsappNumber={content["consult-whatsapp-number"]}
       sourceMessage={catalogue.sourceMessage}

@@ -41,7 +41,6 @@ export async function createProductWithDefaultVariantAction(
       slug,
       shortCopy: formOptionalString(formData, "shortCopy"),
       status: formProductStatus(formData, "status"),
-      categoryIds: [],
       collectionIds: [],
       tags: [],
       mediaIds: [],
@@ -113,7 +112,6 @@ export async function quickEditCatalogueItemAction(
     const actor = await getRequiredAdminActor();
     const productId = formString(formData, "productId");
     const variantId = formString(formData, "variantId");
-    const categoryId = formOptionalString(formData, "categoryId");
     const stockDelta = formInteger(formData, "stockDelta", 0);
 
     const product = await updateProduct(context, actor, {
@@ -121,7 +119,6 @@ export async function quickEditCatalogueItemAction(
       title: formString(formData, "title"),
       shortCopy: formOptionalString(formData, "shortCopy"),
       status: formProductStatus(formData, "status"),
-      categoryIds: categoryId ? [categoryId] : [],
       concernIds: formData.getAll("concernIds").map(String),
       productTypeIds: formData.getAll("productTypeIds").map(String),
       routineIds: formData.getAll("routineIds").map(String),

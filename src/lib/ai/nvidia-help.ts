@@ -17,13 +17,12 @@ export function isAdminHelpConfigured() {
 /** What's actually on each admin page — lets the AI describe what she's looking at right now instead of speaking generically. */
 const PAGE_CONTEXT: Record<string, string> = {
   "/admin": "the Dashboard — revenue/orders/POS-cash/low-stock summary cards, a Recent orders table, and a Needs attention list.",
-  "/admin/products": "the Products page — a list of products; clicking one opens an edit drawer with fields including title, price, was-price (sale), category, shop position, and an image upload field.",
-  "/admin/categories": "the Categories page — create/quick-edit categories, toggle active, upload a category photo.",
+  "/admin/products": "the Products page — a list of products; clicking one opens an edit drawer with fields including title, price, was-price (sale), best seller toggle, shop position, and an image upload field.",
   "/admin/taxonomy": "the Taxonomy page — manages shared classification lists (product types, concerns, routines) that product forms pull from.",
   "/admin/content": "the Content & Media page — a 'Site content' section of editable fields (WhatsApp number, pickup location, SMS templates, shop status/message), and an 'Upload an image' section with a Media library list below it.",
   "/admin/orders": "the Orders page — a numbered 'Needs attention' queue (oldest first) with an inline status dropdown per row, and a collapsed 'Completed' section. Clicking a row opens full detail (customer, items, totals) and the same status control. There's no refund/void here — that only exists for POS sales, not online orders.",
   "/admin/customers": "the Customers page — view/create/update customer records.",
-  "/admin/promotions": "the Promotions page — create/edit discount codes: code, percent or fixed amount, date range, usage limit, product/category/channel restrictions, and a 'requires manager approval' toggle.",
+  "/admin/promotions": "the Promotions page — create/edit discount codes: code, percent or fixed amount, date range, usage limit, product/channel restrictions, and a 'requires manager approval' toggle.",
   "/admin/inventory": "the Inventory page — a list of product variants; clicking one opens a drawer with a stock adjustment form and that variant's movement history.",
   "/admin/delivery": "the Delivery page (Owner only) — manage delivery zones and pricing.",
   "/admin/reports": "the Reports page — discount usage and top products by revenue.",

@@ -7,80 +7,56 @@ import {
   addLineToCart,
   type CartLine
 } from "@/components/storefront/add-to-bag-button";
+import Link from "next/link";
+import type { Route } from "next";
 import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
-import type { StorefrontCategorySummary, StorefrontProductView } from "@/lib/storefront/catalogue";
+import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 import { celebrateBurst } from "@/lib/storefront/celebrate";
 import { openCart } from "@/lib/storefront/cart-store";
 
-// Cosmetic variety for the category pill — cycles deterministically per
-// product so the grid doesn't read as one repeated "CARE" label everywhere,
-// independent of whether real category taxonomy is assigned yet. Drawn only
-// from real brand tokens (peach/green and their soft variants), not new hues.
-const badgeAccents = [
-  { background: "var(--color-peach)", color: "var(--color-near-black)" },
-  { background: "var(--color-green)", color: "var(--color-white-pure)" },
-  { background: "var(--color-green-soft)", color: "var(--color-white-pure)" },
-  { background: "var(--color-peach-light)", color: "var(--color-near-black)" }
-];
-
-function badgeAccentFor(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i += 1) {
-    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  }
-  return badgeAccents[hash % badgeAccents.length];
-}
-
 type DepthShopProps = {
-  categories: StorefrontCategorySummary[];
   products: StorefrontProductView[];
   sourceMessage?: string;
 };
 
-type DiscoveryOption = {
-  slug: string;
-  label: string;
-  imageUrl?: string;
-};
-
-export function DepthShop({ categories, products, sourceMessage }: DepthShopProps) {
+export function DepthShop({ products, sourceMessage }: DepthShopProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const categoryOptions = useMemo<DiscoveryOption[]>(
-    () => categories.map((category) => ({ slug: category.slug, label: category.title, imageUrl: category.imageUrl })),
-    [categories]
+  const bestSellerProducts = useMemo(
+    () =>
+      products
+        .filter((product) => product.bestSeller)
+        .filter((product, index, all) => all.findIndex((entry) => entry.id === product.id) === index)
+        .slice(0, 6),
+    [products]
   );
 
   const filteredProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return products;
+    }
 
-    return products.filter((product) => {
-      const matchesFilter = filter === "all" || product.categorySlugs.includes(filter);
-      const matchesQuery =
-        !normalizedQuery ||
-        [
-          product.title,
-          product.shortCopy,
-          product.sku,
-          product.variantTitle,
-          ...product.categoryLabels,
-          ...product.concernLabels,
-          ...product.productTypeLabels,
-          ...product.routineLabels,
-          ...product.tags
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(normalizedQuery);
-
-      return matchesFilter && matchesQuery;
-    });
-  }, [filter, products, query]);
+    return products.filter((product) =>
+      [
+        product.title,
+        product.shortCopy,
+        product.sku,
+        product.variantTitle,
+        ...product.concernLabels,
+        ...product.productTypeLabels,
+        ...product.routineLabels,
+        ...product.tags
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(normalizedQuery)
+    );
+  }, [products, query]);
 
   const selectedProduct = useMemo(
     () => products.find((product) => product.variantId === selectedId) ?? null,
@@ -94,24 +70,25 @@ export function DepthShop({ categories, products, sourceMessage }: DepthShopProp
     return products.filter((product) => product.id === selectedProduct.id);
   }, [products, selectedProduct]);
 
-  // Same "shares a category" logic as the full product page's related-
-  // products section, just scoped to the quick-view sheet.
+  // No shared taxonomy signal to match on (categories are gone, and
+  // concern/product-type/routine tags aren't populated on real products
+  // either) — best-sellers first, then just other products, is an honest
+  // "you might also like" that actually shows something with real data.
   const relatedProducts = useMemo(() => {
     if (!selectedProduct) {
       return [];
     }
     const seenProductIds = new Set<string>();
-    return products.filter((product) => {
-      if (
-        product.id === selectedProduct.id ||
-        seenProductIds.has(product.id) ||
-        !product.categorySlugs.some((slug) => selectedProduct.categorySlugs.includes(slug))
-      ) {
-        return false;
-      }
-      seenProductIds.add(product.id);
-      return true;
-    }).slice(0, 4);
+    return products
+      .filter((product) => {
+        if (product.id === selectedProduct.id || seenProductIds.has(product.id)) {
+          return false;
+        }
+        seenProductIds.add(product.id);
+        return true;
+      })
+      .sort((first, second) => Number(second.bestSeller) - Number(first.bestSeller))
+      .slice(0, 4);
   }, [products, selectedProduct]);
 
   const variantCountByProductId = useMemo(() => {
@@ -121,6 +98,14 @@ export function DepthShop({ categories, products, sourceMessage }: DepthShopProp
     }
     return counts;
   }, [products]);
+  const heroProducts = useMemo(
+    () =>
+      products
+        .filter((product) => product.imageUrl)
+        .filter((product, index, all) => all.findIndex((entry) => entry.id === product.id) === index)
+        .slice(0, 3),
+    [products]
+  );
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -201,7 +186,7 @@ export function DepthShop({ categories, products, sourceMessage }: DepthShopProp
         <div className="depth-shop-copy">
           <span className="scene-kicker">Shop</span>
           <h1>
-            {"Shop our products.".split(" ").map((word, index) => (
+            {"Shop your care.".split(" ").map((word, index) => (
               <span className="word-mask" key={word + index}>
                 <span className="word">{word}&nbsp;</span>
               </span>
@@ -209,10 +194,39 @@ export function DepthShop({ categories, products, sourceMessage }: DepthShopProp
           </h1>
           {sourceMessage ? <p>{sourceMessage}</p> : null}
         </div>
+        {heroProducts.length > 0 ? <ShopBotanicalDrift products={heroProducts} /> : null}
       </section>
 
+      {bestSellerProducts.length > 0 ? (
+        <section className="related-products" aria-label="Best sellers">
+          <div className="front-product-intro">
+            <span className="scene-kicker">Best sellers</span>
+            <h2>What everyone&apos;s reaching for.</h2>
+          </div>
+          <div className="showcase-grid">
+            {bestSellerProducts.map((product) => (
+              <Link
+                className={`showcase-card ${product.tone}`}
+                href={`/products/${product.slug}` as Route}
+                key={product.variantId}
+              >
+                <div className="product-related-photo" aria-hidden="true">
+                  {product.imageUrl ? <Image alt="" fill sizes="220px" src={product.imageUrl} /> : null}
+                </div>
+                <div>
+                  <span>Best seller</span>
+                  <h3>{product.title}</h3>
+                  <p>{product.shortCopy}</p>
+                  <strong>{product.formattedPrice}</strong>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {products.length > 0 ? (
-        <section className="shop-filter-bar" aria-label="Shop filters">
+        <section className="shop-filter-bar" aria-label="Search products">
           <label className={`shop-search ${searchOpen ? "open" : ""}`}>
             <span aria-hidden="true">⌕</span>
             <input
@@ -223,8 +237,6 @@ export function DepthShop({ categories, products, sourceMessage }: DepthShopProp
               value={query}
             />
           </label>
-
-          <FilterChips filter={filter} onSelect={setFilter} options={categoryOptions} />
         </section>
       ) : null}
 
@@ -279,15 +291,8 @@ export function DepthShop({ categories, products, sourceMessage }: DepthShopProp
             width={72}
           />
           <h2>Nothing matched that yet.</h2>
-          <p>Try clearing your filters, or search for something else.</p>
-          <button
-            className="portal-cta"
-            onClick={() => {
-              setFilter("all");
-              setQuery("");
-            }}
-            type="button"
-          >
+          <p>Try clearing your search, or look for something else.</p>
+          <button className="portal-cta" onClick={() => setQuery("")} type="button">
             <span>Show everything</span>
             <i aria-hidden="true" />
           </button>
@@ -319,9 +324,13 @@ export function DepthShop({ categories, products, sourceMessage }: DepthShopProp
               <ProductPackshot product={selectedProduct} />
             </div>
             <div className="sheet-copy">
-              <span>
-                {selectedProduct.primaryCategory} / {selectedProduct.variantTitle}
-              </span>
+              {selectedProduct.bestSeller || !isDefaultVariant(selectedProduct) ? (
+                <span>
+                  {selectedProduct.bestSeller ? "Best seller" : ""}
+                  {selectedProduct.bestSeller && !isDefaultVariant(selectedProduct) ? " / " : ""}
+                  {!isDefaultVariant(selectedProduct) ? variantLabel(selectedProduct) : ""}
+                </span>
+              ) : null}
               <h2 id="product-sheet-title">{selectedProduct.title}</h2>
               <p>{selectedProduct.shortCopy}</p>
               <div className="sheet-meta">
@@ -349,7 +358,7 @@ export function DepthShop({ categories, products, sourceMessage }: DepthShopProp
               ) : null}
               <AddToBagButton
                 className="pdp-add-button"
-                label="Add to cart"
+                label="Add to bag"
                 line={toCartLine(selectedProduct)}
               />
               <CartTrigger className="sheet-cart-link" onBeforeOpen={() => setSelectedId(null)}>
@@ -387,70 +396,6 @@ export function DepthShop({ categories, products, sourceMessage }: DepthShopProp
   );
 }
 
-function FilterChips({
-  filter,
-  onSelect,
-  options
-}: {
-  filter: string;
-  onSelect: (value: string) => void;
-  options: DiscoveryOption[];
-}) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [glide, setGlide] = useState<{ left: number; width: number } | null>(null);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-
-    const active = container.querySelector<HTMLElement>('[data-active="true"]');
-    if (!active) {
-      setGlide(null);
-      return;
-    }
-
-    setGlide({ left: active.offsetLeft, width: active.offsetWidth });
-  }, [filter, options]);
-
-  return (
-    <div className="filter-chip-row" ref={containerRef}>
-      {glide ? (
-        <span
-          aria-hidden="true"
-          className="filter-chip-glide"
-          style={{ transform: `translateX(${glide.left}px)`, width: glide.width }}
-        />
-      ) : null}
-      <button
-        className="filter-chip"
-        data-active={filter === "all"}
-        onClick={() => onSelect("all")}
-        type="button"
-      >
-        All
-      </button>
-      {options.map((option) => (
-        <button
-          className="filter-chip"
-          data-active={filter === option.slug}
-          key={option.slug}
-          onClick={() => onSelect(option.slug)}
-          type="button"
-        >
-          {option.imageUrl ? (
-            <span className="filter-chip-thumb" aria-hidden="true">
-              <Image alt="" fill sizes="28px" src={option.imageUrl} />
-            </span>
-          ) : null}
-          {option.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 function ProductTile({
   featured,
   hasMultipleVariants,
@@ -472,25 +417,25 @@ function ProductTile({
         <div className="depth-product-stage" aria-hidden="true">
           <ProductPackshot product={product} />
         </div>
-        <span className="category-pill" style={badgeAccentFor(product.id)}>
-          {product.primaryCategory}
-        </span>
-        <h2>{product.title}</h2>
-        <div className="price-with-compare">
-          <strong>{product.formattedPrice}</strong>
-          {product.formattedCompareAtPrice ? (
-            <>
-              <s>{product.formattedCompareAtPrice}</s>
-              <span className="sale-pill">Sale</span>
-            </>
-          ) : null}
+        <div className="depth-product-info">
+          {product.bestSeller ? <span className="category-pill bestseller-pill">Best seller</span> : null}
+          <h2>{product.title}</h2>
+          <div className="price-with-compare">
+            <strong>{product.formattedPrice}</strong>
+            {product.formattedCompareAtPrice ? (
+              <>
+                <s>{product.formattedCompareAtPrice}</s>
+                <span className="sale-pill">Sale</span>
+              </>
+            ) : null}
+          </div>
         </div>
       </button>
       <button
         aria-label={
           hasMultipleVariants
             ? `Choose a size for ${product.title}`
-            : `Quick add ${product.title} to cart`
+            : `Quick add ${product.title} to bag`
         }
         className={`quick-add-button ${added ? "added" : ""}`}
         onClick={(event) => {
@@ -507,6 +452,43 @@ function ProductTile({
         {added ? "✓" : hasMultipleVariants ? "···" : "+"}
       </button>
     </article>
+  );
+}
+
+function variantLabel(product: StorefrontProductView) {
+  return isDefaultVariant(product) ? "Standard" : product.variantTitle;
+}
+
+function isDefaultVariant(product: StorefrontProductView) {
+  return product.variantTitle.toLowerCase() === "default";
+}
+
+function ShopBotanicalDrift({ products }: { products: StorefrontProductView[] }) {
+  return (
+    <div className="depth-shop-botanical-drift" aria-hidden="true">
+      <span className="shop-drift-aura" />
+      <div className="shop-drift-leaf leaf-back">
+        <Image alt="" fill sizes="220px" src="/hero/botanicals/leaf-midground-01.svg" />
+      </div>
+      <div className="shop-drift-leaf leaf-front">
+        <Image alt="" fill sizes="240px" src="/hero/botanicals/leaf-foreground-01.svg" />
+      </div>
+      {products[1]?.imageUrl ? (
+        <div className="shop-drift-product product-side">
+          <Image alt="" fill sizes="220px" src={products[1].imageUrl} />
+        </div>
+      ) : null}
+      {products[0]?.imageUrl ? (
+        <div className="shop-drift-product product-main">
+          <Image alt="" fill priority sizes="380px" src={products[0].imageUrl} />
+        </div>
+      ) : null}
+      {products[2]?.imageUrl ? (
+        <div className="shop-drift-product product-soft">
+          <Image alt="" fill sizes="210px" src={products[2].imageUrl} />
+        </div>
+      ) : null}
+    </div>
   );
 }
 

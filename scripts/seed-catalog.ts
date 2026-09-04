@@ -1,7 +1,6 @@
 import { createRequire } from "node:module";
 import { Timestamp } from "firebase-admin/firestore";
 import {
-  sampleCategories,
   sampleCollections,
   sampleDeliveryRules,
   sampleMedia,
@@ -30,36 +29,13 @@ async function seedCatalog() {
 
   const now = Timestamp.now();
   const batch = db.batch();
-  const activeCategoryIds = new Set(sampleCategories.map((category) => category.id));
-  const obsoleteCategoryIds = [
-    "cat-intimate-care",
-    "cat-tone-shave-care",
-    "cat-feminine-wellness",
-    "cat-herbal-support",
-    "cat-libido-desire",
-    "cat-sets-bundles",
-    "cat-testing-accessories",
-    "cat-wellness"
-  ].filter((categoryId) => !activeCategoryIds.has(categoryId));
   const activeCollectionIds = new Set(sampleCollections.map((collection) => collection.id));
   const obsoleteCollectionIds = ["collection-best-sellers"].filter(
     (collectionId) => !activeCollectionIds.has(collectionId)
   );
 
-  for (const categoryId of obsoleteCategoryIds) {
-    batch.delete(db.collection("categories").doc(categoryId));
-  }
-
   for (const collectionId of obsoleteCollectionIds) {
     batch.delete(db.collection("collections").doc(collectionId));
-  }
-
-  for (const category of sampleCategories) {
-    batch.set(db.collection("categories").doc(category.id), {
-      ...category,
-      createdAt: now,
-      updatedAt: now
-    }, { merge: true });
   }
 
   for (const product of sampleProducts) {

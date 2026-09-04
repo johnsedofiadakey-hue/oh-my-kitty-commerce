@@ -21,17 +21,6 @@ type CartContentsProps = {
   onNavigate?: () => void;
 };
 
-type Recommendation = {
-  productId: string;
-  variantId: string;
-  title: string;
-  variantTitle: string;
-  sku: string;
-  unitPrice: number;
-  formattedPrice: string;
-  imageUrl?: string;
-};
-
 type DeliveryOption = {
   id: string;
   name: string;
@@ -48,11 +37,6 @@ export function CartContents({ onNavigate }: CartContentsProps) {
     () => lines.reduce((total, line) => total + line.unitPrice * line.quantity, 0),
     [lines]
   );
-  const cartProductIds = useMemo(
-    () => Array.from(new Set(lines.map((line) => line.productId))).sort(),
-    [lines]
-  );
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>([]);
 
   useEffect(() => {
@@ -82,59 +66,6 @@ export function CartContents({ onNavigate }: CartContentsProps) {
       .filter((value): value is number => typeof value === "number" && value > 0);
     return thresholds.length > 0 ? Math.min(...thresholds) : null;
   }, [deliveryOptions]);
-
-  useEffect(() => {
-    // No early setRecommendations([]) here on purpose — when the cart is
-    // genuinely empty the component returns its own "empty cart" view below
-    // before this section would ever render, so there's nothing stale to
-    // clear, and synchronously setting state inside an effect body is
-    // exactly what react-hooks/set-state-in-effect flags.
-    if (cartProductIds.length === 0) {
-      return;
-    }
-
-    let cancelled = false;
-    fetch(`/api/storefront/recommendations?productIds=${cartProductIds.join(",")}`)
-      .then((response) => response.json())
-      .then((payload: { products?: Recommendation[] }) => {
-        if (!cancelled) {
-          setRecommendations(payload.products ?? []);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setRecommendations([]);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- cartProductIds is a derived, sorted, deduped array; comparing its join() avoids refetching on quantity-only changes.
-  }, [cartProductIds.join(",")]);
-
-  function addRecommendation(item: Recommendation) {
-    const existing = lines.find((line) => line.variantId === item.variantId);
-    const nextLines = existing
-      ? lines.map((line) =>
-          line.variantId === item.variantId ? { ...line, quantity: line.quantity + 1 } : line
-        )
-      : [
-          ...lines,
-          {
-            productId: item.productId,
-            variantId: item.variantId,
-            productTitle: item.title,
-            variantTitle: item.variantTitle,
-            sku: item.sku,
-            unitPrice: item.unitPrice,
-            quantity: 1,
-            imageUrl: item.imageUrl
-          }
-        ];
-
-    writeCartLines(nextLines);
-  }
 
   function updateQuantity(variantId: string, quantity: number) {
     const nextLines = lines
@@ -193,7 +124,7 @@ export function CartContents({ onNavigate }: CartContentsProps) {
             </div>
             <div className="cart-item-copy">
               <strong>{line.productTitle}</strong>
-              <span>{line.variantTitle}</span>
+              <span>{displayVariant(line)}</span>
               <small>{formatMoney(line.unitPrice)} each</small>
             </div>
             <div className="qty-stepper">
@@ -232,30 +163,6 @@ export function CartContents({ onNavigate }: CartContentsProps) {
         <FreeDeliveryProgress subtotal={subtotal} threshold={freeDeliveryThreshold} />
       ) : null}
 
-      {recommendations.length > 0 ? (
-        <div className="cart-recommendations">
-          <span className="cart-recommendations-label">Goes well with your cart</span>
-          <div className="cart-recommendations-row">
-            {recommendations.map((item) => (
-              <div className="cart-recommendation-card" key={item.variantId}>
-                <div className="cart-recommendation-figure" aria-hidden="true">
-                  {item.imageUrl ? <Image alt="" fill sizes="80px" src={item.imageUrl} /> : null}
-                </div>
-                <span>{item.title}</span>
-                <strong>{item.formattedPrice}</strong>
-                <button
-                  aria-label={`Add ${item.title} to cart`}
-                  onClick={() => addRecommendation(item)}
-                  type="button"
-                >
-                  Add
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
       <div className="checkout-summary">
         <div>
           <span>Subtotal</span>
@@ -269,6 +176,10 @@ export function CartContents({ onNavigate }: CartContentsProps) {
       </div>
     </div>
   );
+}
+
+function displayVariant(line: CartLine) {
+  return line.variantTitle.toLowerCase() === "default" ? "Standard" : line.variantTitle;
 }
 
 function subscribeToCart(listener: () => void) {

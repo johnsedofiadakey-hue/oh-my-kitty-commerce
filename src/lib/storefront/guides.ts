@@ -10,8 +10,7 @@ export type Guide = {
   teaser: string;
   description: string;
   sections: GuideSection[];
-  relatedCategorySlug: string;
-  relatedCategoryLabel: string;
+  shopCtaLabel: string;
 };
 
 /**
@@ -54,8 +53,7 @@ export const guides: Guide[] = [
         ]
       }
     ],
-    relatedCategorySlug: "infection-sets",
-    relatedCategoryLabel: "Shop Infection Sets"
+    shopCtaLabel: "Shop Infection Sets"
   },
   {
     slug: "boric-acid-explained",
@@ -90,8 +88,7 @@ export const guides: Guide[] = [
         ]
       }
     ],
-    relatedCategorySlug: "boric-acid-dripping-pills",
-    relatedCategoryLabel: "Shop Boric Acid & Dripping Pills"
+    shopCtaLabel: "Shop Boric Acid & Dripping Pills"
   },
   {
     slug: "odor-and-irritation-day-to-day",
@@ -125,8 +122,7 @@ export const guides: Guide[] = [
         ]
       }
     ],
-    relatedCategorySlug: "daily-intimate-care",
-    relatedCategoryLabel: "Shop Daily Intimate Care"
+    shopCtaLabel: "Shop Daily Intimate Care"
   },
   {
     slug: "choosing-an-infection-set",
@@ -154,8 +150,7 @@ export const guides: Guide[] = [
         ]
       }
     ],
-    relatedCategorySlug: "infection-sets",
-    relatedCategoryLabel: "Shop Infection Sets"
+    shopCtaLabel: "Shop Infection Sets"
   }
 ];
 

@@ -44,8 +44,8 @@ export function ProductDetailHero({ variants }: ProductDetailHeroProps) {
       </div>
 
       <div className="product-detail-copy">
-        <Link className="scene-kicker" href={`/categories/${selected.primaryCategorySlug}` as Route}>
-          {selected.primaryCategory}
+        <Link className="scene-kicker" href={"/shop" as Route}>
+          Shop
         </Link>
         <h1>{selected.title}</h1>
         <p>{selected.description ?? selected.shortCopy}</p>
@@ -58,18 +58,21 @@ export function ProductDetailHero({ variants }: ProductDetailHeroProps) {
         </div>
 
         <div className="size-pill-row">
-          <span className="size-pill-label">Size</span>
-          {variants.map((variant) => (
-            <button
-              className={`size-pill ${variant.variantId === selectedVariantId ? "active" : ""}`}
-              disabled={!hasMultipleSizes}
-              key={variant.variantId}
-              onClick={() => selectVariant(variant.variantId)}
-              type="button"
-            >
-              {variant.variantTitle}
-            </button>
-          ))}
+          {hasMultipleSizes ? (
+            <>
+              <span className="size-pill-label">Size</span>
+              {variants.map((variant) => (
+                <button
+                  className={`size-pill ${variant.variantId === selectedVariantId ? "active" : ""}`}
+                  key={variant.variantId}
+                  onClick={() => selectVariant(variant.variantId)}
+                  type="button"
+                >
+                  {variantLabel(variant)}
+                </button>
+              ))}
+            </>
+          ) : null}
 
           <span className="qty-stepper" aria-label="Quantity">
             <button
@@ -98,7 +101,7 @@ export function ProductDetailHero({ variants }: ProductDetailHeroProps) {
             label={
               <>
                 <BagIcon className="cta-icon" />
-                <span>Add to cart</span>
+                <span>Add to bag</span>
               </>
             }
             line={toCartLine(selected, quantity)}
@@ -112,7 +115,7 @@ export function ProductDetailHero({ variants }: ProductDetailHeroProps) {
           <div className="mini-cart-line-copy">
             <strong>{selected.title}</strong>
             <span>
-              {selected.variantTitle} × {quantity}
+              {variantLabel(selected)} × {quantity}
             </span>
           </div>
           <strong className="mini-cart-line-price">{linePrice}</strong>
@@ -125,6 +128,10 @@ export function ProductDetailHero({ variants }: ProductDetailHeroProps) {
       </div>
     </section>
   );
+}
+
+function variantLabel(product: StorefrontProductView) {
+  return product.variantTitle.toLowerCase() === "default" ? "Standard" : product.variantTitle;
 }
 
 function toCartLine(product: StorefrontProductView, quantity: number): CartLine {

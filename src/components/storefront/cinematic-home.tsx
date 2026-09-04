@@ -9,11 +9,10 @@ import { openCart } from "@/lib/storefront/cart-store";
 import { CartCount } from "@/components/storefront/cart-count";
 import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
-import type { StorefrontCategorySummary, StorefrontProductView } from "@/lib/storefront/catalogue";
+import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 import { toWhatsAppLink } from "@/lib/storefront/whatsapp";
 
 type CinematicHomeProps = {
-  categories: StorefrontCategorySummary[];
   products: StorefrontProductView[];
   consultWhatsappNumber: string;
   sourceMessage?: string;
@@ -29,7 +28,6 @@ const CONSULT_MESSAGE = "Hi! I'd like some guidance before I order 🌸";
 const HERO_VIDEO_VERSION = "3";
 
 const WORLD_TILE_CYCLE = ["tall", "small", "wide", "small"] as const;
-const EXHIBITION_VARIANT_CYCLE = ["a", "b", "c", "d", "e"] as const;
 
 /**
  * Sample review fragments — placeholder copy only, not real customer reviews.
@@ -228,7 +226,7 @@ function buildHeroTimeline(gsap: any, cfg: HeroBreakpointConfig) {
   return tl;
 }
 
-export function CinematicHome({ categories, products, consultWhatsappNumber, sourceMessage }: CinematicHomeProps) {
+export function CinematicHome({ products, consultWhatsappNumber, sourceMessage }: CinematicHomeProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const heroVideoRef = useRef<HTMLVideoElement>(null);
   const bestSellers = products.filter((product) => product.bestSeller);
@@ -354,7 +352,6 @@ export function CinematicHome({ categories, products, consultWhatsappNumber, sou
           });
         }
 
-        pinHorizontalTrack(".exhibition-track", ".exhibition-gallery", ".exhibition-panel");
         pinHorizontalTrack(".world-track", ".product-world");
 
         gsap.to(".world-panel-forward .world-panel-figure", {
@@ -511,54 +508,13 @@ export function CinematicHome({ categories, products, consultWhatsappNumber, sou
           </section>
         ) : null}
 
-        <section className="exhibition-gallery" aria-label="Shop by category">
-          <div className="exhibition-arch" aria-hidden="true">
-            <Image alt="" fill sizes="900px" src="/hero/architecture/peach-portal.svg" />
-          </div>
-          <div className="exhibition-botanical exhibition-botanical-a" aria-hidden="true">
-            <Image alt="" fill sizes="180px" src="/hero/botanicals/leaf-foreground-01.svg" />
-          </div>
-          <div className="exhibition-botanical exhibition-botanical-b" aria-hidden="true">
-            <Image alt="" fill sizes="200px" src="/hero/botanicals/leaf-midground-01.svg" />
-          </div>
-          <div className="exhibition-track">
-            {categories.map((category, index) => {
-              const variant = EXHIBITION_VARIANT_CYCLE[index % EXHIBITION_VARIANT_CYCLE.length];
-
-              return (
-                <Link
-                  className="exhibition-panel"
-                  data-variant={variant}
-                  href={`/categories/${category.slug}` as Route}
-                  key={category.id}
-                >
-                  {variant === "c" ? (
-                    <span className="exhibition-panel-type" aria-hidden="true">
-                      {category.title}
-                    </span>
-                  ) : null}
-                  <div className="exhibition-panel-figure" aria-hidden="true">
-                    {category.imageUrl ? (
-                      <Image alt="" fill sizes="320px" src={category.imageUrl} />
-                    ) : null}
-                  </div>
-                  <div className="exhibition-panel-copy">
-                    <span>
-                      {category.productCount} {category.productCount === 1 ? "product" : "products"}
-                    </span>
-                    <h2>{category.title}</h2>
-                  </div>
-                </Link>
-              );
-            })}
-            <Link className="exhibition-panel exhibition-finale" data-variant="e" href="/learn">
-              <div className="exhibition-panel-copy">
-                <span>Guides &amp; answers</span>
-                <h2>Know your body.</h2>
-                <p>Straight answers on infections, odor, and care — no shame, just facts.</p>
-              </div>
-            </Link>
-          </div>
+        <section className="learn-teaser" aria-label="Guides and answers">
+          <Link className="learn-teaser-card" href="/learn">
+            <span className="scene-kicker">Guides &amp; answers</span>
+            <h2>Know your body.</h2>
+            <p>Straight answers on infections, odor, and care — no shame, just facts.</p>
+            <span className="learn-teaser-cta">Read the guides</span>
+          </Link>
         </section>
 
         {worldProducts.length > 0 ? (
@@ -585,7 +541,6 @@ export function CinematicHome({ categories, products, consultWhatsappNumber, sou
                       ) : null}
                     </div>
                     <div className="world-panel-copy">
-                      <span>{product.primaryCategory}</span>
                       <h3>{product.title}</h3>
                       <strong>{product.formattedPrice}</strong>
                     </div>
@@ -639,7 +594,7 @@ export function CinematicHome({ categories, products, consultWhatsappNumber, sou
                     ) : null}
                   </div>
                   <div className="best-seller-copy">
-                    <span>{dominantSeller.primaryCategory}</span>
+                    <span>Best seller</span>
                     <h3>{dominantSeller.title}</h3>
                     <strong>{dominantSeller.formattedPrice}</strong>
                   </div>

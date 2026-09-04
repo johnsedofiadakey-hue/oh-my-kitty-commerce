@@ -49,7 +49,6 @@ const productFieldsSchema = z.object({
   shortCopy: z.string().max(140).optional(),
   description: z.string().optional(),
   status: productStatusSchema,
-  categoryIds: z.array(z.string().min(1)),
   collectionIds: z.array(z.string().min(1)),
   concernIds: z.array(z.string().min(1)),
   productTypeIds: z.array(z.string().min(1)),
@@ -65,7 +64,6 @@ const productFieldsSchema = z.object({
 
 export const createProductInputSchema = productFieldsSchema.extend({
   status: productStatusSchema.default("DRAFT"),
-  categoryIds: z.array(z.string().min(1)).default([]),
   collectionIds: z.array(z.string().min(1)).default([]),
   concernIds: z.array(z.string().min(1)).default([]),
   productTypeIds: z.array(z.string().min(1)).default([]),
@@ -231,7 +229,6 @@ const promotionFieldsSchema = z.object({
   active: z.boolean(),
   channelRestrictions: z.array(salesChannelSchema),
   productRestrictions: z.array(z.string()),
-  categoryRestrictions: z.array(z.string()),
   usageLimit: z.number().int().positive().nullable().optional(),
   requiresManagerApproval: z.boolean()
 });
@@ -240,7 +237,6 @@ export const createPromotionInputSchema = promotionFieldsSchema.extend({
   active: z.boolean().default(true),
   channelRestrictions: z.array(salesChannelSchema).default([]),
   productRestrictions: z.array(z.string()).default([]),
-  categoryRestrictions: z.array(z.string()).default([]),
   requiresManagerApproval: z.boolean().default(false)
 });
 
@@ -295,19 +291,6 @@ export const createRoutineInputSchema = taxonomyEntryFieldsSchema.extend(taxonom
 
 export const updateRoutineInputSchema = taxonomyEntryFieldsSchema.partial().extend({
   id: z.string().min(1)
-});
-
-export const createCategoryInputSchema = taxonomyEntryFieldsSchema.extend(taxonomyEntryDefaults);
-
-export const updateCategoryInputSchema = taxonomyEntryFieldsSchema.partial().extend({
-  id: z.string().min(1)
-});
-
-export const attachCategoryImageInputSchema = z.object({
-  categoryId: z.string().min(1),
-  storagePath: z.string().min(1),
-  url: z.string().min(1),
-  alt: z.string().min(1)
 });
 
 const deliveryRuleFieldsSchema = z.object({
@@ -396,9 +379,6 @@ export type CreateProductTypeInput = z.input<typeof createProductTypeInputSchema
 export type UpdateProductTypeInput = z.input<typeof updateProductTypeInputSchema>;
 export type CreateRoutineInput = z.input<typeof createRoutineInputSchema>;
 export type UpdateRoutineInput = z.input<typeof updateRoutineInputSchema>;
-export type CreateCategoryInput = z.input<typeof createCategoryInputSchema>;
-export type UpdateCategoryInput = z.input<typeof updateCategoryInputSchema>;
-export type AttachCategoryImageInput = z.input<typeof attachCategoryImageInputSchema>;
 export type CreateVariantInput = z.input<typeof createVariantInputSchema>;
 export type UpdateVariantInput = z.input<typeof updateVariantInputSchema>;
 export type CreateOrderDraftInput = z.input<typeof createOrderDraftInputSchema>;

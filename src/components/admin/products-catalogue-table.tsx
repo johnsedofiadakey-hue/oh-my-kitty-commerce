@@ -304,7 +304,6 @@ function ProductEditDrawer({
     return null;
   }
 
-  const selectedCategoryId = product.categoryIds[0] ?? "";
   const mediaId = (variant.mediaIds ?? [])[0] ?? (product.mediaIds ?? [])[0];
   const currentImageUrl = mediaId ? catalogue.media.find((asset) => asset.id === mediaId)?.url : undefined;
 
@@ -334,17 +333,6 @@ function ProductEditDrawer({
             <input defaultValue={product.shortCopy ?? ""} name="shortCopy" />
           </label>
           <div className="admin-form-grid">
-            <label className="admin-field">
-              <span>Category</span>
-              <select defaultValue={selectedCategoryId} name="categoryId">
-                <option value="">Uncategorized</option>
-                {catalogue.categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.title}
-                  </option>
-                ))}
-              </select>
-            </label>
             <label className="admin-field">
               <span>Status</span>
               <select defaultValue={product.status} name="status">

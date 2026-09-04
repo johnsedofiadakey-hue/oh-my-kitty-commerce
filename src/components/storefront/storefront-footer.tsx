@@ -7,7 +7,7 @@ type StorefrontFooterProps = {
   whatsappNumber: string;
 };
 
-type SocialIcon = "instagram" | "tiktok" | "snapchat" | "whatsapp";
+type SocialIcon = "instagram" | "tiktok" | "facebook" | "snapchat" | "whatsapp";
 
 export function StorefrontFooter({ variant = "full", whatsappNumber }: StorefrontFooterProps) {
   const socialButtons = [
@@ -20,6 +20,11 @@ export function StorefrontFooter({ variant = "full", whatsappNumber }: Storefron
       href: "https://www.tiktok.com/@ohmykitty_30",
       icon: "tiktok" as SocialIcon,
       label: "TikTok"
+    },
+    {
+      href: "https://www.facebook.com/ohmykitty_30",
+      icon: "facebook" as SocialIcon,
+      label: "Facebook"
     },
     {
       href: "https://snapchat.com/t/d02oD04F",
@@ -102,8 +107,9 @@ export function StorefrontFooter({ variant = "full", whatsappNumber }: Storefron
             ))}
           </div>
 
-          <Link className="footer-admin-link" href="/admin/login">
-            Admin
+          <Link className="footer-admin-peek" href="/admin/login">
+            <span aria-hidden="true" className="footer-admin-lock" />
+            <strong>Admin</strong>
           </Link>
 
           <p className="footer-credit">
@@ -144,6 +150,14 @@ function SocialIcon({ name }: { name: SocialIcon }) {
         <path d="M12 3.5c-3.6 0-6.5 3-6.5 6.7v7.3l1.8-1.6 1.7 1.6 1.7-1.6 1.7 1.6 1.6-1.6 1.7 1.6 1.8-1.6v-7.3c0-3.7-2.9-6.7-6.5-6.7Z" />
         <circle cx="9.6" cy="10.2" r="0.9" />
         <circle cx="14.4" cy="10.2" r="0.9" />
+      </svg>
+    );
+  }
+
+  if (name === "facebook") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M14.4 8H17V4.5h-2.9c-3.2 0-5.1 1.9-5.1 5.2V12H6v3.6h3V21h3.9v-5.4h3.2l.6-3.6h-3.8v-1.9c0-1.1.5-2.1 1.5-2.1Z" />
       </svg>
     );
   }

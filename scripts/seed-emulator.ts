@@ -2,7 +2,6 @@ import { getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import {
   sampleAuditLogs,
-  sampleCategories,
   sampleCollections,
   sampleCustomers,
   sampleDeliveryRules,
@@ -35,14 +34,6 @@ const db = getFirestore();
 async function seed() {
   const now = Timestamp.now();
   const batch = db.batch();
-
-  for (const category of sampleCategories) {
-    batch.set(db.collection("categories").doc(category.id), {
-      ...category,
-      createdAt: now,
-      updatedAt: now
-    });
-  }
 
   for (const product of sampleProducts) {
     batch.set(db.collection("products").doc(product.id), {

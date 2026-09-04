@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
 import { DepthShop } from "@/components/storefront/depth-shop";
-import {
-  getStorefrontCatalogue,
-  toStorefrontCategorySummaries,
-  toStorefrontProductViews
-} from "@/lib/storefront/catalogue";
+import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefront/catalogue";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +15,6 @@ export default async function ShopPage() {
   const catalogue = await getStorefrontCatalogue();
 
   return (
-    <DepthShop
-      categories={toStorefrontCategorySummaries(catalogue)}
-      products={toStorefrontProductViews(catalogue)}
-      sourceMessage={catalogue.sourceMessage}
-    />
+    <DepthShop products={toStorefrontProductViews(catalogue)} sourceMessage={catalogue.sourceMessage} />
   );
 }
