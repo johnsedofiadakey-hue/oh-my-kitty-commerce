@@ -49,7 +49,10 @@ const icons = {
   notifications: [
     "M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9Z",
     "M10.3 21a1.7 1.7 0 0 0 3.4 0"
-  ]
+  ],
+  expenses: ["M6 2h12v20l-3-2-3 2-3-2-3 2V2Z", "M9 7h6M9 11h6M9 15h4"],
+  assets: ["M4 8h16v11H4z", "M9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2", "M4 13h16"],
+  payroll: ["M3 7h18v12H3z", "M3 10h18", "M15 15h3"]
 } as const;
 
 export type AdminIconName = keyof typeof icons;

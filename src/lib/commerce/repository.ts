@@ -1,15 +1,20 @@
 import type { Role } from "@/lib/permissions/permissions";
 import type {
   AuditLog,
+  CapitalAsset,
   Collection,
   Concern,
   ContentBlock,
   Customer,
   DeliveryRule,
+  Expense,
+  ExpenseCategory,
   InventoryMovement,
+  ManualRevenueEntry,
   MediaAsset,
   NotificationLog,
   Order,
+  PayrollPayment,
   Payment,
   PosShift,
   Product,
@@ -18,9 +23,11 @@ import type {
   Promotion,
   PushSubscription,
   RawMaterial,
+  RecurringExpenseTemplate,
   Routine,
   StaffUser,
-  StoreSettings
+  StoreSettings,
+  Worker
 } from "@/lib/commerce/types";
 
 export type CommerceRepository = {
@@ -88,6 +95,31 @@ export type CommerceRepository = {
   deletePushSubscription(id: string): Promise<void>;
   saveNotificationLog(log: NotificationLog): Promise<void>;
   listNotificationLogs(): Promise<NotificationLog[]>;
+  listExpenseCategories(): Promise<ExpenseCategory[]>;
+  getExpenseCategory(id: string): Promise<ExpenseCategory | null>;
+  saveExpenseCategory(category: ExpenseCategory): Promise<void>;
+  listExpenses(): Promise<Expense[]>;
+  getExpense(id: string): Promise<Expense | null>;
+  saveExpense(expense: Expense): Promise<void>;
+  deleteExpense(id: string): Promise<void>;
+  listRecurringExpenseTemplates(): Promise<RecurringExpenseTemplate[]>;
+  getRecurringExpenseTemplate(id: string): Promise<RecurringExpenseTemplate | null>;
+  saveRecurringExpenseTemplate(template: RecurringExpenseTemplate): Promise<void>;
+  deleteRecurringExpenseTemplate(id: string): Promise<void>;
+  listCapitalAssets(): Promise<CapitalAsset[]>;
+  getCapitalAsset(id: string): Promise<CapitalAsset | null>;
+  saveCapitalAsset(asset: CapitalAsset): Promise<void>;
+  deleteCapitalAsset(id: string): Promise<void>;
+  listWorkers(): Promise<Worker[]>;
+  getWorker(id: string): Promise<Worker | null>;
+  saveWorker(worker: Worker): Promise<void>;
+  deleteWorker(id: string): Promise<void>;
+  listPayrollPayments(): Promise<PayrollPayment[]>;
+  savePayrollPayment(payment: PayrollPayment): Promise<void>;
+  deletePayrollPayment(id: string): Promise<void>;
+  listManualRevenueEntries(): Promise<ManualRevenueEntry[]>;
+  saveManualRevenueEntry(entry: ManualRevenueEntry): Promise<void>;
+  deleteManualRevenueEntry(id: string): Promise<void>;
 };
 
 export type CommerceTransaction = <T>(operation: (repo: CommerceRepository) => Promise<T>) => Promise<T>;

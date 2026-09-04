@@ -2,15 +2,20 @@ import type { Role } from "@/lib/permissions/permissions";
 import type { CommerceRepository } from "@/lib/commerce/repository";
 import type {
   AuditLog,
+  CapitalAsset,
   Collection,
   Concern,
   ContentBlock,
   Customer,
   DeliveryRule,
+  Expense,
+  ExpenseCategory,
   InventoryMovement,
+  ManualRevenueEntry,
   MediaAsset,
   NotificationLog,
   Order,
+  PayrollPayment,
   Payment,
   PosShift,
   Product,
@@ -19,9 +24,11 @@ import type {
   Promotion,
   PushSubscription,
   RawMaterial,
+  RecurringExpenseTemplate,
   Routine,
   StaffUser,
-  StoreSettings
+  StoreSettings,
+  Worker
 } from "@/lib/commerce/types";
 
 export class MemoryCommerceRepository implements CommerceRepository {
@@ -47,6 +54,13 @@ export class MemoryCommerceRepository implements CommerceRepository {
   auditLogs = new Map<string, AuditLog>();
   pushSubscriptions = new Map<string, PushSubscription>();
   notificationLogs = new Map<string, NotificationLog>();
+  expenseCategories = new Map<string, ExpenseCategory>();
+  expenses = new Map<string, Expense>();
+  recurringExpenseTemplates = new Map<string, RecurringExpenseTemplate>();
+  capitalAssets = new Map<string, CapitalAsset>();
+  workers = new Map<string, Worker>();
+  payrollPayments = new Map<string, PayrollPayment>();
+  manualRevenueEntries = new Map<string, ManualRevenueEntry>();
 
   async listProducts() {
     return [...this.products.values()].sort((first, second) =>
@@ -313,6 +327,112 @@ export class MemoryCommerceRepository implements CommerceRepository {
     return [...this.notificationLogs.values()].sort(
       (first, second) => second.createdAt.getTime() - first.createdAt.getTime()
     );
+  }
+
+  async listExpenseCategories() {
+    return [...this.expenseCategories.values()].sort((first, second) => first.sortOrder - second.sortOrder);
+  }
+
+  async getExpenseCategory(id: string) {
+    return this.expenseCategories.get(id) ?? null;
+  }
+
+  async saveExpenseCategory(category: ExpenseCategory) {
+    this.expenseCategories.set(category.id, category);
+  }
+
+  async listExpenses() {
+    return [...this.expenses.values()].sort((first, second) => second.date.getTime() - first.date.getTime());
+  }
+
+  async getExpense(id: string) {
+    return this.expenses.get(id) ?? null;
+  }
+
+  async saveExpense(expense: Expense) {
+    this.expenses.set(expense.id, expense);
+  }
+
+  async deleteExpense(id: string) {
+    this.expenses.delete(id);
+  }
+
+  async listRecurringExpenseTemplates() {
+    return [...this.recurringExpenseTemplates.values()].sort((first, second) => first.label.localeCompare(second.label));
+  }
+
+  async getRecurringExpenseTemplate(id: string) {
+    return this.recurringExpenseTemplates.get(id) ?? null;
+  }
+
+  async saveRecurringExpenseTemplate(template: RecurringExpenseTemplate) {
+    this.recurringExpenseTemplates.set(template.id, template);
+  }
+
+  async deleteRecurringExpenseTemplate(id: string) {
+    this.recurringExpenseTemplates.delete(id);
+  }
+
+  async listCapitalAssets() {
+    return [...this.capitalAssets.values()].sort(
+      (first, second) => second.purchaseDate.getTime() - first.purchaseDate.getTime()
+    );
+  }
+
+  async getCapitalAsset(id: string) {
+    return this.capitalAssets.get(id) ?? null;
+  }
+
+  async saveCapitalAsset(asset: CapitalAsset) {
+    this.capitalAssets.set(asset.id, asset);
+  }
+
+  async deleteCapitalAsset(id: string) {
+    this.capitalAssets.delete(id);
+  }
+
+  async listWorkers() {
+    return [...this.workers.values()].sort((first, second) => first.name.localeCompare(second.name));
+  }
+
+  async getWorker(id: string) {
+    return this.workers.get(id) ?? null;
+  }
+
+  async saveWorker(worker: Worker) {
+    this.workers.set(worker.id, worker);
+  }
+
+  async deleteWorker(id: string) {
+    this.workers.delete(id);
+  }
+
+  async listPayrollPayments() {
+    return [...this.payrollPayments.values()].sort(
+      (first, second) => second.paidDate.getTime() - first.paidDate.getTime()
+    );
+  }
+
+  async savePayrollPayment(payment: PayrollPayment) {
+    this.payrollPayments.set(payment.id, payment);
+  }
+
+  async deletePayrollPayment(id: string) {
+    this.payrollPayments.delete(id);
+  }
+
+  async listManualRevenueEntries() {
+    return [...this.manualRevenueEntries.values()].sort(
+      (first, second) => second.date.getTime() - first.date.getTime()
+    );
+  }
+
+  async saveManualRevenueEntry(entry: ManualRevenueEntry) {
+    this.manualRevenueEntries.set(entry.id, entry);
+  }
+
+  async deleteManualRevenueEntry(id: string) {
+    this.manualRevenueEntries.delete(id);
   }
 }
 

@@ -15,6 +15,19 @@ import { createNoopTransaction } from "@/lib/commerce/repository";
 import {
   adjustInventoryInputSchema,
   completeSaleInputSchema,
+  createExpenseCategoryInputSchema,
+  updateExpenseCategoryInputSchema,
+  createExpenseInputSchema,
+  updateExpenseInputSchema,
+  createRecurringExpenseTemplateInputSchema,
+  updateRecurringExpenseTemplateInputSchema,
+  logRecurringExpenseInputSchema,
+  createCapitalAssetInputSchema,
+  updateCapitalAssetInputSchema,
+  createWorkerInputSchema,
+  updateWorkerInputSchema,
+  createPayrollPaymentInputSchema,
+  createManualRevenueEntryInputSchema,
   createConcernInputSchema,
   createCustomerInputSchema,
   createDeliveryRuleInputSchema,
@@ -64,18 +77,23 @@ import {
 } from "@/lib/commerce/schemas";
 import type {
   AuditLog,
+  CapitalAsset,
   Concern,
   ContentBlock,
   Customer,
   CustomerSnapshot,
   DeliveryRule,
+  Expense,
+  ExpenseCategory,
   InventoryMovement,
   InventoryMovementType,
+  ManualRevenueEntry,
   MediaAsset,
   NotificationLog,
   Order,
   OrderItem,
   FulfilmentStatus,
+  PayrollPayment,
   Payment,
   PaymentMethod,
   Product,
@@ -86,10 +104,12 @@ import type {
   PushSubscriptionPlatform,
   RawMaterial,
   RecipeItem,
+  RecurringExpenseTemplate,
   Routine,
   SalesChannel,
   StaffUser,
-  StoreSettings
+  StoreSettings,
+  Worker
 } from "@/lib/commerce/types";
 import { notifyAdminOfNewOrder, notifyOrderEvent, summarizeItems } from "@/lib/notifications/order-notifications";
 import { getAdminMessaging } from "@/lib/firebase/server";
@@ -1013,6 +1033,407 @@ async function uniqueMaterialId(context: CommerceContext, name: string) {
   }
 
   return candidate;
+}
+
+// ---- Accounting: expense categories, expenses, recurring templates ----
+
+export async function createExpenseCategory(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "expenses.manage");
+  const parsed = createExpenseCategoryInputSchema.parse(input);
+  const category: ExpenseCategory = { ...parsed, id: createSlugId("expense-category", parsed.slug) };
+
+  await context.repo.saveExpenseCategory(category);
+  await writeAuditLog(context, actor, {
+    action: "expenseCategories.create",
+    entityType: "expenseCategory",
+    entityId: category.id,
+    summary: `Created expense category ${category.title}`
+  });
+
+  return category;
+}
+
+export async function updateExpenseCategory(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "expenses.manage");
+  const parsed = updateExpenseCategoryInputSchema.parse(input);
+  const existing = await requiredEntity(await context.repo.listExpenseCategories(), parsed.id, "Expense category");
+  const category: ExpenseCategory = { ...existing, ...parsed, id: existing.id };
+
+  await context.repo.saveExpenseCategory(category);
+  await writeAuditLog(context, actor, {
+    action: "expenseCategories.update",
+    entityType: "expenseCategory",
+    entityId: category.id,
+    summary: `Updated expense category ${category.title}`
+  });
+
+  return category;
+}
+
+export async function createExpense(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "expenses.manage");
+  const parsed = createExpenseInputSchema.parse(input);
+  await requiredEntity(await context.repo.listExpenseCategories(), parsed.categoryId, "Expense category");
+
+  const expense: Expense = {
+    ...parsed,
+    id: createId(context, "expense"),
+    createdBy: actor.uid,
+    createdAt: getNow(context)
+  };
+
+  await context.repo.saveExpense(expense);
+  await writeAuditLog(context, actor, {
+    action: "expenses.create",
+    entityType: "expense",
+    entityId: expense.id,
+    summary: `Logged expense of ${expense.amount} minor units`
+  });
+
+  return expense;
+}
+
+export async function updateExpense(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "expenses.manage");
+  const parsed = updateExpenseInputSchema.parse(input);
+  const existing = await context.repo.getExpense(parsed.id);
+  if (!existing) {
+    throw new CommerceError("NOT_FOUND", "Expense not found.");
+  }
+
+  const expense: Expense = { ...existing, ...parsed, id: existing.id };
+  await context.repo.saveExpense(expense);
+  await writeAuditLog(context, actor, {
+    action: "expenses.update",
+    entityType: "expense",
+    entityId: expense.id,
+    summary: `Updated expense ${expense.id}`
+  });
+
+  return expense;
+}
+
+export async function deleteExpense(context: CommerceContext, actor: CommerceActor, expenseId: string) {
+  await assertCan(context, actor, "expenses.manage");
+  const existing = await context.repo.getExpense(expenseId);
+  if (!existing) {
+    throw new CommerceError("NOT_FOUND", "Expense not found.");
+  }
+
+  await context.repo.deleteExpense(expenseId);
+  await writeAuditLog(context, actor, {
+    action: "expenses.delete",
+    entityType: "expense",
+    entityId: expenseId,
+    summary: `Deleted expense ${expenseId}`
+  });
+}
+
+export async function createRecurringExpenseTemplate(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "expenses.manage");
+  const parsed = createRecurringExpenseTemplateInputSchema.parse(input);
+  await requiredEntity(await context.repo.listExpenseCategories(), parsed.categoryId, "Expense category");
+
+  const template: RecurringExpenseTemplate = {
+    ...parsed,
+    id: createId(context, "recurring-expense"),
+    lastLoggedPeriod: null,
+    createdAt: getNow(context)
+  };
+
+  await context.repo.saveRecurringExpenseTemplate(template);
+  await writeAuditLog(context, actor, {
+    action: "recurringExpenses.create",
+    entityType: "recurringExpenseTemplate",
+    entityId: template.id,
+    summary: `Added recurring expense ${template.label}`
+  });
+
+  return template;
+}
+
+export async function updateRecurringExpenseTemplate(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "expenses.manage");
+  const parsed = updateRecurringExpenseTemplateInputSchema.parse(input);
+  const existing = await context.repo.getRecurringExpenseTemplate(parsed.id);
+  if (!existing) {
+    throw new CommerceError("NOT_FOUND", "Recurring expense not found.");
+  }
+
+  const template: RecurringExpenseTemplate = { ...existing, ...parsed, id: existing.id };
+  await context.repo.saveRecurringExpenseTemplate(template);
+  await writeAuditLog(context, actor, {
+    action: "recurringExpenses.update",
+    entityType: "recurringExpenseTemplate",
+    entityId: template.id,
+    summary: `Updated recurring expense ${template.label}`
+  });
+
+  return template;
+}
+
+export async function deleteRecurringExpenseTemplate(context: CommerceContext, actor: CommerceActor, templateId: string) {
+  await assertCan(context, actor, "expenses.manage");
+  const existing = await context.repo.getRecurringExpenseTemplate(templateId);
+  if (!existing) {
+    throw new CommerceError("NOT_FOUND", "Recurring expense not found.");
+  }
+
+  await context.repo.deleteRecurringExpenseTemplate(templateId);
+  await writeAuditLog(context, actor, {
+    action: "recurringExpenses.delete",
+    entityType: "recurringExpenseTemplate",
+    entityId: templateId,
+    summary: `Deleted recurring expense ${existing.label}`
+  });
+}
+
+/**
+ * "Log as paid" for a recurring template — creates the real dated Expense
+ * for this period and stamps the template so the Expenses page knows it's
+ * covered. Deliberately period-based (not date-based) so logging it a few
+ * days early or late in the month doesn't create a duplicate.
+ */
+export async function logRecurringExpense(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "expenses.manage");
+  const parsed = logRecurringExpenseInputSchema.parse(input);
+  const template = await context.repo.getRecurringExpenseTemplate(parsed.templateId);
+  if (!template) {
+    throw new CommerceError("NOT_FOUND", "Recurring expense not found.");
+  }
+  if (template.lastLoggedPeriod === parsed.period) {
+    throw new CommerceError("INVALID_STATE", `${template.label} was already logged for ${parsed.period}.`);
+  }
+
+  const expense: Expense = {
+    id: createId(context, "expense"),
+    categoryId: template.categoryId,
+    amount: template.amount,
+    date: parsed.date,
+    note: template.label,
+    recurringTemplateId: template.id,
+    createdBy: actor.uid,
+    createdAt: getNow(context)
+  };
+
+  await context.repo.saveExpense(expense);
+  await context.repo.saveRecurringExpenseTemplate({ ...template, lastLoggedPeriod: parsed.period });
+  await writeAuditLog(context, actor, {
+    action: "expenses.create",
+    entityType: "expense",
+    entityId: expense.id,
+    summary: `Logged recurring expense ${template.label} for ${parsed.period}`
+  });
+
+  return expense;
+}
+
+// ---- Accounting: capital assets ----
+
+export async function createCapitalAsset(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "assets.manage");
+  const parsed = createCapitalAssetInputSchema.parse(input);
+  const asset: CapitalAsset = {
+    ...parsed,
+    id: createId(context, "asset"),
+    createdAt: getNow(context)
+  };
+
+  await context.repo.saveCapitalAsset(asset);
+  await writeAuditLog(context, actor, {
+    action: "assets.create",
+    entityType: "capitalAsset",
+    entityId: asset.id,
+    summary: `Added asset ${asset.name}`
+  });
+
+  return asset;
+}
+
+export async function updateCapitalAsset(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "assets.manage");
+  const parsed = updateCapitalAssetInputSchema.parse(input);
+  const existing = await context.repo.getCapitalAsset(parsed.id);
+  if (!existing) {
+    throw new CommerceError("NOT_FOUND", "Asset not found.");
+  }
+
+  const merged: CapitalAsset = { ...existing, ...parsed, id: existing.id };
+  if (!merged.trackDepreciation) {
+    merged.usefulLifeYears = null;
+  } else if (!merged.usefulLifeYears) {
+    throw new CommerceError("VALIDATION_ERROR", "Useful life (years) is required when depreciation tracking is on.");
+  }
+
+  await context.repo.saveCapitalAsset(merged);
+  await writeAuditLog(context, actor, {
+    action: "assets.update",
+    entityType: "capitalAsset",
+    entityId: merged.id,
+    summary: `Updated asset ${merged.name}`
+  });
+
+  return merged;
+}
+
+export async function deleteCapitalAsset(context: CommerceContext, actor: CommerceActor, assetId: string) {
+  await assertCan(context, actor, "assets.manage");
+  const existing = await context.repo.getCapitalAsset(assetId);
+  if (!existing) {
+    throw new CommerceError("NOT_FOUND", "Asset not found.");
+  }
+
+  await context.repo.deleteCapitalAsset(assetId);
+  await writeAuditLog(context, actor, {
+    action: "assets.delete",
+    entityType: "capitalAsset",
+    entityId: assetId,
+    summary: `Deleted asset ${existing.name}`
+  });
+}
+
+// ---- Accounting: workers (admin-only HR records — no login/auth attached) ----
+
+export async function createWorker(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "payroll.manage");
+  const parsed = createWorkerInputSchema.parse(input);
+  const worker: Worker = {
+    ...parsed,
+    id: createId(context, "worker"),
+    createdAt: getNow(context),
+    updatedAt: getNow(context)
+  };
+
+  await context.repo.saveWorker(worker);
+  await writeAuditLog(context, actor, {
+    action: "workers.create",
+    entityType: "worker",
+    entityId: worker.id,
+    summary: `Added worker ${worker.name}`
+  });
+
+  return worker;
+}
+
+export async function updateWorker(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "payroll.manage");
+  const parsed = updateWorkerInputSchema.parse(input);
+  const existing = await context.repo.getWorker(parsed.id);
+  if (!existing) {
+    throw new CommerceError("NOT_FOUND", "Worker not found.");
+  }
+
+  const worker: Worker = { ...existing, ...parsed, id: existing.id, updatedAt: getNow(context) };
+  await context.repo.saveWorker(worker);
+  await writeAuditLog(context, actor, {
+    action: "workers.update",
+    entityType: "worker",
+    entityId: worker.id,
+    summary: `Updated worker ${worker.name}`
+  });
+
+  return worker;
+}
+
+export async function deleteWorker(context: CommerceContext, actor: CommerceActor, workerId: string) {
+  await assertCan(context, actor, "payroll.manage");
+  const existing = await context.repo.getWorker(workerId);
+  if (!existing) {
+    throw new CommerceError("NOT_FOUND", "Worker not found.");
+  }
+
+  await context.repo.deleteWorker(workerId);
+  await writeAuditLog(context, actor, {
+    action: "workers.delete",
+    entityType: "worker",
+    entityId: workerId,
+    summary: `Deleted worker ${existing.name}`
+  });
+}
+
+/** One payment per worker per period — re-paying the same period overwrites (a correction), rather than stacking a duplicate. */
+export async function createPayrollPayment(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "payroll.manage");
+  const parsed = createPayrollPaymentInputSchema.parse(input);
+  const worker = await context.repo.getWorker(parsed.workerId);
+  if (!worker) {
+    throw new CommerceError("NOT_FOUND", "Worker not found.");
+  }
+
+  const existing = (await context.repo.listPayrollPayments()).find(
+    (payment) => payment.workerId === parsed.workerId && payment.period === parsed.period
+  );
+
+  const deductionTotal = parsed.deductions.reduce((total, deduction) => total + deduction.amount, 0);
+  const netAmount = Math.max(0, parsed.grossAmount - deductionTotal);
+
+  const payment: PayrollPayment = {
+    id: existing?.id ?? createId(context, "payroll"),
+    workerId: parsed.workerId,
+    period: parsed.period,
+    grossAmount: parsed.grossAmount,
+    deductions: parsed.deductions,
+    netAmount,
+    paidDate: parsed.paidDate,
+    note: parsed.note,
+    createdBy: actor.uid,
+    createdAt: existing?.createdAt ?? getNow(context)
+  };
+
+  await context.repo.savePayrollPayment(payment);
+  await writeAuditLog(context, actor, {
+    action: "payroll.pay",
+    entityType: "payrollPayment",
+    entityId: payment.id,
+    summary: `${existing ? "Corrected" : "Paid"} ${worker.name} for ${parsed.period}`
+  });
+
+  return payment;
+}
+
+export async function deletePayrollPayment(context: CommerceContext, actor: CommerceActor, paymentId: string) {
+  await assertCan(context, actor, "payroll.manage");
+  await context.repo.deletePayrollPayment(paymentId);
+  await writeAuditLog(context, actor, {
+    action: "payroll.delete",
+    entityType: "payrollPayment",
+    entityId: paymentId,
+    summary: `Deleted payroll payment ${paymentId}`
+  });
+}
+
+// ---- Accounting: manual revenue (income outside POS/online orders) ----
+
+export async function createManualRevenueEntry(context: CommerceContext, actor: CommerceActor, input: unknown) {
+  await assertCan(context, actor, "revenue.manage");
+  const parsed = createManualRevenueEntryInputSchema.parse(input);
+  const entry: ManualRevenueEntry = {
+    ...parsed,
+    id: createId(context, "revenue"),
+    createdBy: actor.uid,
+    createdAt: getNow(context)
+  };
+
+  await context.repo.saveManualRevenueEntry(entry);
+  await writeAuditLog(context, actor, {
+    action: "revenue.create",
+    entityType: "manualRevenueEntry",
+    entityId: entry.id,
+    summary: `Logged other income: ${entry.label}`
+  });
+
+  return entry;
+}
+
+export async function deleteManualRevenueEntry(context: CommerceContext, actor: CommerceActor, entryId: string) {
+  await assertCan(context, actor, "revenue.manage");
+  await context.repo.deleteManualRevenueEntry(entryId);
+  await writeAuditLog(context, actor, {
+    action: "revenue.delete",
+    entityType: "manualRevenueEntry",
+    entityId: entryId,
+    summary: `Deleted revenue entry ${entryId}`
+  });
 }
 
 export async function updateStoreSettings(

@@ -3,15 +3,20 @@ import type { Role } from "@/lib/permissions/permissions";
 import type { CommerceRepository } from "@/lib/commerce/repository";
 import type {
   AuditLog,
+  CapitalAsset,
   Collection,
   Concern,
   ContentBlock,
   Customer,
   DeliveryRule,
+  Expense,
+  ExpenseCategory,
   InventoryMovement,
+  ManualRevenueEntry,
   MediaAsset,
   NotificationLog,
   Order,
+  PayrollPayment,
   Payment,
   PosShift,
   Product,
@@ -20,9 +25,11 @@ import type {
   Promotion,
   PushSubscription,
   RawMaterial,
+  RecurringExpenseTemplate,
   Routine,
   StaffUser,
-  StoreSettings
+  StoreSettings,
+  Worker
 } from "@/lib/commerce/types";
 
 export class FirestoreCommerceRepository implements CommerceRepository {
@@ -454,6 +461,152 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     this.rejectIfTransactional("listNotificationLogs");
     const snapshot = await this.db.collection("notificationLogs").orderBy("createdAt", "desc").limit(100).get();
     return snapshot.docs.map((doc) => readDoc<NotificationLog>(doc)).filter(isDefined);
+  }
+
+  async listExpenseCategories() {
+    this.rejectIfTransactional("listExpenseCategories");
+    const snapshot = await this.db.collection("expenseCategories").orderBy("sortOrder").get();
+    return snapshot.docs.map((doc) => readDoc<ExpenseCategory>(doc)).filter(isDefined);
+  }
+
+  async getExpenseCategory(id: string) {
+    this.rejectIfTransactional("getExpenseCategory");
+    return readDoc<ExpenseCategory>(await this.db.collection("expenseCategories").doc(id).get());
+  }
+
+  async saveExpenseCategory(category: ExpenseCategory) {
+    this.rejectIfTransactional("saveExpenseCategory");
+    await this.db.collection("expenseCategories").doc(category.id).set(cleanFirestoreData(category), {
+      merge: true
+    });
+  }
+
+  async listExpenses() {
+    this.rejectIfTransactional("listExpenses");
+    const snapshot = await this.db.collection("expenses").orderBy("date", "desc").get();
+    return snapshot.docs.map((doc) => readDoc<Expense>(doc)).filter(isDefined);
+  }
+
+  async getExpense(id: string) {
+    this.rejectIfTransactional("getExpense");
+    return readDoc<Expense>(await this.db.collection("expenses").doc(id).get());
+  }
+
+  async saveExpense(expense: Expense) {
+    this.rejectIfTransactional("saveExpense");
+    await this.db.collection("expenses").doc(expense.id).set(cleanFirestoreData(expense), {
+      merge: true
+    });
+  }
+
+  async deleteExpense(id: string) {
+    this.rejectIfTransactional("deleteExpense");
+    await this.db.collection("expenses").doc(id).delete();
+  }
+
+  async listRecurringExpenseTemplates() {
+    this.rejectIfTransactional("listRecurringExpenseTemplates");
+    const snapshot = await this.db.collection("recurringExpenseTemplates").orderBy("label").get();
+    return snapshot.docs.map((doc) => readDoc<RecurringExpenseTemplate>(doc)).filter(isDefined);
+  }
+
+  async getRecurringExpenseTemplate(id: string) {
+    this.rejectIfTransactional("getRecurringExpenseTemplate");
+    return readDoc<RecurringExpenseTemplate>(await this.db.collection("recurringExpenseTemplates").doc(id).get());
+  }
+
+  async saveRecurringExpenseTemplate(template: RecurringExpenseTemplate) {
+    this.rejectIfTransactional("saveRecurringExpenseTemplate");
+    await this.db.collection("recurringExpenseTemplates").doc(template.id).set(cleanFirestoreData(template), {
+      merge: true
+    });
+  }
+
+  async deleteRecurringExpenseTemplate(id: string) {
+    this.rejectIfTransactional("deleteRecurringExpenseTemplate");
+    await this.db.collection("recurringExpenseTemplates").doc(id).delete();
+  }
+
+  async listCapitalAssets() {
+    this.rejectIfTransactional("listCapitalAssets");
+    const snapshot = await this.db.collection("capitalAssets").orderBy("purchaseDate", "desc").get();
+    return snapshot.docs.map((doc) => readDoc<CapitalAsset>(doc)).filter(isDefined);
+  }
+
+  async getCapitalAsset(id: string) {
+    this.rejectIfTransactional("getCapitalAsset");
+    return readDoc<CapitalAsset>(await this.db.collection("capitalAssets").doc(id).get());
+  }
+
+  async saveCapitalAsset(asset: CapitalAsset) {
+    this.rejectIfTransactional("saveCapitalAsset");
+    await this.db.collection("capitalAssets").doc(asset.id).set(cleanFirestoreData(asset), {
+      merge: true
+    });
+  }
+
+  async deleteCapitalAsset(id: string) {
+    this.rejectIfTransactional("deleteCapitalAsset");
+    await this.db.collection("capitalAssets").doc(id).delete();
+  }
+
+  async listWorkers() {
+    this.rejectIfTransactional("listWorkers");
+    const snapshot = await this.db.collection("workers").orderBy("name").get();
+    return snapshot.docs.map((doc) => readDoc<Worker>(doc)).filter(isDefined);
+  }
+
+  async getWorker(id: string) {
+    this.rejectIfTransactional("getWorker");
+    return readDoc<Worker>(await this.db.collection("workers").doc(id).get());
+  }
+
+  async saveWorker(worker: Worker) {
+    this.rejectIfTransactional("saveWorker");
+    await this.db.collection("workers").doc(worker.id).set(cleanFirestoreData(worker), {
+      merge: true
+    });
+  }
+
+  async deleteWorker(id: string) {
+    this.rejectIfTransactional("deleteWorker");
+    await this.db.collection("workers").doc(id).delete();
+  }
+
+  async listPayrollPayments() {
+    this.rejectIfTransactional("listPayrollPayments");
+    const snapshot = await this.db.collection("payrollPayments").orderBy("paidDate", "desc").get();
+    return snapshot.docs.map((doc) => readDoc<PayrollPayment>(doc)).filter(isDefined);
+  }
+
+  async savePayrollPayment(payment: PayrollPayment) {
+    this.rejectIfTransactional("savePayrollPayment");
+    await this.db.collection("payrollPayments").doc(payment.id).set(cleanFirestoreData(payment), {
+      merge: true
+    });
+  }
+
+  async deletePayrollPayment(id: string) {
+    this.rejectIfTransactional("deletePayrollPayment");
+    await this.db.collection("payrollPayments").doc(id).delete();
+  }
+
+  async listManualRevenueEntries() {
+    this.rejectIfTransactional("listManualRevenueEntries");
+    const snapshot = await this.db.collection("manualRevenueEntries").orderBy("date", "desc").get();
+    return snapshot.docs.map((doc) => readDoc<ManualRevenueEntry>(doc)).filter(isDefined);
+  }
+
+  async saveManualRevenueEntry(entry: ManualRevenueEntry) {
+    this.rejectIfTransactional("saveManualRevenueEntry");
+    await this.db.collection("manualRevenueEntries").doc(entry.id).set(cleanFirestoreData(entry), {
+      merge: true
+    });
+  }
+
+  async deleteManualRevenueEntry(id: string) {
+    this.rejectIfTransactional("deleteManualRevenueEntry");
+    await this.db.collection("manualRevenueEntries").doc(id).delete();
   }
 
   private variantCollection(productId: string) {

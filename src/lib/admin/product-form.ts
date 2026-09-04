@@ -86,6 +86,21 @@ export function formMoneyMinorUnit(formData: FormData, key: string) {
   return Math.round(Number(normalized) * 100);
 }
 
+/** Parses an <input type="date"> value ("YYYY-MM-DD") into a real Date, defaulting to today when left blank. */
+export function formDate(formData: FormData, key: string) {
+  const value = formString(formData, key);
+  if (!value) {
+    return new Date();
+  }
+
+  const parsed = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error(`${key} must be a valid date.`);
+  }
+
+  return parsed;
+}
+
 export function formProductStatus(formData: FormData, key: string): ProductStatus {
   const value = formString(formData, key);
   if (value === "ACTIVE" || value === "DRAFT" || value === "ARCHIVED") {

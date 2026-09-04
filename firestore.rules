@@ -133,6 +133,45 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /expenseCategories/{categoryId} {
+      allow read: if isStaff();
+      allow create, update, delete: if false;
+    }
+
+    match /expenses/{expenseId} {
+      allow read: if isStaff();
+      allow create, update, delete: if false;
+    }
+
+    match /recurringExpenseTemplates/{templateId} {
+      allow read: if isStaff();
+      allow create, update, delete: if false;
+    }
+
+    match /capitalAssets/{assetId} {
+      allow read: if isStaff();
+      allow create, update, delete: if false;
+    }
+
+    match /manualRevenueEntries/{entryId} {
+      allow read: if isStaff();
+      allow create, update, delete: if false;
+    }
+
+    // Workers and payroll carry national ID, bank/MoMo, and salary details —
+    // restricted to isAdmin() (the Owner), stricter than the isStaff() used
+    // elsewhere. All writes happen server-side via the Admin SDK regardless;
+    // this only gates direct client reads.
+    match /workers/{workerId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    match /payrollPayments/{paymentId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

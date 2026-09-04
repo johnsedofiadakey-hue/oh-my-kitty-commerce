@@ -399,3 +399,157 @@ export type CreateMediaAssetInput = z.input<typeof createMediaAssetInputSchema>;
 export type AttachProductImageInput = z.input<typeof attachProductImageInputSchema>;
 export type ParsedCreateOrderDraftInput = z.output<typeof createOrderDraftInputSchema>;
 export type ParsedCompleteSaleInput = z.output<typeof completeSaleInputSchema>;
+
+// ---- Accounting ----
+
+const expenseCategoryFieldsSchema = z.object({
+  title: z.string().min(2),
+  slug: slugSchema,
+  sortOrder: z.number().int().min(0),
+  active: z.boolean()
+});
+
+export const createExpenseCategoryInputSchema = expenseCategoryFieldsSchema.extend({
+  sortOrder: z.number().int().min(0).default(0),
+  active: z.boolean().default(true)
+});
+
+export const updateExpenseCategoryInputSchema = expenseCategoryFieldsSchema.partial().extend({
+  id: z.string().min(1)
+});
+
+const expenseFieldsSchema = z.object({
+  categoryId: z.string().min(1),
+  amount: moneySchema.refine((value) => value > 0, "Amount must be greater than zero."),
+  date: z.date(),
+  note: z.string().optional(),
+  receiptMediaId: z.string().nullable().optional(),
+  recurringTemplateId: z.string().nullable().optional()
+});
+
+export const createExpenseInputSchema = expenseFieldsSchema;
+
+export const updateExpenseInputSchema = expenseFieldsSchema.partial().extend({
+  id: z.string().min(1)
+});
+
+const recurringExpenseTemplateFieldsSchema = z.object({
+  categoryId: z.string().min(1),
+  label: z.string().min(2),
+  amount: moneySchema.refine((value) => value > 0, "Amount must be greater than zero."),
+  dayOfMonth: z.number().int().min(1).max(28),
+  active: z.boolean()
+});
+
+export const createRecurringExpenseTemplateInputSchema = recurringExpenseTemplateFieldsSchema.extend({
+  active: z.boolean().default(true)
+});
+
+export const updateRecurringExpenseTemplateInputSchema = recurringExpenseTemplateFieldsSchema.partial().extend({
+  id: z.string().min(1)
+});
+
+export const logRecurringExpenseInputSchema = z.object({
+  templateId: z.string().min(1),
+  date: z.date(),
+  period: z.string().regex(/^\d{4}-\d{2}$/)
+});
+
+const capitalAssetFieldsSchema = z
+  .object({
+    name: z.string().min(2),
+    category: z.enum(["EQUIPMENT", "FURNITURE", "MACHINE", "PROPERTY", "OTHER"]),
+    purchaseDate: z.date(),
+    purchaseCost: moneySchema.refine((value) => value > 0, "Purchase cost must be greater than zero."),
+    location: z.string().optional(),
+    notes: z.string().optional(),
+    trackDepreciation: z.boolean(),
+    usefulLifeYears: z.number().int().min(1).max(50).nullable().optional()
+  })
+  .refine((value) => !value.trackDepreciation || Boolean(value.usefulLifeYears), {
+    message: "Useful life (years) is required when depreciation tracking is on.",
+    path: ["usefulLifeYears"]
+  });
+
+export const createCapitalAssetInputSchema = capitalAssetFieldsSchema;
+
+const capitalAssetUpdateShape = z.object({
+  id: z.string().min(1),
+  name: z.string().min(2).optional(),
+  category: z.enum(["EQUIPMENT", "FURNITURE", "MACHINE", "PROPERTY", "OTHER"]).optional(),
+  purchaseDate: z.date().optional(),
+  purchaseCost: moneySchema.optional(),
+  location: z.string().optional(),
+  notes: z.string().optional(),
+  trackDepreciation: z.boolean().optional(),
+  usefulLifeYears: z.number().int().min(1).max(50).nullable().optional()
+});
+
+export const updateCapitalAssetInputSchema = capitalAssetUpdateShape;
+
+const workerFieldsSchema = z.object({
+  name: z.string().min(2),
+  role: z.string().optional(),
+  status: z.enum(["ACTIVE", "INACTIVE"]),
+  monthlySalary: moneySchema,
+  startDate: z.date().nullable().optional(),
+  phone: z.string().optional(),
+  ghanaCardNumber: z.string().optional(),
+  bankName: z.string().optional(),
+  bankAccountNumber: z.string().optional(),
+  momoNumber: z.string().optional(),
+  momoNetwork: z.string().optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().optional(),
+  nextOfKinName: z.string().optional(),
+  nextOfKinRelationship: z.string().optional(),
+  nextOfKinPhone: z.string().optional(),
+  parentGuardianName: z.string().optional(),
+  siblingsInfo: z.string().optional(),
+  notes: z.string().optional()
+});
+
+export const createWorkerInputSchema = workerFieldsSchema.extend({
+  status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE")
+});
+
+export const updateWorkerInputSchema = workerFieldsSchema.partial().extend({
+  id: z.string().min(1)
+});
+
+export const payrollDeductionSchema = z.object({
+  label: z.string().min(1),
+  amount: moneySchema
+});
+
+export const createPayrollPaymentInputSchema = z.object({
+  workerId: z.string().min(1),
+  period: z.string().regex(/^\d{4}-\d{2}$/),
+  grossAmount: moneySchema.refine((value) => value > 0, "Gross amount must be greater than zero."),
+  deductions: z.array(payrollDeductionSchema).default([]),
+  paidDate: z.date(),
+  note: z.string().optional()
+});
+
+const manualRevenueEntryFieldsSchema = z.object({
+  label: z.string().min(2),
+  amount: moneySchema.refine((value) => value > 0, "Amount must be greater than zero."),
+  date: z.date(),
+  note: z.string().optional()
+});
+
+export const createManualRevenueEntryInputSchema = manualRevenueEntryFieldsSchema;
+
+export type CreateExpenseCategoryInput = z.input<typeof createExpenseCategoryInputSchema>;
+export type UpdateExpenseCategoryInput = z.input<typeof updateExpenseCategoryInputSchema>;
+export type CreateExpenseInput = z.input<typeof createExpenseInputSchema>;
+export type UpdateExpenseInput = z.input<typeof updateExpenseInputSchema>;
+export type CreateRecurringExpenseTemplateInput = z.input<typeof createRecurringExpenseTemplateInputSchema>;
+export type UpdateRecurringExpenseTemplateInput = z.input<typeof updateRecurringExpenseTemplateInputSchema>;
+export type LogRecurringExpenseInput = z.input<typeof logRecurringExpenseInputSchema>;
+export type CreateCapitalAssetInput = z.input<typeof createCapitalAssetInputSchema>;
+export type UpdateCapitalAssetInput = z.input<typeof updateCapitalAssetInputSchema>;
+export type CreateWorkerInput = z.input<typeof createWorkerInputSchema>;
+export type UpdateWorkerInput = z.input<typeof updateWorkerInputSchema>;
+export type CreatePayrollPaymentInput = z.input<typeof createPayrollPaymentInputSchema>;
+export type CreateManualRevenueEntryInput = z.input<typeof createManualRevenueEntryInputSchema>;
