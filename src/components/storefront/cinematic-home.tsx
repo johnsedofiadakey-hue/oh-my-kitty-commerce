@@ -9,6 +9,7 @@ import { openCart } from "@/lib/storefront/cart-store";
 import { CartCount } from "@/components/storefront/cart-count";
 import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
+import { WhatsAppCta } from "@/components/storefront/whatsapp-cta";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 import { toWhatsAppLink } from "@/lib/storefront/whatsapp";
 
@@ -441,14 +442,12 @@ export function CinematicHome({ products, consultWhatsappNumber, sourceMessage }
                 <span>Shop now</span>
                 <i aria-hidden="true" />
               </Link>
-              <a
+              <WhatsAppCta
                 className="portal-cta-secondary"
                 href={toWhatsAppLink(consultWhatsappNumber, CONSULT_MESSAGE)}
-                rel="noreferrer"
-                target="_blank"
-              >
-                Get guidance
-              </a>
+                label="Get guidance"
+                phoneDisplay={consultWhatsappNumber}
+              />
             </div>
           </div>
 
