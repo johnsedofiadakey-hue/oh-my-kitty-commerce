@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AdminNav, type AdminNavGroup } from "@/components/admin/admin-nav";
 import { AdminHelpWidget } from "@/components/admin/admin-help-widget";
 import { RegisterPushNotifications } from "@/components/admin/register-push-notifications";
+import { IosInstallBanner } from "@/components/admin/ios-install-banner";
 import type { AdminIconName } from "@/components/admin/admin-icons";
 import { getAdminOperationsData } from "@/lib/admin/operations-data";
 import { getRequiredAdminActor } from "@/lib/auth/server";
@@ -11,8 +12,24 @@ import { getEffectiveRoles, type CommerceActor } from "@/lib/commerce/operations
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { registerPushSubscriptionAction } from "./notifications/actions";
 
+// A dedicated manifest (start_url/scope "/admin") rather than the site-wide
+// one at "/manifest.json" — installing from here should put a distinct
+// "OMK Admin" icon on the home screen that opens straight into /admin, not
+// the storefront. appleWebApp is what actually makes "Add to Home Screen"
+// install as a standalone app on iOS instead of a plain bookmark — iOS only
+// grants the Push API (real-time notifications) inside that standalone
+// context, not in an ordinary Safari tab.
 export const metadata: Metadata = {
-  robots: { index: false, follow: false }
+  robots: { index: false, follow: false },
+  manifest: "/admin-manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "OMK Admin"
+  },
+  icons: {
+    apple: "/icons/apple-touch-icon.png"
+  }
 };
 
 type NavConfigItem = {
@@ -190,6 +207,7 @@ export default async function AdminLayout({
         {children}
       </main>
       <AdminHelpWidget />
+      <IosInstallBanner />
       <RegisterPushNotifications registerAction={registerPushSubscriptionAction} />
     </div>
   );
