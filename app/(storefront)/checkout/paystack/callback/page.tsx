@@ -7,6 +7,8 @@ import { confirmPaystackPayment } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { verifyPaystackTransaction } from "@/lib/payments/paystack";
 import { formatMoney } from "@/lib/commerce/format";
+import { getContentValue } from "@/lib/storefront/content";
+import { buildContactCardDataUrl } from "@/lib/storefront/vcard";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +25,7 @@ export default async function PaystackCallbackPage({ searchParams }: PageProps) 
   const params = await searchParams;
   const reference = params.reference ?? params.trxref;
 
-  const result = await resolvePayment(reference);
+  const [result, whatsappNumber] = await Promise.all([resolvePayment(reference), getContentValue("whatsapp-number")]);
 
   return (
     <main className="cart-page">
@@ -57,6 +59,13 @@ export default async function PaystackCallbackPage({ searchParams }: PageProps) 
             <h1>{result.orderNumber}</h1>
             <p>Total: {formatMoney(result.total)}</p>
             <p>Your payment was verified with Paystack and your order is confirmed.</p>
+            <a
+              className="text-button"
+              download="oh-my-kitty.vcf"
+              href={buildContactCardDataUrl("Oh My Kitty", whatsappNumber)}
+            >
+              Save our contact for order updates
+            </a>
           </>
         ) : (
           <>

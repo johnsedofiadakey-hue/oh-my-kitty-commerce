@@ -198,7 +198,9 @@ export type Customer = {
   name?: string;
   email?: string | null;
   phone?: string | null;
-  createdFrom: SalesChannel;
+  // Not always a sale — a guidance-form submission is a real contact worth
+  // keeping even if it never becomes an order.
+  createdFrom: SalesChannel | "GUIDANCE_REQUEST";
 };
 
 export type OrderItem = {

@@ -2443,6 +2443,12 @@ export async function createGuidanceRequest(context: CommerceContext, input: unk
   const parsed = createGuidanceRequestInputSchema.parse(input);
   const actor = systemActor("storefront-guidance-request");
 
+  // Same reasoning as an order's customer snapshot: whoever asks a question
+  // is a real contact worth keeping, whether or not they ever buy anything.
+  // Must run before saving the log — listCustomers/saveCustomer can't run
+  // inside a transaction, and this function doesn't open one anyway.
+  await resolveCustomerId(context, "GUIDANCE_REQUEST", { phone: parsed.contactNumber });
+
   const log: NotificationLog = {
     id: createId(context, "notif"),
     type: "NEW_GUIDANCE_REQUEST",
@@ -2701,7 +2707,7 @@ async function completeSale(
  */
 async function resolveCustomerId(
   context: CommerceContext,
-  channel: SalesChannel,
+  channel: SalesChannel | "GUIDANCE_REQUEST",
   snapshot: CustomerSnapshot | null | undefined
 ): Promise<string | null> {
   const phone = snapshot?.phone?.trim() || null;

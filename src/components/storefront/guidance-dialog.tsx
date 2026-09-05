@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { WhatsAppCta } from "@/components/storefront/whatsapp-cta";
+import { buildContactCardDataUrl } from "@/lib/storefront/vcard";
 
 type Status = "idle" | "submitting" | "sent" | "error";
 
@@ -104,6 +105,13 @@ export function GuidanceDialog({
             <button className="portal-cta" onClick={close} type="button">
               <span>Done</span>
             </button>
+            <a
+              className="text-button"
+              download="oh-my-kitty.vcf"
+              href={buildContactCardDataUrl("Oh My Kitty", whatsappNumber)}
+            >
+              Save our contact so you don&apos;t miss our reply
+            </a>
           </div>
         ) : (
           <form className="guidance-form" onSubmit={(event) => void handleSubmit(event)}>

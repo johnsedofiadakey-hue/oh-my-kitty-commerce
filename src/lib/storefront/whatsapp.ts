@@ -1,5 +1,5 @@
 /** `0241448231` -> `233241448231`, the format wa.me/whatsapp:// links require. */
-function toInternationalNumber(localNumber: string) {
+export function toInternationalNumber(localNumber: string) {
   const digits = localNumber.replace(/\D/g, "");
   return digits.startsWith("0") ? `233${digits.slice(1)}` : digits;
 }
