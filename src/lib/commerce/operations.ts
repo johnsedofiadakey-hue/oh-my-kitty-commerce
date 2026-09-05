@@ -113,6 +113,7 @@ import type {
   Worker
 } from "@/lib/commerce/types";
 import { notifyAdminOfNewOrder, notifyOrderEvent, summarizeItems } from "@/lib/notifications/order-notifications";
+import { buildGuidanceReplyPrefill, toWhatsAppLink } from "@/lib/storefront/whatsapp";
 import { getAdminMessaging } from "@/lib/firebase/server";
 import type { BatchResponse } from "firebase-admin/messaging";
 
@@ -2481,17 +2482,24 @@ export async function sendNewOrderPush(context: CommerceContext, order: Order): 
 
 /**
  * Same push alert as sendNewOrderPush, for a guidance request instead of an
- * order. Never throws — a failed push should not break the customer's
- * on-site submission, which has already been saved by this point.
+ * order. Tapping the notification goes straight to WhatsApp — with the
+ * customer's own message pre-filled as a reply prompt — rather than to the
+ * admin Notifications page, so replying never needs that extra stop.
+ * Never throws — a failed push should not break the customer's on-site
+ * submission, which has already been saved by this point.
  */
 export async function sendNewGuidanceRequestPush(context: CommerceContext, log: NotificationLog): Promise<void> {
-  await pushNotificationLogToStaff(context, log);
+  const clickUrl = log.contactNumber
+    ? toWhatsAppLink(log.contactNumber, buildGuidanceReplyPrefill(log.body))
+    : undefined;
+  await pushNotificationLogToStaff(context, log, {}, clickUrl);
 }
 
 async function pushNotificationLogToStaff(
   context: CommerceContext,
   log: NotificationLog,
-  extraData: Record<string, string> = {}
+  extraData: Record<string, string> = {},
+  clickUrl = "/admin/notifications"
 ): Promise<void> {
   try {
     const [staff, subscriptions] = await Promise.all([
@@ -2519,8 +2527,8 @@ async function pushNotificationLogToStaff(
     const response = await messaging.sendEachForMulticast({
       tokens,
       notification: { title: log.title, body: log.body },
-      data: { url: "/admin/notifications", notificationId: log.id, ...extraData },
-      webpush: { fcmOptions: { link: "/admin/notifications" } }
+      data: { url: clickUrl, notificationId: log.id, ...extraData },
+      webpush: { fcmOptions: { link: clickUrl } }
     });
 
     await pruneDeadTokens(context, tokens, response);

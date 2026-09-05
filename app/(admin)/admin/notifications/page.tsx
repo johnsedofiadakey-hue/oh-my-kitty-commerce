@@ -3,23 +3,16 @@ import { getAdminOperationsData } from "@/lib/admin/operations-data";
 import { formatDate } from "@/lib/admin/sample-admin-data";
 import { requireAdminPermission } from "@/lib/auth/server";
 import { AcknowledgeNotificationButton } from "@/components/admin/acknowledge-notification-button";
-import { toWhatsAppLink } from "@/lib/storefront/whatsapp";
+import { buildGuidanceReplyPrefill, toWhatsAppLink } from "@/lib/storefront/whatsapp";
 import type { NotificationLog } from "@/lib/commerce/types";
 import { acknowledgeNotificationAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-// Quotes the customer's own message back at the top of the reply box, with
-// the cursor landing right after it — staff tap, see exactly what was asked,
-// and just type the answer, rather than reopening this page to remember it.
-function buildReplyPrefill(customerMessage: string) {
-  return `Hi! Following up on your message:\n"${customerMessage}"\n\n`;
-}
-
 function NotificationSource({ log }: { log: NotificationLog }) {
   if (log.entityType === "guidanceRequest" && log.contactNumber) {
     return (
-      <a href={toWhatsAppLink(log.contactNumber, buildReplyPrefill(log.body))} rel="noreferrer" target="_blank">
+      <a href={toWhatsAppLink(log.contactNumber, buildGuidanceReplyPrefill(log.body))} rel="noreferrer" target="_blank">
         {log.contactNumber}
       </a>
     );

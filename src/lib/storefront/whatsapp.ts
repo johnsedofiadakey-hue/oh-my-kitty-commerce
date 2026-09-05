@@ -29,3 +29,13 @@ export function toAndroidWhatsAppEscapeLink(localNumber: string, message?: strin
   const fallback = encodeURIComponent(toWhatsAppLink(localNumber, message));
   return `intent://send?phone=${toInternationalNumber(localNumber)}${query}#Intent;scheme=whatsapp;package=com.whatsapp;S.browser_fallback_url=${fallback};end;`;
 }
+
+/**
+ * Quotes a customer's own guidance-request message back at the top of the
+ * reply, with the cursor landing on the blank line after it — whoever taps
+ * the resulting wa.me link sees exactly what was asked without reopening
+ * the admin Notifications page to remember it, and just types the answer.
+ */
+export function buildGuidanceReplyPrefill(customerMessage: string) {
+  return `Hi! Following up on your message:\n"${customerMessage}"\n\n`;
+}
