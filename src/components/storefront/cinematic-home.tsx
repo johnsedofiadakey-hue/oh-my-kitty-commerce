@@ -9,8 +9,15 @@ import { openCart } from "@/lib/storefront/cart-store";
 import { CartCount } from "@/components/storefront/cart-count";
 import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
-import { GuidanceDialog } from "@/components/storefront/guidance-dialog";
+import { WhatsAppCta } from "@/components/storefront/whatsapp-cta";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
+
+// Client preference, 2026-09-05: reverted from the on-site GuidanceDialog
+// back to a direct WhatsApp link, at the business owner's request — despite
+// this being the exact flow that silently fails inside TikTok's in-app
+// browser (see WhatsAppCta's own notes). GuidanceDialog is intentionally
+// left fully intact and unused rather than removed: swap the import back
+// below if she changes her mind, no need to rebuild it.
 
 type CinematicHomeProps = {
   products: StorefrontProductView[];
@@ -441,11 +448,11 @@ export function CinematicHome({ products, consultWhatsappNumber, sourceMessage }
                 <span>Shop now</span>
                 <i aria-hidden="true" />
               </Link>
-              <GuidanceDialog
-                triggerClassName="portal-cta-secondary"
-                triggerLabel="Get guidance"
-                whatsappMessage={CONSULT_MESSAGE}
-                whatsappNumber={consultWhatsappNumber}
+              <WhatsAppCta
+                className="portal-cta-secondary"
+                label="Get guidance"
+                message={CONSULT_MESSAGE}
+                phoneNumber={consultWhatsappNumber}
               />
             </div>
           </div>
