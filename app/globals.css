@@ -7220,14 +7220,18 @@ a.pos-secondary-button {
   box-shadow: 0 12px 32px rgb(17 17 17 / 10%);
   color: var(--color-near-black);
   font-family: "Courier New", ui-monospace, monospace;
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   font-weight: 700;
   line-height: 1.55;
-  /* font-weight alone tops out at whatever "bold" face Courier New
-     actually ships (font-weight: 900 often just reuses the same 700 face)
-     — a text stroke thickens every glyph on top of that, which is what
-     actually reads as "deeper/blacker" on a low-resolution receipt printer. */
-  -webkit-text-stroke: 0.35px currentColor;
+  /* A real 80mm thermal print head is 1-bit — it can only place a dot or
+     leave it blank, unlike the statement page's normal printer/PDF output
+     which has true grayscale to smooth an edge with. The text-stroke trick
+     that deepened the statement page instead reads as a soft antialiased
+     outline on screen, and a thermal head can only reproduce "soft" as a
+     dither pattern of dots — which is the speckled look this was meant to
+     fix, not help. Skip the stroke here; lean on a bigger, already-bold
+     glyph (thicker strokes in absolute mm at this fixed paper width) so the
+     print head can lay down solid black instead of dithering an edge. */
   /* Thermal/inkjet printers routinely lighten colors to save ink unless
      told not to — without this, text set to solid black on screen can
      still come out gray on paper. */
