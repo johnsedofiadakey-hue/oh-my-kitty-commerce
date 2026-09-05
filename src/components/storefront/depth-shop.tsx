@@ -7,13 +7,12 @@ import {
   addLineToCart,
   type CartLine
 } from "@/components/storefront/add-to-bag-button";
-import Link from "next/link";
-import type { Route } from "next";
 import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 import { celebrateBurst } from "@/lib/storefront/celebrate";
 import { openCart } from "@/lib/storefront/cart-store";
+import { ShowcaseCard } from "@/components/storefront/showcase-card";
 import { usePhotoBackdrop } from "@/lib/storefront/use-photo-backdrop";
 
 type DepthShopProps = {
@@ -207,21 +206,7 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
           </div>
           <div className="showcase-grid">
             {bestSellerProducts.map((product) => (
-              <Link
-                className={`showcase-card ${product.tone}`}
-                href={`/products/${product.slug}` as Route}
-                key={product.variantId}
-              >
-                <div className="product-related-photo" aria-hidden="true">
-                  {product.imageUrl ? <Image alt="" fill sizes="220px" src={product.imageUrl} /> : null}
-                </div>
-                <div>
-                  <span>Best seller</span>
-                  <h3>{product.title}</h3>
-                  <p>{product.shortCopy}</p>
-                  <strong>{product.formattedPrice}</strong>
-                </div>
-              </Link>
+              <ShowcaseCard key={product.variantId} product={product} />
             ))}
           </div>
         </section>
@@ -376,20 +361,11 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
                   <span className="sheet-related-label">You might also like</span>
                   <div className="sheet-related-row">
                     {relatedProducts.map((related) => (
-                      <button
-                        className="sheet-related-card"
+                      <SheetRelatedCard
                         key={related.variantId}
-                        onClick={() => setSelectedId(related.variantId)}
-                        type="button"
-                      >
-                        <div className="sheet-related-figure" aria-hidden="true">
-                          {related.imageUrl ? (
-                            <Image alt="" fill sizes="120px" src={related.imageUrl} />
-                          ) : null}
-                        </div>
-                        <span>{related.title}</span>
-                        <strong>{related.formattedPrice}</strong>
-                      </button>
+                        onSelect={() => setSelectedId(related.variantId)}
+                        product={related}
+                      />
                     ))}
                   </div>
                 </div>
@@ -500,6 +476,30 @@ function ShopBotanicalDrift({ products }: { products: StorefrontProductView[] })
         </div>
       ) : null}
     </div>
+  );
+}
+
+function SheetRelatedCard({
+  product,
+  onSelect
+}: {
+  product: StorefrontProductView;
+  onSelect: () => void;
+}) {
+  const { backgroundColor, handleLoad } = usePhotoBackdrop();
+
+  return (
+    <button className="sheet-related-card" onClick={onSelect} type="button">
+      <div
+        className="sheet-related-figure"
+        aria-hidden="true"
+        style={backgroundColor ? { background: backgroundColor } : undefined}
+      >
+        {product.imageUrl ? <Image alt="" fill onLoad={handleLoad} sizes="120px" src={product.imageUrl} /> : null}
+      </div>
+      <span>{product.title}</span>
+      <strong>{product.formattedPrice}</strong>
+    </button>
   );
 }
 

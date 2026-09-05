@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Route } from "next";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductDetailHero } from "@/components/storefront/product-detail-hero";
+import { ShowcaseCard } from "@/components/storefront/showcase-card";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
 import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefront/catalogue";
 import { buildProductJsonLd } from "@/lib/seo/structured-data";
@@ -107,21 +107,7 @@ export default async function ProductDetailPage({ params }: ProductPageParams) {
           </div>
           <div className="showcase-grid">
             {relatedProducts.map((entry) => (
-              <Link
-                className={`showcase-card ${entry.tone}`}
-                href={`/products/${entry.slug}` as Route}
-                key={entry.variantId}
-              >
-                <div className="product-related-photo" aria-hidden="true">
-                  {entry.imageUrl ? <Image alt="" fill sizes="220px" src={entry.imageUrl} /> : null}
-                </div>
-                <div>
-                  {entry.bestSeller ? <span>Best seller</span> : null}
-                  <h3>{entry.title}</h3>
-                  <p>{entry.shortCopy}</p>
-                  <strong>{entry.formattedPrice}</strong>
-                </div>
-              </Link>
+              <ShowcaseCard key={entry.variantId} product={entry} />
             ))}
           </div>
         </section>
