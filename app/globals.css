@@ -7209,6 +7209,11 @@ a.pos-secondary-button {
   font-size: 0.82rem;
   font-weight: 700;
   line-height: 1.55;
+  /* font-weight alone tops out at whatever "bold" face Courier New
+     actually ships (font-weight: 900 often just reuses the same 700 face)
+     — a text stroke thickens every glyph on top of that, which is what
+     actually reads as "deeper/blacker" on a low-resolution receipt printer. */
+  -webkit-text-stroke: 0.35px currentColor;
   /* Thermal/inkjet printers routinely lighten colors to save ink unless
      told not to — without this, text set to solid black on screen can
      still come out gray on paper. */
@@ -7224,14 +7229,19 @@ a.pos-secondary-button {
 }
 
 .receipt-logo {
-  width: 44px;
-  height: 44px;
+  width: 72px;
+  height: 72px;
   margin-bottom: 4px;
   border-radius: 999px;
   object-fit: cover;
   /* Thermal printers are monochrome regardless — converting up front makes
-     the on-screen preview match what actually comes out of the printer. */
-  filter: grayscale(1) contrast(1.15);
+     the on-screen preview match what actually comes out of the printer.
+     This logo is a pale, soft-pink illustration — mostly light tones with
+     thin outlines — which all but disappears at small size with only a
+     mild contrast bump. Larger size plus a much stronger contrast curve
+     (tested against several values) is what actually makes the outline,
+     whiskers, and small text underneath legible once printed. */
+  filter: grayscale(1) contrast(1.8) brightness(1.05);
 }
 
 .receipt-header strong {
