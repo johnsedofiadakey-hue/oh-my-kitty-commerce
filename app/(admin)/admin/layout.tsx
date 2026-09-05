@@ -73,9 +73,6 @@ const navConfig: NavConfigGroup[] = [
     items: [
       { label: "Reports", href: "/admin/reports", icon: "reports", requiredPermission: "reports.view" },
       { label: "Financial", href: "/admin/financial", icon: "financial", requiredPermission: "reports.financial" },
-      { label: "Expenses", href: "/admin/expenses", icon: "expenses", requiredPermission: "expenses.view" },
-      { label: "Assets", href: "/admin/assets", icon: "assets", requiredPermission: "assets.view" },
-      { label: "Payroll", href: "/admin/payroll", icon: "payroll", requiredPermission: "payroll.view" },
       { label: "Raw Materials", href: "/admin/materials", icon: "materials", requiredPermission: "reports.financial" },
       { label: "Audit log", href: "/admin/audit", icon: "audit", requiredPermission: "audit.view" },
       {

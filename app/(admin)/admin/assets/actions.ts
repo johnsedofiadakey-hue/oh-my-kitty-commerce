@@ -38,7 +38,7 @@ export async function createCapitalAssetAction(
     });
 
     return `Added asset ${asset.name}.`;
-  }, "/admin/assets", "/admin/financial");
+  }, "/admin/financial");
 }
 
 export async function updateCapitalAssetAction(
@@ -63,7 +63,7 @@ export async function updateCapitalAssetAction(
     });
 
     return `Saved ${asset.name}.`;
-  }, "/admin/assets", "/admin/financial");
+  }, "/admin/financial");
 }
 
 export async function deleteCapitalAssetAction(assetId: string): Promise<AdminActionState> {
@@ -72,7 +72,7 @@ export async function deleteCapitalAssetAction(assetId: string): Promise<AdminAc
     const actor = await getRequiredAdminActor();
     await deleteCapitalAsset(context, actor, assetId);
     return "Asset deleted.";
-  }, "/admin/assets", "/admin/financial");
+  }, "/admin/financial");
 }
 
 function formAssetCategory(formData: FormData): CapitalAssetCategory {

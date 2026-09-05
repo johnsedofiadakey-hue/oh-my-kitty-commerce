@@ -4,14 +4,55 @@ import {
   toSortableMillis
 } from "@/lib/admin/operations-data";
 import { getAdminFinancialData } from "@/lib/admin/financial-data";
-import { requireAdminPermission } from "@/lib/auth/server";
+import { getRequiredAdminActor } from "@/lib/auth/server";
+import { getCommerceServerContext } from "@/lib/commerce/server-context";
+import { getEffectiveRoles } from "@/lib/commerce/operations";
+import { hasPermission } from "@/lib/permissions/permissions";
+import { redirect } from "next/navigation";
+import { computeAssetBookValue } from "@/lib/commerce/depreciation";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
+import { AdminTabs, type AdminTabSpec } from "@/components/admin/admin-tabs";
+import { TaxonomyRow } from "@/components/admin/taxonomy-row";
 import { CreateManualRevenueForm, ManualRevenueRow } from "@/components/admin/manual-revenue-forms";
+import {
+  CreateExpenseCategoryForm,
+  CreateExpenseForm,
+  CreateRecurringExpenseForm,
+  ExpenseRow,
+  RecurringExpenseRow
+} from "@/components/admin/expense-forms";
+import { AssetRow, CreateAssetForm } from "@/components/admin/asset-forms";
+import { CreateWorkerForm, PayWorkerForm, PayrollHistoryRow, WorkerRow } from "@/components/admin/worker-forms";
 import type { AdminOrderRow } from "@/lib/admin/operations-data";
 import type { Expense, ManualRevenueEntry, PayrollPayment } from "@/lib/commerce/types";
 import { createManualRevenueEntryAction, deleteManualRevenueEntryAction } from "./actions";
+import {
+  createExpenseAction,
+  createExpenseCategoryAction,
+  createRecurringExpenseTemplateAction,
+  deleteExpenseAction,
+  deleteRecurringExpenseTemplateAction,
+  logRecurringExpenseAction,
+  quickEditExpenseCategoryAction
+} from "../expenses/actions";
+import { createCapitalAssetAction, deleteCapitalAssetAction, updateCapitalAssetAction } from "../assets/actions";
+import {
+  createWorkerAction,
+  deletePayrollPaymentAction,
+  deleteWorkerAction,
+  payWorkerAction,
+  updateWorkerAction
+} from "../payroll/actions";
 
 export const dynamic = "force-dynamic";
+
+const ASSET_CATEGORY_LABELS: Record<string, string> = {
+  EQUIPMENT: "Equipment",
+  FURNITURE: "Furniture",
+  MACHINE: "Machine",
+  PROPERTY: "Property",
+  OTHER: "Other"
+};
 
 type ProductProfitRow = {
   productId: string;
@@ -172,14 +213,32 @@ function formatDateLabel(value: Date) {
   return new Date(value).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
+function toDateInputValue(value: Date) {
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+function currentPeriod() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
 type AdminFinancialPageProps = {
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; tab?: string }>;
 };
 
 export default async function AdminFinancialPage({ searchParams }: AdminFinancialPageProps) {
-  await requireAdminPermission("reports.financial");
-  const { from, to } = await searchParams;
+  const actor = await getRequiredAdminActor();
+  const context = getCommerceServerContext();
+  const roles = context ? await getEffectiveRoles(context, actor.roleIds) : [];
+  if (!hasPermission(roles, actor, "reports.financial")) {
+    redirect("/admin");
+  }
 
+  const canSeeExpenses = hasPermission(roles, actor, "expenses.view");
+  const canSeeAssets = hasPermission(roles, actor, "assets.view");
+  const canSeePayroll = hasPermission(roles, actor, "payroll.view");
+
+  const { from, to, tab } = await searchParams;
   const [operations, financial] = await Promise.all([getAdminOperationsData(), getAdminFinancialData()]);
   const disabled = financial.source !== "live";
 
@@ -209,23 +268,10 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
     buildProductMarginReport("Last 30 days", operations.orderRows, thirtyDaysAgo)
   ];
   const anyCostSet = marginPeriods.some((period) => period.rows.some((row) => row.costKnown));
-
   const recentRevenueEntries = financial.manualRevenueEntries.slice(0, 50);
 
-  return (
+  const overviewTab = (
     <>
-      <div className="page-heading">
-        <div>
-          <h1 className="app-title">Financial</h1>
-          <p className="app-subtitle">
-            Real cash in vs real cash out — orders, other income, expenses, and payroll — plus a per-product margin
-            reference for pricing.
-          </p>
-        </div>
-        <AdminDrawer title="Log other income" triggerLabel="Log income">
-          <CreateManualRevenueForm action={createManualRevenueEntryAction} disabled={disabled} />
-        </AdminDrawer>
-      </div>
       {operations.sourceMessage ? (
         <div className="admin-alert" role="status">
           {operations.sourceMessage}
@@ -311,6 +357,30 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
         ) : null}
       </section>
 
+      <section className="admin-panel">
+        <div className="panel-header">
+          <h2>Other income</h2>
+          <AdminDrawer title="Log other income" triggerLabel="Log income">
+            <CreateManualRevenueForm action={createManualRevenueEntryAction} disabled={disabled} />
+          </AdminDrawer>
+        </div>
+        <div className="stack-list">
+          {recentRevenueEntries.map((entry) => (
+            <ManualRevenueRow
+              amountLabel={formatMoney(entry.amount)}
+              dateLabel={formatDateLabel(entry.date)}
+              deleteAction={deleteManualRevenueEntryAction}
+              disabled={disabled}
+              entryId={entry.id}
+              key={entry.id}
+              label={entry.label}
+              note={entry.note}
+            />
+          ))}
+          {recentRevenueEntries.length === 0 ? <p className="admin-help">Nothing logged yet.</p> : null}
+        </div>
+      </section>
+
       <div className="page-heading">
         <div>
           <h2 className="app-title" style={{ fontSize: "1.35rem" }}>
@@ -377,28 +447,336 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
           </section>
         );
       })}
+    </>
+  );
 
-      <section className="admin-panel">
-        <div className="panel-header">
-          <h2>Other income</h2>
-          <span>{financial.manualRevenueEntries.length} entries</span>
+  const tabs: AdminTabSpec[] = [{ id: "overview", label: "Overview", content: overviewTab }];
+
+  if (canSeeExpenses) {
+    const categoriesById = new Map(financial.expenseCategories.map((category) => [category.id, category]));
+    const recentExpenses = financial.expenses.slice(0, 50);
+    const period = currentPeriod();
+
+    tabs.push({
+      id: "expenses",
+      label: "Expenses",
+      content: (
+        <>
+          {financial.expenseCategories.length === 0 ? (
+            <div className="admin-alert" role="status">
+              Add a category below before logging your first expense.
+            </div>
+          ) : null}
+
+          <section className="admin-panel">
+            <div className="panel-header">
+              <h2>Categories</h2>
+              <span>{financial.expenseCategories.length} categories</span>
+            </div>
+            <div className="quick-edit-list">
+              {financial.expenseCategories.map((category) => (
+                <TaxonomyRow
+                  action={quickEditExpenseCategoryAction}
+                  active={category.active}
+                  disabled={disabled}
+                  id={category.id}
+                  key={category.id}
+                  slug={category.slug}
+                  sortOrder={category.sortOrder}
+                  title={category.title}
+                />
+              ))}
+              {financial.expenseCategories.length === 0 ? <p className="admin-help">No categories yet.</p> : null}
+            </div>
+            <div className="admin-panel-section">
+              <CreateExpenseCategoryForm action={createExpenseCategoryAction} disabled={disabled} />
+            </div>
+          </section>
+
+          <section className="admin-panel">
+            <div className="panel-header">
+              <h2>Recurring expenses</h2>
+              <span>{financial.recurringExpenseTemplates.length} set up</span>
+            </div>
+            <div className="stack-list">
+              {financial.recurringExpenseTemplates.map((template) => (
+                <RecurringExpenseRow
+                  amountLabel={formatMoney(template.amount)}
+                  categoryTitle={categoriesById.get(template.categoryId)?.title ?? "Uncategorized"}
+                  currentPeriod={period}
+                  dayOfMonth={template.dayOfMonth}
+                  deleteAction={deleteRecurringExpenseTemplateAction}
+                  disabled={disabled}
+                  key={template.id}
+                  label={template.label}
+                  lastLoggedPeriod={template.lastLoggedPeriod ?? null}
+                  logAction={logRecurringExpenseAction}
+                  templateId={template.id}
+                />
+              ))}
+              {financial.recurringExpenseTemplates.length === 0 ? (
+                <p className="admin-help">Nothing recurring set up yet — rent, salaries, subscriptions.</p>
+              ) : null}
+            </div>
+            {financial.expenseCategories.length > 0 ? (
+              <div className="admin-panel-section">
+                <CreateRecurringExpenseForm
+                  action={createRecurringExpenseTemplateAction}
+                  categories={financial.expenseCategories}
+                  disabled={disabled}
+                />
+              </div>
+            ) : null}
+          </section>
+
+          <section className="admin-panel">
+            <div className="panel-header">
+              <h2>Log an expense</h2>
+              <span>{financial.expenses.length} logged</span>
+            </div>
+            {financial.expenseCategories.length > 0 ? (
+              <div className="admin-panel-section">
+                <CreateExpenseForm action={createExpenseAction} categories={financial.expenseCategories} disabled={disabled} />
+              </div>
+            ) : null}
+            <div className="stack-list">
+              {recentExpenses.map((expense) => (
+                <ExpenseRow
+                  amountLabel={formatMoney(expense.amount)}
+                  categoryTitle={categoriesById.get(expense.categoryId)?.title ?? "Uncategorized"}
+                  dateLabel={formatDateLabel(expense.date)}
+                  deleteAction={deleteExpenseAction}
+                  disabled={disabled}
+                  expenseId={expense.id}
+                  isRecurring={Boolean(expense.recurringTemplateId)}
+                  key={expense.id}
+                  note={expense.note}
+                />
+              ))}
+              {recentExpenses.length === 0 ? <p className="admin-help">Nothing logged yet.</p> : null}
+            </div>
+          </section>
+        </>
+      )
+    });
+  }
+
+  if (canSeeAssets) {
+    const totalPurchaseCost = financial.capitalAssets.reduce((total, asset) => total + asset.purchaseCost, 0);
+    const totalBookValue = financial.capitalAssets.reduce((total, asset) => total + computeAssetBookValue(asset), 0);
+
+    tabs.push({
+      id: "assets",
+      label: "Assets",
+      content: (
+        <>
+          <div className="page-heading">
+            <div>
+              <p className="app-subtitle">Equipment, furniture, machines, and everything else the business owns.</p>
+            </div>
+            <AdminDrawer title="Add an asset" triggerLabel="Add asset">
+              <CreateAssetForm action={createCapitalAssetAction} disabled={disabled} />
+            </AdminDrawer>
+          </div>
+
+          <section className="admin-panel">
+            <div className="panel-header">
+              <h2>Overview</h2>
+              <span>{financial.capitalAssets.length} assets</span>
+            </div>
+            <div className="metric-grid">
+              <article className="metric">
+                <span>Total purchase cost</span>
+                <strong>{formatMoney(totalPurchaseCost)}</strong>
+              </article>
+              <article className="metric">
+                <span>Current book value</span>
+                <strong>{formatMoney(totalBookValue)}</strong>
+              </article>
+            </div>
+          </section>
+
+          <section className="admin-panel">
+            <div className="panel-header">
+              <h2>Register</h2>
+              <span>Tap one to edit or remove it</span>
+            </div>
+            <div className="order-list">
+              {financial.capitalAssets.map((asset) => {
+                const bookValue = computeAssetBookValue(asset);
+                return (
+                  <AssetRow
+                    assetId={asset.id}
+                    bookValueLabel={asset.trackDepreciation ? formatMoney(bookValue) : null}
+                    category={asset.category}
+                    categoryLabel={ASSET_CATEGORY_LABELS[asset.category] ?? asset.category}
+                    deleteAction={deleteCapitalAssetAction}
+                    disabled={disabled}
+                    key={asset.id}
+                    location={asset.location}
+                    name={asset.name}
+                    notes={asset.notes}
+                    purchaseCostLabel={formatMoney(asset.purchaseCost)}
+                    purchaseCostValue={(asset.purchaseCost / 100).toFixed(2)}
+                    purchaseDateLabel={formatDateLabel(asset.purchaseDate)}
+                    purchaseDateValue={toDateInputValue(asset.purchaseDate)}
+                    trackDepreciation={asset.trackDepreciation}
+                    updateAction={updateCapitalAssetAction}
+                    usefulLifeYears={asset.usefulLifeYears ?? null}
+                  />
+                );
+              })}
+              {financial.capitalAssets.length === 0 ? <p className="admin-help">Nothing added yet.</p> : null}
+            </div>
+          </section>
+        </>
+      )
+    });
+  }
+
+  if (canSeePayroll) {
+    const period = currentPeriod();
+    const activeWorkers = financial.workers.filter((worker) => worker.status === "ACTIVE");
+    const paymentsThisPeriod = new Map(
+      financial.payrollPayments.filter((payment) => payment.period === period).map((payment) => [payment.workerId, payment])
+    );
+    const workersById = new Map(financial.workers.map((worker) => [worker.id, worker]));
+    const recentPayments = financial.payrollPayments.slice(0, 50);
+    const totalMonthlyPayroll = activeWorkers.reduce((total, worker) => total + worker.monthlySalary, 0);
+    const paidThisPeriod = financial.payrollPayments
+      .filter((payment) => payment.period === period)
+      .reduce((total, payment) => total + payment.grossAmount, 0);
+
+    tabs.push({
+      id: "payroll",
+      label: "Payroll",
+      content: (
+        <>
+          <div className="page-heading">
+            <div>
+              <p className="app-subtitle">Worker profiles and monthly pay. Owner-only — this carries national ID and bank details.</p>
+            </div>
+            <AdminDrawer title="Add a worker" triggerLabel="Add worker">
+              <CreateWorkerForm action={createWorkerAction} disabled={disabled} />
+            </AdminDrawer>
+          </div>
+
+          <section className="admin-panel">
+            <div className="panel-header">
+              <h2>Overview</h2>
+              <span>{activeWorkers.length} active workers</span>
+            </div>
+            <div className="metric-grid">
+              <article className="metric">
+                <span>Monthly payroll (active workers)</span>
+                <strong>{formatMoney(totalMonthlyPayroll)}</strong>
+              </article>
+              <article className="metric">
+                <span>Paid for {period}</span>
+                <strong>{formatMoney(paidThisPeriod)}</strong>
+              </article>
+            </div>
+          </section>
+
+          <section className="admin-panel">
+            <div className="panel-header">
+              <h2>Run payroll — {period}</h2>
+              <span>{paymentsThisPeriod.size} of {activeWorkers.length} paid</span>
+            </div>
+            <div className="stack-list">
+              {activeWorkers.map((worker) => {
+                const existing = paymentsThisPeriod.get(worker.id);
+                return (
+                  <PayWorkerForm
+                    action={payWorkerAction}
+                    alreadyPaid={Boolean(existing)}
+                    defaultGrossValue={((existing?.grossAmount ?? worker.monthlySalary) / 100).toFixed(2)}
+                    disabled={disabled}
+                    key={worker.id}
+                    period={period}
+                    workerId={worker.id}
+                    workerName={worker.name}
+                  />
+                );
+              })}
+              {activeWorkers.length === 0 ? <p className="admin-help">Add a worker below to start running payroll.</p> : null}
+            </div>
+          </section>
+
+          <section className="admin-panel">
+            <div className="panel-header">
+              <h2>Workers</h2>
+              <span>{financial.workers.length} total</span>
+            </div>
+            <div className="order-list">
+              {financial.workers.map((worker) => (
+                <WorkerRow
+                  bankAccountNumber={worker.bankAccountNumber}
+                  bankName={worker.bankName}
+                  deleteAction={deleteWorkerAction}
+                  disabled={disabled}
+                  emergencyContactName={worker.emergencyContactName}
+                  emergencyContactPhone={worker.emergencyContactPhone}
+                  ghanaCardNumber={worker.ghanaCardNumber}
+                  key={worker.id}
+                  momoNetwork={worker.momoNetwork}
+                  momoNumber={worker.momoNumber}
+                  monthlySalaryValue={(worker.monthlySalary / 100).toFixed(2)}
+                  name={worker.name}
+                  nextOfKinName={worker.nextOfKinName}
+                  nextOfKinPhone={worker.nextOfKinPhone}
+                  nextOfKinRelationship={worker.nextOfKinRelationship}
+                  notes={worker.notes}
+                  parentGuardianName={worker.parentGuardianName}
+                  phone={worker.phone}
+                  role={worker.role}
+                  salaryLabel={formatMoney(worker.monthlySalary)}
+                  siblingsInfo={worker.siblingsInfo}
+                  startDateValue={worker.startDate ? toDateInputValue(worker.startDate) : undefined}
+                  status={worker.status}
+                  updateAction={updateWorkerAction}
+                  workerId={worker.id}
+                />
+              ))}
+              {financial.workers.length === 0 ? <p className="admin-help">Nothing here yet.</p> : null}
+            </div>
+          </section>
+
+          <section className="admin-panel">
+            <div className="panel-header">
+              <h2>Payment history</h2>
+              <span>{financial.payrollPayments.length} payments</span>
+            </div>
+            <div className="stack-list">
+              {recentPayments.map((payment) => (
+                <PayrollHistoryRow
+                  deleteAction={deletePayrollPaymentAction}
+                  disabled={disabled}
+                  key={payment.id}
+                  netLabel={formatMoney(payment.netAmount)}
+                  paidDateLabel={formatDateLabel(payment.paidDate)}
+                  paymentId={payment.id}
+                  period={payment.period}
+                  workerName={workersById.get(payment.workerId)?.name ?? "Former worker"}
+                />
+              ))}
+              {recentPayments.length === 0 ? <p className="admin-help">No payments logged yet.</p> : null}
+            </div>
+          </section>
+        </>
+      )
+    });
+  }
+
+  return (
+    <>
+      <div className="page-heading">
+        <div>
+          <h1 className="app-title">Financial</h1>
+          <p className="app-subtitle">Everything about the money — revenue, expenses, assets, and payroll, in one place.</p>
         </div>
-        <div className="stack-list">
-          {recentRevenueEntries.map((entry) => (
-            <ManualRevenueRow
-              amountLabel={formatMoney(entry.amount)}
-              dateLabel={formatDateLabel(entry.date)}
-              deleteAction={deleteManualRevenueEntryAction}
-              disabled={disabled}
-              entryId={entry.id}
-              key={entry.id}
-              label={entry.label}
-              note={entry.note}
-            />
-          ))}
-          {recentRevenueEntries.length === 0 ? <p className="admin-help">Nothing logged yet.</p> : null}
-        </div>
-      </section>
+      </div>
+      <AdminTabs initialTabId={tab} tabs={tabs} />
     </>
   );
 }

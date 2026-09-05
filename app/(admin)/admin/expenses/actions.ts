@@ -39,7 +39,7 @@ export async function createExpenseCategoryAction(
     });
 
     return `Created category ${category.title}.`;
-  }, "/admin/expenses");
+  }, "/admin/financial");
 }
 
 export async function quickEditExpenseCategoryAction(
@@ -58,7 +58,7 @@ export async function quickEditExpenseCategoryAction(
     });
 
     return `Saved ${category.title}.`;
-  }, "/admin/expenses");
+  }, "/admin/financial");
 }
 
 export async function createExpenseAction(
@@ -77,7 +77,7 @@ export async function createExpenseAction(
     });
 
     return "Expense logged.";
-  }, "/admin/expenses", "/admin/financial");
+  }, "/admin/financial");
 }
 
 export async function deleteExpenseAction(expenseId: string): Promise<AdminActionState> {
@@ -86,7 +86,7 @@ export async function deleteExpenseAction(expenseId: string): Promise<AdminActio
     const actor = await getRequiredAdminActor();
     await deleteExpense(context, actor, expenseId);
     return "Expense deleted.";
-  }, "/admin/expenses", "/admin/financial");
+  }, "/admin/financial");
 }
 
 export async function createRecurringExpenseTemplateAction(
@@ -105,7 +105,7 @@ export async function createRecurringExpenseTemplateAction(
     });
 
     return `Added recurring expense ${template.label}.`;
-  }, "/admin/expenses");
+  }, "/admin/financial");
 }
 
 export async function deleteRecurringExpenseTemplateAction(templateId: string): Promise<AdminActionState> {
@@ -114,7 +114,7 @@ export async function deleteRecurringExpenseTemplateAction(templateId: string): 
     const actor = await getRequiredAdminActor();
     await deleteRecurringExpenseTemplate(context, actor, templateId);
     return "Recurring expense deleted.";
-  }, "/admin/expenses");
+  }, "/admin/financial");
 }
 
 export async function logRecurringExpenseAction(templateId: string, period: string): Promise<AdminActionState> {
@@ -123,7 +123,7 @@ export async function logRecurringExpenseAction(templateId: string, period: stri
     const actor = await getRequiredAdminActor();
     await logRecurringExpense(context, actor, { templateId, period, date: new Date() });
     return "Logged as paid for this period.";
-  }, "/admin/expenses", "/admin/financial");
+  }, "/admin/financial");
 }
 
 async function runAction(

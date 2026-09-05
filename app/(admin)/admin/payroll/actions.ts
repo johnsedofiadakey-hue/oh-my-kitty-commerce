@@ -46,7 +46,7 @@ export async function createWorkerAction(
     const actor = await getRequiredAdminActor();
     const worker = await createWorker(context, actor, workerFieldsFromForm(formData));
     return `Added worker ${worker.name}.`;
-  }, "/admin/payroll");
+  }, "/admin/financial");
 }
 
 export async function updateWorkerAction(
@@ -61,7 +61,7 @@ export async function updateWorkerAction(
       ...workerFieldsFromForm(formData)
     });
     return `Saved ${worker.name}.`;
-  }, "/admin/payroll");
+  }, "/admin/financial");
 }
 
 export async function deleteWorkerAction(workerId: string): Promise<AdminActionState> {
@@ -70,7 +70,7 @@ export async function deleteWorkerAction(workerId: string): Promise<AdminActionS
     const actor = await getRequiredAdminActor();
     await deleteWorker(context, actor, workerId);
     return "Worker removed.";
-  }, "/admin/payroll");
+  }, "/admin/financial");
 }
 
 export async function payWorkerAction(
@@ -97,7 +97,7 @@ export async function payWorkerAction(
     });
 
     return `Paid for ${payment.period}.`;
-  }, "/admin/payroll", "/admin/financial");
+  }, "/admin/financial");
 }
 
 export async function deletePayrollPaymentAction(paymentId: string): Promise<AdminActionState> {
@@ -106,7 +106,7 @@ export async function deletePayrollPaymentAction(paymentId: string): Promise<Adm
     const actor = await getRequiredAdminActor();
     await deletePayrollPayment(context, actor, paymentId);
     return "Payment record deleted.";
-  }, "/admin/payroll", "/admin/financial");
+  }, "/admin/financial");
 }
 
 async function runAction(operation: () => Promise<string>, ...paths: string[]): Promise<AdminActionState> {
