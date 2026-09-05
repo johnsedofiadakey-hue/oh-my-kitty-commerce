@@ -9,10 +9,17 @@ import { acknowledgeNotificationAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
+// Quotes the customer's own message back at the top of the reply box, with
+// the cursor landing right after it — staff tap, see exactly what was asked,
+// and just type the answer, rather than reopening this page to remember it.
+function buildReplyPrefill(customerMessage: string) {
+  return `Hi! Following up on your message:\n"${customerMessage}"\n\n`;
+}
+
 function NotificationSource({ log }: { log: NotificationLog }) {
   if (log.entityType === "guidanceRequest" && log.contactNumber) {
     return (
-      <a href={toWhatsAppLink(log.contactNumber)} rel="noreferrer" target="_blank">
+      <a href={toWhatsAppLink(log.contactNumber, buildReplyPrefill(log.body))} rel="noreferrer" target="_blank">
         {log.contactNumber}
       </a>
     );
