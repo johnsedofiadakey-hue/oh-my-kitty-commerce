@@ -228,6 +228,22 @@ function OrderDetail({ row, disabled, canDelete }: { row: AdminOrderRow; disable
         </a>
       </section>
 
+      {payment?.providerReference ? (
+        <section className="order-detail-section">
+          <h3>Payment</h3>
+          <dl className="order-detail-dl">
+            <div>
+              <dt>Reference</dt>
+              <dd>{payment.providerReference}</dd>
+            </div>
+          </dl>
+          <p className="admin-help">
+            Verified directly with {payment.provider === "PAYSTACK" ? "Paystack" : payment.provider} — look this
+            reference up on their dashboard to see the same transaction independently.
+          </p>
+        </section>
+      ) : null}
+
       <section className="order-detail-section">
         <h3>Customer</h3>
         <dl className="order-detail-dl">
