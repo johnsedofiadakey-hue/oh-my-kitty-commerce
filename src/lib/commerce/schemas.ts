@@ -540,6 +540,11 @@ const manualRevenueEntryFieldsSchema = z.object({
 
 export const createManualRevenueEntryInputSchema = manualRevenueEntryFieldsSchema;
 
+export const createGuidanceRequestInputSchema = z.object({
+  message: z.string().trim().min(1, "Tell us a bit about what you need.").max(1000),
+  contactNumber: z.string().trim().min(6, "Enter a valid phone number.").max(20)
+});
+
 export type CreateExpenseCategoryInput = z.input<typeof createExpenseCategoryInputSchema>;
 export type UpdateExpenseCategoryInput = z.input<typeof updateExpenseCategoryInputSchema>;
 export type CreateExpenseInput = z.input<typeof createExpenseInputSchema>;
@@ -552,4 +557,5 @@ export type UpdateCapitalAssetInput = z.input<typeof updateCapitalAssetInputSche
 export type CreateWorkerInput = z.input<typeof createWorkerInputSchema>;
 export type UpdateWorkerInput = z.input<typeof updateWorkerInputSchema>;
 export type CreatePayrollPaymentInput = z.input<typeof createPayrollPaymentInputSchema>;
+export type CreateGuidanceRequestInput = z.input<typeof createGuidanceRequestInputSchema>;
 export type CreateManualRevenueEntryInput = z.input<typeof createManualRevenueEntryInputSchema>;

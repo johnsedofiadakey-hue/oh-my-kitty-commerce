@@ -28,6 +28,7 @@ import {
   updateWorkerInputSchema,
   createPayrollPaymentInputSchema,
   createManualRevenueEntryInputSchema,
+  createGuidanceRequestInputSchema,
   createConcernInputSchema,
   createCustomerInputSchema,
   createDeliveryRuleInputSchema,
@@ -2424,6 +2425,45 @@ export async function recordNewOrderNotification(
 }
 
 /**
+ * A guidance request submitted straight from the storefront's "Get
+ * guidance" dialog — no WhatsApp app hand-off required to send it, which is
+ * the whole point: that hand-off is what silently fails inside TikTok's
+ * in-app browser. Reuses the NotificationLog plumbing (same admin
+ * Notifications page, same push alert, same acknowledge flow) rather than a
+ * separate collection, since a guidance request is exactly the same shape
+ * of "something a staff member needs to notice and act on" as a new order.
+ * No permission gate: called anonymously from the public storefront, behind
+ * its own rate limit at the API route.
+ */
+export async function createGuidanceRequest(context: CommerceContext, input: unknown): Promise<NotificationLog> {
+  const parsed = createGuidanceRequestInputSchema.parse(input);
+  const actor = systemActor("storefront-guidance-request");
+
+  const log: NotificationLog = {
+    id: createId(context, "notif"),
+    type: "NEW_GUIDANCE_REQUEST",
+    title: "New guidance request",
+    body: parsed.message,
+    entityType: "guidanceRequest",
+    entityId: createId(context, "guidance"),
+    entityRef: parsed.contactNumber,
+    contactNumber: parsed.contactNumber,
+    acknowledged: false,
+    createdAt: getNow(context)
+  };
+
+  await context.repo.saveNotificationLog(log);
+  await writeAuditLog(context, actor, {
+    action: "guidance.create",
+    entityType: "notificationLog",
+    entityId: log.id,
+    summary: `New guidance request from ${parsed.contactNumber}`
+  });
+
+  return log;
+}
+
+/**
  * Real-time Chrome push (desktop + Android) to every active, POS-enabled
  * staff member when a customer places an order on the website. The owner
  * already gets an SMS for this via notifyAdminOfNewOrder and isn't part of
@@ -2435,9 +2475,25 @@ export async function sendNewOrderPush(context: CommerceContext, order: Order): 
     return;
   }
 
-  try {
-    const log = await recordNewOrderNotification(context, order);
+  const log = await recordNewOrderNotification(context, order);
+  await pushNotificationLogToStaff(context, log, { orderId: order.id });
+}
 
+/**
+ * Same push alert as sendNewOrderPush, for a guidance request instead of an
+ * order. Never throws — a failed push should not break the customer's
+ * on-site submission, which has already been saved by this point.
+ */
+export async function sendNewGuidanceRequestPush(context: CommerceContext, log: NotificationLog): Promise<void> {
+  await pushNotificationLogToStaff(context, log);
+}
+
+async function pushNotificationLogToStaff(
+  context: CommerceContext,
+  log: NotificationLog,
+  extraData: Record<string, string> = {}
+): Promise<void> {
+  try {
     const [staff, subscriptions] = await Promise.all([
       context.repo.listStaffUsers(),
       context.repo.listPushSubscriptions()
@@ -2463,13 +2519,13 @@ export async function sendNewOrderPush(context: CommerceContext, order: Order): 
     const response = await messaging.sendEachForMulticast({
       tokens,
       notification: { title: log.title, body: log.body },
-      data: { url: "/admin/notifications", notificationId: log.id, orderId: order.id },
+      data: { url: "/admin/notifications", notificationId: log.id, ...extraData },
       webpush: { fcmOptions: { link: "/admin/notifications" } }
     });
 
     await pruneDeadTokens(context, tokens, response);
   } catch (error) {
-    console.error(`New-order push failed for order ${order.orderNumber}:`, error);
+    console.error(`Push failed for notification ${log.id}:`, error);
   }
 }
 

@@ -2164,6 +2164,83 @@ button {
   font-weight: 900;
 }
 
+/* ---------- guidance dialog: same bottom-sheet language as .product-sheet,
+   single-column since this is a form rather than a product spread. */
+.guidance-sheet-backdrop {
+  position: fixed;
+  z-index: 70;
+  inset: 0;
+  display: grid;
+  align-items: end;
+  background: rgb(17 17 17 / 38%);
+  backdrop-filter: blur(14px);
+}
+
+.guidance-sheet {
+  position: relative;
+  width: min(100%, 460px);
+  max-height: min(92svh, 640px);
+  margin: 0 auto;
+  padding: 28px 22px 22px;
+  border: 1px solid rgb(255 255 255 / 78%);
+  border-radius: 28px 28px 0 0;
+  background: var(--color-white-pure);
+  box-shadow: 0 -28px 90px rgb(17 17 17 / 22%);
+  overflow-y: auto;
+}
+
+.guidance-form {
+  display: grid;
+  gap: 14px;
+}
+
+.guidance-form h2,
+.guidance-sheet-confirm h2 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 1.5rem;
+}
+
+.guidance-form > p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.guidance-field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.guidance-field textarea,
+.guidance-field input {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-medium);
+  padding: 12px 14px;
+  background: var(--color-cream);
+  font: inherit;
+  font-weight: 400;
+  resize: vertical;
+}
+
+.guidance-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.guidance-sheet-confirm {
+  display: grid;
+  gap: 12px;
+  padding: 20px 0;
+  text-align: center;
+}
+
 /* ---------- cart drawer: same bottom-sheet language as .product-sheet,
    so the bag reads as one consistent interaction, not a bolted-on pattern. */
 .cart-drawer-backdrop {

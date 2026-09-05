@@ -9,7 +9,7 @@ import { openCart } from "@/lib/storefront/cart-store";
 import { CartCount } from "@/components/storefront/cart-count";
 import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
-import { WhatsAppCta } from "@/components/storefront/whatsapp-cta";
+import { GuidanceDialog } from "@/components/storefront/guidance-dialog";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 
 type CinematicHomeProps = {
@@ -441,11 +441,11 @@ export function CinematicHome({ products, consultWhatsappNumber, sourceMessage }
                 <span>Shop now</span>
                 <i aria-hidden="true" />
               </Link>
-              <WhatsAppCta
-                className="portal-cta-secondary"
-                label="Get guidance"
-                message={CONSULT_MESSAGE}
-                phoneNumber={consultWhatsappNumber}
+              <GuidanceDialog
+                triggerClassName="portal-cta-secondary"
+                triggerLabel="Get guidance"
+                whatsappMessage={CONSULT_MESSAGE}
+                whatsappNumber={consultWhatsappNumber}
               />
             </div>
           </div>

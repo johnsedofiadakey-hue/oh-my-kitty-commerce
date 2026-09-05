@@ -3,9 +3,23 @@ import { getAdminOperationsData } from "@/lib/admin/operations-data";
 import { formatDate } from "@/lib/admin/sample-admin-data";
 import { requireAdminPermission } from "@/lib/auth/server";
 import { AcknowledgeNotificationButton } from "@/components/admin/acknowledge-notification-button";
+import { toWhatsAppLink } from "@/lib/storefront/whatsapp";
+import type { NotificationLog } from "@/lib/commerce/types";
 import { acknowledgeNotificationAction } from "./actions";
 
 export const dynamic = "force-dynamic";
+
+function NotificationSource({ log }: { log: NotificationLog }) {
+  if (log.entityType === "guidanceRequest" && log.contactNumber) {
+    return (
+      <a href={toWhatsAppLink(log.contactNumber)} rel="noreferrer" target="_blank">
+        {log.contactNumber}
+      </a>
+    );
+  }
+
+  return <Link href="/admin/orders">{log.entityRef}</Link>;
+}
 
 export default async function AdminNotificationsPage() {
   await requireAdminPermission("notifications.view");
@@ -21,7 +35,7 @@ export default async function AdminNotificationsPage() {
         <div>
           <h1 className="app-title">Notifications</h1>
           <p className="app-subtitle">
-            New website orders that came in while nobody was watching the Orders list.
+            New website orders and guidance requests that came in while nobody was watching.
           </p>
         </div>
       </div>
@@ -37,7 +51,7 @@ export default async function AdminNotificationsPage() {
         </div>
         <div className="admin-table">
           <div className="admin-table-row header">
-            <span>Order</span>
+            <span>From</span>
             <span>Details</span>
             <span>Time</span>
             <span>Action</span>
@@ -45,7 +59,7 @@ export default async function AdminNotificationsPage() {
           {pending.map((log) => (
             <div className="admin-table-row" key={log.id}>
               <strong>
-                <Link href="/admin/orders">{log.entityRef}</Link>
+                <NotificationSource log={log} />
               </strong>
               <span>{log.body}</span>
               <span>{formatDate(log.createdAt)}</span>
@@ -67,7 +81,7 @@ export default async function AdminNotificationsPage() {
         </summary>
         <div className="admin-table">
           <div className="admin-table-row header">
-            <span>Order</span>
+            <span>From</span>
             <span>Details</span>
             <span>Time</span>
             <span>Acknowledged by</span>
@@ -75,7 +89,7 @@ export default async function AdminNotificationsPage() {
           {acknowledged.map((log) => (
             <div className="admin-table-row" key={log.id}>
               <strong>
-                <Link href="/admin/orders">{log.entityRef}</Link>
+                <NotificationSource log={log} />
               </strong>
               <span>{log.body}</span>
               <span>{formatDate(log.createdAt)}</span>

@@ -381,16 +381,19 @@ export type PushSubscription = {
   lastSeenAt: Date;
 };
 
-export type NotificationLogType = "NEW_ONLINE_ORDER";
+export type NotificationLogType = "NEW_ONLINE_ORDER" | "NEW_GUIDANCE_REQUEST";
 
 export type NotificationLog = {
   id: string;
   type: NotificationLogType;
   title: string;
   body: string;
-  entityType: "order";
+  entityType: "order" | "guidanceRequest";
   entityId: string;
   entityRef: string;
+  // Set only for entityType "guidanceRequest" — the customer's own number,
+  // so the admin UI can offer a "reply on WhatsApp" link straight from here.
+  contactNumber?: string;
   acknowledged: boolean;
   acknowledgedBy?: string;
   acknowledgedAt?: Date;
