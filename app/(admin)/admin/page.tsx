@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AdminIcon } from "@/components/admin/admin-icons";
 import {
   daysSince,
@@ -9,10 +10,33 @@ import {
   getOrderCustomerName
 } from "@/lib/admin/operations-data";
 import { formatFulfilmentStatus } from "@/lib/commerce/format";
+import { getRequiredAdminActor } from "@/lib/auth/server";
+import { getCommerceServerContext } from "@/lib/commerce/server-context";
+import { getEffectiveRoles } from "@/lib/commerce/operations";
+import { canAccessPos, hasPermission } from "@/lib/permissions/permissions";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
+  const actor = await getRequiredAdminActor();
+  const context = getCommerceServerContext();
+  const roles = context ? await getEffectiveRoles(context, actor.roleIds) : [];
+
+  // This is the /admin shell root, so a failed check can't redirect back to
+  // /admin like requireAdminPermission does elsewhere (infinite loop) — send
+  // orders-only staff (e.g. Sales Staff) straight to the one section they do
+  // have, falling back to POS, then the account page every staff account can
+  // reach.
+  if (!hasPermission(roles, actor, "dashboard.view")) {
+    if (hasPermission(roles, actor, "orders.view")) {
+      redirect("/admin/orders");
+    }
+    if (canAccessPos(roles, actor)) {
+      redirect("/pos");
+    }
+    redirect("/admin/account");
+  }
+
   const data = await getAdminOperationsData();
   const recentOrders = data.orderRows.slice(0, 5);
 

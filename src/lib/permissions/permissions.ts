@@ -203,9 +203,6 @@ export const defaultRoles: Role[] = [
       "pos.access",
       "pos.sell",
       "orders.view",
-      "customers.view",
-      "customers.create",
-      "customers.update",
       "pos.receipts.view",
       "pos.shift.open",
       "pos.shift.close"

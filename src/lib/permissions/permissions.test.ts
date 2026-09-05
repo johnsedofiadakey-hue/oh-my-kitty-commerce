@@ -32,6 +32,15 @@ describe("permissions", () => {
     expect(hasPermission(defaultRoles, salesStaff, "settings.update")).toBe(false);
   });
 
+  it("limits sales staff to POS and orders — no dashboard, no other sections", () => {
+    expect(hasPermission(defaultRoles, salesStaff, "dashboard.view")).toBe(false);
+    expect(hasPermission(defaultRoles, salesStaff, "orders.view")).toBe(true);
+    expect(hasPermission(defaultRoles, salesStaff, "pos.access")).toBe(true);
+    expect(hasPermission(defaultRoles, salesStaff, "customers.view")).toBe(false);
+    expect(hasPermission(defaultRoles, salesStaff, "products.view")).toBe(false);
+    expect(hasPermission(defaultRoles, salesStaff, "reports.view")).toBe(false);
+  });
+
   it("supports explicit permission overrides", () => {
     const permissions = getGrantedPermissions(defaultRoles, {
       ...salesStaff,
