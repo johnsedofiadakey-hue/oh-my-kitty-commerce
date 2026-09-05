@@ -10,6 +10,7 @@ import { CartCount } from "@/components/storefront/cart-count";
 import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
 import { WhatsAppCta } from "@/components/storefront/whatsapp-cta";
+import { usePhotoBackdrop } from "@/lib/storefront/use-photo-backdrop";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 
 // Client preference, 2026-09-05: reverted from the on-site GuidanceDialog
@@ -540,11 +541,7 @@ export function CinematicHome({ products, consultWhatsappNumber, sourceMessage }
                     href={`/products/${product.slug}` as Route}
                     key={product.variantId}
                   >
-                    <div className="world-panel-figure" aria-hidden="true">
-                      {product.imageUrl ? (
-                        <Image alt="" fill sizes="360px" src={product.imageUrl} />
-                      ) : null}
-                    </div>
+                    <ProductPhotoFigure className="world-panel-figure" imageUrl={product.imageUrl} sizes="360px" />
                     <div className="world-panel-copy">
                       <h3>{product.title}</h3>
                       <strong>{product.formattedPrice}</strong>
@@ -593,11 +590,7 @@ export function CinematicHome({ products, consultWhatsappNumber, sourceMessage }
             <div className="best-sellers-stage">
               <article className="best-seller-dominant">
                 <Link className="best-seller-dominant-hit" href={`/products/${dominantSeller.slug}` as Route}>
-                  <div className="best-seller-figure" aria-hidden="true">
-                    {dominantSeller.imageUrl ? (
-                      <Image alt="" fill sizes="420px" src={dominantSeller.imageUrl} />
-                    ) : null}
-                  </div>
+                  <ProductPhotoFigure className="best-seller-figure" imageUrl={dominantSeller.imageUrl} sizes="420px" />
                   <div className="best-seller-copy">
                     <span>Best seller</span>
                     <h3>{dominantSeller.title}</h3>
@@ -624,11 +617,7 @@ export function CinematicHome({ products, consultWhatsappNumber, sourceMessage }
                       href={`/products/${product.slug}` as Route}
                       key={product.variantId}
                     >
-                      <div className="best-seller-figure small" aria-hidden="true">
-                        {product.imageUrl ? (
-                          <Image alt="" fill sizes="160px" src={product.imageUrl} />
-                        ) : null}
-                      </div>
+                      <ProductPhotoFigure className="best-seller-figure small" imageUrl={product.imageUrl} sizes="160px" />
                       <span>{product.title}</span>
                       <strong>{product.formattedPrice}</strong>
                     </Link>
@@ -672,6 +661,24 @@ export function CinematicHome({ products, consultWhatsappNumber, sourceMessage }
           <CartCount />
         </CartTrigger>
       </div>
+    </div>
+  );
+}
+
+function ProductPhotoFigure({
+  className,
+  imageUrl,
+  sizes
+}: {
+  className: string;
+  imageUrl: string | null | undefined;
+  sizes: string;
+}) {
+  const { backgroundColor, handleLoad } = usePhotoBackdrop();
+
+  return (
+    <div aria-hidden="true" className={className} style={backgroundColor ? { backgroundColor } : undefined}>
+      {imageUrl ? <Image alt="" fill onLoad={handleLoad} sizes={sizes} src={imageUrl} /> : null}
     </div>
   );
 }

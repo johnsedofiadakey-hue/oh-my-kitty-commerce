@@ -7811,14 +7811,13 @@ a.pos-secondary-button {
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 74%);
   border-radius: 24px;
-  background:
-    radial-gradient(circle at 48% 42%, rgb(255 255 255 / 80%), transparent 48%),
-    linear-gradient(150deg, #fdebe6, #f6b8c1 100%);
+  /* Flat, matching the product photos' own background — see product-detail-stage. */
+  background: var(--color-peach-mist);
 }
 
 .sheet-stage .photo-packshot > img {
-  object-fit: cover;
-  padding: 0;
+  object-fit: contain;
+  padding: 16px;
 }
 
 .sheet-copy h2 {
@@ -7864,18 +7863,100 @@ a.pos-secondary-button {
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 82%);
   border-radius: 34px;
-  background:
-    radial-gradient(circle at 42% 38%, rgb(255 255 255 / 74%), transparent 52%),
-    linear-gradient(145deg, #fdebe6, #f8cbd2 100%);
+  /* Flat, matching the product photos' own cream background almost exactly
+     (sampled from the actual images) — the previous pink diagonal gradient
+     was designed for full-bleed cropped photos and left a visible seam now
+     that the whole (uncropped) image shows its own background. */
+  background: var(--color-peach-mist);
   box-shadow: var(--shadow-premium);
 }
 
 .product-detail-stage img {
   border-radius: 30px;
-  object-fit: cover;
-  padding: 0;
+  /* cover was cropping the top/bottom off taller bottles — contain shows
+     the whole product, matching the shop grid tiles' own treatment. */
+  object-fit: contain;
+  padding: 20px;
   -webkit-mask-image: none;
   mask-image: none;
+}
+
+/* ---------- product photo zoom lightbox: tap-to-magnify trigger sits on
+   .product-detail-stage (already position: relative via .podium-surface). */
+.product-detail-zoom-trigger {
+  position: absolute;
+  z-index: 2;
+  right: 18px;
+  bottom: 18px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  color: var(--color-near-black);
+  background: rgb(255 255 255 / 86%);
+  box-shadow: var(--shadow-crisp);
+}
+
+.product-detail-zoom-trigger svg {
+  width: 20px;
+  height: 20px;
+}
+
+.image-zoom-backdrop {
+  position: fixed;
+  z-index: 90;
+  inset: 0;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  gap: 14px;
+  padding: 24px;
+  background: rgb(17 17 17 / 86%);
+  backdrop-filter: blur(10px);
+}
+
+.image-zoom-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: rgb(255 255 255 / 92%);
+}
+
+.image-zoom-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(100%, 640px);
+  height: min(76svh, 640px);
+  overflow: hidden;
+  border-radius: var(--radius-large);
+  background: var(--color-peach-mist);
+  cursor: zoom-in;
+}
+
+.image-zoom-frame.zoomed {
+  cursor: zoom-out;
+}
+
+.image-zoom-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.35s ease;
+  transform: scale(1);
+}
+
+.image-zoom-frame.zoomed .image-zoom-img {
+  transform: scale(2);
+}
+
+.image-zoom-hint {
+  color: var(--color-white-pure);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  opacity: 0.82;
 }
 
 .product-detail-copy {
@@ -7974,7 +8055,8 @@ a.pos-secondary-button {
 .cart-recommendation-figure img,
 .sheet-related-figure img,
 .track-result-thumb img {
-  object-fit: cover;
+  object-fit: contain;
+  padding: 6px;
 }
 
 .cart-item-figure img {
@@ -8675,9 +8757,10 @@ a.pos-secondary-button {
 .depth-product-stage {
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 76%);
-  background:
-    radial-gradient(circle at 50% 42%, rgb(255 255 255 / 78%), transparent 48%),
-    linear-gradient(150deg, #fffdfa, #fff7f2);
+  /* Flat, matching the product photos' own background — the near-white
+     gradient here still showed as a visible seam against the warmer cream
+     baked into the actual photos. */
+  background: var(--color-peach-mist);
   box-shadow:
     inset 0 0 0 1px rgb(255 255 255 / 58%),
     0 12px 28px rgb(88 43 52 / 7%);
@@ -9571,7 +9654,8 @@ a.pos-secondary-button {
 
 .cinematic-storefront .world-panel-figure {
   overflow: hidden;
-  background: #fff7f2;
+  /* Matches the product photos' own background — see product-detail-stage. */
+  background: var(--color-peach-mist);
 }
 
 .cinematic-storefront .world-panel-figure::before {
@@ -9579,10 +9663,10 @@ a.pos-secondary-button {
 }
 
 .cinematic-storefront .world-panel-figure img {
-  object-fit: cover;
-  padding: 0;
+  object-fit: contain;
+  padding: 18px;
   filter: none;
-  transform: scale(1.01);
+  transform: none;
 }
 
 .cinematic-storefront .world-panel-copy {
@@ -9647,7 +9731,8 @@ a.pos-secondary-button {
 
 .cinematic-storefront .best-seller-figure {
   overflow: hidden;
-  background: #fff7f2;
+  /* Matches the product photos' own background — see product-detail-stage. */
+  background: var(--color-peach-mist);
 }
 
 .cinematic-storefront .best-seller-figure::before {
@@ -9666,8 +9751,8 @@ a.pos-secondary-button {
 }
 
 .cinematic-storefront .best-seller-figure img {
-  object-fit: cover;
-  padding: 0;
+  object-fit: contain;
+  padding: 18px;
   filter: none;
 }
 
@@ -9684,12 +9769,13 @@ a.pos-secondary-button {
 
 .cinematic-storefront .best-seller-peek-card .best-seller-figure.small {
   overflow: hidden;
-  background: #fff7f2;
+  /* Matches the product photos' own background — see product-detail-stage. */
+  background: var(--color-peach-mist);
 }
 
 .cinematic-storefront .best-seller-figure.small img {
-  object-fit: cover;
-  padding: 0;
+  object-fit: contain;
+  padding: 10px;
 }
 
 @media (max-width: 860px) {

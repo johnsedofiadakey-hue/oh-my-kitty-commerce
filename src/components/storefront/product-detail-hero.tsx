@@ -6,8 +6,10 @@ import type { Route } from "next";
 import { useMemo, useState } from "react";
 import { AddToBagButton, type CartLine } from "@/components/storefront/add-to-bag-button";
 import { CartTrigger } from "@/components/storefront/cart-trigger";
+import { ProductImageZoom } from "@/components/storefront/product-image-zoom";
 import { BagIcon } from "@/components/storefront/icons";
 import { formatMoney } from "@/lib/commerce/format";
+import { usePhotoBackdrop } from "@/lib/storefront/use-photo-backdrop";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 
 type ProductDetailHeroProps = {
@@ -21,6 +23,7 @@ export function ProductDetailHero({ variants }: ProductDetailHeroProps) {
   const hasMultipleSizes = variants.length > 1;
   const maxQuantity = Math.max(1, selected.stockAvailable);
   const linePrice = useMemo(() => formatMoney(selected.price * quantity), [selected.price, quantity]);
+  const { backgroundColor: stageBackdrop, handleLoad: handleStageLoad } = usePhotoBackdrop();
 
   function selectVariant(variantId: string) {
     setSelectedVariantId(variantId);
@@ -29,17 +32,22 @@ export function ProductDetailHero({ variants }: ProductDetailHeroProps) {
 
   return (
     <section className={`product-detail-hero ${selected.tone}`}>
-      <div className="product-detail-stage podium-surface" aria-hidden="true">
+      <div className="product-detail-stage podium-surface" style={stageBackdrop ? { backgroundColor: stageBackdrop } : undefined}>
         {selected.imageUrl ? (
-          <Image
-            alt=""
-            fill
-            priority
-            sizes="(max-width: 820px) 92vw, 520px"
-            src={selected.imageUrl}
-          />
+          <>
+            <Image
+              alt=""
+              aria-hidden="true"
+              fill
+              priority
+              onLoad={handleStageLoad}
+              sizes="(max-width: 820px) 92vw, 520px"
+              src={selected.imageUrl}
+            />
+            <ProductImageZoom alt={selected.title} src={selected.imageUrl} />
+          </>
         ) : (
-          <Image alt="" height={160} priority src="/brand/oh-my-kitty-logo.jpeg" width={160} />
+          <Image alt="" aria-hidden="true" height={160} priority src="/brand/oh-my-kitty-logo.jpeg" width={160} />
         )}
       </div>
 

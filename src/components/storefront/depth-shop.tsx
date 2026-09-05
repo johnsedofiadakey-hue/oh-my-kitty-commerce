@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react";
 import {
   AddToBagButton,
   addLineToCart,
@@ -14,6 +14,7 @@ import { StorefrontNav } from "@/components/storefront/storefront-nav";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 import { celebrateBurst } from "@/lib/storefront/celebrate";
 import { openCart } from "@/lib/storefront/cart-store";
+import { usePhotoBackdrop } from "@/lib/storefront/use-photo-backdrop";
 
 type DepthShopProps = {
   products: StorefrontProductView[];
@@ -25,6 +26,7 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const { backgroundColor: sheetBackdrop, handleLoad: handleSheetLoad } = usePhotoBackdrop();
 
   const bestSellerProducts = useMemo(
     () =>
@@ -320,8 +322,12 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
             >
               <span aria-hidden="true">x</span>
             </button>
-            <div className={`sheet-stage podium-surface ${selectedProduct.tone}`} aria-hidden="true">
-              <ProductPackshot product={selectedProduct} />
+            <div
+              className={`sheet-stage podium-surface ${selectedProduct.tone}`}
+              aria-hidden="true"
+              style={sheetBackdrop ? { backgroundColor: sheetBackdrop } : undefined}
+            >
+              <ProductPackshot product={selectedProduct} onImageLoad={handleSheetLoad} />
             </div>
             <div className="sheet-copy">
               {selectedProduct.bestSeller || !isDefaultVariant(selectedProduct) ? (
@@ -410,12 +416,17 @@ function ProductTile({
   product: StorefrontProductView;
 }) {
   const [added, setAdded] = useState(false);
+  const { backgroundColor: tileBackdrop, handleLoad: handleTileLoad } = usePhotoBackdrop();
 
   return (
     <article className={`depth-product-card ${featured ? "featured" : ""}`}>
       <button className="depth-product-card-hit" onClick={onSelect} type="button">
-        <div className="depth-product-stage" aria-hidden="true">
-          <ProductPackshot product={product} />
+        <div
+          className="depth-product-stage"
+          aria-hidden="true"
+          style={tileBackdrop ? { backgroundColor: tileBackdrop } : undefined}
+        >
+          <ProductPackshot product={product} onImageLoad={handleTileLoad} />
         </div>
         <div className="depth-product-info">
           {product.bestSeller ? <span className="category-pill bestseller-pill">Best seller</span> : null}
@@ -492,7 +503,13 @@ function ShopBotanicalDrift({ products }: { products: StorefrontProductView[] })
   );
 }
 
-function ProductPackshot({ product }: { product: StorefrontProductView }) {
+function ProductPackshot({
+  product,
+  onImageLoad
+}: {
+  product: StorefrontProductView;
+  onImageLoad?: (event: SyntheticEvent<HTMLImageElement>) => void;
+}) {
   const [loaded, setLoaded] = useState(false);
 
   if (product.imageUrl) {
@@ -504,7 +521,10 @@ function ProductPackshot({ product }: { product: StorefrontProductView }) {
           fill
           sizes="(max-width: 820px) calc(100vw - 80px), 430px"
           aria-hidden="true"
-          onLoad={() => setLoaded(true)}
+          onLoad={(event) => {
+            setLoaded(true);
+            onImageLoad?.(event);
+          }}
         />
       </div>
     );
