@@ -1,9 +1,12 @@
+import Link from "next/link";
+import type { Route } from "next";
 import {
   formatMoney,
   getAdminOperationsData,
   toSortableMillis
 } from "@/lib/admin/operations-data";
 import { getAdminFinancialData } from "@/lib/admin/financial-data";
+import { buildPnlReport, getPeriodBoundaries, parseCustomRange } from "@/lib/admin/financial-reports";
 import { getRequiredAdminActor } from "@/lib/auth/server";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getEffectiveRoles } from "@/lib/commerce/operations";
@@ -24,7 +27,6 @@ import {
 import { AssetRow, CreateAssetForm } from "@/components/admin/asset-forms";
 import { CreateWorkerForm, PayWorkerForm, PayrollHistoryRow, WorkerRow } from "@/components/admin/worker-forms";
 import type { AdminOrderRow } from "@/lib/admin/operations-data";
-import type { Expense, ManualRevenueEntry, PayrollPayment } from "@/lib/commerce/types";
 import { createManualRevenueEntryAction, deleteManualRevenueEntryAction } from "./actions";
 import {
   createExpenseAction,
@@ -119,89 +121,6 @@ function buildProductMarginReport(label: string, orderRows: AdminOrderRow[], sin
   };
 }
 
-type PnlReport = {
-  label: string;
-  orderCount: number;
-  ordersRevenue: number;
-  otherRevenue: number;
-  revenue: number;
-  expenses: number;
-  payroll: number;
-  netProfit: number;
-};
-
-// Cash-basis P&L: revenue is what actually came in (orders + logged other
-// income), expenses is everything spent (including raw-material purchases —
-// deliberately NOT the recipe-based COGS used in the product margin section
-// below, which answers a different question and would double-count against
-// this if subtracted here too).
-function buildPnlReport(
-  label: string,
-  data: {
-    orderRows: AdminOrderRow[];
-    expenses: Expense[];
-    payrollPayments: PayrollPayment[];
-    manualRevenueEntries: ManualRevenueEntry[];
-  },
-  sinceMillis: number,
-  untilMillis: number
-): PnlReport {
-  const inRange = (millis: number) => millis >= sinceMillis && millis <= untilMillis;
-
-  const paidInPeriod = data.orderRows.filter(
-    (row) => row.order.paymentStatus === "PAID" && inRange(toSortableMillis(row.order.createdAt))
-  );
-  const ordersRevenue = paidInPeriod.reduce((total, row) => total + row.order.total, 0);
-  const otherRevenue = data.manualRevenueEntries
-    .filter((entry) => inRange(new Date(entry.date).getTime()))
-    .reduce((total, entry) => total + entry.amount, 0);
-  const expensesTotal = data.expenses
-    .filter((expense) => inRange(new Date(expense.date).getTime()))
-    .reduce((total, expense) => total + expense.amount, 0);
-  const payrollTotal = data.payrollPayments
-    .filter((payment) => inRange(new Date(payment.paidDate).getTime()))
-    .reduce((total, payment) => total + payment.grossAmount, 0);
-  const revenue = ordersRevenue + otherRevenue;
-
-  return {
-    label,
-    orderCount: paidInPeriod.length,
-    ordersRevenue,
-    otherRevenue,
-    revenue,
-    expenses: expensesTotal,
-    payroll: payrollTotal,
-    netProfit: revenue - expensesTotal - payrollTotal
-  };
-}
-
-function getPeriodBoundaries() {
-  const now = Date.now();
-  const startOfToday = new Date();
-  startOfToday.setUTCHours(0, 0, 0, 0);
-
-  return {
-    now,
-    startOfToday: startOfToday.getTime(),
-    sevenDaysAgo: now - 7 * 24 * 60 * 60 * 1000,
-    thirtyDaysAgo: now - 30 * 24 * 60 * 60 * 1000
-  };
-}
-
-function parseCustomRange(from: string | undefined, to: string | undefined) {
-  if (!from || !to) {
-    return null;
-  }
-
-  const start = new Date(`${from}T00:00:00.000Z`);
-  const end = new Date(`${to}T23:59:59.999Z`);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
-    return null;
-  }
-
-  return { from, to, sinceMillis: start.getTime(), untilMillis: end.getTime() };
-}
-
 function formatMargin(revenue: number, profit: number) {
   if (revenue <= 0) {
     return "—";
@@ -251,10 +170,10 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
   };
 
   const pnlPeriods = [
-    buildPnlReport("Today", pnlInput, startOfToday, now),
-    buildPnlReport("Last 7 days", pnlInput, sevenDaysAgo, now),
-    buildPnlReport("Last 30 days", pnlInput, thirtyDaysAgo, now),
-    buildPnlReport("All time", pnlInput, 0, now)
+    { key: "today", ...buildPnlReport("Today", pnlInput, startOfToday, now) },
+    { key: "7d", ...buildPnlReport("Last 7 days", pnlInput, sevenDaysAgo, now) },
+    { key: "30d", ...buildPnlReport("Last 30 days", pnlInput, thirtyDaysAgo, now) },
+    { key: "all", ...buildPnlReport("All time", pnlInput, 0, now) }
   ];
 
   const customRange = parseCustomRange(from, to);
@@ -284,7 +203,7 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
       ) : null}
 
       {pnlPeriods.map((period) => (
-        <section className="admin-panel" key={period.label}>
+        <section className="admin-panel" key={period.key}>
           <div className="panel-header">
             <h2>{period.label}</h2>
             <span>{period.orderCount} order{period.orderCount === 1 ? "" : "s"}</span>
@@ -307,10 +226,15 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
               <strong>{formatMoney(period.netProfit)}</strong>
             </article>
           </div>
-          <p className="admin-help">
-            Revenue is {formatMoney(period.ordersRevenue)} from orders
-            {period.otherRevenue > 0 ? ` + ${formatMoney(period.otherRevenue)} other income` : ""}.
-          </p>
+          <div className="admin-panel-footer-row">
+            <p className="admin-help">
+              Revenue is {formatMoney(period.ordersRevenue)} from orders
+              {period.otherRevenue > 0 ? ` + ${formatMoney(period.otherRevenue)} other income` : ""}.
+            </p>
+            <Link className="text-button" href={`/admin/financial/print/pnl?period=${period.key}` as Route} target="_blank">
+              Print statement
+            </Link>
+          </div>
         </section>
       ))}
 
@@ -352,7 +276,12 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                 <strong>{formatMoney(customPeriod.netProfit)}</strong>
               </article>
             </div>
-            <p className="admin-help">{customPeriod.orderCount} paid order{customPeriod.orderCount === 1 ? "" : "s"}.</p>
+            <div className="admin-panel-footer-row">
+              <p className="admin-help">{customPeriod.orderCount} paid order{customPeriod.orderCount === 1 ? "" : "s"}.</p>
+              <Link className="text-button" href={`/admin/financial/print/pnl?from=${from}&to=${to}` as Route} target="_blank">
+                Print statement
+              </Link>
+            </div>
           </>
         ) : null}
       </section>
@@ -380,15 +309,19 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
           {recentRevenueEntries.length === 0 ? <p className="admin-help">Nothing logged yet.</p> : null}
         </div>
       </section>
+    </>
+  );
 
+  const marginReferenceContent = (
+    <>
       <div className="page-heading">
         <div>
           <h2 className="app-title" style={{ fontSize: "1.35rem" }}>
             Product margin reference
           </h2>
           <p className="app-subtitle">
-            Revenue against recipe cost per product — for pricing decisions, not part of Net profit above. Set a cost
-            per unit on each product (Products &rarr; Edit) to see it here.
+            Revenue against recipe cost per product — for pricing decisions, not part of Net profit. Set a cost per
+            unit on each product (Products &rarr; Edit) to see it here.
           </p>
         </div>
       </div>
@@ -450,12 +383,96 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
     </>
   );
 
-  const tabs: AdminTabSpec[] = [{ id: "overview", label: "Overview", content: overviewTab }];
+  const reportsTab = (
+    <>
+      <section className="admin-panel">
+        <div className="panel-header">
+          <h2>Profit &amp; Loss statement</h2>
+        </div>
+        <div className="stack-list">
+          {pnlPeriods.map((period) => (
+            <div className="stack-row" key={period.key}>
+              <strong>{period.label}</strong>
+              <span>Net profit {formatMoney(period.netProfit)}</span>
+              <div className="stack-row-actions">
+                <Link className="admin-action ghost small" href={`/admin/financial/print/pnl?period=${period.key}` as Route} target="_blank">
+                  Print
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+        <form className="admin-form-grid admin-panel-section" action="/admin/financial/print/pnl" method="get" target="_blank">
+          <label className="admin-field">
+            <span>From</span>
+            <input name="from" required type="date" />
+          </label>
+          <label className="admin-field">
+            <span>To</span>
+            <input name="to" required type="date" />
+          </label>
+          <button className="admin-action" type="submit">
+            Print custom range
+          </button>
+        </form>
+      </section>
+
+      {canSeeExpenses ? (
+        <section className="admin-panel">
+          <div className="panel-header">
+            <h2>Expense report</h2>
+          </div>
+          <div className="stack-list">
+            {pnlPeriods.map((period) => (
+              <div className="stack-row" key={period.key}>
+                <strong>{period.label}</strong>
+                <span>Total {formatMoney(period.expenses)}</span>
+                <div className="stack-row-actions">
+                  <Link
+                    className="admin-action ghost small"
+                    href={`/admin/financial/print/expenses?period=${period.key}` as Route}
+                    target="_blank"
+                  >
+                    Print
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+          <form
+            className="admin-form-grid admin-panel-section"
+            action="/admin/financial/print/expenses"
+            method="get"
+            target="_blank"
+          >
+            <label className="admin-field">
+              <span>From</span>
+              <input name="from" required type="date" />
+            </label>
+            <label className="admin-field">
+              <span>To</span>
+              <input name="to" required type="date" />
+            </label>
+            <button className="admin-action" type="submit">
+              Print custom range
+            </button>
+          </form>
+        </section>
+      ) : null}
+
+      {marginReferenceContent}
+    </>
+  );
+
+  const tabs: AdminTabSpec[] = [
+    { id: "overview", label: "Overview", content: overviewTab },
+    { id: "reports", label: "Reports", content: reportsTab }
+  ];
 
   if (canSeeExpenses) {
     const categoriesById = new Map(financial.expenseCategories.map((category) => [category.id, category]));
-    const recentExpenses = financial.expenses.slice(0, 50);
     const period = currentPeriod();
+    const allExpensesTotal = financial.expenses.reduce((total, expense) => total + expense.amount, 0);
 
     tabs.push({
       id: "expenses",
@@ -464,75 +481,14 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
         <>
           {financial.expenseCategories.length === 0 ? (
             <div className="admin-alert" role="status">
-              Add a category below before logging your first expense.
+              Add a category first — open &quot;Manage categories &amp; recurring&quot; below.
             </div>
           ) : null}
 
           <section className="admin-panel">
             <div className="panel-header">
-              <h2>Categories</h2>
-              <span>{financial.expenseCategories.length} categories</span>
-            </div>
-            <div className="quick-edit-list">
-              {financial.expenseCategories.map((category) => (
-                <TaxonomyRow
-                  action={quickEditExpenseCategoryAction}
-                  active={category.active}
-                  disabled={disabled}
-                  id={category.id}
-                  key={category.id}
-                  slug={category.slug}
-                  sortOrder={category.sortOrder}
-                  title={category.title}
-                />
-              ))}
-              {financial.expenseCategories.length === 0 ? <p className="admin-help">No categories yet.</p> : null}
-            </div>
-            <div className="admin-panel-section">
-              <CreateExpenseCategoryForm action={createExpenseCategoryAction} disabled={disabled} />
-            </div>
-          </section>
-
-          <section className="admin-panel">
-            <div className="panel-header">
-              <h2>Recurring expenses</h2>
-              <span>{financial.recurringExpenseTemplates.length} set up</span>
-            </div>
-            <div className="stack-list">
-              {financial.recurringExpenseTemplates.map((template) => (
-                <RecurringExpenseRow
-                  amountLabel={formatMoney(template.amount)}
-                  categoryTitle={categoriesById.get(template.categoryId)?.title ?? "Uncategorized"}
-                  currentPeriod={period}
-                  dayOfMonth={template.dayOfMonth}
-                  deleteAction={deleteRecurringExpenseTemplateAction}
-                  disabled={disabled}
-                  key={template.id}
-                  label={template.label}
-                  lastLoggedPeriod={template.lastLoggedPeriod ?? null}
-                  logAction={logRecurringExpenseAction}
-                  templateId={template.id}
-                />
-              ))}
-              {financial.recurringExpenseTemplates.length === 0 ? (
-                <p className="admin-help">Nothing recurring set up yet — rent, salaries, subscriptions.</p>
-              ) : null}
-            </div>
-            {financial.expenseCategories.length > 0 ? (
-              <div className="admin-panel-section">
-                <CreateRecurringExpenseForm
-                  action={createRecurringExpenseTemplateAction}
-                  categories={financial.expenseCategories}
-                  disabled={disabled}
-                />
-              </div>
-            ) : null}
-          </section>
-
-          <section className="admin-panel">
-            <div className="panel-header">
-              <h2>Log an expense</h2>
-              <span>{financial.expenses.length} logged</span>
+              <h2>All expenses</h2>
+              <span>{financial.expenses.length} logged &middot; {formatMoney(allExpensesTotal)} total</span>
             </div>
             {financial.expenseCategories.length > 0 ? (
               <div className="admin-panel-section">
@@ -540,7 +496,7 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
               </div>
             ) : null}
             <div className="stack-list">
-              {recentExpenses.map((expense) => (
+              {financial.expenses.map((expense) => (
                 <ExpenseRow
                   amountLabel={formatMoney(expense.amount)}
                   categoryTitle={categoriesById.get(expense.categoryId)?.title ?? "Uncategorized"}
@@ -553,9 +509,80 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                   note={expense.note}
                 />
               ))}
-              {recentExpenses.length === 0 ? <p className="admin-help">Nothing logged yet.</p> : null}
+              {financial.expenses.length === 0 ? <p className="admin-help">Nothing logged yet.</p> : null}
+            </div>
+            <div className="admin-panel-footer-row">
+              <span />
+              <Link className="text-button" href={"/admin/financial/print/expenses?period=all" as Route} target="_blank">
+                Print all-time expense report
+              </Link>
             </div>
           </section>
+
+          <details className="admin-panel admin-collapsible">
+            <summary className="panel-header">
+              <h2>Manage categories &amp; recurring</h2>
+              <span>
+                {financial.expenseCategories.length} categories &middot; {financial.recurringExpenseTemplates.length}{" "}
+                recurring
+              </span>
+            </summary>
+
+            <div className="admin-panel-section">
+              <h3>Categories</h3>
+              <div className="quick-edit-list">
+                {financial.expenseCategories.map((category) => (
+                  <TaxonomyRow
+                    action={quickEditExpenseCategoryAction}
+                    active={category.active}
+                    disabled={disabled}
+                    id={category.id}
+                    key={category.id}
+                    slug={category.slug}
+                    sortOrder={category.sortOrder}
+                    title={category.title}
+                  />
+                ))}
+                {financial.expenseCategories.length === 0 ? <p className="admin-help">No categories yet.</p> : null}
+              </div>
+              <div className="admin-panel-section">
+                <CreateExpenseCategoryForm action={createExpenseCategoryAction} disabled={disabled} />
+              </div>
+            </div>
+
+            <div className="admin-panel-section">
+              <h3>Recurring expenses</h3>
+              <div className="stack-list">
+                {financial.recurringExpenseTemplates.map((template) => (
+                  <RecurringExpenseRow
+                    amountLabel={formatMoney(template.amount)}
+                    categoryTitle={categoriesById.get(template.categoryId)?.title ?? "Uncategorized"}
+                    currentPeriod={period}
+                    dayOfMonth={template.dayOfMonth}
+                    deleteAction={deleteRecurringExpenseTemplateAction}
+                    disabled={disabled}
+                    key={template.id}
+                    label={template.label}
+                    lastLoggedPeriod={template.lastLoggedPeriod ?? null}
+                    logAction={logRecurringExpenseAction}
+                    templateId={template.id}
+                  />
+                ))}
+                {financial.recurringExpenseTemplates.length === 0 ? (
+                  <p className="admin-help">Nothing recurring set up yet — rent, salaries, subscriptions.</p>
+                ) : null}
+              </div>
+              {financial.expenseCategories.length > 0 ? (
+                <div className="admin-panel-section">
+                  <CreateRecurringExpenseForm
+                    action={createRecurringExpenseTemplateAction}
+                    categories={financial.expenseCategories}
+                    disabled={disabled}
+                  />
+                </div>
+              ) : null}
+            </div>
+          </details>
         </>
       )
     });
@@ -773,7 +800,9 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
       <div className="page-heading">
         <div>
           <h1 className="app-title">Financial</h1>
-          <p className="app-subtitle">Everything about the money — revenue, expenses, assets, and payroll, in one place.</p>
+          <p className="app-subtitle">
+            Revenue, expenses, assets, and payroll — with printable statements under Reports.
+          </p>
         </div>
       </div>
       <AdminTabs initialTabId={tab} tabs={tabs} />

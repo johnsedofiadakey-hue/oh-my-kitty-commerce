@@ -4585,6 +4585,20 @@ button {
   padding: 18px 20px;
 }
 
+.admin-panel-footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 0 20px 16px;
+}
+
+.admin-panel-footer-row .admin-help {
+  margin: 0;
+}
+
 .panel-header h2 {
   margin: 0;
   font-family: var(--font-serif);
@@ -7318,6 +7332,106 @@ a.pos-secondary-button {
   font-size: 0.76rem;
 }
 
+.statement-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-height: 100vh;
+  padding: 24px 16px 60px;
+  background: var(--color-cream);
+}
+
+.statement-print-bar {
+  display: flex;
+  gap: 10px;
+}
+
+.statement-paper {
+  width: 100%;
+  max-width: 640px;
+  padding: 32px 28px;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: var(--color-white-pure);
+  box-shadow: 0 12px 32px rgb(17 17 17 / 10%);
+  color: var(--color-near-black);
+  font-weight: 700;
+  line-height: 1.6;
+  -webkit-text-stroke: 0.3px currentColor;
+}
+
+.statement-header {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.statement-header h1 {
+  margin: 0 0 2px;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 1.5rem;
+}
+
+.statement-header p {
+  margin: 0;
+  font-weight: 700;
+}
+
+.statement-section {
+  margin-top: 22px;
+}
+
+.statement-section h2 {
+  margin: 0 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--color-near-black);
+  font-size: 0.92rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.statement-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.statement-row.indent {
+  padding-left: 16px;
+}
+
+.statement-total-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 2px solid var(--color-near-black);
+  font-weight: 900;
+  font-size: 1.05rem;
+}
+
+.statement-net-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 3px double var(--color-near-black);
+  font-weight: 900;
+  font-size: 1.3rem;
+}
+
+.statement-footnote {
+  margin-top: 22px;
+  color: var(--color-near-black);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
 @media print {
   .no-print {
     display: none !important;
@@ -7338,9 +7452,31 @@ a.pos-secondary-button {
     box-shadow: none;
   }
 
-  @page {
+  /* Named page, scoped to the receipt only via `page: receipt` below — an
+     unscoped @page rule here would force every other printed page in the
+     app (the financial statements) onto the same 80mm thermal-paper width. */
+  @page receipt {
     size: 80mm auto;
     margin: 4mm;
+  }
+
+  .receipt-page {
+    page: receipt;
+  }
+
+  .statement-page {
+    display: block;
+    min-height: 0;
+    padding: 0;
+    background: var(--color-white-pure);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .statement-paper {
+    border: 0;
+    box-shadow: none;
+    max-width: 100%;
   }
 }
 
