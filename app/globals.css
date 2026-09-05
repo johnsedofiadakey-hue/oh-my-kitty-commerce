@@ -7206,8 +7206,14 @@ a.pos-secondary-button {
   box-shadow: 0 12px 32px rgb(17 17 17 / 10%);
   color: var(--color-near-black);
   font-family: "Courier New", ui-monospace, monospace;
-  font-size: 0.78rem;
-  line-height: 1.5;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.55;
+  /* Thermal/inkjet printers routinely lighten colors to save ink unless
+     told not to — without this, text set to solid black on screen can
+     still come out gray on paper. */
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
 }
 
 .receipt-header {
@@ -7229,24 +7235,27 @@ a.pos-secondary-button {
 }
 
 .receipt-header strong {
-  font-size: 1rem;
+  font-size: 1.05rem;
+  font-weight: 900;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
 .receipt-header span {
-  color: var(--color-muted);
-  font-size: 0.72rem;
+  color: var(--color-near-black);
+  font-weight: 700;
+  font-size: 0.76rem;
 }
 
 .receipt-rule {
-  border-top: 1px dashed var(--color-line);
+  border-top: 1.5px dashed var(--color-near-black);
   margin: 10px 0;
 }
 
 .receipt-meta {
   display: grid;
   gap: 3px;
+  font-weight: 700;
 }
 
 .receipt-meta div,
@@ -7265,17 +7274,19 @@ a.pos-secondary-button {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .receipt-item-sub {
-  color: var(--color-muted);
-  font-size: 0.72rem;
+  color: var(--color-near-black);
+  font-weight: 700;
+  font-size: 0.76rem;
 }
 
 .receipt-totals {
   display: grid;
   gap: 3px;
+  font-weight: 700;
 }
 
 .receipt-grand-total {
@@ -7284,16 +7295,17 @@ a.pos-secondary-button {
   gap: 10px;
   margin-top: 6px;
   padding-top: 6px;
-  border-top: 1px solid var(--color-near-black);
-  font-weight: 800;
-  font-size: 0.92rem;
+  border-top: 2px solid var(--color-near-black);
+  font-weight: 900;
+  font-size: 0.98rem;
 }
 
 .receipt-footer {
   margin: 0;
   text-align: center;
-  color: var(--color-muted);
-  font-size: 0.72rem;
+  color: var(--color-near-black);
+  font-weight: 700;
+  font-size: 0.76rem;
 }
 
 @media print {
@@ -7306,6 +7318,8 @@ a.pos-secondary-button {
     min-height: 0;
     padding: 0;
     background: var(--color-white-pure);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   .receipt-paper {
