@@ -11,7 +11,6 @@ import { CartTrigger } from "@/components/storefront/cart-trigger";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
 import { WhatsAppCta } from "@/components/storefront/whatsapp-cta";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
-import { toWhatsAppLink } from "@/lib/storefront/whatsapp";
 
 type CinematicHomeProps = {
   products: StorefrontProductView[];
@@ -444,8 +443,9 @@ export function CinematicHome({ products, consultWhatsappNumber, sourceMessage }
               </Link>
               <WhatsAppCta
                 className="portal-cta-secondary"
-                href={toWhatsAppLink(consultWhatsappNumber, CONSULT_MESSAGE)}
                 label="Get guidance"
+                message={CONSULT_MESSAGE}
+                phoneNumber={consultWhatsappNumber}
               />
             </div>
           </div>

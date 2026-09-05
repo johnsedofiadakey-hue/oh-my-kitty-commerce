@@ -1,17 +1,17 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { toAndroidBrowserEscapeLink } from "@/lib/storefront/whatsapp";
+import { toAndroidWhatsAppEscapeLink, toWhatsAppLink } from "@/lib/storefront/whatsapp";
 
 // TikTok, Instagram, and Facebook open links in their own locked-down in-app
 // WebView rather than the device's real browser. That WebView deliberately
 // blocks the OS-level app handoff wa.me links rely on to open WhatsApp, so
 // a plain tap there does nothing. On Android we can still get there in one
-// tap: an Intent URI is resolved by the OS itself, not the WebView's JS
-// sandbox, so it forces the request out to the real browser, which then
-// completes the handoff. iOS has no equivalent — Apple's WKWebView doesn't
-// give a web page that escape, so the best a tap can do there is a plain
-// top-level navigation instead of one that opens a (blocked) new tab.
+// direct tap: an Intent URI targeting WhatsApp's own package is resolved by
+// the OS itself, not the WebView's JS sandbox, so it launches the app with
+// no browser hop in between. iOS has no equivalent — Apple's WKWebView
+// doesn't give a web page that escape, so the best a tap can do there is a
+// plain top-level navigation instead of one that opens a (blocked) new tab.
 const IN_APP_BROWSER_PATTERN = /musical_ly|bytedancewebview|tiktok|instagram|FBAN|FBAV|FB_IAB|FBSV/i;
 const ANDROID_PATTERN = /Android/i;
 
@@ -38,21 +38,33 @@ function getAndroidServerSnapshot() {
   return false;
 }
 
-export function WhatsAppCta({ className, href, label }: { className?: string; href: string; label: string }) {
+export function WhatsAppCta({
+  className,
+  phoneNumber,
+  message,
+  label
+}: {
+  className?: string;
+  phoneNumber: string;
+  message?: string;
+  label: string;
+}) {
   const restricted = useSyncExternalStore(subscribeNever, getRestrictedSnapshot, getRestrictedServerSnapshot);
   const isAndroid = useSyncExternalStore(subscribeNever, getAndroidSnapshot, getAndroidServerSnapshot);
 
-  if (!restricted) {
+  if (restricted && isAndroid) {
     return (
-      <a className={className} href={href} rel="noreferrer" target="_blank">
+      <a className={className} href={toAndroidWhatsAppEscapeLink(phoneNumber, message)}>
         {label}
       </a>
     );
   }
 
-  if (isAndroid) {
+  const href = toWhatsAppLink(phoneNumber, message);
+
+  if (!restricted) {
     return (
-      <a className={className} href={toAndroidBrowserEscapeLink(href)}>
+      <a className={className} href={href} rel="noreferrer" target="_blank">
         {label}
       </a>
     );
