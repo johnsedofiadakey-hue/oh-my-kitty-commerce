@@ -95,8 +95,26 @@ export const getStorefrontCatalogue = cache(async (): Promise<StorefrontCatalogu
     const variantsById = new Map(allVariants.map((variant) => [variant.id, variant]));
     const variants = allVariants.filter((variant) => variant.active && productIds.has(variant.productId));
 
+    // Every storefront page load used to list the entire media library just
+    // to look up the handful of images these products actually reference —
+    // fetch only those instead. Mirrors exactly what createCards resolves
+    // per card (variant's own image, falling back to the product's).
+    const neededMediaIds = new Set<string>();
+    for (const variant of variants) {
+      const id = (variant.mediaIds ?? [])[0];
+      if (id) {
+        neededMediaIds.add(id);
+      }
+    }
+    for (const product of products) {
+      const id = (product.mediaIds ?? [])[0];
+      if (id) {
+        neededMediaIds.add(id);
+      }
+    }
+
     const [media, concerns, productTypes, routines] = await Promise.all([
-      context.repo.listMedia(),
+      context.repo.findMediaByIds([...neededMediaIds]),
       context.repo.listConcerns(),
       context.repo.listProductTypes(),
       context.repo.listRoutines()

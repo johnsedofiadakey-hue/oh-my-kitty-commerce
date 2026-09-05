@@ -1,4 +1,4 @@
-import { Timestamp, type Firestore } from "firebase-admin/firestore";
+import { FieldPath, Timestamp, type Firestore } from "firebase-admin/firestore";
 import type { Role } from "@/lib/permissions/permissions";
 import type { CommerceRepository } from "@/lib/commerce/repository";
 import type {
@@ -181,6 +181,28 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     return snapshot.docs.map((doc) => readDoc<MediaAsset>(doc)).filter(isDefined);
   }
 
+  async findMediaByIds(ids: string[]) {
+    const unique = [...new Set(ids)];
+    if (unique.length === 0) {
+      return [];
+    }
+
+    // Firestore's "in" operator caps out at 30 values per query.
+    const chunks: string[][] = [];
+    for (let i = 0; i < unique.length; i += 30) {
+      chunks.push(unique.slice(i, i + 30));
+    }
+
+    const snapshots = await Promise.all(
+      chunks.map((chunk) => {
+        const query = this.db.collection("media").where(FieldPath.documentId(), "in", chunk);
+        return this.tx ? this.tx.get(query) : query.get();
+      })
+    );
+
+    return snapshots.flatMap((snapshot) => snapshot.docs.map((doc) => readDoc<MediaAsset>(doc)).filter(isDefined));
+  }
+
   async saveMedia(media: MediaAsset) {
     this.rejectIfTransactional("saveMedia");
     await this.db.collection("media").doc(media.id).set(cleanFirestoreData(media), {
@@ -306,7 +328,11 @@ export class FirestoreCommerceRepository implements CommerceRepository {
    */
   async listAllInventoryMovements() {
     this.rejectIfTransactional("listAllInventoryMovements");
-    const snapshot = await this.db.collection("inventoryMovements").get();
+    // The admin inventory page only ever shows the 8 most recent per
+    // variant — stock levels themselves come from the variant document, not
+    // this ledger, so nothing needs the full history. Capped generously so
+    // it costs nothing today and just stops this from growing unbounded.
+    const snapshot = await this.db.collection("inventoryMovements").orderBy("createdAt", "desc").limit(500).get();
     return snapshot.docs.map((doc) => readDoc<InventoryMovement>(doc)).filter(isDefined);
   }
 
@@ -428,7 +454,10 @@ export class FirestoreCommerceRepository implements CommerceRepository {
 
   async listAuditLogs() {
     this.rejectIfTransactional("listAuditLogs");
-    const snapshot = await this.db.collection("auditLogs").get();
+    // Pure display (the Audit page), unbounded otherwise — every admin
+    // action ever taken writes one of these, so this grows forever without
+    // a cap. 300 is generous for "what happened recently."
+    const snapshot = await this.db.collection("auditLogs").orderBy("createdAt", "desc").limit(300).get();
     return snapshot.docs.map((doc) => readDoc<AuditLog>(doc)).filter(isDefined);
   }
 

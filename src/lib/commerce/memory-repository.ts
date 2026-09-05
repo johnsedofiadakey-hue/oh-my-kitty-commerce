@@ -157,6 +157,11 @@ export class MemoryCommerceRepository implements CommerceRepository {
     return [...this.media.values()];
   }
 
+  async findMediaByIds(ids: string[]) {
+    const unique = new Set(ids);
+    return [...this.media.values()].filter((asset) => unique.has(asset.id));
+  }
+
   async saveMedia(media: MediaAsset) {
     this.media.set(media.id, media);
   }
@@ -228,7 +233,9 @@ export class MemoryCommerceRepository implements CommerceRepository {
   }
 
   async listAllInventoryMovements() {
-    return [...this.inventoryMovements.values()];
+    return [...this.inventoryMovements.values()].sort(
+      (first, second) => (second.createdAt?.getTime() ?? 0) - (first.createdAt?.getTime() ?? 0)
+    );
   }
 
   async savePromotion(promotion: Promotion) {
@@ -304,7 +311,7 @@ export class MemoryCommerceRepository implements CommerceRepository {
   }
 
   async listAuditLogs() {
-    return [...this.auditLogs.values()];
+    return [...this.auditLogs.values()].sort((first, second) => second.createdAt.getTime() - first.createdAt.getTime());
   }
 
   async savePushSubscription(subscription: PushSubscription) {

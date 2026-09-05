@@ -53,6 +53,11 @@ export type CommerceRepository = {
   saveRawMaterial(material: RawMaterial): Promise<void>;
   deleteRawMaterial(id: string): Promise<void>;
   listMedia(): Promise<MediaAsset[]>;
+  // For the storefront: fetches only the specific media docs a page
+  // actually references, instead of scanning the whole library — same
+  // result, far fewer reads, and scales with what's live rather than with
+  // everything ever uploaded. Returns [] for an empty `ids` array.
+  findMediaByIds(ids: string[]): Promise<MediaAsset[]>;
   saveMedia(media: MediaAsset): Promise<void>;
   deleteMedia(id: string): Promise<void>;
   listContentBlocks(): Promise<ContentBlock[]>;
