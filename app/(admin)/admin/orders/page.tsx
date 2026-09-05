@@ -247,6 +247,15 @@ function OrderDetail({ row, disabled, canDelete }: { row: AdminOrderRow; disable
               <dd>{email}</dd>
             </div>
           ) : null}
+          {order.deliveryMethod ? (
+            <div>
+              <dt>Delivery method</dt>
+              <dd>
+                {order.deliveryMethod.name}
+                {order.deliveryMethod.estimate ? ` — ${order.deliveryMethod.estimate}` : ""}
+              </dd>
+            </div>
+          ) : null}
           {address ? (
             <div>
               <dt>Delivery address</dt>

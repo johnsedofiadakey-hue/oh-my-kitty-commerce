@@ -154,12 +154,20 @@ export const customerSnapshotSchema = z.object({
   notes: z.string().nullable().optional()
 });
 
+const deliveryMethodSnapshotSchema = z.object({
+  ruleId: z.string().min(1),
+  name: z.string().min(1),
+  type: z.enum(["PICKUP", "LOCAL_DELIVERY", "NATIONWIDE_DELIVERY"]),
+  estimate: z.string().optional()
+});
+
 export const createOrderDraftInputSchema = z.object({
   channel: salesChannelSchema,
   customerId: z.string().nullable().optional(),
   customerSnapshot: customerSnapshotSchema.nullable().optional(),
   items: z.array(orderItemInputSchema).min(1),
   deliveryTotal: moneySchema.default(0),
+  deliveryMethod: deliveryMethodSnapshotSchema.nullable().optional(),
   taxTotal: moneySchema.default(0),
   // When true, buildOrder adds a Paystack processing-fee surcharge into the
   // total — only the online checkout and POS mobile-money flows set this,

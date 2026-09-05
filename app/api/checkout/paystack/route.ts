@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     // harmless placeholder from their phone number instead of blocking checkout.
     const email = normalizeOptionalString(body.customer?.email) ?? placeholderEmailForPhone(phone);
 
-    const deliveryTotal = await resolveDeliveryFee(context, body.deliveryRuleId);
+    const deliveryRule = await resolveDeliveryRule(context, body.deliveryRuleId);
     const idempotencyKey =
       normalizeOptionalString(body.idempotencyKey) ??
       `checkout-paystack-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -81,7 +81,13 @@ export async function POST(request: Request) {
         address: normalizeOptionalString(body.customer?.address) ?? null,
         notes: normalizeOptionalString(body.customer?.notes) ?? null
       },
-      deliveryTotal,
+      deliveryTotal: deliveryRule.fee,
+      deliveryMethod: {
+        ruleId: deliveryRule.id,
+        name: deliveryRule.name,
+        type: deliveryRule.type,
+        estimate: deliveryRule.estimate
+      },
       taxTotal: 0,
       chargePaystackFee: true,
       idempotencyKey,
@@ -175,7 +181,7 @@ function getSiteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 }
 
-async function resolveDeliveryFee(
+async function resolveDeliveryRule(
   context: NonNullable<ReturnType<typeof getCommerceServerContext>>,
   deliveryRuleId: unknown
 ) {
@@ -190,7 +196,7 @@ async function resolveDeliveryFee(
     throw new CommerceError("VALIDATION_ERROR", "That delivery option is no longer available.");
   }
 
-  return rule.fee;
+  return rule;
 }
 
 function parseCheckoutLines(value: unknown) {

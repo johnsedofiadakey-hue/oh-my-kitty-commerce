@@ -231,6 +231,13 @@ export type Order = {
   subtotal: MoneyMinorUnit;
   discountTotal: MoneyMinorUnit;
   deliveryTotal: MoneyMinorUnit;
+  // Snapshotted from the chosen DeliveryRule at checkout — same reason
+  // customerSnapshot/productTitle are snapshots: a later edit or deletion of
+  // the delivery rule must not change what a past order shows. Several of
+  // this store's rules have a $0 fee (courier collects cash on arrival, or
+  // it's genuinely free/pickup), so deliveryTotal alone can't tell staff
+  // which method a customer actually chose — this is the only record of it.
+  deliveryMethod?: DeliveryMethodSnapshot | null;
   taxTotal: MoneyMinorUnit;
   // Card/mobile-money processing fee passed on to the customer, already
   // folded into `total` — 0 for cash, manual transfer, and POS's manual
@@ -308,6 +315,13 @@ export type DeliveryRule = {
   freeAbove?: MoneyMinorUnit | null;
   estimate?: string;
   sortOrder: number;
+};
+
+export type DeliveryMethodSnapshot = {
+  ruleId: string;
+  name: string;
+  type: DeliveryRule["type"];
+  estimate?: string;
 };
 
 export type PosShift = {

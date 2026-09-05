@@ -2776,6 +2776,7 @@ async function buildOrder(
     subtotal,
     discountTotal,
     deliveryTotal: input.deliveryTotal,
+    deliveryMethod: input.deliveryMethod ?? null,
     taxTotal: input.taxTotal,
     paymentFeeTotal,
     total,
