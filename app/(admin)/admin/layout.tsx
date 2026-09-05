@@ -4,6 +4,7 @@ import { AdminNav, type AdminNavGroup } from "@/components/admin/admin-nav";
 import { AdminHelpWidget } from "@/components/admin/admin-help-widget";
 import { RegisterPushNotifications } from "@/components/admin/register-push-notifications";
 import { IosInstallBanner } from "@/components/admin/ios-install-banner";
+import { SessionKeepAlive } from "@/components/admin/session-keepalive";
 import type { AdminIconName } from "@/components/admin/admin-icons";
 import { getAdminOperationsData } from "@/lib/admin/operations-data";
 import { getRequiredAdminActor } from "@/lib/auth/server";
@@ -208,6 +209,7 @@ export default async function AdminLayout({
       </main>
       <AdminHelpWidget />
       <IosInstallBanner />
+      <SessionKeepAlive />
       <RegisterPushNotifications registerAction={registerPushSubscriptionAction} />
     </div>
   );
