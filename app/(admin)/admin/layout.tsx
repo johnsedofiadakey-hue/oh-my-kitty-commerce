@@ -157,6 +157,7 @@ export default async function AdminLayout({
     orders: data.orders.filter(
       (order) =>
         order.status !== "CANCELLED" &&
+        order.paymentStatus !== "PENDING" &&
         (order.fulfilmentStatus === "UNFULFILLED" || order.fulfilmentStatus === "PROCESSING")
     ).length,
     inventory: data.metrics.lowStock,

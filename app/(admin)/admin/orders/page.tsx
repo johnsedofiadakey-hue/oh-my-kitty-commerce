@@ -68,10 +68,24 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
       ? data.orderRows
       : data.orderRows.filter((row) => row.order.channel === selectedChannel);
 
+  // A checkout that was started but never actually paid for isn't a real
+  // sale yet — nothing to pick, pack, or hand over — so it doesn't belong
+  // in the working queue. Kept out of sight rather than deleted (it's still
+  // real data, e.g. for spotting checkout friction later), in its own
+  // collapsed section below instead of mixed into "needs attention".
+  const awaitingPayment = channelRows
+    .filter((row) => row.order.paymentStatus === "PENDING")
+    .sort((a, b) => toSortableMillis(b.order.createdAt) - toSortableMillis(a.order.createdAt));
+
   // Oldest-first within "needs attention" — staff work the queue in the order
   // customers actually arrived in, same reasoning as a physical ticket queue.
   const needsAttention = channelRows
-    .filter((row) => row.order.fulfilmentStatus !== "FULFILLED" && row.order.fulfilmentStatus !== "CANCELLED")
+    .filter(
+      (row) =>
+        row.order.paymentStatus !== "PENDING" &&
+        row.order.fulfilmentStatus !== "FULFILLED" &&
+        row.order.fulfilmentStatus !== "CANCELLED"
+    )
     .sort((a, b) => toSortableMillis(a.order.createdAt) - toSortableMillis(b.order.createdAt));
   const completed = channelRows
     .filter((row) => row.order.fulfilmentStatus === "FULFILLED" || row.order.fulfilmentStatus === "CANCELLED")
@@ -135,6 +149,23 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
           {needsAttention.length === 0 ? <p className="admin-help">Nothing waiting on you right now.</p> : null}
         </div>
       </section>
+
+      <details className="admin-panel admin-collapsible">
+        <summary className="panel-header">
+          <h2>Awaiting payment</h2>
+          <span>{awaitingPayment.length} order{awaitingPayment.length === 1 ? "" : "s"}</span>
+        </summary>
+        <p className="admin-help">
+          Checkout was started but payment was never confirmed — abandoned or failed attempts, not real sales.
+          Nothing to do here unless the customer says they paid; check the Payment section on the order for proof.
+        </p>
+        <div className="order-list">
+          {awaitingPayment.map((row) => (
+            <OrderRow canDelete={canDelete} disabled={disabled} key={row.order.id} row={row} />
+          ))}
+          {awaitingPayment.length === 0 ? <p className="admin-help">Nothing awaiting payment.</p> : null}
+        </div>
+      </details>
 
       <details className="admin-panel admin-collapsible">
         <summary className="panel-header">

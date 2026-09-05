@@ -1950,8 +1950,11 @@ export async function confirmPaystackPayment(
       paymentStatus: "PAID",
       // This path also confirms POS mobile-money charges (shared with the
       // online Paystack webhook/callback) — a confirmed POS momo sale is
-      // just as much "handed over at the counter" as a cash one.
-      fulfilmentStatus: order.channel === "POS" ? "FULFILLED" : order.fulfilmentStatus
+      // just as much "handed over at the counter" as a cash one. An online
+      // order still has real work ahead (pick, pack, ship/hand over), so it
+      // moves to Processing the moment there's an actual confirmed sale to
+      // act on, rather than sitting as "New order" until someone notices.
+      fulfilmentStatus: order.channel === "POS" ? "FULFILLED" : "PROCESSING"
     };
     // allowOversell: the customer's money has already moved at Paystack by
     // this point — refusing to confirm the order over a stock shortfall

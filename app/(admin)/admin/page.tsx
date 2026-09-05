@@ -20,6 +20,7 @@ export default async function AdminDashboardPage() {
     .filter(
       ({ order }) =>
         order.status !== "CANCELLED" &&
+        order.paymentStatus !== "PENDING" &&
         (order.fulfilmentStatus === "UNFULFILLED" || order.fulfilmentStatus === "PROCESSING")
     )
     .sort((a, b) => (daysSince(b.order.createdAt) ?? 0) - (daysSince(a.order.createdAt) ?? 0))

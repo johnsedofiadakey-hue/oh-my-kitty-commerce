@@ -6,8 +6,10 @@ import {
   attachProductImage,
   completeOnlineOrder,
   completePosSale,
+  confirmPaystackPayment,
   createDeliveryRule,
   createOrderDraft,
+  createPendingOnlineOrder,
   createProduct,
   createVariant,
   refundPosSale,
@@ -520,6 +522,31 @@ describe("commerce operations", () => {
     await expect(context.repo.listMedia()).resolves.toEqual([
       expect.objectContaining({ url: "https://example.com/photo.jpg", visibility: "PUBLIC" })
     ]);
+  });
+
+  it("moves an online order to Processing once Paystack confirms payment", async () => {
+    const context = createTestContext();
+    const { variant } = await seedProductAndVariant(context);
+
+    const pending = await createPendingOnlineOrder(context, {
+      customerSnapshot: { name: "Ama", phone: "0241234567" },
+      deliveryTotal: 0,
+      taxTotal: 0,
+      chargePaystackFee: false,
+      idempotencyKey: "online-order-0001",
+      items: [{ productId: variant.productId, variantId: variant.id, quantity: 1 }],
+      paymentMethod: "card"
+    });
+
+    expect(pending.order.fulfilmentStatus).toBe("UNFULFILLED");
+
+    const confirmed = await confirmPaystackPayment(context, {
+      orderId: pending.order.id,
+      providerReference: "paystack-ref-0001"
+    });
+
+    expect(confirmed.order.paymentStatus).toBe("PAID");
+    expect(confirmed.order.fulfilmentStatus).toBe("PROCESSING");
   });
 });
 
