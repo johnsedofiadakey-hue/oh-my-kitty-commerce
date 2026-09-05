@@ -446,7 +446,6 @@ export function CinematicHome({ products, consultWhatsappNumber, sourceMessage }
                 className="portal-cta-secondary"
                 href={toWhatsAppLink(consultWhatsappNumber, CONSULT_MESSAGE)}
                 label="Get guidance"
-                phoneDisplay={consultWhatsappNumber}
               />
             </div>
           </div>

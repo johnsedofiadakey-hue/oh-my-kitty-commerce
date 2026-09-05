@@ -832,56 +832,6 @@ button {
   background: rgb(255 255 255 / 70%);
 }
 
-.whatsapp-fallback {
-  position: relative;
-}
-
-.whatsapp-fallback-popover {
-  position: absolute;
-  z-index: 20;
-  top: calc(100% + 10px);
-  left: 50%;
-  width: min(280px, calc(100vw - 48px));
-  transform: translateX(-50%);
-  display: grid;
-  gap: 10px;
-  padding: 16px;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-medium);
-  background: var(--color-white-pure);
-  box-shadow: var(--shadow-soft);
-  color: var(--color-near-black);
-  font-size: 0.86rem;
-  text-align: left;
-}
-
-.whatsapp-fallback-popover p {
-  margin: 0;
-}
-
-.whatsapp-fallback-number {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: var(--radius-small);
-  background: var(--color-cream);
-}
-
-.whatsapp-fallback-number button {
-  border: 1px solid var(--color-line);
-  border-radius: 999px;
-  padding: 4px 12px;
-  background: var(--color-white-pure);
-  font-weight: 700;
-  font-size: 0.78rem;
-}
-
-.whatsapp-fallback-number button:hover {
-  border-color: var(--color-near-black);
-}
-
 .shop-control {
   position: fixed;
   z-index: 45;

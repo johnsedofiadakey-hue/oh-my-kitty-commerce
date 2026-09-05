@@ -1,72 +1,46 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
+import { toAndroidBrowserEscapeLink } from "@/lib/storefront/whatsapp";
 
 // TikTok, Instagram, and Facebook open links in their own locked-down in-app
 // WebView rather than the device's real browser. That WebView deliberately
 // blocks the OS-level app handoff wa.me links rely on to open WhatsApp, so
-// tapping the link there does nothing — the customer sees no error, just a
-// dead button. There's no way to force WhatsApp open from inside it; the
-// only real fix is detecting it and pointing the customer at the browser's
-// own "Open in Browser" escape hatch instead.
+// a plain tap there does nothing. On Android we can still get there in one
+// tap: an Intent URI is resolved by the OS itself, not the WebView's JS
+// sandbox, so it forces the request out to the real browser, which then
+// completes the handoff. iOS has no equivalent — Apple's WKWebView doesn't
+// give a web page that escape, so the best a tap can do there is a plain
+// top-level navigation instead of one that opens a (blocked) new tab.
 const IN_APP_BROWSER_PATTERN = /musical_ly|bytedancewebview|tiktok|instagram|FBAN|FBAV|FB_IAB|FBSV/i;
+const ANDROID_PATTERN = /Android/i;
 
 function subscribeNever() {
   return () => {};
 }
 
-// The user agent can't change mid-session, so this is read as a stable
-// snapshot rather than set from an effect — same reasoning as the
-// localStorage reads elsewhere in the storefront (see cart-store.ts).
-function getInAppBrowserSnapshot() {
+// User agent can't change mid-session, so these are read as stable
+// snapshots rather than set from an effect (avoids react-hooks/set-state-in-effect;
+// same reasoning as the localStorage reads elsewhere in the storefront).
+function getRestrictedSnapshot() {
   return IN_APP_BROWSER_PATTERN.test(navigator.userAgent);
 }
 
-function getInAppBrowserServerSnapshot() {
+function getRestrictedServerSnapshot() {
   return false;
 }
 
-export function WhatsAppCta({
-  className,
-  href,
-  label,
-  phoneDisplay
-}: {
-  className?: string;
-  href: string;
-  label: string;
-  phoneDisplay: string;
-}) {
-  const restricted = useSyncExternalStore(subscribeNever, getInAppBrowserSnapshot, getInAppBrowserServerSnapshot);
-  const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+function getAndroidSnapshot() {
+  return ANDROID_PATTERN.test(navigator.userAgent);
+}
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
+function getAndroidServerSnapshot() {
+  return false;
+}
 
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, [open]);
-
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(phoneDisplay);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard API unavailable in this browser — the number is still
-      // visible right there to copy by hand.
-    }
-  }
+export function WhatsAppCta({ className, href, label }: { className?: string; href: string; label: string }) {
+  const restricted = useSyncExternalStore(subscribeNever, getRestrictedSnapshot, getRestrictedServerSnapshot);
+  const isAndroid = useSyncExternalStore(subscribeNever, getAndroidSnapshot, getAndroidServerSnapshot);
 
   if (!restricted) {
     return (
@@ -76,26 +50,17 @@ export function WhatsAppCta({
     );
   }
 
-  return (
-    <div className="whatsapp-fallback" ref={containerRef}>
-      <button className={className} onClick={() => setOpen((value) => !value)} type="button">
+  if (isAndroid) {
+    return (
+      <a className={className} href={toAndroidBrowserEscapeLink(href)}>
         {label}
-      </button>
-      {open ? (
-        <div className="whatsapp-fallback-popover" role="dialog">
-          <p>This app&apos;s browser blocks WhatsApp from opening directly.</p>
-          <p>
-            Tap <strong>⋯</strong> at the top and choose <strong>Open in Browser</strong>, then try again — or
-            message us at:
-          </p>
-          <div className="whatsapp-fallback-number">
-            <strong>{phoneDisplay}</strong>
-            <button onClick={() => void handleCopy()} type="button">
-              {copied ? "Copied" : "Copy"}
-            </button>
-          </div>
-        </div>
-      ) : null}
-    </div>
+      </a>
+    );
+  }
+
+  return (
+    <a className={className} href={href} rel="noreferrer">
+      {label}
+    </a>
   );
 }
