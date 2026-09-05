@@ -22,6 +22,7 @@ type PosSaleRequestBody = {
   customer?: {
     name?: unknown;
     phone?: unknown;
+    address?: unknown;
   };
   idempotencyKey?: unknown;
   items?: unknown;
@@ -53,7 +54,8 @@ export async function POST(request: Request) {
       channel: "POS",
       customerSnapshot: {
         name: normalizeOptionalString(body.customer?.name),
-        phone: normalizeOptionalString(body.customer?.phone) ?? null
+        phone: normalizeOptionalString(body.customer?.phone) ?? null,
+        address: normalizeOptionalString(body.customer?.address) ?? null
       },
       deliveryTotal: 0,
       idempotencyKey:

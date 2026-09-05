@@ -22,6 +22,7 @@ type MomoChargeRequestBody = {
   customer?: {
     name?: unknown;
     phone?: unknown;
+    address?: unknown;
   };
   idempotencyKey?: unknown;
   items?: unknown;
@@ -65,7 +66,8 @@ export async function POST(request: Request) {
     const pending = await createPendingPosMomoOrder(context, actor, {
       customerSnapshot: {
         name: normalizeOptionalString(body.customer?.name),
-        phone
+        phone,
+        address: normalizeOptionalString(body.customer?.address) ?? null
       },
       deliveryTotal: 0,
       taxTotal: 0,

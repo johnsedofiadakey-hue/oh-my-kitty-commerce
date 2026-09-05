@@ -82,6 +82,7 @@ export function PosSaleClient({
   const [cart, setCart] = useState<PosLine[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [cashReceived, setCashReceived] = useState("");
@@ -243,6 +244,7 @@ export function PosSaleClient({
     setCart([]);
     setCustomerName("");
     setCustomerPhone("");
+    setCustomerAddress("");
     setPromoCode("");
     setCashReceived("");
   }
@@ -355,7 +357,7 @@ export function PosSaleClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customer: { name: customerName, phone: customerPhone },
+          customer: { name: customerName, phone: customerPhone, address: customerAddress.trim() || undefined },
           items: cart.map((line) => ({
             productId: line.id,
             variantId: line.variantId,
@@ -426,7 +428,8 @@ export function PosSaleClient({
       amountReceived,
       customer: {
         name: customerName,
-        phone: customerPhone
+        phone: customerPhone,
+        address: customerAddress.trim() || undefined
       },
       items: cart.map((line) => ({
         productId: line.id,
@@ -690,6 +693,14 @@ export function PosSaleClient({
               placeholder={paymentMethod === "mobile_money" ? "024 000 0000" : "Optional"}
               required={paymentMethod === "mobile_money"}
               value={customerPhone}
+            />
+          </label>
+          <label className="admin-field">
+            <span>Customer location</span>
+            <input
+              onChange={(event) => setCustomerAddress(event.target.value)}
+              placeholder="Optional"
+              value={customerAddress}
             />
           </label>
           <label className="admin-field">

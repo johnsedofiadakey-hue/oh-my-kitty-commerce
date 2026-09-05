@@ -305,7 +305,7 @@ function OrderDetail({ row, disabled, canDelete }: { row: AdminOrderRow; disable
           ) : null}
           {address ? (
             <div>
-              <dt>Delivery address</dt>
+              <dt>{order.channel === "POS" ? "Location" : "Delivery address"}</dt>
               <dd>{address}</dd>
             </div>
           ) : null}
