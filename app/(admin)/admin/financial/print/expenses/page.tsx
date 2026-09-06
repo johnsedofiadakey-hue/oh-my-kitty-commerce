@@ -42,6 +42,13 @@ export default async function PrintExpenseReportPage({ searchParams }: PageProps
 
   const { label, sinceMillis, untilMillis } = resolvePeriod(period, from, to);
   const report = buildExpensesByCategory(financial.expenses, financial.expenseCategories, sinceMillis, untilMillis);
+  const categoriesById = new Map(financial.expenseCategories.map((category) => [category.id, category]));
+  const lineItems = financial.expenses
+    .filter((expense) => {
+      const millis = new Date(expense.date).getTime();
+      return millis >= sinceMillis && millis <= untilMillis;
+    })
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const storeName = storeSettings?.storeName ?? "Oh My Kitty";
   const generatedOn = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
@@ -71,6 +78,23 @@ export default async function PrintExpenseReportPage({ searchParams }: PageProps
             <span>{formatMoney(report.total)}</span>
           </div>
         </div>
+
+        {lineItems.length > 0 ? (
+          <div className="statement-section">
+            <h2>Detail</h2>
+            {lineItems.map((expense) => (
+              <div className="statement-row indent" key={expense.id}>
+                <span>
+                  {new Date(expense.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+                  {"  "}
+                  {expense.name || categoriesById.get(expense.categoryId)?.title || "Expense"}
+                  {expense.name ? ` — ${categoriesById.get(expense.categoryId)?.title ?? "Uncategorized"}` : ""}
+                </span>
+                <span>{formatMoney(expense.amount)}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         <p className="statement-footnote">
           {report.count} expense{report.count === 1 ? "" : "s"} in this period. Generated {generatedOn}.

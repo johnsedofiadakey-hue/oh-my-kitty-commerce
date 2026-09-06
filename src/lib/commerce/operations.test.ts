@@ -8,6 +8,8 @@ import {
   completePosSale,
   confirmPaystackPayment,
   createDeliveryRule,
+  createExpense,
+  createExpenseCategory,
   createOrderDraft,
   createPendingOnlineOrder,
   createProduct,
@@ -547,6 +549,54 @@ describe("commerce operations", () => {
 
     expect(confirmed.order.paymentStatus).toBe("PAID");
     expect(confirmed.order.fulfilmentStatus).toBe("PROCESSING");
+  });
+});
+
+describe("expenses", () => {
+  async function seedCategory(context: CommerceContext) {
+    return createExpenseCategory(context, owner, { title: "Supplies", slug: "supplies", sortOrder: 0 });
+  }
+
+  it("stores what the expense was for alongside its category", async () => {
+    const context = createTestContext();
+    const category = await seedCategory(context);
+
+    const expense = await createExpense(context, owner, {
+      categoryId: category.id,
+      name: "Bottles from supplier",
+      amount: 15000,
+      date: new Date("2026-01-05T00:00:00.000Z"),
+      note: "Paid in cash"
+    });
+
+    expect(expense.name).toBe("Bottles from supplier");
+    expect(expense.note).toBe("Paid in cash");
+    expect((await context.repo.listExpenses())[0]?.name).toBe("Bottles from supplier");
+  });
+
+  it("still accepts an expense with no name, so older rows stay valid", async () => {
+    const context = createTestContext();
+    const category = await seedCategory(context);
+
+    const expense = await createExpense(context, owner, {
+      categoryId: category.id,
+      amount: 5000,
+      date: new Date("2026-01-05T00:00:00.000Z")
+    });
+
+    expect(expense.name).toBeUndefined();
+  });
+
+  it("rejects an expense pointing at a category that does not exist", async () => {
+    const context = createTestContext();
+
+    await expect(
+      createExpense(context, owner, {
+        categoryId: "missing",
+        amount: 5000,
+        date: new Date("2026-01-05T00:00:00.000Z")
+      })
+    ).rejects.toBeInstanceOf(CommerceError);
   });
 });
 

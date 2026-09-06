@@ -1210,9 +1210,10 @@ export async function logRecurringExpense(context: CommerceContext, actor: Comme
   const expense: Expense = {
     id: createId(context, "expense"),
     categoryId: template.categoryId,
+    name: template.label,
     amount: template.amount,
     date: parsed.date,
-    note: template.label,
+    note: `Recurring — ${parsed.period}`,
     recurringTemplateId: template.id,
     createdBy: actor.uid,
     createdAt: getNow(context)

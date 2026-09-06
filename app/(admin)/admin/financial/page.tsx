@@ -335,6 +335,17 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
   );
   const missingCostCount = operations.variants.filter((variant) => variant.active && variant.cost == null).length;
   const payrollAccrual = buildPayrollAccrual(financial.workers, financial.payrollPayments, currentPeriod());
+  // Hoisted above the tabs so the Overview action dock can open the same
+  // payroll run in a dialog without duplicating the lookups.
+  const payrollPeriod = currentPeriod();
+  const activeWorkers = financial.workers.filter((worker) => worker.status === "ACTIVE");
+  const paymentsThisPeriod = new Map(
+    financial.payrollPayments
+      .filter((payment) => payment.period === payrollPeriod)
+      .map((payment) => [payment.workerId, payment])
+  );
+  const expenseCategoriesById = new Map(financial.expenseCategories.map((category) => [category.id, category]));
+  const recentExpenses = financial.expenses.slice(0, 8);
 
   const customRange = parseCustomRange(from, to);
   const customPeriod = customRange
@@ -459,27 +470,52 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
 
       <section className="money-action-dock" aria-label="Financial actions">
         <div>
-          <strong>Clean action row</strong>
-          <span>Add income, log expenses, run payroll, register assets, and print statements from one place.</span>
+          <strong>Record something</strong>
+          <span>Log an expense or income, run payroll, register an asset, or print a statement — without leaving this page.</span>
         </div>
         <div className="money-action-dock-actions">
-          <AdminDrawer title="Log other income" triggerClassName="money-primary-action" triggerLabel="Log income">
+          {canSeeExpenses && financial.expenseCategories.length > 0 ? (
+            <AdminDrawer title="Log an expense" triggerClassName="money-primary-action" triggerLabel="Log expense">
+              <CreateExpenseForm action={createExpenseAction} categories={financial.expenseCategories} disabled={disabled} />
+            </AdminDrawer>
+          ) : null}
+          <AdminDrawer
+            title="Log other income"
+            triggerClassName={
+              canSeeExpenses && financial.expenseCategories.length > 0 ? "money-secondary-action" : "money-primary-action"
+            }
+            triggerLabel="Log income"
+          >
             <CreateManualRevenueForm action={createManualRevenueEntryAction} disabled={disabled} />
           </AdminDrawer>
-          {canSeeExpenses ? (
-            <Link className="money-secondary-action" href={"/admin/financial?tab=expenses" as Route}>
-              Log expense
-            </Link>
-          ) : null}
           {canSeePayroll ? (
-            <Link className="money-secondary-action" href={"/admin/financial?tab=payroll" as Route}>
-              Run payroll
-            </Link>
+            <AdminDrawer title={`Run payroll — ${payrollPeriod}`} triggerClassName="money-secondary-action" triggerLabel="Run payroll">
+              <div className="stack-list">
+                {activeWorkers.map((worker) => {
+                  const existing = paymentsThisPeriod.get(worker.id);
+                  return (
+                    <PayWorkerForm
+                      action={payWorkerAction}
+                      alreadyPaid={Boolean(existing)}
+                      defaultGrossValue={((existing?.grossAmount ?? worker.monthlySalary) / 100).toFixed(2)}
+                      disabled={disabled}
+                      key={worker.id}
+                      period={payrollPeriod}
+                      workerId={worker.id}
+                      workerName={worker.name}
+                    />
+                  );
+                })}
+                {activeWorkers.length === 0 ? (
+                  <p className="admin-help">Add a worker under the Setup tab first.</p>
+                ) : null}
+              </div>
+            </AdminDrawer>
           ) : null}
           {canSeeAssets ? (
-            <Link className="money-secondary-action" href={"/admin/financial?tab=assets" as Route}>
-              Add asset
-            </Link>
+            <AdminDrawer title="Register an asset" triggerClassName="money-secondary-action" triggerLabel="Add asset">
+              <CreateAssetForm action={createCapitalAssetAction} disabled={disabled} />
+            </AdminDrawer>
           ) : null}
           <Link className="money-secondary-action" href={"/admin/financial/print/pnl?period=month" as Route} target="_blank">
             Print P&amp;L
@@ -566,6 +602,44 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
             ) : null}
           </div>
         </section>
+
+        {canSeeExpenses ? (
+          <section className="money-panel">
+            <div className="money-panel-header">
+              <div>
+                <h3>Latest expenses</h3>
+                <p>The most recent entries, newest first.</p>
+              </div>
+              <span>{financial.expenses.length} logged</span>
+            </div>
+            <div className="money-income-list">
+              {recentExpenses.map((expense) => (
+                <div className="stack-row" key={expense.id}>
+                  <strong>{expense.name || expenseCategoriesById.get(expense.categoryId)?.title || "Expense"}</strong>
+                  <span>
+                    {formatDateLabel(expense.date)} ·{" "}
+                    {expenseCategoriesById.get(expense.categoryId)?.title ?? "Uncategorized"}
+                    {expense.note ? ` · ${expense.note}` : ""}
+                  </span>
+                  <div className="stack-row-actions">
+                    <strong>{formatMoney(expense.amount)}</strong>
+                  </div>
+                </div>
+              ))}
+              {financial.expenses.length === 0 ? (
+                <p className="admin-help">Nothing logged yet — use &quot;Log expense&quot; above.</p>
+              ) : null}
+            </div>
+            {financial.expenses.length > recentExpenses.length ? (
+              <div className="admin-panel-footer-row">
+                <span />
+                <Link className="text-button" href={"/admin/financial?tab=expenses" as Route}>
+                  See all {financial.expenses.length} expenses
+                </Link>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
 
         <section className="money-panel">
           <div className="money-panel-header">
@@ -801,14 +875,25 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
 
           <section className="admin-panel">
             <div className="panel-header">
-              <h2>All expenses</h2>
+              <h2>Expense log</h2>
               <span>{financial.expenses.length} logged &middot; {formatMoney(allExpensesTotal)} total</span>
             </div>
-            {financial.expenseCategories.length > 0 ? (
-              <div className="admin-panel-section">
-                <CreateExpenseForm action={createExpenseAction} categories={financial.expenseCategories} disabled={disabled} />
-              </div>
-            ) : null}
+            <div className="admin-panel-footer-row">
+              <span className="admin-help">
+                {formatMoney(currentMonthExpenseBreakdown.total)} this month across{" "}
+                {currentMonthExpenseBreakdown.count} entr
+                {currentMonthExpenseBreakdown.count === 1 ? "y" : "ies"}.
+              </span>
+              {financial.expenseCategories.length > 0 ? (
+                <AdminDrawer title="Log an expense" triggerLabel="Log expense">
+                  <CreateExpenseForm
+                    action={createExpenseAction}
+                    categories={financial.expenseCategories}
+                    disabled={disabled}
+                  />
+                </AdminDrawer>
+              ) : null}
+            </div>
             <div className="stack-list">
               {financial.expenses.map((expense) => (
                 <ExpenseRow
@@ -820,6 +905,7 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                   expenseId={expense.id}
                   isRecurring={Boolean(expense.recurringTemplateId)}
                   key={expense.id}
+                  name={expense.name}
                   note={expense.note}
                 />
               ))}

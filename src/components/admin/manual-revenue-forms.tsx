@@ -9,12 +9,16 @@ export function CreateManualRevenueForm({ action, disabled }: { action: ManualRe
   const [state, formAction, pending] = useActionState(action, initialAdminActionState);
   const today = new Date().toISOString().slice(0, 10);
 
+  // Same as the expense dialog: clear the inputs after a save so a second
+  // entry can be logged straight away.
+  const formKey = state.status === "success" ? `saved-${state.message}` : "editing";
+
   return (
     <form action={formAction} className="admin-form">
-      <fieldset disabled={disabled || pending}>
+      <fieldset disabled={disabled || pending} key={formKey}>
         <label className="admin-field">
           <span>What came in</span>
-          <input name="label" placeholder="e.g. Old equipment sold" required />
+          <input autoFocus name="label" placeholder="e.g. Old equipment sold" required />
         </label>
         <label className="admin-field">
           <span>Amount GHS</span>

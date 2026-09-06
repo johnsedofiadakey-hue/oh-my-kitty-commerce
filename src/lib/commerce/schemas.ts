@@ -428,6 +428,10 @@ export const updateExpenseCategoryInputSchema = expenseCategoryFieldsSchema.part
 
 const expenseFieldsSchema = z.object({
   categoryId: z.string().min(1),
+  // What the money was spent on, in the owner's own words. Optional so the
+  // rows logged before this field existed (and the ones generated from a
+  // recurring template, which carry the template's label) stay valid.
+  name: z.string().optional(),
   amount: moneySchema.refine((value) => value > 0, "Amount must be greater than zero."),
   date: z.date(),
   note: z.string().optional(),

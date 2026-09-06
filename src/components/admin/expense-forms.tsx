@@ -46,9 +46,18 @@ export function CreateExpenseForm({
   const [state, formAction, pending] = useActionState(action, initialAdminActionState);
   const today = new Date().toISOString().slice(0, 10);
 
+  // Remounting the fieldset after a successful save clears every input, so
+  // several expenses can be logged one after another without closing the
+  // dialog — the "fill it in and move on" flow this is used for.
+  const formKey = state.status === "success" ? `saved-${state.message}` : "editing";
+
   return (
     <form action={formAction} className="admin-form">
-      <fieldset disabled={disabled || pending}>
+      <fieldset disabled={disabled || pending} key={formKey}>
+        <label className="admin-field">
+          <span>What was it for</span>
+          <input autoFocus name="name" placeholder="e.g. Bottles from supplier" required />
+        </label>
         <label className="admin-field">
           <span>Category</span>
           <select name="categoryId" required>
@@ -68,8 +77,8 @@ export function CreateExpenseForm({
           <input defaultValue={today} name="date" required type="date" />
         </label>
         <label className="admin-field">
-          <span>Note (optional)</span>
-          <input name="note" placeholder="e.g. Bottles from supplier" />
+          <span>Comments (optional)</span>
+          <textarea name="note" placeholder="Anything worth remembering about this spend" rows={2} />
         </label>
         {state.message ? <p className={`admin-form-status ${state.status}`}>{state.message}</p> : null}
         <button className="admin-action" type="submit">
@@ -86,6 +95,7 @@ export function CreateExpenseForm({
 // admin), so the server page formats id/date/amount to strings first.
 export function ExpenseRow({
   expenseId,
+  name,
   categoryTitle,
   dateLabel,
   amountLabel,
@@ -95,6 +105,7 @@ export function ExpenseRow({
   deleteAction
 }: {
   expenseId: string;
+  name?: string;
   categoryTitle: string;
   dateLabel: string;
   amountLabel: string;
@@ -105,9 +116,11 @@ export function ExpenseRow({
 }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  // Rows logged before the name field existed fall back to the category.
+  const title = name || categoryTitle;
 
   async function handleDelete() {
-    if (!window.confirm(`Delete this ${categoryTitle} expense?`)) {
+    if (!window.confirm(`Delete "${title}"?`)) {
       return;
     }
 
@@ -119,9 +132,9 @@ export function ExpenseRow({
 
   return (
     <div className="stack-row">
-      <strong>{categoryTitle}</strong>
+      <strong>{title}</strong>
       <span>
-        {dateLabel}
+        {dateLabel} · {categoryTitle}
         {note ? ` · ${note}` : ""}
         {isRecurring ? " · recurring" : ""}
       </span>

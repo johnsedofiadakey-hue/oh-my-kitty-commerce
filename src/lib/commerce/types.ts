@@ -443,6 +443,8 @@ export type ExpenseCategory = {
 export type Expense = {
   id: string;
   categoryId: string;
+  /** What the money went on, e.g. "Bottles from supplier". Optional — rows predating this field have none. */
+  name?: string;
   amount: MoneyMinorUnit;
   date: Date;
   note?: string;

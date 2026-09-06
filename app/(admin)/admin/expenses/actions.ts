@@ -71,6 +71,7 @@ export async function createExpenseAction(
 
     await createExpense(context, actor, {
       categoryId: formString(formData, "categoryId"),
+      name: formOptionalString(formData, "name"),
       amount: formMoneyMinorUnit(formData, "amount"),
       date: formDate(formData, "date"),
       note: formOptionalString(formData, "note")
