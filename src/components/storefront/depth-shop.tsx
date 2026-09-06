@@ -199,16 +199,12 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
       </section>
 
       {bestSellerProducts.length > 0 ? (
-        <section className="related-products" aria-label="Best sellers">
+        <section className="related-products best-sellers-rail" aria-label="Best sellers">
           <div className="front-product-intro">
             <span className="scene-kicker">Best sellers</span>
             <h2>What everyone&apos;s reaching for.</h2>
           </div>
-          <div className="showcase-grid">
-            {bestSellerProducts.map((product) => (
-              <ShowcaseCard key={product.variantId} product={product} />
-            ))}
-          </div>
+          <BestSellersRail products={bestSellerProducts} />
         </section>
       ) : null}
 
@@ -474,6 +470,68 @@ function ShopBotanicalDrift({ products }: { products: StorefrontProductView[] })
       {products[2]?.imageUrl ? (
         <div className="shop-drift-product product-soft">
           <Image alt="" fill sizes="210px" src={products[2].imageUrl} />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * A swipeable, snap-scrolling rail instead of another static grid — the
+ * bestsellers already reappear in the main grid below, so this section's
+ * only job is to feel like a distinct, curated pick rather than "more of
+ * the same." The thin progress track and a one-time scroll nudge both
+ * signal "swipe me" without relying on a visible scrollbar.
+ */
+function BestSellersRail({ products }: { products: StorefrontProductView[] }) {
+  const railRef = useRef<HTMLDivElement>(null);
+  const [thumb, setThumb] = useState({ width: 100, left: 0 });
+
+  const updateThumb = () => {
+    const rail = railRef.current;
+    if (!rail || rail.scrollWidth <= 0) {
+      return;
+    }
+    setThumb({
+      width: (rail.clientWidth / rail.scrollWidth) * 100,
+      left: (rail.scrollLeft / rail.scrollWidth) * 100
+    });
+  };
+
+  useEffect(() => {
+    updateThumb();
+
+    const rail = railRef.current;
+    if (!rail || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+    if (rail.scrollWidth <= rail.clientWidth + 4) {
+      return;
+    }
+
+    // A brief right-then-back nudge, once, to hint the rail scrolls —
+    // there's no visible scrollbar telling anyone that on its own.
+    const nudge = window.setTimeout(() => {
+      rail.scrollTo({ left: 44, behavior: "smooth" });
+      window.setTimeout(() => rail.scrollTo({ left: 0, behavior: "smooth" }), 480);
+    }, 700);
+
+    return () => window.clearTimeout(nudge);
+  }, [products]);
+
+  return (
+    <div className="showcase-rail-track">
+      <div className="showcase-rail" onScroll={updateThumb} ref={railRef}>
+        {products.map((product) => (
+          <ShowcaseCard key={product.variantId} product={product} />
+        ))}
+      </div>
+      {thumb.width < 100 ? (
+        <div className="showcase-rail-progress">
+          <span
+            className="showcase-rail-progress-fill"
+            style={{ width: `${thumb.width}%`, left: `${thumb.left}%` }}
+          />
         </div>
       ) : null}
     </div>

@@ -938,6 +938,82 @@ button {
   justify-self: center;
 }
 
+/*
+ * The shop page's "Best sellers" rail — scoped under .best-sellers-rail so
+ * none of this touches the PDP's "You might also like" section, which still
+ * uses the plain two-column .showcase-grid these cards were designed for.
+ */
+.best-sellers-rail .front-product-intro {
+  margin-bottom: 16px;
+}
+
+.best-sellers-rail .front-product-intro h2 {
+  font-size: clamp(1.7rem, 5.6vw, 2.5rem);
+  line-height: 1.08;
+}
+
+.showcase-rail-track {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+
+.showcase-rail {
+  display: flex;
+  gap: 14px;
+  padding: 4px max(20px, calc(50vw - var(--shell-max) / 2)) 6px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 20px,
+    black calc(100% - 36px),
+    transparent 100%
+  );
+}
+
+.showcase-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.showcase-rail .showcase-card {
+  flex: 0 0 68%;
+  min-height: 270px;
+  scroll-snap-align: start;
+}
+
+.showcase-rail-progress {
+  position: relative;
+  width: min(calc(100% - 40px), var(--shell-max));
+  height: 3px;
+  margin: 10px auto 0;
+  border-radius: 999px;
+  background: var(--color-line);
+  overflow: hidden;
+}
+
+.showcase-rail-progress-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-green);
+}
+
+@media (min-width: 861px) {
+  .showcase-rail .showcase-card {
+    flex: 0 0 272px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .showcase-rail {
+    scroll-behavior: auto;
+  }
+}
+
 .showcase-card .product-bottle {
   width: 100px;
   height: 160px;
@@ -8434,6 +8510,24 @@ a.pos-secondary-button {
 .category-pill {
   color: var(--color-rose-deep) !important;
   background: var(--color-peach-mist) !important;
+}
+
+/*
+ * The rule above forces every .category-pill to the same rose/peach-mist
+ * look with !important, which is correct for the plain "Sale"-style tag but
+ * was also silently swallowing the distinct bestseller/free-delivery colors
+ * defined earlier in this file — both ended up identical. Reassert them
+ * here (later in the cascade, same !important weight) so each pill keeps
+ * its own color instead of collapsing into one.
+ */
+.bestseller-pill {
+  color: var(--color-near-black) !important;
+  background: var(--color-peach) !important;
+}
+
+.free-delivery-pill {
+  color: var(--color-status-good) !important;
+  background: var(--color-status-good-soft) !important;
 }
 
 .quick-add-button {
