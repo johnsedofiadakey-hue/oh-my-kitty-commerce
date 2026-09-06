@@ -4991,6 +4991,575 @@ button {
   background: var(--color-muted);
 }
 
+/* ---------- admin money workspace: financial + reports ---------- */
+.money-workspace,
+.reports-workspace {
+  margin-top: 18px;
+}
+
+.money-kicker {
+  margin: 0 0 7px;
+  color: #cf3e6e;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.money-hero-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.72fr);
+  gap: 24px;
+  align-items: center;
+  border: 1px solid rgb(240 220 213 / 92%);
+  border-radius: 28px;
+  margin-top: 18px;
+  padding: 28px;
+  background:
+    radial-gradient(circle at 92% 12%, rgb(246 184 174 / 18%), transparent 30%),
+    linear-gradient(145deg, rgb(255 255 255 / 96%), rgb(255 249 246 / 94%));
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.money-hero-copy h2 {
+  margin: 0;
+  color: var(--color-near-black);
+  font-family: var(--font-serif);
+  font-size: clamp(2.45rem, 5vw, 4.6rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.money-hero-copy p {
+  max-width: 56ch;
+  margin: 12px 0 0;
+  color: var(--color-muted);
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.money-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.money-hero-meta span {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  padding: 0 12px;
+  color: var(--color-near-black);
+  background: var(--color-white-pure);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+/* Net profit is cash-basis, so unrecorded payroll would silently flatter it —
+   this pill says so right next to the number rather than only in a panel
+   further down the page. */
+.money-hero-meta span.money-hero-warning {
+  border-color: rgb(191 84 60 / 38%);
+  color: #8c3d29;
+  background: #fdf0ea;
+}
+
+.money-hero-visual {
+  border: 1px solid var(--color-line);
+  border-radius: 24px;
+  padding: 18px;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 74%), rgb(255 249 246 / 68%)),
+    radial-gradient(circle at 22% 0%, rgb(132 147 115 / 14%), transparent 34%);
+}
+
+.money-trend,
+.reports-trend {
+  display: block;
+  width: 100%;
+  height: 170px;
+}
+
+.money-trend polygon,
+.reports-trend polygon {
+  fill: rgb(207 62 110 / 16%);
+}
+
+.money-trend polyline,
+.reports-trend polyline {
+  fill: none;
+  stroke: #cf3e6e;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.money-stat-grid,
+.report-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.money-stat,
+.report-metric {
+  display: grid;
+  gap: 12px;
+  min-height: 136px;
+  border: 1px solid rgb(240 220 213 / 88%);
+  border-radius: 22px;
+  padding: 18px 20px;
+  background: rgb(255 255 255 / 92%);
+  box-shadow: 0 18px 52px rgb(17 17 17 / 7%);
+}
+
+.money-stat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.money-stat-top span,
+.report-metric span {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.money-stat-top i {
+  display: block;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background:
+    linear-gradient(135deg, transparent 47%, currentColor 48% 56%, transparent 57%),
+    var(--color-peach-mist);
+  color: #cf3e6e;
+}
+
+.money-stat.green .money-stat-top i {
+  color: var(--color-status-good);
+}
+
+.money-stat.warn .money-stat-top i {
+  color: var(--color-status-warn);
+}
+
+.money-stat.dark .money-stat-top i {
+  color: var(--color-near-black);
+}
+
+.money-stat strong,
+.report-metric strong {
+  display: block;
+  color: var(--color-near-black);
+  font-family: var(--font-serif);
+  font-size: clamp(1.35rem, 2.3vw, 1.9rem);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.money-stat small,
+.report-metric small {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.money-action-dock {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 28px;
+  margin-top: 16px;
+  padding: 18px 20px;
+  color: var(--color-white-pure);
+  background:
+    radial-gradient(circle at 12% 0%, rgb(246 184 174 / 18%), transparent 34%),
+    var(--color-near-black);
+  box-shadow: 0 20px 58px rgb(17 17 17 / 16%);
+}
+
+.money-action-dock strong {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.money-action-dock span {
+  display: block;
+  margin-top: 3px;
+  color: rgb(255 249 246 / 76%);
+  font-size: 0.82rem;
+}
+
+.money-action-dock-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.money-primary-action,
+.money-secondary-action,
+.money-row-action {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 14px;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.money-primary-action {
+  color: var(--color-white-pure);
+  background: linear-gradient(135deg, #de587f, #cf3e6e);
+}
+
+.money-secondary-action {
+  color: var(--color-white-pure);
+  background: rgb(255 255 255 / 14%);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 18%);
+}
+
+.money-row-action {
+  min-height: 30px;
+  color: var(--color-near-black);
+  background: var(--color-white-pure);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+
+.money-dashboard-grid,
+.reports-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 16px;
+  align-items: start;
+  margin-top: 16px;
+}
+
+.money-panel,
+.reports-panel {
+  border: 1px solid rgb(240 220 213 / 90%);
+  border-radius: 26px;
+  padding: 20px;
+  background: rgb(255 255 255 / 92%);
+  box-shadow: 0 18px 52px rgb(17 17 17 / 7%);
+  overflow: hidden;
+}
+
+.money-panel-header,
+.reports-panel-header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.money-panel-header h3,
+.reports-panel-header h2 {
+  margin: 0;
+  color: var(--color-near-black);
+  font-family: var(--font-serif);
+  font-size: 1.22rem;
+  line-height: 1.1;
+}
+
+.money-panel-header p,
+.reports-panel-header p {
+  max-width: 46ch;
+  margin: 5px 0 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.money-panel-header > span,
+.reports-panel-header > span {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0 11px;
+  color: #cf3e6e;
+  background: var(--color-peach-mist);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+  font-size: 0.74rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.money-bars {
+  display: grid;
+  gap: 14px;
+}
+
+.money-bar-row {
+  display: grid;
+  gap: 8px;
+}
+
+.money-bar-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.money-bar-label strong {
+  color: var(--color-near-black);
+  font-size: 0.84rem;
+}
+
+.money-bar-label span {
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  text-align: right;
+}
+
+.money-bar-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--color-peach-mist);
+  overflow: hidden;
+}
+
+.money-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-peach), #cf3e6e);
+}
+
+.money-bar-fill.pos,
+.money-bar-fill.green {
+  background: linear-gradient(90deg, var(--color-green-soft), var(--color-green));
+}
+
+.money-bar-fill.admin_created,
+.money-bar-fill.dark {
+  background: linear-gradient(90deg, var(--color-muted), var(--color-near-black));
+}
+
+.money-bar-fill.expenses {
+  background: linear-gradient(90deg, #f3a99d, #93611c);
+}
+
+.money-review-list,
+.report-product-list,
+.report-pack-list,
+.money-income-list {
+  display: grid;
+  gap: 10px;
+}
+
+.money-review-row,
+.report-product-row,
+.report-pack-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
+  padding: 12px 14px;
+  background: var(--color-white);
+}
+
+.money-review-row strong,
+.report-product-row strong,
+.report-pack-card strong {
+  display: block;
+  color: var(--color-near-black);
+  font-size: 0.86rem;
+  line-height: 1.25;
+}
+
+.money-review-row span,
+.report-product-row span,
+.report-pack-card span {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-muted);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.money-review-row em,
+.report-product-row em {
+  color: var(--color-near-black);
+  font-style: normal;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.money-range-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.money-range-result {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--color-white);
+}
+
+.money-range-result strong {
+  color: var(--color-near-black);
+  font-size: 0.92rem;
+}
+
+.money-range-result span {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+}
+
+.money-income-list {
+  margin-top: 12px;
+}
+
+.money-income-list .stack-row {
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
+  padding: 12px 14px;
+  background: var(--color-white);
+}
+
+.reports-heading {
+  align-items: flex-end;
+}
+
+.report-metric {
+  justify-content: space-between;
+}
+
+.report-metric.accent small {
+  color: #cf3e6e;
+}
+
+.report-metric.green small {
+  color: var(--color-status-good);
+}
+
+.report-metric.dark small {
+  color: var(--color-near-black);
+}
+
+.reports-trend-panel {
+  margin-top: 16px;
+}
+
+.reports-trend {
+  height: 210px;
+  border: 1px solid var(--color-line);
+  border-radius: 22px;
+  margin-top: 4px;
+  padding: 8px;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 52px, rgb(240 220 213 / 70%) 53px),
+    var(--color-white-pure);
+}
+
+.report-period-strip,
+.report-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.report-period-card,
+.report-mini-grid > div {
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
+  padding: 13px 14px;
+  background: var(--color-white);
+}
+
+.report-period-card span,
+.report-mini-grid span {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.report-period-card strong,
+.report-mini-grid strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--color-near-black);
+  font-family: var(--font-serif);
+  font-size: 1.14rem;
+}
+
+.report-period-card small {
+  display: block;
+  margin-top: 4px;
+  color: var(--color-muted);
+  font-size: 0.74rem;
+}
+
+.report-product-row {
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+}
+
+.report-product-row i {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 46%, #cf3e6e 0 30%, transparent 31%),
+    var(--color-peach-mist);
+}
+
+.report-product-row.warn i {
+  background:
+    radial-gradient(circle at 50% 46%, var(--color-status-warn) 0 30%, transparent 31%),
+    var(--color-status-warn-soft);
+}
+
+.report-pack-card {
+  grid-template-columns: minmax(0, 1fr);
+  text-decoration: none;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.report-pack-card:hover {
+  border-color: #cf3e6e;
+  transform: translateY(-1px);
+}
+
 .admin-table {
   width: 100%;
   overflow-x: auto;
@@ -6103,6 +6672,53 @@ a.pos-secondary-button {
   }
 
   .dash-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .money-hero-panel,
+  .money-dashboard-grid,
+  .reports-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .money-stat-grid,
+  .report-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .money-hero-panel {
+    padding: 22px;
+  }
+
+  .money-hero-visual {
+    padding: 12px;
+  }
+
+  .money-trend,
+  .reports-trend {
+    height: 150px;
+  }
+
+  .money-action-dock {
+    align-items: stretch;
+  }
+
+  .money-action-dock-actions {
+    width: 100%;
+  }
+
+  .money-primary-action,
+  .money-secondary-action {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .money-range-form {
+    grid-template-columns: 1fr;
+  }
+
+  .report-period-strip,
+  .report-mini-grid {
     grid-template-columns: 1fr;
   }
 

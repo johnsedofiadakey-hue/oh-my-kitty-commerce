@@ -1,12 +1,20 @@
 import Link from "next/link";
 import type { Route } from "next";
+import { Fragment, type ReactNode } from "react";
 import {
   formatMoney,
   getAdminOperationsData,
   toSortableMillis
 } from "@/lib/admin/operations-data";
 import { getAdminFinancialData } from "@/lib/admin/financial-data";
-import { buildPnlReport, getPeriodBoundaries, parseCustomRange } from "@/lib/admin/financial-reports";
+import {
+  buildExpensesByCategory,
+  buildPayrollAccrual,
+  buildPnlReport,
+  getPeriodBoundaries,
+  parseCustomRange,
+  type PnlInput
+} from "@/lib/admin/financial-reports";
 import { getRequiredAdminActor } from "@/lib/auth/server";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getEffectiveRoles } from "@/lib/commerce/operations";
@@ -141,6 +149,125 @@ function currentPeriod() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+type CashTrendPoint = {
+  label: string;
+  value: number;
+};
+
+function buildCashTrend(data: PnlInput, days = 14): CashTrendPoint[] {
+  const end = new Date();
+  end.setUTCHours(0, 0, 0, 0);
+  const startMillis = end.getTime() - (days - 1) * DAY_MS;
+  const buckets = Array.from({ length: days }, (_, index) => {
+    const date = new Date(startMillis + index * DAY_MS);
+    return {
+      label: date.toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
+      value: 0
+    };
+  });
+
+  const addToBucket = (millis: number, amount: number) => {
+    const index = Math.floor((millis - startMillis) / DAY_MS);
+    if (index >= 0 && index < buckets.length) {
+      buckets[index].value += amount;
+    }
+  };
+
+  for (const row of data.orderRows) {
+    if (row.order.paymentStatus === "PAID") {
+      addToBucket(toSortableMillis(row.order.createdAt), row.order.total);
+    }
+  }
+  for (const entry of data.manualRevenueEntries) {
+    addToBucket(new Date(entry.date).getTime(), entry.amount);
+  }
+  for (const expense of data.expenses) {
+    addToBucket(new Date(expense.date).getTime(), -expense.amount);
+  }
+  for (const payment of data.payrollPayments) {
+    addToBucket(new Date(payment.paidDate).getTime(), -payment.grossAmount);
+  }
+
+  return buckets;
+}
+
+function formatDeltaLabel(current: number, previous: number, label = "previous period") {
+  if (previous <= 0) {
+    return current > 0 ? "New activity" : "No activity yet";
+  }
+
+  const change = Math.round(((current - previous) / previous) * 100);
+  return `${change >= 0 ? "+" : ""}${change}% vs ${label}`;
+}
+
+function percentWidth(value: number, max: number) {
+  if (max <= 0 || value <= 0) {
+    return "4%";
+  }
+
+  return `${Math.max(4, Math.round((value / max) * 100))}%`;
+}
+
+function formatChannelName(channel: string) {
+  return channel
+    .replace("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function MoneyTrend({ points, id }: { points: CashTrendPoint[]; id: string }) {
+  const values = points.map((point) => point.value);
+  const min = Math.min(0, ...values);
+  const max = Math.max(1, ...values);
+  const spread = max - min || 1;
+  const linePoints = points
+    .map((point, index) => {
+      const x = points.length <= 1 ? 0 : (index / (points.length - 1)) * 100;
+      const y = 42 - ((point.value - min) / spread) * 34;
+      return `${x.toFixed(2)},${y.toFixed(2)}`;
+    })
+    .join(" ");
+  const areaPoints = `0,44 ${linePoints} 100,44`;
+
+  return (
+    <svg aria-hidden="true" className="money-trend" preserveAspectRatio="none" viewBox="0 0 100 44">
+      <defs>
+        <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="#cf3e6e" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="#cf3e6e" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={areaPoints} />
+      <polyline points={linePoints} />
+    </svg>
+  );
+}
+
+function MoneyStat({
+  label,
+  value,
+  note,
+  tone = "accent"
+}: {
+  label: string;
+  value: string;
+  note: string;
+  tone?: "accent" | "green" | "warn" | "dark";
+}) {
+  return (
+    <article className={`money-stat ${tone}`}>
+      <div className="money-stat-top">
+        <span>{label}</span>
+        <i aria-hidden="true" />
+      </div>
+      <strong>{value}</strong>
+      <small>{note}</small>
+    </article>
+  );
+}
+
 type AdminFinancialPageProps = {
   searchParams: Promise<{ from?: string; to?: string; tab?: string }>;
 };
@@ -161,7 +288,7 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
   const [operations, financial] = await Promise.all([getAdminOperationsData(), getAdminFinancialData()]);
   const disabled = financial.source !== "live";
 
-  const { now, startOfToday, sevenDaysAgo, thirtyDaysAgo } = getPeriodBoundaries();
+  const { now, startOfToday, startOfMonth, startOfPreviousMonth, sevenDaysAgo, thirtyDaysAgo } = getPeriodBoundaries();
   const pnlInput = {
     orderRows: operations.orderRows,
     expenses: financial.expenses,
@@ -175,6 +302,39 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
     { key: "30d", ...buildPnlReport("Last 30 days", pnlInput, thirtyDaysAgo, now) },
     { key: "all", ...buildPnlReport("All time", pnlInput, 0, now) }
   ];
+  const monthPeriod = { key: "month", ...buildPnlReport("This month", pnlInput, startOfMonth, now) };
+  const previousMonthPeriod = buildPnlReport("Previous month", pnlInput, startOfPreviousMonth, startOfMonth - 1);
+  const cashTrend = buildCashTrend(pnlInput);
+  const currentMonthExpenseBreakdown = buildExpensesByCategory(
+    financial.expenses,
+    financial.expenseCategories,
+    startOfMonth,
+    now
+  );
+  const paidChannelTotals = (["ONLINE", "POS", "ADMIN_CREATED"] as const).map((channel) => {
+    const orders = operations.orders.filter((order) => order.channel === channel && order.paymentStatus === "PAID");
+
+    return {
+      channel,
+      orders: orders.length,
+      revenue: orders.reduce((total, order) => total + order.total, 0)
+    };
+  });
+  const maxChannelRevenue = Math.max(1, ...paidChannelTotals.map((row) => row.revenue));
+  const maxExpenseCategoryTotal = Math.max(1, ...currentMonthExpenseBreakdown.rows.map((row) => row.total));
+  const totalBookValue = financial.capitalAssets.reduce((total, asset) => total + computeAssetBookValue(asset), 0);
+  const currentPayrollTotal = financial.workers
+    .filter((worker) => worker.status === "ACTIVE")
+    .reduce((total, worker) => total + worker.monthlySalary, 0);
+  const activeShiftCount = operations.posShifts.filter((shift) => shift.status === "OPEN").length;
+  const openShiftExpectedCash = operations.posShifts
+    .filter((shift) => shift.status === "OPEN")
+    .reduce((total, shift) => total + (shift.expectedCash ?? 0), 0);
+  const dueRecurringExpenses = financial.recurringExpenseTemplates.filter(
+    (template) => template.active && template.lastLoggedPeriod !== currentPeriod()
+  );
+  const missingCostCount = operations.variants.filter((variant) => variant.active && variant.cost == null).length;
+  const payrollAccrual = buildPayrollAccrual(financial.workers, financial.payrollPayments, currentPeriod());
 
   const customRange = parseCustomRange(from, to);
   const customPeriod = customRange
@@ -188,9 +348,51 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
   ];
   const anyCostSet = marginPeriods.some((period) => period.rows.some((row) => row.costKnown));
   const recentRevenueEntries = financial.manualRevenueEntries.slice(0, 50);
+  const reviewItems = [
+    {
+      title: activeShiftCount > 0 ? "Close POS shift" : "POS shifts settled",
+      detail:
+        activeShiftCount > 0
+          ? "Open shifts should be counted before the day is closed."
+          : "No open shift needs cash review right now.",
+      value: activeShiftCount > 0 ? formatMoney(openShiftExpectedCash) : "Clear",
+      href: "/pos",
+      actionLabel: activeShiftCount > 0 ? "Open POS" : "View POS"
+    },
+    {
+      title: payrollAccrual.outstanding > 0 ? "Payroll not yet recorded" : "Payroll recorded",
+      detail:
+        payrollAccrual.outstanding > 0
+          ? `${payrollAccrual.unpaidWorkerCount} worker${payrollAccrual.unpaidWorkerCount === 1 ? "" : "s"} unpaid this month — net profit above does not include this yet.`
+          : "Every active worker has a payment recorded for this month.",
+      value: payrollAccrual.outstanding > 0 ? formatMoney(payrollAccrual.outstanding) : "Clear",
+      href: "/admin/financial?tab=payroll",
+      actionLabel: "Payroll"
+    },
+    {
+      title: dueRecurringExpenses.length > 0 ? "Recurring expenses due" : "Recurring expenses current",
+      detail:
+        dueRecurringExpenses.length > 0
+          ? "Log the due items so this month stays accurate."
+          : "Every recurring expense has been handled for this period.",
+      value: dueRecurringExpenses.length > 0 ? `${dueRecurringExpenses.length} due` : "Clear",
+      href: "/admin/financial?tab=expenses",
+      actionLabel: "Expenses"
+    },
+    {
+      title: missingCostCount > 0 ? "Missing product costs" : "Product costs ready",
+      detail:
+        missingCostCount > 0
+          ? "Set unit costs to make product margin reports reliable."
+          : "Active variants have cost data for margin reporting.",
+      value: missingCostCount > 0 ? `${missingCostCount} SKU${missingCostCount === 1 ? "" : "s"}` : "Clear",
+      href: "/admin/products",
+      actionLabel: "Products"
+    }
+  ];
 
   const overviewTab = (
-    <>
+    <div className="money-workspace">
       {operations.sourceMessage ? (
         <div className="admin-alert" role="status">
           {operations.sourceMessage}
@@ -202,114 +404,223 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
         </div>
       ) : null}
 
-      {pnlPeriods.map((period) => (
-        <section className="admin-panel" key={period.key}>
-          <div className="panel-header">
-            <h2>{period.label}</h2>
-            <span>{period.orderCount} order{period.orderCount === 1 ? "" : "s"}</span>
+      <section className="money-hero-panel">
+        <div className="money-hero-copy">
+          <div className="money-kicker">Cash-basis profit and loss</div>
+          <h2>{formatMoney(monthPeriod.netProfit)}</h2>
+          <p>
+            Net profit this month after expenses and payroll. Revenue is split between paid orders and logged
+            other income.
+          </p>
+          <div className="money-hero-meta">
+            <span>{monthPeriod.orderCount} paid order{monthPeriod.orderCount === 1 ? "" : "s"}</span>
+            <span>{formatDeltaLabel(monthPeriod.netProfit, previousMonthPeriod.netProfit, "previous month")}</span>
+            {payrollAccrual.outstanding > 0 ? (
+              <span className="money-hero-warning">
+                Excludes {formatMoney(payrollAccrual.outstanding)} unrecorded payroll
+              </span>
+            ) : null}
           </div>
-          <div className="metric-grid">
-            <article className="metric">
-              <span>Revenue</span>
-              <strong>{formatMoney(period.revenue)}</strong>
-            </article>
-            <article className="metric">
-              <span>Expenses</span>
-              <strong>{formatMoney(period.expenses)}</strong>
-            </article>
-            <article className="metric">
-              <span>Payroll</span>
-              <strong>{formatMoney(period.payroll)}</strong>
-            </article>
-            <article className="metric">
-              <span>Net profit</span>
-              <strong>{formatMoney(period.netProfit)}</strong>
-            </article>
-          </div>
-          <div className="admin-panel-footer-row">
-            <p className="admin-help">
-              Revenue is {formatMoney(period.ordersRevenue)} from orders
-              {period.otherRevenue > 0 ? ` + ${formatMoney(period.otherRevenue)} other income` : ""}.
-            </p>
-            <Link className="text-button" href={`/admin/financial/print/pnl?period=${period.key}` as Route} target="_blank">
-              Print statement
-            </Link>
-          </div>
-        </section>
-      ))}
-
-      <section className="admin-panel">
-        <div className="panel-header">
-          <h2>Custom range</h2>
         </div>
-        <form className="admin-form-grid" method="get">
-          <label className="admin-field">
-            <span>From</span>
-            <input defaultValue={from} name="from" required type="date" />
-          </label>
-          <label className="admin-field">
-            <span>To</span>
-            <input defaultValue={to} name="to" required type="date" />
-          </label>
-          <button className="admin-action" type="submit">
-            Show
-          </button>
-        </form>
-        {from && to && !customRange ? <p className="form-error">That date range isn&apos;t valid.</p> : null}
-        {customPeriod ? (
-          <>
-            <div className="metric-grid">
-              <article className="metric">
-                <span>Revenue</span>
-                <strong>{formatMoney(customPeriod.revenue)}</strong>
-              </article>
-              <article className="metric">
-                <span>Expenses</span>
-                <strong>{formatMoney(customPeriod.expenses)}</strong>
-              </article>
-              <article className="metric">
-                <span>Payroll</span>
-                <strong>{formatMoney(customPeriod.payroll)}</strong>
-              </article>
-              <article className="metric">
-                <span>Net profit</span>
-                <strong>{formatMoney(customPeriod.netProfit)}</strong>
-              </article>
-            </div>
-            <div className="admin-panel-footer-row">
-              <p className="admin-help">{customPeriod.orderCount} paid order{customPeriod.orderCount === 1 ? "" : "s"}.</p>
-              <Link className="text-button" href={`/admin/financial/print/pnl?from=${from}&to=${to}` as Route} target="_blank">
-                Print statement
-              </Link>
-            </div>
-          </>
-        ) : null}
+        <div className="money-hero-visual">
+          <MoneyTrend id="financial-month-trend" points={cashTrend} />
+        </div>
       </section>
 
-      <section className="admin-panel">
-        <div className="panel-header">
-          <h2>Other income</h2>
-          <AdminDrawer title="Log other income" triggerLabel="Log income">
+      <section aria-label="Financial metrics" className="money-stat-grid">
+        <MoneyStat
+          label="Revenue"
+          note={`${formatMoney(monthPeriod.ordersRevenue)} from paid orders`}
+          value={formatMoney(monthPeriod.revenue)}
+        />
+        <MoneyStat
+          label="Expenses"
+          note={`${currentMonthExpenseBreakdown.count} item${currentMonthExpenseBreakdown.count === 1 ? "" : "s"} logged`}
+          tone="warn"
+          value={formatMoney(monthPeriod.expenses)}
+        />
+        <MoneyStat
+          label="Payroll recorded"
+          note={
+            payrollAccrual.outstanding > 0
+              ? `${formatMoney(payrollAccrual.outstanding)} still to record of ${formatMoney(currentPayrollTotal)}`
+              : `${formatMoney(currentPayrollTotal)} monthly payroll, fully recorded`
+          }
+          tone="green"
+          value={formatMoney(monthPeriod.payroll)}
+        />
+        <MoneyStat
+          label="Assets"
+          note={`${financial.capitalAssets.length} asset${financial.capitalAssets.length === 1 ? "" : "s"} registered`}
+          tone="dark"
+          value={formatMoney(totalBookValue)}
+        />
+      </section>
+
+      <section className="money-action-dock" aria-label="Financial actions">
+        <div>
+          <strong>Clean action row</strong>
+          <span>Add income, log expenses, run payroll, register assets, and print statements from one place.</span>
+        </div>
+        <div className="money-action-dock-actions">
+          <AdminDrawer title="Log other income" triggerClassName="money-primary-action" triggerLabel="Log income">
             <CreateManualRevenueForm action={createManualRevenueEntryAction} disabled={disabled} />
           </AdminDrawer>
-        </div>
-        <div className="stack-list">
-          {recentRevenueEntries.map((entry) => (
-            <ManualRevenueRow
-              amountLabel={formatMoney(entry.amount)}
-              dateLabel={formatDateLabel(entry.date)}
-              deleteAction={deleteManualRevenueEntryAction}
-              disabled={disabled}
-              entryId={entry.id}
-              key={entry.id}
-              label={entry.label}
-              note={entry.note}
-            />
-          ))}
-          {recentRevenueEntries.length === 0 ? <p className="admin-help">Nothing logged yet.</p> : null}
+          {canSeeExpenses ? (
+            <Link className="money-secondary-action" href={"/admin/financial?tab=expenses" as Route}>
+              Log expense
+            </Link>
+          ) : null}
+          {canSeePayroll ? (
+            <Link className="money-secondary-action" href={"/admin/financial?tab=payroll" as Route}>
+              Run payroll
+            </Link>
+          ) : null}
+          {canSeeAssets ? (
+            <Link className="money-secondary-action" href={"/admin/financial?tab=assets" as Route}>
+              Add asset
+            </Link>
+          ) : null}
+          <Link className="money-secondary-action" href={"/admin/financial/print/pnl?period=month" as Route} target="_blank">
+            Print P&amp;L
+          </Link>
         </div>
       </section>
-    </>
+
+      <div className="money-dashboard-grid">
+        <section className="money-panel">
+          <div className="money-panel-header">
+            <div>
+              <h3>Money in by channel</h3>
+              <p>Paid revenue across online, POS, and admin-created sales.</p>
+            </div>
+            <span>{formatMoney(monthPeriod.ordersRevenue)}</span>
+          </div>
+          <div className="money-bars">
+            {paidChannelTotals.map((row) => (
+              <div className="money-bar-row" key={row.channel}>
+                <div className="money-bar-label">
+                  <strong>{formatChannelName(row.channel)}</strong>
+                  <span>
+                    {row.orders} order{row.orders === 1 ? "" : "s"} · {formatMoney(row.revenue)}
+                  </span>
+                </div>
+                <div className="money-bar-track">
+                  <span className={`money-bar-fill ${row.channel.toLowerCase()}`} style={{ width: percentWidth(row.revenue, maxChannelRevenue) }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="money-panel">
+          <div className="money-panel-header">
+            <div>
+              <h3>Needs review</h3>
+              <p>The money checks that need an owner or manager decision.</p>
+            </div>
+            <span>{reviewItems.filter((item) => item.value !== "Clear").length} item{reviewItems.filter((item) => item.value !== "Clear").length === 1 ? "" : "s"}</span>
+          </div>
+          <div className="money-review-list">
+            {reviewItems.map((item) => (
+              <div className="money-review-row" key={item.title}>
+                <div>
+                  <strong>{item.title}</strong>
+                  <span>{item.detail}</span>
+                </div>
+                <em>{item.value}</em>
+                <Link className="money-row-action" href={item.href as Route}>
+                  {item.actionLabel}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      <div className="money-dashboard-grid">
+        <section className="money-panel">
+          <div className="money-panel-header">
+            <div>
+              <h3>Expenses by category</h3>
+              <p>QuickBooks-style operating cost view for the current month.</p>
+            </div>
+            <span>{formatMoney(currentMonthExpenseBreakdown.total)}</span>
+          </div>
+          <div className="money-bars">
+            {currentMonthExpenseBreakdown.rows.slice(0, 5).map((row) => (
+              <div className="money-bar-row" key={row.categoryId}>
+                <div className="money-bar-label">
+                  <strong>{row.categoryTitle}</strong>
+                  <span>
+                    {row.count} item{row.count === 1 ? "" : "s"} · {formatMoney(row.total)}
+                  </span>
+                </div>
+                <div className="money-bar-track">
+                  <span className="money-bar-fill expenses" style={{ width: percentWidth(row.total, maxExpenseCategoryTotal) }} />
+                </div>
+              </div>
+            ))}
+            {currentMonthExpenseBreakdown.rows.length === 0 ? (
+              <p className="admin-help">No expenses logged for this month yet.</p>
+            ) : null}
+          </div>
+        </section>
+
+        <section className="money-panel">
+          <div className="money-panel-header">
+            <div>
+              <h3>Statements &amp; other income</h3>
+              <p>Run custom ranges and keep non-order income visible.</p>
+            </div>
+            <Link className="money-row-action" href={"/admin/financial/print/pnl?period=30d" as Route} target="_blank">
+              Print 30 days
+            </Link>
+          </div>
+          <form className="money-range-form" method="get">
+            <label className="admin-field">
+              <span>From</span>
+              <input defaultValue={from} name="from" required type="date" />
+            </label>
+            <label className="admin-field">
+              <span>To</span>
+              <input defaultValue={to} name="to" required type="date" />
+            </label>
+            <button className="admin-action" type="submit">
+              Show range
+            </button>
+          </form>
+          {from && to && !customRange ? <p className="form-error">That date range isn&apos;t valid.</p> : null}
+          {customPeriod ? (
+            <div className="money-range-result">
+              <strong>{formatMoney(customPeriod.netProfit)} net profit</strong>
+              <span>
+                {customPeriod.orderCount} paid order{customPeriod.orderCount === 1 ? "" : "s"} ·{" "}
+                {formatMoney(customPeriod.revenue)} revenue
+              </span>
+              <Link className="text-button" href={`/admin/financial/print/pnl?from=${from}&to=${to}` as Route} target="_blank">
+                Print custom statement
+              </Link>
+            </div>
+          ) : null}
+          <div className="money-income-list">
+            {recentRevenueEntries.slice(0, 3).map((entry) => (
+              <ManualRevenueRow
+                amountLabel={formatMoney(entry.amount)}
+                dateLabel={formatDateLabel(entry.date)}
+                deleteAction={deleteManualRevenueEntryAction}
+                disabled={disabled}
+                entryId={entry.id}
+                key={entry.id}
+                label={entry.label}
+                note={entry.note}
+              />
+            ))}
+            {recentRevenueEntries.length === 0 ? <p className="admin-help">No other income has been logged yet.</p> : null}
+          </div>
+        </section>
+      </div>
+    </div>
   );
 
   const marginReferenceContent = (
@@ -464,10 +775,13 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
     </>
   );
 
-  const tabs: AdminTabSpec[] = [
-    { id: "overview", label: "Overview", content: overviewTab },
-    { id: "reports", label: "Reports", content: reportsTab }
-  ];
+  // Tab order is deliberate: the day-to-day work (Overview, Expenses,
+  // Payroll) comes first, statements next, and one-time configuration last
+  // in a Setup tab — categories, recurring templates, worker profiles, and
+  // the asset register are all set up once and then rarely touched, so they
+  // shouldn't compete for attention with the expense log.
+  const tabs: AdminTabSpec[] = [{ id: "overview", label: "Overview", content: overviewTab }];
+  const setupSections: ReactNode[] = [];
 
   if (canSeeExpenses) {
     const categoriesById = new Map(financial.expenseCategories.map((category) => [category.id, category]));
@@ -481,7 +795,7 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
         <>
           {financial.expenseCategories.length === 0 ? (
             <div className="admin-alert" role="status">
-              Add a category first — open &quot;Manage categories &amp; recurring&quot; below.
+              Add a category first — categories live under the Setup tab.
             </div>
           ) : null}
 
@@ -518,17 +832,22 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
               </Link>
             </div>
           </section>
+        </>
+      )
+    });
 
-          <details className="admin-panel admin-collapsible">
-            <summary className="panel-header">
-              <h2>Manage categories &amp; recurring</h2>
-              <span>
-                {financial.expenseCategories.length} categories &middot; {financial.recurringExpenseTemplates.length}{" "}
-                recurring
-              </span>
-            </summary>
+    setupSections.push(
+      <Fragment key="expense-setup">
+        <section className="admin-panel">
+          <div className="panel-header">
+            <h2>Expense categories</h2>
+            <span>
+              {financial.expenseCategories.length} categories &middot; {financial.recurringExpenseTemplates.length}{" "}
+              recurring
+            </span>
+          </div>
 
-            <div className="admin-panel-section">
+          <div className="admin-panel-section">
               <h3>Categories</h3>
               <div className="quick-edit-list">
                 {financial.expenseCategories.map((category) => (
@@ -582,50 +901,47 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                 </div>
               ) : null}
             </div>
-          </details>
-        </>
-      )
-    });
+        </section>
+      </Fragment>
+    );
   }
 
   if (canSeeAssets) {
     const totalPurchaseCost = financial.capitalAssets.reduce((total, asset) => total + asset.purchaseCost, 0);
     const totalBookValue = financial.capitalAssets.reduce((total, asset) => total + computeAssetBookValue(asset), 0);
 
-    tabs.push({
-      id: "assets",
-      label: "Assets",
-      content: (
-        <>
-          <div className="page-heading">
-            <div>
-              <p className="app-subtitle">Equipment, furniture, machines, and everything else the business owns.</p>
-            </div>
+    setupSections.push(
+      <Fragment key="asset-setup">
+        <section className="admin-panel">
+          <div className="panel-header">
+            <h2>Assets</h2>
+            <span>{financial.capitalAssets.length} assets</span>
+          </div>
+          <p className="admin-help">
+            Equipment, furniture, machines, and everything else the business owns. Registered once, then
+            depreciated automatically — this is capital value, not a monthly cost, so it never touches the P&amp;L.
+          </p>
+          <div className="metric-grid">
+            <article className="metric">
+              <span>Total purchase cost</span>
+              <strong>{formatMoney(totalPurchaseCost)}</strong>
+            </article>
+            <article className="metric">
+              <span>Current book value</span>
+              <strong>{formatMoney(totalBookValue)}</strong>
+            </article>
+          </div>
+          <div className="admin-panel-footer-row">
+            <span />
             <AdminDrawer title="Add an asset" triggerLabel="Add asset">
               <CreateAssetForm action={createCapitalAssetAction} disabled={disabled} />
             </AdminDrawer>
           </div>
+        </section>
 
-          <section className="admin-panel">
+        <section className="admin-panel">
             <div className="panel-header">
-              <h2>Overview</h2>
-              <span>{financial.capitalAssets.length} assets</span>
-            </div>
-            <div className="metric-grid">
-              <article className="metric">
-                <span>Total purchase cost</span>
-                <strong>{formatMoney(totalPurchaseCost)}</strong>
-              </article>
-              <article className="metric">
-                <span>Current book value</span>
-                <strong>{formatMoney(totalBookValue)}</strong>
-              </article>
-            </div>
-          </section>
-
-          <section className="admin-panel">
-            <div className="panel-header">
-              <h2>Register</h2>
+              <h2>Asset register</h2>
               <span>Tap one to edit or remove it</span>
             </div>
             <div className="order-list">
@@ -655,10 +971,9 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
               })}
               {financial.capitalAssets.length === 0 ? <p className="admin-help">Nothing added yet.</p> : null}
             </div>
-          </section>
-        </>
-      )
-    });
+        </section>
+      </Fragment>
+    );
   }
 
   if (canSeePayroll) {
@@ -679,14 +994,12 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
       label: "Payroll",
       content: (
         <>
-          <div className="page-heading">
-            <div>
-              <p className="app-subtitle">Worker profiles and monthly pay. Owner-only — this carries national ID and bank details.</p>
+          {payrollAccrual.outstanding > 0 ? (
+            <div className="admin-alert" role="status">
+              {formatMoney(payrollAccrual.outstanding)} of payroll isn&apos;t recorded for {period} yet, so it is
+              not in this month&apos;s profit &amp; loss. Salaries only count once you record the payment below.
             </div>
-            <AdminDrawer title="Add a worker" triggerLabel="Add worker">
-              <CreateWorkerForm action={createWorkerAction} disabled={disabled} />
-            </AdminDrawer>
-          </div>
+          ) : null}
 
           <section className="admin-panel">
             <div className="panel-header">
@@ -699,8 +1012,12 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                 <strong>{formatMoney(totalMonthlyPayroll)}</strong>
               </article>
               <article className="metric">
-                <span>Paid for {period}</span>
+                <span>Recorded for {period}</span>
                 <strong>{formatMoney(paidThisPeriod)}</strong>
+              </article>
+              <article className="metric">
+                <span>Still to record</span>
+                <strong>{formatMoney(payrollAccrual.outstanding)}</strong>
               </article>
             </div>
           </section>
@@ -726,11 +1043,40 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                   />
                 );
               })}
-              {activeWorkers.length === 0 ? <p className="admin-help">Add a worker below to start running payroll.</p> : null}
+              {activeWorkers.length === 0 ? (
+                <p className="admin-help">Add a worker under the Setup tab to start running payroll.</p>
+              ) : null}
             </div>
           </section>
 
           <section className="admin-panel">
+            <div className="panel-header">
+              <h2>Payment history</h2>
+              <span>{financial.payrollPayments.length} payments</span>
+            </div>
+            <div className="stack-list">
+              {recentPayments.map((payment) => (
+                <PayrollHistoryRow
+                  deleteAction={deletePayrollPaymentAction}
+                  disabled={disabled}
+                  key={payment.id}
+                  netLabel={formatMoney(payment.netAmount)}
+                  paidDateLabel={formatDateLabel(payment.paidDate)}
+                  paymentId={payment.id}
+                  period={payment.period}
+                  workerName={workersById.get(payment.workerId)?.name ?? "Former worker"}
+                />
+              ))}
+              {recentPayments.length === 0 ? <p className="admin-help">No payments logged yet.</p> : null}
+            </div>
+          </section>
+        </>
+      )
+    });
+
+    setupSections.push(
+      <Fragment key="payroll-setup">
+        <section className="admin-panel">
             <div className="panel-header">
               <h2>Workers</h2>
               <span>{financial.workers.length} total</span>
@@ -767,29 +1113,33 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
               ))}
               {financial.workers.length === 0 ? <p className="admin-help">Nothing here yet.</p> : null}
             </div>
-          </section>
+            <p className="admin-help">
+              Worker profiles carry national ID and bank details, and set the monthly salary each payroll run
+              starts from. Owner-only.
+            </p>
+            <div className="admin-panel-footer-row">
+              <span />
+              <AdminDrawer title="Add a worker" triggerLabel="Add worker">
+                <CreateWorkerForm action={createWorkerAction} disabled={disabled} />
+              </AdminDrawer>
+            </div>
+        </section>
+      </Fragment>
+    );
+  }
 
-          <section className="admin-panel">
-            <div className="panel-header">
-              <h2>Payment history</h2>
-              <span>{financial.payrollPayments.length} payments</span>
-            </div>
-            <div className="stack-list">
-              {recentPayments.map((payment) => (
-                <PayrollHistoryRow
-                  deleteAction={deletePayrollPaymentAction}
-                  disabled={disabled}
-                  key={payment.id}
-                  netLabel={formatMoney(payment.netAmount)}
-                  paidDateLabel={formatDateLabel(payment.paidDate)}
-                  paymentId={payment.id}
-                  period={payment.period}
-                  workerName={workersById.get(payment.workerId)?.name ?? "Former worker"}
-                />
-              ))}
-              {recentPayments.length === 0 ? <p className="admin-help">No payments logged yet.</p> : null}
-            </div>
-          </section>
+  tabs.push({ id: "reports", label: "Reports", content: reportsTab });
+
+  if (setupSections.length > 0) {
+    tabs.push({
+      id: "setup",
+      label: "Setup",
+      content: (
+        <>
+          <div className="admin-alert" role="status">
+            One-time configuration. Set these up once and the day-to-day tabs stay simple.
+          </div>
+          {setupSections}
         </>
       )
     });
@@ -801,7 +1151,8 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
         <div>
           <h1 className="app-title">Financial</h1>
           <p className="app-subtitle">
-            Revenue, expenses, assets, and payroll — with printable statements under Reports.
+            Money in, money out, and what it leaves you. Statements print from Reports; categories, workers, and
+            assets are configured under Setup.
           </p>
         </div>
       </div>

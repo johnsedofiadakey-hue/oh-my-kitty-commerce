@@ -1,5 +1,5 @@
 import { toSortableMillis, type AdminOrderRow } from "@/lib/admin/operations-data";
-import type { Expense, ExpenseCategory, ManualRevenueEntry, PayrollPayment } from "@/lib/commerce/types";
+import type { Expense, ExpenseCategory, ManualRevenueEntry, PayrollPayment, Worker } from "@/lib/commerce/types";
 
 export type PnlReport = {
   label: string;
@@ -100,14 +100,65 @@ export function buildExpensesByCategory(
   };
 }
 
+export type PayrollAccrual = {
+  period: string;
+  expected: number;
+  recorded: number;
+  outstanding: number;
+  workerCount: number;
+  unpaidWorkerCount: number;
+};
+
+/**
+ * Payroll only reaches the P&L once a payment is actually recorded — the
+ * cash-basis rule the rest of this report follows. That is correct, but it
+ * silently flatters a month whose salaries simply haven't been entered yet,
+ * so this reports what the active roster is expected to cost against what
+ * has been recorded. The gap is surfaced as a warning next to net profit
+ * rather than subtracted, since subtracting it would double-count the
+ * moment the payment is logged.
+ */
+export function buildPayrollAccrual(
+  workers: Worker[],
+  payrollPayments: PayrollPayment[],
+  period: string
+): PayrollAccrual {
+  const activeWorkers = workers.filter((worker) => worker.status === "ACTIVE");
+  const expected = activeWorkers.reduce((total, worker) => total + worker.monthlySalary, 0);
+  const paymentsThisPeriod = payrollPayments.filter((payment) => payment.period === period);
+  const recorded = paymentsThisPeriod.reduce((total, payment) => total + payment.grossAmount, 0);
+  const paidWorkerIds = new Set(paymentsThisPeriod.map((payment) => payment.workerId));
+
+  return {
+    period,
+    expected,
+    recorded,
+    outstanding: Math.max(0, expected - recorded),
+    workerCount: activeWorkers.length,
+    unpaidWorkerCount: activeWorkers.filter((worker) => !paidWorkerIds.has(worker.id)).length
+  };
+}
+
+/** "2026-09" for whatever month the given date falls in — the payroll period key. */
+export function periodKeyFor(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export function getPeriodBoundaries() {
   const now = Date.now();
   const startOfToday = new Date();
   startOfToday.setUTCHours(0, 0, 0, 0);
+  const startOfMonth = new Date();
+  startOfMonth.setUTCDate(1);
+  startOfMonth.setUTCHours(0, 0, 0, 0);
+  const startOfPreviousMonth = new Date(startOfMonth);
+  startOfPreviousMonth.setUTCMonth(startOfPreviousMonth.getUTCMonth() - 1);
 
   return {
     now,
     startOfToday: startOfToday.getTime(),
+    startOfMonth: startOfMonth.getTime(),
+    startOfPreviousMonth: startOfPreviousMonth.getTime(),
     sevenDaysAgo: now - 7 * 24 * 60 * 60 * 1000,
     thirtyDaysAgo: now - 30 * 24 * 60 * 60 * 1000
   };
