@@ -4,6 +4,7 @@ import { getAdminOperationsData, formatMoney } from "@/lib/admin/operations-data
 import { getAdminFinancialData } from "@/lib/admin/financial-data";
 import {
   buildExpensesByCategory,
+  buildMonthOptions,
   buildPayrollAccrual,
   buildPnlReport,
   getPeriodBoundaries,
@@ -15,15 +16,32 @@ import { PrintPageButton } from "@/components/admin/print-page-button";
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  searchParams: Promise<{ period?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ period?: string; from?: string; to?: string; month?: string }>;
 };
 
-function resolvePeriod(period: string | undefined, from: string | undefined, to: string | undefined) {
+function resolvePeriod(
+  period: string | undefined,
+  from: string | undefined,
+  to: string | undefined,
+  month: string | undefined
+) {
   const { now, startOfToday, startOfMonth, sevenDaysAgo, thirtyDaysAgo } = getPeriodBoundaries();
   const custom = parseCustomRange(from, to);
 
   if (custom) {
     return { label: `${custom.from} to ${custom.to}`, sinceMillis: custom.sinceMillis, untilMillis: custom.untilMillis };
+  }
+  // A specific month picked on the dashboard, so the printed statement covers
+  // the same period the screen was showing.
+  if (month) {
+    const selected = buildMonthOptions(new Date(now), 24).find((option) => option.key === month);
+    if (selected) {
+      return {
+        label: selected.label,
+        sinceMillis: selected.sinceMillis,
+        untilMillis: Math.min(selected.untilMillis, now)
+      };
+    }
   }
   if (period === "month") {
     return { label: "This month", sinceMillis: startOfMonth, untilMillis: now };
@@ -42,7 +60,7 @@ function resolvePeriod(period: string | undefined, from: string | undefined, to:
 
 export default async function PrintPnlPage({ searchParams }: PageProps) {
   await requireAdminPermission("reports.financial");
-  const { period, from, to } = await searchParams;
+  const { period, from, to, month } = await searchParams;
 
   const context = getCommerceServerContext();
   const [operations, financial, storeSettings] = await Promise.all([
@@ -51,7 +69,7 @@ export default async function PrintPnlPage({ searchParams }: PageProps) {
     context ? context.repo.getStoreSettings().catch(() => null) : Promise.resolve(null)
   ]);
 
-  const { label, sinceMillis, untilMillis } = resolvePeriod(period, from, to);
+  const { label, sinceMillis, untilMillis } = resolvePeriod(period, from, to, month);
   const report = buildPnlReport(
     label,
     {
@@ -92,9 +110,21 @@ export default async function PrintPnlPage({ searchParams }: PageProps) {
         <div className="statement-section">
           <h2>Income</h2>
           <div className="statement-row indent">
-            <span>Sales (orders paid)</span>
-            <span>{formatMoney(report.ordersRevenue)}</span>
+            <span>Product sales</span>
+            <span>{formatMoney(report.productRevenue)}</span>
           </div>
+          {report.deliveryRevenue > 0 ? (
+            <div className="statement-row indent">
+              <span>Delivery charged</span>
+              <span>{formatMoney(report.deliveryRevenue)}</span>
+            </div>
+          ) : null}
+          {report.paymentFeeRevenue > 0 ? (
+            <div className="statement-row indent">
+              <span>Payment fees collected</span>
+              <span>{formatMoney(report.paymentFeeRevenue)}</span>
+            </div>
+          ) : null}
           {report.otherRevenue > 0 ? (
             <div className="statement-row indent">
               <span>Other income</span>
@@ -106,6 +136,20 @@ export default async function PrintPnlPage({ searchParams }: PageProps) {
             <span>{formatMoney(report.revenue)}</span>
           </div>
         </div>
+
+        {report.paymentFees > 0 ? (
+          <div className="statement-section">
+            <h2>Cost of taking payment</h2>
+            <div className="statement-row indent">
+              <span>Paystack fees</span>
+              <span>{formatMoney(report.paymentFees)}</span>
+            </div>
+            <div className="statement-total-row">
+              <span>Total payment costs</span>
+              <span>{formatMoney(report.paymentFees)}</span>
+            </div>
+          </div>
+        ) : null}
 
         <div className="statement-section">
           <h2>Expenses</h2>
@@ -140,9 +184,18 @@ export default async function PrintPnlPage({ searchParams }: PageProps) {
           <span>{formatMoney(report.netProfit)}</span>
         </div>
 
+        {report.taxCollected > 0 ? (
+          <p className="statement-footnote">
+            Sales tax collected in this period: {formatMoney(report.taxCollected)}. Held on behalf of the tax
+            authority and excluded from income above — it is owed, not earned.
+          </p>
+        ) : null}
+
         <p className="statement-footnote">
           {report.orderCount} paid order{report.orderCount === 1 ? "" : "s"} in this period. Prepared on a cash
-          basis — income and costs count on the date they were received or paid. Generated {generatedOn}.
+          basis — income and costs count on the date they were received or paid. Payment fees appear on both
+          sides: charged to the customer, then paid to Paystack, so they do not change net profit. Generated{" "}
+          {generatedOn}.
         </p>
         {payrollAccrual && payrollAccrual.outstanding > 0 ? (
           <p className="statement-footnote">

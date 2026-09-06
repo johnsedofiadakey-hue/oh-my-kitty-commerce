@@ -5068,6 +5068,34 @@ button {
   background: #fdf0ea;
 }
 
+/* One month selector above the dashboard: every panel below reads from it. */
+.money-period-form,
+.admin-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.money-period-form .admin-field,
+.admin-filter-row .admin-field {
+  flex: 1 1 200px;
+  min-width: 0;
+  margin: 0;
+}
+
+.admin-filter-row {
+  margin-bottom: 14px;
+}
+
+/* Inline edit form inside an otherwise read-only log row. */
+.stack-row-edit {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-small);
+  padding: 14px;
+  background: var(--color-white-pure);
+}
+
 .money-hero-visual {
   border: 1px solid var(--color-line);
   border-radius: 24px;

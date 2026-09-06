@@ -4,9 +4,31 @@ import type { Expense, ExpenseCategory, ManualRevenueEntry, PayrollPayment, Work
 export type PnlReport = {
   label: string;
   orderCount: number;
-  ordersRevenue: number;
+  /** Goods sold, after line discounts — the actual trading income. */
+  productRevenue: number;
+  /** Delivery charged to customers. Income, but not from selling product. */
+  deliveryRevenue: number;
+  /**
+   * The Paystack fee customers are charged on top of their order. It really
+   * does arrive, so it is income — and it is handed straight to Paystack, so
+   * the identical amount appears as a cost below. Shown on both sides rather
+   * than netted off, because "what did card payments cost me" is a question
+   * worth being able to answer.
+   */
+  paymentFeeRevenue: number;
+  /** Manually logged income — equipment sold, refunds received, and so on. */
   otherRevenue: number;
+  /** Every order line combined. Kept for callers that only want one number. */
+  ordersRevenue: number;
+  /** Total income: product + delivery + payment fees + other. Excludes tax. */
   revenue: number;
+  /**
+   * Sales tax collected on behalf of the tax authority. Deliberately NOT in
+   * revenue — it is money held and owed, never the business's to keep.
+   */
+  taxCollected: number;
+  /** Paid to Paystack. Always equals paymentFeeRevenue; nets to zero on profit. */
+  paymentFees: number;
   expenses: number;
   payroll: number;
   netProfit: number;
@@ -20,11 +42,19 @@ export type PnlInput = {
 };
 
 /**
- * Cash-basis P&L: revenue is what actually came in (orders + logged other
- * income), expenses is everything spent (including raw-material purchases —
- * deliberately NOT the recipe-based COGS used in the product margin
- * reference, which answers a different question — pricing, not cash flow —
- * and would double-count against this if subtracted here too).
+ * Cash-basis P&L: income is what actually came in, costs are what actually
+ * went out, both dated by when the money moved.
+ *
+ * An order's `total` is subtotal − discounts + delivery + tax + payment fee,
+ * so it cannot be used as revenue directly: tax belongs to the tax authority
+ * and the payment fee belongs to Paystack. Summing `total` treated both as
+ * profit. This splits the order into its parts instead, keeps tax out of
+ * revenue entirely, and books the payment fee on both sides so it shows up
+ * as a real cost rather than quietly inflating the bottom line.
+ *
+ * Raw-material purchases stay in `expenses` and are deliberately NOT the
+ * recipe-based COGS used by the product margin reference — that answers a
+ * pricing question, and subtracting it here too would double-count.
  */
 export function buildPnlReport(label: string, data: PnlInput, sinceMillis: number, untilMillis: number): PnlReport {
   const inRange = (millis: number) => millis >= sinceMillis && millis <= untilMillis;
@@ -32,7 +62,18 @@ export function buildPnlReport(label: string, data: PnlInput, sinceMillis: numbe
   const paidInPeriod = data.orderRows.filter(
     (row) => row.order.paymentStatus === "PAID" && inRange(toSortableMillis(row.order.createdAt))
   );
-  const ordersRevenue = paidInPeriod.reduce((total, row) => total + row.order.total, 0);
+
+  let productRevenue = 0;
+  let deliveryRevenue = 0;
+  let paymentFeeRevenue = 0;
+  let taxCollected = 0;
+  for (const { order } of paidInPeriod) {
+    productRevenue += order.subtotal - order.discountTotal;
+    deliveryRevenue += order.deliveryTotal;
+    paymentFeeRevenue += order.paymentFeeTotal;
+    taxCollected += order.taxTotal;
+  }
+
   const otherRevenue = data.manualRevenueEntries
     .filter((entry) => inRange(new Date(entry.date).getTime()))
     .reduce((total, entry) => total + entry.amount, 0);
@@ -42,18 +83,94 @@ export function buildPnlReport(label: string, data: PnlInput, sinceMillis: numbe
   const payrollTotal = data.payrollPayments
     .filter((payment) => inRange(new Date(payment.paidDate).getTime()))
     .reduce((total, payment) => total + payment.grossAmount, 0);
+
+  const ordersRevenue = productRevenue + deliveryRevenue + paymentFeeRevenue;
   const revenue = ordersRevenue + otherRevenue;
+  const paymentFees = paymentFeeRevenue;
 
   return {
     label,
     orderCount: paidInPeriod.length,
-    ordersRevenue,
+    productRevenue,
+    deliveryRevenue,
+    paymentFeeRevenue,
     otherRevenue,
+    ordersRevenue,
     revenue,
+    taxCollected,
+    paymentFees,
     expenses: expensesTotal,
     payroll: payrollTotal,
-    netProfit: revenue - expensesTotal - payrollTotal
+    netProfit: revenue - paymentFees - expensesTotal - payrollTotal
   };
+}
+
+export type ChannelTotal = {
+  channel: string;
+  orders: number;
+  revenue: number;
+};
+
+/**
+ * Paid revenue per sales channel within a period. Previously computed with
+ * no date bound at all while sitting under a heading showing the month's
+ * revenue, so the total and the bars silently described different spans of
+ * time. Uses the same product + delivery + fee basis as buildPnlReport so
+ * the two agree.
+ */
+export function buildChannelTotals(
+  orderRows: AdminOrderRow[],
+  channels: readonly string[],
+  sinceMillis: number,
+  untilMillis: number
+): ChannelTotal[] {
+  return channels.map((channel) => {
+    const orders = orderRows.filter((row) => {
+      const millis = toSortableMillis(row.order.createdAt);
+      return (
+        row.order.channel === channel &&
+        row.order.paymentStatus === "PAID" &&
+        millis >= sinceMillis &&
+        millis <= untilMillis
+      );
+    });
+
+    return {
+      channel,
+      orders: orders.length,
+      revenue: orders.reduce(
+        (total, { order }) => total + (order.subtotal - order.discountTotal) + order.deliveryTotal + order.paymentFeeTotal,
+        0
+      )
+    };
+  });
+}
+
+export type MonthOption = {
+  /** "2026-09" — also the payroll period key. */
+  key: string;
+  label: string;
+  sinceMillis: number;
+  untilMillis: number;
+};
+
+/**
+ * The last `count` months, newest first, for the period selector. Owners ask
+ * "how did September go" far more often than "how did the last 30 days go",
+ * and a rolling window can't answer that.
+ */
+export function buildMonthOptions(now: Date, count = 12): MonthOption[] {
+  return Array.from({ length: count }, (_, index) => {
+    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - index, 1));
+    const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1) - 1);
+
+    return {
+      key: `${start.getUTCFullYear()}-${String(start.getUTCMonth() + 1).padStart(2, "0")}`,
+      label: start.toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" }),
+      sinceMillis: start.getTime(),
+      untilMillis: end.getTime()
+    };
+  });
 }
 
 export type ExpenseCategoryTotal = {

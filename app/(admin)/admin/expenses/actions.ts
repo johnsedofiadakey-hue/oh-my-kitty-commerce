@@ -5,10 +5,12 @@ import { CommerceError } from "@/lib/commerce/errors";
 import {
   createExpense,
   createExpenseCategory,
+  createMediaAsset,
   createRecurringExpenseTemplate,
   deleteExpense,
   deleteRecurringExpenseTemplate,
   logRecurringExpense,
+  updateExpense,
   updateExpenseCategory
 } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
@@ -78,6 +80,61 @@ export async function createExpenseAction(
     });
 
     return "Expense logged.";
+  }, "/admin/financial");
+}
+
+export async function updateExpenseAction(
+  _previousState: AdminActionState,
+  formData: FormData
+): Promise<AdminActionState> {
+  return runAction(async () => {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+
+    await updateExpense(context, actor, {
+      id: formString(formData, "id"),
+      categoryId: formString(formData, "categoryId"),
+      name: formOptionalString(formData, "name"),
+      amount: formMoneyMinorUnit(formData, "amount"),
+      date: formDate(formData, "date"),
+      note: formOptionalString(formData, "note")
+    });
+
+    return "Expense updated.";
+  }, "/admin/financial");
+}
+
+/**
+ * Attaches an uploaded photo of the receipt to an expense. The file itself is
+ * already in storage by this point — the browser uploads it directly, same as
+ * product images — so this only records the media asset and links it.
+ */
+export async function attachExpenseReceiptAction(
+  expenseId: string,
+  input: { storagePath: string; url: string; alt: string }
+): Promise<AdminActionState> {
+  return runAction(async () => {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+
+    const asset = await createMediaAsset(context, actor, {
+      storagePath: input.storagePath,
+      url: input.url,
+      alt: input.alt,
+      usage: ["expense-receipt"]
+    });
+    await updateExpense(context, actor, { id: expenseId, receiptMediaId: asset.id });
+
+    return "Receipt attached.";
+  }, "/admin/financial");
+}
+
+export async function removeExpenseReceiptAction(expenseId: string): Promise<AdminActionState> {
+  return runAction(async () => {
+    const context = requireCommerceContext();
+    const actor = await getRequiredAdminActor();
+    await updateExpense(context, actor, { id: expenseId, receiptMediaId: null });
+    return "Receipt removed.";
   }, "/admin/financial");
 }
 

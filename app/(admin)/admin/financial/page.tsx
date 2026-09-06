@@ -8,7 +8,9 @@ import {
 } from "@/lib/admin/operations-data";
 import { getAdminFinancialData } from "@/lib/admin/financial-data";
 import {
+  buildChannelTotals,
   buildExpensesByCategory,
+  buildMonthOptions,
   buildPayrollAccrual,
   buildPnlReport,
   getPeriodBoundaries,
@@ -29,7 +31,7 @@ import {
   CreateExpenseCategoryForm,
   CreateExpenseForm,
   CreateRecurringExpenseForm,
-  ExpenseRow,
+  ExpenseLog,
   RecurringExpenseRow
 } from "@/components/admin/expense-forms";
 import { AssetRow, CreateAssetForm } from "@/components/admin/asset-forms";
@@ -37,13 +39,16 @@ import { CreateWorkerForm, PayWorkerForm, PayrollHistoryRow, WorkerRow } from "@
 import type { AdminOrderRow } from "@/lib/admin/operations-data";
 import { createManualRevenueEntryAction, deleteManualRevenueEntryAction } from "./actions";
 import {
+  attachExpenseReceiptAction,
   createExpenseAction,
   createExpenseCategoryAction,
   createRecurringExpenseTemplateAction,
   deleteExpenseAction,
   deleteRecurringExpenseTemplateAction,
   logRecurringExpenseAction,
-  quickEditExpenseCategoryAction
+  quickEditExpenseCategoryAction,
+  removeExpenseReceiptAction,
+  updateExpenseAction
 } from "../expenses/actions";
 import { createCapitalAssetAction, deleteCapitalAssetAction, updateCapitalAssetAction } from "../assets/actions";
 import {
@@ -269,7 +274,7 @@ function MoneyStat({
 }
 
 type AdminFinancialPageProps = {
-  searchParams: Promise<{ from?: string; to?: string; tab?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; tab?: string; month?: string }>;
 };
 
 export default async function AdminFinancialPage({ searchParams }: AdminFinancialPageProps) {
@@ -284,11 +289,11 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
   const canSeeAssets = hasPermission(roles, actor, "assets.view");
   const canSeePayroll = hasPermission(roles, actor, "payroll.view");
 
-  const { from, to, tab } = await searchParams;
+  const { from, to, tab, month } = await searchParams;
   const [operations, financial] = await Promise.all([getAdminOperationsData(), getAdminFinancialData()]);
   const disabled = financial.source !== "live";
 
-  const { now, startOfToday, startOfMonth, startOfPreviousMonth, sevenDaysAgo, thirtyDaysAgo } = getPeriodBoundaries();
+  const { now, startOfToday, sevenDaysAgo, thirtyDaysAgo } = getPeriodBoundaries();
   const pnlInput = {
     orderRows: operations.orderRows,
     expenses: financial.expenses,
@@ -302,24 +307,40 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
     { key: "30d", ...buildPnlReport("Last 30 days", pnlInput, thirtyDaysAgo, now) },
     { key: "all", ...buildPnlReport("All time", pnlInput, 0, now) }
   ];
-  const monthPeriod = { key: "month", ...buildPnlReport("This month", pnlInput, startOfMonth, now) };
-  const previousMonthPeriod = buildPnlReport("Previous month", pnlInput, startOfPreviousMonth, startOfMonth - 1);
+  // One month selector drives every panel below, so the headline number, the
+  // channel bars, and the category breakdown always describe the same span.
+  // They previously each picked their own window, and the channel bars had no
+  // date bound at all.
+  const monthOptions = buildMonthOptions(new Date(now), 12);
+  const selectedMonth = monthOptions.find((option) => option.key === month) ?? monthOptions[0];
+  const isCurrentMonth = selectedMonth.key === monthOptions[0].key;
+  // The live month has no future to report on, so stop it at "now".
+  const monthUntil = isCurrentMonth ? now : selectedMonth.untilMillis;
+  const previousMonthOption = buildMonthOptions(new Date(selectedMonth.sinceMillis), 2)[1];
+
+  const monthPeriod = {
+    key: "month",
+    ...buildPnlReport(selectedMonth.label, pnlInput, selectedMonth.sinceMillis, monthUntil)
+  };
+  const previousMonthPeriod = buildPnlReport(
+    previousMonthOption.label,
+    pnlInput,
+    previousMonthOption.sinceMillis,
+    previousMonthOption.untilMillis
+  );
   const cashTrend = buildCashTrend(pnlInput);
   const currentMonthExpenseBreakdown = buildExpensesByCategory(
     financial.expenses,
     financial.expenseCategories,
-    startOfMonth,
-    now
+    selectedMonth.sinceMillis,
+    monthUntil
   );
-  const paidChannelTotals = (["ONLINE", "POS", "ADMIN_CREATED"] as const).map((channel) => {
-    const orders = operations.orders.filter((order) => order.channel === channel && order.paymentStatus === "PAID");
-
-    return {
-      channel,
-      orders: orders.length,
-      revenue: orders.reduce((total, order) => total + order.total, 0)
-    };
-  });
+  const paidChannelTotals = buildChannelTotals(
+    operations.orderRows,
+    ["ONLINE", "POS", "ADMIN_CREATED"],
+    selectedMonth.sinceMillis,
+    monthUntil
+  );
   const maxChannelRevenue = Math.max(1, ...paidChannelTotals.map((row) => row.revenue));
   const maxExpenseCategoryTotal = Math.max(1, ...currentMonthExpenseBreakdown.rows.map((row) => row.total));
   const totalBookValue = financial.capitalAssets.reduce((total, asset) => total + computeAssetBookValue(asset), 0);
@@ -346,6 +367,17 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
   );
   const expenseCategoriesById = new Map(financial.expenseCategories.map((category) => [category.id, category]));
   const recentExpenses = financial.expenses.slice(0, 8);
+  // Targeted fetch by id rather than listing every media asset — most
+  // expenses have no receipt, and the media collection is the product
+  // catalogue's, which is far larger than this page needs.
+  const receiptMediaIds = Array.from(
+    new Set(financial.expenses.map((expense) => expense.receiptMediaId).filter((id): id is string => Boolean(id)))
+  );
+  const receiptUrlById = new Map(
+    context && receiptMediaIds.length > 0
+      ? (await context.repo.findMediaByIds(receiptMediaIds)).map((asset) => [asset.id, asset.url])
+      : []
+  );
 
   const customRange = parseCustomRange(from, to);
   const customPeriod = customRange
@@ -415,18 +447,34 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
         </div>
       ) : null}
 
+      <form action="/admin/financial" className="money-period-form" method="get">
+        <label className="admin-field">
+          <span>Period</span>
+          <select defaultValue={selectedMonth.key} name="month">
+            {monthOptions.map((option) => (
+              <option key={option.key} value={option.key}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button className="admin-action ghost" type="submit">
+          Show
+        </button>
+      </form>
+
       <section className="money-hero-panel">
         <div className="money-hero-copy">
-          <div className="money-kicker">Cash-basis profit and loss</div>
+          <div className="money-kicker">Cash-basis profit and loss · {selectedMonth.label}</div>
           <h2>{formatMoney(monthPeriod.netProfit)}</h2>
           <p>
-            Net profit this month after expenses and payroll. Revenue is split between paid orders and logged
-            other income.
+            What the business kept after payment fees, expenses, and payroll. Sales tax and Paystack&apos;s cut
+            are excluded — that money is never yours to keep.
           </p>
           <div className="money-hero-meta">
             <span>{monthPeriod.orderCount} paid order{monthPeriod.orderCount === 1 ? "" : "s"}</span>
-            <span>{formatDeltaLabel(monthPeriod.netProfit, previousMonthPeriod.netProfit, "previous month")}</span>
-            {payrollAccrual.outstanding > 0 ? (
+            <span>{formatDeltaLabel(monthPeriod.netProfit, previousMonthPeriod.netProfit, previousMonthOption.label)}</span>
+            {payrollAccrual.outstanding > 0 && isCurrentMonth ? (
               <span className="money-hero-warning">
                 Excludes {formatMoney(payrollAccrual.outstanding)} unrecorded payroll
               </span>
@@ -440,8 +488,8 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
 
       <section aria-label="Financial metrics" className="money-stat-grid">
         <MoneyStat
-          label="Revenue"
-          note={`${formatMoney(monthPeriod.ordersRevenue)} from paid orders`}
+          label="Income"
+          note={`${formatMoney(monthPeriod.productRevenue)} product · ${formatMoney(monthPeriod.deliveryRevenue)} delivery`}
           value={formatMoney(monthPeriod.revenue)}
         />
         <MoneyStat
@@ -449,6 +497,16 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
           note={`${currentMonthExpenseBreakdown.count} item${currentMonthExpenseBreakdown.count === 1 ? "" : "s"} logged`}
           tone="warn"
           value={formatMoney(monthPeriod.expenses)}
+        />
+        <MoneyStat
+          label="Payment fees"
+          note={
+            monthPeriod.paymentFees > 0
+              ? "Charged to customers, paid to Paystack — not profit"
+              : "No card or mobile money fees this period"
+          }
+          tone="warn"
+          value={formatMoney(monthPeriod.paymentFees)}
         />
         <MoneyStat
           label="Payroll recorded"
@@ -517,7 +575,11 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
               <CreateAssetForm action={createCapitalAssetAction} disabled={disabled} />
             </AdminDrawer>
           ) : null}
-          <Link className="money-secondary-action" href={"/admin/financial/print/pnl?period=month" as Route} target="_blank">
+          <Link
+            className="money-secondary-action"
+            href={`/admin/financial/print/pnl?month=${selectedMonth.key}` as Route}
+            target="_blank"
+          >
             Print P&amp;L
           </Link>
         </div>
@@ -894,23 +956,28 @@ export default async function AdminFinancialPage({ searchParams }: AdminFinancia
                 </AdminDrawer>
               ) : null}
             </div>
-            <div className="stack-list">
-              {financial.expenses.map((expense) => (
-                <ExpenseRow
-                  amountLabel={formatMoney(expense.amount)}
-                  categoryTitle={categoriesById.get(expense.categoryId)?.title ?? "Uncategorized"}
-                  dateLabel={formatDateLabel(expense.date)}
-                  deleteAction={deleteExpenseAction}
-                  disabled={disabled}
-                  expenseId={expense.id}
-                  isRecurring={Boolean(expense.recurringTemplateId)}
-                  key={expense.id}
-                  name={expense.name}
-                  note={expense.note}
-                />
-              ))}
-              {financial.expenses.length === 0 ? <p className="admin-help">Nothing logged yet.</p> : null}
-            </div>
+            <ExpenseLog
+              attachReceiptAction={attachExpenseReceiptAction}
+              categories={financial.expenseCategories}
+              deleteAction={deleteExpenseAction}
+              disabled={disabled}
+              entries={financial.expenses.map((expense) => ({
+                id: expense.id,
+                name: expense.name,
+                categoryId: expense.categoryId,
+                categoryTitle: categoriesById.get(expense.categoryId)?.title ?? "Uncategorized",
+                dateLabel: formatDateLabel(expense.date),
+                dateValue: toDateInputValue(expense.date),
+                amountLabel: formatMoney(expense.amount),
+                amountValue: (expense.amount / 100).toFixed(2),
+                amountMinor: expense.amount,
+                note: expense.note,
+                isRecurring: Boolean(expense.recurringTemplateId),
+                receiptUrl: expense.receiptMediaId ? receiptUrlById.get(expense.receiptMediaId) : undefined
+              }))}
+              removeReceiptAction={removeExpenseReceiptAction}
+              updateAction={updateExpenseAction}
+            />
             <div className="admin-panel-footer-row">
               <span />
               <Link className="text-button" href={"/admin/financial/print/expenses?period=all" as Route} target="_blank">

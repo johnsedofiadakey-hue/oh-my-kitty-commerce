@@ -1,7 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, type ChangeEvent } from "react";
 import { initialAdminActionState, type AdminActionState } from "@/lib/admin/product-form";
+import { compressAndUploadImage } from "@/lib/admin/upload-image";
+import { formatMoney } from "@/lib/commerce/format";
 import type { ExpenseCategory } from "@/lib/commerce/types";
 
 type CreateExpenseCategoryAction = (
@@ -96,26 +98,47 @@ export function CreateExpenseForm({
 export function ExpenseRow({
   expenseId,
   name,
+  categoryId,
   categoryTitle,
+  categories,
   dateLabel,
+  dateValue,
   amountLabel,
+  amountValue,
   note,
   isRecurring,
+  receiptUrl,
   disabled,
-  deleteAction
+  deleteAction,
+  updateAction,
+  attachReceiptAction,
+  removeReceiptAction
 }: {
   expenseId: string;
   name?: string;
+  categoryId: string;
   categoryTitle: string;
+  categories: ExpenseCategory[];
   dateLabel: string;
+  dateValue: string;
   amountLabel: string;
+  amountValue: string;
   note?: string;
   isRecurring: boolean;
+  receiptUrl?: string;
   disabled: boolean;
   deleteAction: (expenseId: string) => Promise<AdminActionState>;
+  updateAction: CreateExpenseCategoryAction;
+  attachReceiptAction: (
+    expenseId: string,
+    input: { storagePath: string; url: string; alt: string }
+  ) => Promise<AdminActionState>;
+  removeReceiptAction: (expenseId: string) => Promise<AdminActionState>;
 }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [state, formAction, pending] = useActionState(updateAction, initialAdminActionState);
   // Rows logged before the name field existed fall back to the category.
   const title = name || categoryTitle;
 
@@ -130,6 +153,60 @@ export function ExpenseRow({
     setBusy(false);
   }
 
+  if (editing) {
+    return (
+      <form action={formAction} className="admin-form stack-row-edit">
+        <fieldset disabled={disabled || pending}>
+          <input name="id" type="hidden" value={expenseId} />
+          <label className="admin-field">
+            <span>What was it for</span>
+            <input defaultValue={name ?? ""} name="name" required />
+          </label>
+          <label className="admin-field">
+            <span>Category</span>
+            <select defaultValue={categoryId} name="categoryId" required>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="admin-field">
+            <span>Amount GHS</span>
+            <input defaultValue={amountValue} inputMode="decimal" name="amount" required />
+          </label>
+          <label className="admin-field">
+            <span>Date</span>
+            <input defaultValue={dateValue} name="date" required type="date" />
+          </label>
+          <label className="admin-field">
+            <span>Comments (optional)</span>
+            <textarea defaultValue={note ?? ""} name="note" rows={2} />
+          </label>
+          {state.message ? <p className={`admin-form-status ${state.status}`}>{state.message}</p> : null}
+          <div className="stack-row-actions">
+            <button className="admin-action" type="submit">
+              {pending ? "Saving..." : "Save changes"}
+            </button>
+            <button className="text-button" onClick={() => setEditing(false)} type="button">
+              Cancel
+            </button>
+          </div>
+        </fieldset>
+        {/* Outside the fieldset: uploading a receipt is its own action and
+            must stay usable while the edit form is submitting. */}
+        <ExpenseReceiptUploader
+          attachAction={attachReceiptAction}
+          disabled={disabled}
+          expenseId={expenseId}
+          receiptUrl={receiptUrl}
+          removeAction={removeReceiptAction}
+        />
+      </form>
+    );
+  }
+
   return (
     <div className="stack-row">
       <strong>{title}</strong>
@@ -140,12 +217,220 @@ export function ExpenseRow({
       </span>
       <div className="stack-row-actions">
         <strong>{amountLabel}</strong>
+        {receiptUrl ? (
+          <a className="text-button" href={receiptUrl} rel="noopener" target="_blank">
+            Receipt
+          </a>
+        ) : null}
+        <button className="text-button" disabled={disabled || busy} onClick={() => setEditing(true)} type="button">
+          Edit
+        </button>
         <button className="text-button" disabled={disabled || busy} onClick={() => void handleDelete()} type="button">
           {busy ? "Deleting..." : "Delete"}
         </button>
       </div>
       {message ? <p className="form-error">{message}</p> : null}
     </div>
+  );
+}
+
+/**
+ * Photo of the receipt for an expense — the proof-of-spend half of
+ * bookkeeping. Uploads straight to storage from the browser (same path as
+ * product images), then records and links the asset server-side.
+ */
+export function ExpenseReceiptUploader({
+  expenseId,
+  receiptUrl,
+  disabled,
+  attachAction,
+  removeAction
+}: {
+  expenseId: string;
+  receiptUrl?: string;
+  disabled: boolean;
+  attachAction: (
+    expenseId: string,
+    input: { storagePath: string; url: string; alt: string }
+  ) => Promise<AdminActionState>;
+  removeAction: (expenseId: string) => Promise<AdminActionState>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ status: AdminActionState["status"]; text: string } | null>(null);
+
+  async function handleFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setBusy(true);
+    setMessage(null);
+    try {
+      const { storagePath, url } = await compressAndUploadImage(
+        file,
+        (extension) => `public/receipts/${expenseId}-${Date.now()}.${extension}`
+      );
+      const result = await attachAction(expenseId, { storagePath, url, alt: `Receipt for ${expenseId}` });
+      setMessage({ status: result.status, text: result.message });
+    } catch (error) {
+      setMessage({ status: "error", text: error instanceof Error ? error.message : "Upload failed." });
+    } finally {
+      setBusy(false);
+      event.target.value = "";
+    }
+  }
+
+  async function handleRemove() {
+    setBusy(true);
+    const result = await removeAction(expenseId);
+    setMessage({ status: result.status, text: result.message });
+    setBusy(false);
+  }
+
+  return (
+    <div className="expense-receipt-control">
+      {receiptUrl ? (
+        <>
+          <a className="text-button" href={receiptUrl} rel="noopener" target="_blank">
+            View receipt
+          </a>
+          <button className="text-button" disabled={disabled || busy} onClick={() => void handleRemove()} type="button">
+            {busy ? "Removing..." : "Remove"}
+          </button>
+        </>
+      ) : (
+        <label className="admin-field">
+          <span>Receipt photo (optional)</span>
+          <input accept="image/*" disabled={disabled || busy} onChange={(event) => void handleFile(event)} type="file" />
+        </label>
+      )}
+      {busy && !receiptUrl ? <p className="admin-help">Uploading...</p> : null}
+      {message ? <p className={`admin-form-status ${message.status}`}>{message.text}</p> : null}
+    </div>
+  );
+}
+
+export type ExpenseLogEntry = {
+  id: string;
+  name?: string;
+  categoryId: string;
+  categoryTitle: string;
+  dateLabel: string;
+  dateValue: string;
+  amountLabel: string;
+  amountValue: string;
+  /** Minor units, so the filtered subtotal can be recomputed as you search. */
+  amountMinor: number;
+  note?: string;
+  isRecurring: boolean;
+  receiptUrl?: string;
+};
+
+/**
+ * The expense log with a search box. Filtering happens here rather than on
+ * the server because the whole list is already loaded for the P&L totals —
+ * a round trip per keystroke would buy nothing.
+ */
+export function ExpenseLog({
+  entries,
+  categories,
+  disabled,
+  deleteAction,
+  updateAction,
+  attachReceiptAction,
+  removeReceiptAction
+}: {
+  entries: ExpenseLogEntry[];
+  categories: ExpenseCategory[];
+  disabled: boolean;
+  deleteAction: (expenseId: string) => Promise<AdminActionState>;
+  updateAction: CreateExpenseCategoryAction;
+  attachReceiptAction: (
+    expenseId: string,
+    input: { storagePath: string; url: string; alt: string }
+  ) => Promise<AdminActionState>;
+  removeReceiptAction: (expenseId: string) => Promise<AdminActionState>;
+}) {
+  const [query, setQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+
+  const needle = query.trim().toLowerCase();
+  const filtered = entries.filter((entry) => {
+    if (categoryFilter && entry.categoryId !== categoryFilter) {
+      return false;
+    }
+    if (!needle) {
+      return true;
+    }
+
+    return [entry.name, entry.categoryTitle, entry.note, entry.dateLabel]
+      .filter(Boolean)
+      .some((field) => field!.toLowerCase().includes(needle));
+  });
+  const filteredTotal = filtered.reduce((total, entry) => total + entry.amountMinor, 0);
+  const narrowed = filtered.length !== entries.length;
+
+  return (
+    <>
+      <div className="admin-filter-row">
+        <label className="admin-field">
+          <span>Search</span>
+          <input
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Name, category, or comment"
+            type="search"
+            value={query}
+          />
+        </label>
+        <label className="admin-field">
+          <span>Category</span>
+          <select onChange={(event) => setCategoryFilter(event.target.value)} value={categoryFilter}>
+            <option value="">All categories</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.title}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {narrowed ? (
+        <p className="admin-help">
+          {filtered.length} of {entries.length} shown · {formatMoney(filteredTotal)}
+        </p>
+      ) : null}
+
+      <div className="stack-list">
+        {filtered.map((entry) => (
+          <ExpenseRow
+            amountLabel={entry.amountLabel}
+            amountValue={entry.amountValue}
+            attachReceiptAction={attachReceiptAction}
+            categories={categories}
+            categoryId={entry.categoryId}
+            categoryTitle={entry.categoryTitle}
+            dateLabel={entry.dateLabel}
+            dateValue={entry.dateValue}
+            deleteAction={deleteAction}
+            disabled={disabled}
+            expenseId={entry.id}
+            isRecurring={entry.isRecurring}
+            key={entry.id}
+            name={entry.name}
+            note={entry.note}
+            receiptUrl={entry.receiptUrl}
+            removeReceiptAction={removeReceiptAction}
+            updateAction={updateAction}
+          />
+        ))}
+        {entries.length === 0 ? <p className="admin-help">Nothing logged yet.</p> : null}
+        {entries.length > 0 && filtered.length === 0 ? (
+          <p className="admin-help">Nothing matches that search.</p>
+        ) : null}
+      </div>
+    </>
   );
 }
 
