@@ -7,6 +7,7 @@ import {
   getOrderCustomerName,
   getProductTitle,
   getVariantLabel,
+  toRealDate,
   toSortableMillis
 } from "@/lib/admin/sample-admin-data";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
@@ -150,6 +151,7 @@ export {
   getOrderCustomerName,
   getProductTitle,
   getVariantLabel,
+  toRealDate,
   toSortableMillis
 };
 

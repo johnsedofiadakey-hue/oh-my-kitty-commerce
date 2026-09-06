@@ -4,6 +4,7 @@ import { Fragment, type ReactNode } from "react";
 import {
   formatMoney,
   getAdminOperationsData,
+  toRealDate,
   toSortableMillis
 } from "@/lib/admin/operations-data";
 import { getAdminFinancialData } from "@/lib/admin/financial-data";
@@ -142,11 +143,14 @@ function formatMargin(revenue: number, profit: number) {
 }
 
 function formatDateLabel(value: Date) {
-  return new Date(value).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  const date = toRealDate(value);
+  return date ? date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "Not set";
 }
 
+// toISOString() throws RangeError on an Invalid Date, which a raw Firestore
+// Timestamp always produces — that crashed the whole page render.
 function toDateInputValue(value: Date) {
-  return new Date(value).toISOString().slice(0, 10);
+  return (toRealDate(value) ?? new Date()).toISOString().slice(0, 10);
 }
 
 function currentPeriod() {
@@ -186,13 +190,13 @@ function buildCashTrend(data: PnlInput, days = 14): CashTrendPoint[] {
     }
   }
   for (const entry of data.manualRevenueEntries) {
-    addToBucket(new Date(entry.date).getTime(), entry.amount);
+    addToBucket(toRealDate(entry.date)?.getTime() ?? NaN, entry.amount);
   }
   for (const expense of data.expenses) {
-    addToBucket(new Date(expense.date).getTime(), -expense.amount);
+    addToBucket(toRealDate(expense.date)?.getTime() ?? NaN, -expense.amount);
   }
   for (const payment of data.payrollPayments) {
-    addToBucket(new Date(payment.paidDate).getTime(), -payment.grossAmount);
+    addToBucket(toRealDate(payment.paidDate)?.getTime() ?? NaN, -payment.grossAmount);
   }
 
   return buckets;

@@ -166,6 +166,60 @@ describe("buildPnlReport revenue split", () => {
   });
 });
 
+describe("Firestore Timestamp dates", () => {
+  const since = new Date("2026-09-01T00:00:00.000Z").getTime();
+  const until = new Date("2026-09-30T23:59:59.999Z").getTime();
+  // What the repository actually returns: a Timestamp-shaped object, not a
+  // Date. `new Date(...)` on this yields an Invalid Date, so every row was
+  // being dropped from date-range filters without any error.
+  const timestamp = (iso: string) =>
+    ({ _seconds: Math.floor(new Date(iso).getTime() / 1000), _nanoseconds: 0 }) as unknown as Date;
+
+  it("counts an expense whose date is a Timestamp, not a Date", () => {
+    const report = buildPnlReport(
+      "Sept",
+      {
+        orderRows: [],
+        payrollPayments: [],
+        manualRevenueEntries: [],
+        expenses: [
+          {
+            id: "expense-1",
+            categoryId: "cat-1",
+            amount: 5000,
+            date: timestamp("2026-09-10T00:00:00.000Z"),
+            createdBy: "owner"
+          }
+        ]
+      },
+      since,
+      until
+    );
+
+    expect(report.expenses).toBe(5000);
+    expect(report.netProfit).toBe(-5000);
+  });
+
+  it("counts payroll and other income given as Timestamps", () => {
+    const report = buildPnlReport(
+      "Sept",
+      {
+        orderRows: [],
+        expenses: [],
+        payrollPayments: [payment("a", "2026-09", 300_00, timestamp("2026-09-28T00:00:00.000Z"))],
+        manualRevenueEntries: [
+          { id: "rev-1", label: "Scrap", amount: 1000, date: timestamp("2026-09-05T00:00:00.000Z"), createdBy: "owner" }
+        ]
+      },
+      since,
+      until
+    );
+
+    expect(report.otherRevenue).toBe(1000);
+    expect(report.payroll).toBe(300_00);
+  });
+});
+
 describe("buildChannelTotals", () => {
   const since = new Date("2026-09-01T00:00:00.000Z").getTime();
   const until = new Date("2026-09-30T23:59:59.999Z").getTime();

@@ -142,7 +142,16 @@ export function getRoleNames(roleIds: string[]) {
  * object forever, with no `.toDate()` to call — this is the only way to
  * still read a date out of it.
  */
-function toRealDate(value: unknown): Date | null {
+/**
+ * Firestore hands back `Timestamp` objects, not `Date`s, even though the
+ * domain types say Date — nothing converts them on read. So any raw
+ * `new Date(field)` on a value straight out of the repository produces an
+ * Invalid Date: `.toISOString()` throws, `.getTime()` returns NaN (silently
+ * dropping the row from every date-range filter), and `toLocaleDateString`
+ * prints "Invalid Date". Every date coming from the repo must go through
+ * this.
+ */
+export function toRealDate(value: unknown): Date | null {
   if (value instanceof Date) {
     return value;
   }

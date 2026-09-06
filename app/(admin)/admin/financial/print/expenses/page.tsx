@@ -1,6 +1,6 @@
 import { requireAdminPermission } from "@/lib/auth/server";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
-import { formatMoney } from "@/lib/admin/operations-data";
+import { formatMoney, toRealDate } from "@/lib/admin/operations-data";
 import { getAdminFinancialData } from "@/lib/admin/financial-data";
 import { buildExpensesByCategory, getPeriodBoundaries, parseCustomRange } from "@/lib/admin/financial-reports";
 import { PrintPageButton } from "@/components/admin/print-page-button";
@@ -45,10 +45,10 @@ export default async function PrintExpenseReportPage({ searchParams }: PageProps
   const categoriesById = new Map(financial.expenseCategories.map((category) => [category.id, category]));
   const lineItems = financial.expenses
     .filter((expense) => {
-      const millis = new Date(expense.date).getTime();
+      const millis = toRealDate(expense.date)?.getTime() ?? NaN;
       return millis >= sinceMillis && millis <= untilMillis;
     })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    .sort((a, b) => (toRealDate(a.date)?.getTime() ?? 0) - (toRealDate(b.date)?.getTime() ?? 0));
   const storeName = storeSettings?.storeName ?? "Oh My Kitty";
   const generatedOn = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
@@ -85,7 +85,7 @@ export default async function PrintExpenseReportPage({ searchParams }: PageProps
             {lineItems.map((expense) => (
               <div className="statement-row indent" key={expense.id}>
                 <span>
-                  {new Date(expense.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+                  {toRealDate(expense.date)?.toLocaleDateString("en-GB", { day: "2-digit", month: "short" }) ?? "—"}
                   {"  "}
                   {expense.name || categoriesById.get(expense.categoryId)?.title || "Expense"}
                   {expense.name ? ` — ${categoriesById.get(expense.categoryId)?.title ?? "Uncategorized"}` : ""}

@@ -1,4 +1,4 @@
-import { toSortableMillis, type AdminOrderRow } from "@/lib/admin/operations-data";
+import { toRealDate, toSortableMillis, type AdminOrderRow } from "@/lib/admin/operations-data";
 import type { Expense, ExpenseCategory, ManualRevenueEntry, PayrollPayment, Worker } from "@/lib/commerce/types";
 
 export type PnlReport = {
@@ -75,13 +75,13 @@ export function buildPnlReport(label: string, data: PnlInput, sinceMillis: numbe
   }
 
   const otherRevenue = data.manualRevenueEntries
-    .filter((entry) => inRange(new Date(entry.date).getTime()))
+    .filter((entry) => inRange(toRealDate(entry.date)?.getTime() ?? NaN))
     .reduce((total, entry) => total + entry.amount, 0);
   const expensesTotal = data.expenses
-    .filter((expense) => inRange(new Date(expense.date).getTime()))
+    .filter((expense) => inRange(toRealDate(expense.date)?.getTime() ?? NaN))
     .reduce((total, expense) => total + expense.amount, 0);
   const payrollTotal = data.payrollPayments
-    .filter((payment) => inRange(new Date(payment.paidDate).getTime()))
+    .filter((payment) => inRange(toRealDate(payment.paidDate)?.getTime() ?? NaN))
     .reduce((total, payment) => total + payment.grossAmount, 0);
 
   const ordersRevenue = productRevenue + deliveryRevenue + paymentFeeRevenue;
@@ -188,7 +188,7 @@ export function buildExpensesByCategory(
 ): { rows: ExpenseCategoryTotal[]; total: number; count: number } {
   const categoriesById = new Map(categories.map((category) => [category.id, category]));
   const inPeriod = expenses.filter((expense) => {
-    const millis = new Date(expense.date).getTime();
+    const millis = toRealDate(expense.date)?.getTime() ?? NaN;
     return millis >= sinceMillis && millis <= untilMillis;
   });
 
