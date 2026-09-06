@@ -45,6 +45,7 @@ export default async function AdminDeliveryPage() {
               name={rule.name}
               quickEditDeliveryRuleAction={quickEditDeliveryRuleAction}
               regions={rule.regions}
+              requiresFreeDeliveryItem={rule.requiresFreeDeliveryItem ?? false}
               sortOrder={rule.sortOrder}
               type={rule.type}
             />

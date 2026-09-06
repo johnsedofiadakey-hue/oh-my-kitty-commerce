@@ -13,6 +13,7 @@ export function DeliveryRuleRow({
   estimate,
   sortOrder,
   active,
+  requiresFreeDeliveryItem,
   disabled,
   quickEditDeliveryRuleAction
 }: {
@@ -24,6 +25,7 @@ export function DeliveryRuleRow({
   estimate?: string;
   sortOrder: number;
   active: boolean;
+  requiresFreeDeliveryItem: boolean;
   disabled: boolean;
   quickEditDeliveryRuleAction: AdminFormAction;
 }) {
@@ -66,6 +68,15 @@ export function DeliveryRuleRow({
       <label className="admin-field checkbox">
         <input defaultChecked={active} disabled={disabled || pending} name="active" type="checkbox" />
         <span>Active</span>
+      </label>
+      <label className="admin-field checkbox">
+        <input
+          defaultChecked={requiresFreeDeliveryItem}
+          disabled={disabled || pending}
+          name="requiresFreeDeliveryItem"
+          type="checkbox"
+        />
+        <span>Only offer this when the cart has a free-delivery-eligible product</span>
       </label>
       {state.message ? <p className={`admin-form-status ${state.status}`}>{state.message}</p> : null}
       <button className="admin-action" disabled={disabled || pending} type="submit">

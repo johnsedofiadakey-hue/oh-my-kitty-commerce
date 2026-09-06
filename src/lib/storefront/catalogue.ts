@@ -65,6 +65,7 @@ export type StorefrontProductView = {
   routineSlugs: string[];
   tags: string[];
   bestSeller: boolean;
+  freeDelivery: boolean;
   care?: StorefrontProductCare;
   tone: "peach" | "green" | "ivory";
 };
@@ -250,6 +251,7 @@ export function toStorefrontProductViews(catalogue: StorefrontCatalogue): Storef
       routineSlugs: routines.map((routine) => routine.slug),
       tags: product.tags ?? [],
       bestSeller: product.bestSeller,
+      freeDelivery: product.freeDelivery,
       care: product.care,
       tone: tones[index % tones.length] ?? "peach"
     })

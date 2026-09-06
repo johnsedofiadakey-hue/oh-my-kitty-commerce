@@ -3,6 +3,7 @@ import { CommerceError } from "@/lib/commerce/errors";
 import { createPendingOnlineOrder, evaluatePromotionCode } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefront/catalogue";
+import { isDeliveryRuleEligible } from "@/lib/storefront/delivery";
 import { isShopClosed } from "@/lib/storefront/content";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import {
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
     // harmless placeholder from their phone number instead of blocking checkout.
     const email = normalizeOptionalString(body.customer?.email) ?? placeholderEmailForPhone(phone);
 
-    const deliveryRule = await resolveDeliveryRule(context, body.deliveryRuleId);
+    const deliveryRule = await resolveDeliveryRule(context, body.deliveryRuleId, items);
     const idempotencyKey =
       normalizeOptionalString(body.idempotencyKey) ??
       `checkout-paystack-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -181,9 +182,17 @@ function getSiteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 }
 
+/**
+ * The client's chosen delivery option can't be trusted as-is — it can post
+ * any rule id it likes, so this re-checks both that the rule still exists
+ * and, for a rule gated behind a free-delivery-tagged item, that the cart
+ * actually contains one. This is the check that actually matters; the
+ * delivery-options API's filtering is only there to keep the UI honest.
+ */
 async function resolveDeliveryRule(
   context: NonNullable<ReturnType<typeof getCommerceServerContext>>,
-  deliveryRuleId: unknown
+  deliveryRuleId: unknown,
+  items: { productId: string; variantId: string; quantity: number }[]
 ) {
   const id = normalizeOptionalString(deliveryRuleId);
   if (!id) {
@@ -194,6 +203,16 @@ async function resolveDeliveryRule(
   const rule = rules.find((entry) => entry.id === id && entry.active);
   if (!rule) {
     throw new CommerceError("VALIDATION_ERROR", "That delivery option is no longer available.");
+  }
+
+  const products = await context.repo.listProducts();
+  const cartProductIds = new Set(items.map((item) => item.productId));
+  const cartHasFreeDeliveryItem = products.some(
+    (product) => cartProductIds.has(product.id) && product.freeDelivery
+  );
+
+  if (!isDeliveryRuleEligible(rule, cartHasFreeDeliveryItem)) {
+    throw new CommerceError("VALIDATION_ERROR", "That delivery option needs an eligible item in your cart.");
   }
 
   return rule;

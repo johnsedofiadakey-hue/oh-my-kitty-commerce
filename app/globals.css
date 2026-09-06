@@ -2017,6 +2017,17 @@ button {
   background: var(--color-peach);
 }
 
+.free-delivery-pill {
+  color: var(--color-status-good);
+  background: var(--color-status-good-soft);
+}
+
+.showcase-free-delivery-tag {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-status-good);
+}
+
 .depth-product-card-hit h2 {
   display: -webkit-box;
   overflow: hidden;

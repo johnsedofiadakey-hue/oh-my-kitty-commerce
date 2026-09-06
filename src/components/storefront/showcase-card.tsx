@@ -27,6 +27,7 @@ export function ShowcaseCard({ product }: { product: StorefrontProductView }) {
       </div>
       <div>
         {product.bestSeller ? <span>Best seller</span> : null}
+        {product.freeDelivery ? <span className="showcase-free-delivery-tag">Free delivery</span> : null}
         <h3>{product.title}</h3>
         <p>{product.shortCopy}</p>
         <strong>{product.formattedPrice}</strong>

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, type FormEvent } from "react";
 import { onCartChanged, readCartLines, type CartLine } from "@/components/storefront/add-to-bag-button";
 import { BagIcon } from "@/components/storefront/icons";
 import { formatMoney } from "@/lib/commerce/format";
@@ -27,7 +27,7 @@ type CustomerState = {
 const serverCartSnapshot: CartLine[] = [];
 
 export function CheckoutClient({
-  deliveryOptions,
+  deliveryOptions: initialDeliveryOptions,
   paystackEnabled,
   pickupLocation,
   pickupMapLink
@@ -40,7 +40,46 @@ export function CheckoutClient({
     address: "",
     notes: ""
   });
-  const [deliveryId, setDeliveryId] = useState(deliveryOptions[0]?.id ?? "");
+  const [deliveryOptions, setDeliveryOptions] = useState(initialDeliveryOptions);
+  const [deliveryId, setDeliveryId] = useState(initialDeliveryOptions[0]?.id ?? "");
+
+  // The server-rendered `deliveryOptions` prop can't know the cart's
+  // contents (the cart lives in localStorage, read only client-side above),
+  // so a rule gated behind a free-delivery-tagged item needs a client-side
+  // refetch once the cart's actual products are known. Keyed on the set of
+  // product ids rather than `lines` directly so a quantity +/- click doesn't
+  // trigger a refetch — only adding/removing a distinct product does.
+  const cartProductIdsKey = useMemo(
+    () => Array.from(new Set(lines.map((line) => line.productId))).sort().join(","),
+    [lines]
+  );
+
+  useEffect(() => {
+    if (!cartProductIdsKey) {
+      return;
+    }
+
+    let cancelled = false;
+    fetch(`/api/storefront/delivery-options?productIds=${encodeURIComponent(cartProductIdsKey)}`)
+      .then((response) => response.json())
+      .then((payload: { options?: StorefrontDeliveryOption[] }) => {
+        if (cancelled) {
+          return;
+        }
+        const options = payload.options ?? [];
+        setDeliveryOptions(options);
+        setDeliveryId((current) =>
+          options.some((option) => option.id === current) ? current : (options[0]?.id ?? "")
+        );
+      })
+      .catch(() => {
+        // Keep the last known-good list on failure rather than clearing it.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cartProductIdsKey]);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [promoInput, setPromoInput] = useState("");

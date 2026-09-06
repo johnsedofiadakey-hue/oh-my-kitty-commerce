@@ -57,6 +57,7 @@ const productFieldsSchema = z.object({
   mediaIds: z.array(z.string().min(1)),
   featured: z.boolean(),
   bestSeller: z.boolean(),
+  freeDelivery: z.boolean(),
   homepagePriority: z.number().int().min(0).optional(),
   seo: seoSchema.optional(),
   care: productCareSchema.optional()
@@ -71,7 +72,8 @@ export const createProductInputSchema = productFieldsSchema.extend({
   tags: z.array(z.string().min(1)).default([]),
   mediaIds: z.array(z.string().min(1)).default([]),
   featured: z.boolean().default(false),
-  bestSeller: z.boolean().default(false)
+  bestSeller: z.boolean().default(false),
+  freeDelivery: z.boolean().default(false)
 });
 
 export const updateProductInputSchema = productFieldsSchema.partial().extend({
@@ -305,6 +307,7 @@ const deliveryRuleFieldsSchema = z.object({
   regions: z.array(z.string()),
   fee: moneySchema,
   freeAbove: moneySchema.nullable().optional(),
+  requiresFreeDeliveryItem: z.boolean().optional(),
   estimate: z.string().optional(),
   sortOrder: z.number().int().min(0)
 });

@@ -73,6 +73,7 @@ export type Product = {
   mediaIds: string[];
   featured: boolean;
   bestSeller: boolean;
+  freeDelivery: boolean;
   homepagePriority?: number;
   seo?: SeoFields;
   care?: ProductCare;
@@ -315,6 +316,7 @@ export type DeliveryRule = {
   regions: string[];
   fee: MoneyMinorUnit;
   freeAbove?: MoneyMinorUnit | null;
+  requiresFreeDeliveryItem?: boolean;
   estimate?: string;
   sortOrder: number;
 };

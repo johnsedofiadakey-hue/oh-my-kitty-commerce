@@ -406,6 +406,7 @@ function ProductTile({
         </div>
         <div className="depth-product-info">
           {product.bestSeller ? <span className="category-pill bestseller-pill">Best seller</span> : null}
+          {product.freeDelivery ? <span className="category-pill free-delivery-pill">Free delivery</span> : null}
           <h2>{product.title}</h2>
           <div className="price-with-compare">
             <strong>{product.formattedPrice}</strong>

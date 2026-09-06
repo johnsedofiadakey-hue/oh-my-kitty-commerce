@@ -240,6 +240,10 @@ export function CreateProductForm({
             <input name="bestSeller" type="checkbox" />
             <span>Best seller (shows in Live Products on the home page)</span>
           </label>
+          <label className="admin-field checkbox">
+            <input name="freeDelivery" type="checkbox" />
+            <span>Free delivery eligible (unlocks the Free Delivery option at checkout)</span>
+          </label>
           <button className="admin-action" type="submit">
             {pending ? "Creating" : "Create product"}
           </button>

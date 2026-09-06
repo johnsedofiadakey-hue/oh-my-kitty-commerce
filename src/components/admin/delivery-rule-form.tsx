@@ -56,6 +56,10 @@ export function CreateDeliveryRuleForm({
               <input defaultValue="0" inputMode="numeric" min="0" name="sortOrder" />
             </label>
           </div>
+          <label className="admin-field checkbox">
+            <input name="requiresFreeDeliveryItem" type="checkbox" />
+            <span>Only offer this when the cart has a free-delivery-eligible product</span>
+          </label>
           <button className="admin-action" type="submit">
             {pending ? "Creating" : "Create rule"}
           </button>

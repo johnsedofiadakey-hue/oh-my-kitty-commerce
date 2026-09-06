@@ -27,7 +27,8 @@ export async function createDeliveryRuleAction(
       regions: parseRegions(formData),
       fee: formMoneyMinorUnit(formData, "fee"),
       estimate: formOptionalString(formData, "estimate"),
-      sortOrder: formInteger(formData, "sortOrder", 0)
+      sortOrder: formInteger(formData, "sortOrder", 0),
+      requiresFreeDeliveryItem: formData.get("requiresFreeDeliveryItem") === "on"
     });
 
     revalidatePath("/admin/delivery");
@@ -51,7 +52,8 @@ export async function quickEditDeliveryRuleAction(
       fee: formMoneyMinorUnit(formData, "fee"),
       estimate: formOptionalString(formData, "estimate"),
       sortOrder: formInteger(formData, "sortOrder", 0),
-      active: formData.get("active") === "on"
+      active: formData.get("active") === "on",
+      requiresFreeDeliveryItem: formData.get("requiresFreeDeliveryItem") === "on"
     });
 
     revalidatePath("/admin/delivery");

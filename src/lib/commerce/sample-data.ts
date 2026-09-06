@@ -134,6 +134,7 @@ type ProductSeed = {
   stock: number;
   featured?: boolean;
   bestSeller?: boolean;
+  freeDelivery?: boolean;
   homepagePriority?: number;
   /** Additional sizes/packs of the same product, beyond the default variant above. */
   variants?: VariantSeed[];
@@ -596,6 +597,7 @@ export const sampleProducts: Product[] = productSeeds.map((product) => ({
   mediaIds: [mediaIdForProduct(product.id)],
   featured: product.featured ?? false,
   bestSeller: product.bestSeller ?? false,
+  freeDelivery: product.freeDelivery ?? false,
   ...(product.homepagePriority !== undefined ? { homepagePriority: product.homepagePriority } : {})
 }));
 

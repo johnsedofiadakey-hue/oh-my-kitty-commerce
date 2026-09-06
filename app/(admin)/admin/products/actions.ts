@@ -45,7 +45,8 @@ export async function createProductWithDefaultVariantAction(
       tags: [],
       mediaIds: [],
       featured: false,
-      bestSeller: formData.get("bestSeller") === "on"
+      bestSeller: formData.get("bestSeller") === "on",
+      freeDelivery: formData.get("freeDelivery") === "on"
     });
 
     const variant = await createVariant(context, actor, {
@@ -123,6 +124,7 @@ export async function quickEditCatalogueItemAction(
       productTypeIds: formData.getAll("productTypeIds").map(String),
       routineIds: formData.getAll("routineIds").map(String),
       bestSeller: formData.get("bestSeller") === "on",
+      freeDelivery: formData.get("freeDelivery") === "on",
       homepagePriority: formOptionalInteger(formData, "homepagePriority")
     });
 

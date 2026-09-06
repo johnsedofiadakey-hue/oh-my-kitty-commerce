@@ -524,6 +524,10 @@ function ProductEditDrawer({
             <input defaultChecked={product.bestSeller} name="bestSeller" type="checkbox" />
             <span>Best seller (shows in Live Products on the home page)</span>
           </label>
+          <label className="admin-field checkbox">
+            <input defaultChecked={product.freeDelivery} name="freeDelivery" type="checkbox" />
+            <span>Free delivery eligible (unlocks the Free Delivery option at checkout)</span>
+          </label>
           {state.message ? (
             <p className={`admin-form-status ${state.status}`}>{state.message}</p>
           ) : null}
