@@ -17,7 +17,7 @@ export default async function StorefrontHomePage() {
   return (
     <CinematicHome
       products={toStorefrontProductViews(catalogue)}
-      consultWhatsappNumber={content["consult-whatsapp-number"]}
+      whatsappNumber={content["whatsapp-number"]}
       sourceMessage={catalogue.sourceMessage}
     />
   );

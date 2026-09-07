@@ -22,7 +22,7 @@ import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 
 type CinematicHomeProps = {
   products: StorefrontProductView[];
-  consultWhatsappNumber: string;
+  whatsappNumber: string;
   sourceMessage?: string;
 };
 
@@ -234,7 +234,7 @@ function buildHeroTimeline(gsap: any, cfg: HeroBreakpointConfig) {
   return tl;
 }
 
-export function CinematicHome({ products, consultWhatsappNumber, sourceMessage }: CinematicHomeProps) {
+export function CinematicHome({ products, whatsappNumber, sourceMessage }: CinematicHomeProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const heroVideoRef = useRef<HTMLVideoElement>(null);
   const bestSellers = products.filter((product) => product.bestSeller);
@@ -453,7 +453,7 @@ export function CinematicHome({ products, consultWhatsappNumber, sourceMessage }
                 className="portal-cta-secondary"
                 label="Get guidance"
                 message={CONSULT_MESSAGE}
-                phoneNumber={consultWhatsappNumber}
+                phoneNumber={whatsappNumber}
               />
             </div>
           </div>
