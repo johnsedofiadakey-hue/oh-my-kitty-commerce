@@ -399,10 +399,12 @@ export function CheckoutClient({
             <span>Delivery</span>
             <strong>{deliveryFee === 0 ? "Free" : formatMoney(deliveryFee)}</strong>
           </div>
-          <div>
-            <span>Card/mobile money fee (1.95%)</span>
-            <strong>{formatMoney(paymentFee)}</strong>
-          </div>
+          {/*
+            Card/mobile money processing fee is still charged — folded
+            silently into the Total below — just not itemized. Customers
+            already expect some fee on card/momo payments in Ghana; calling
+            it out as its own line reads as a surprise surcharge instead.
+          */}
           <div className="checkout-grand-total">
             <span>Total</span>
             <strong>{formatMoney(total)}</strong>
