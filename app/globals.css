@@ -8024,9 +8024,26 @@ a.pos-secondary-button {
   gap: 10px;
 }
 
+/* A delivery address runs longer than any other meta value on an 80mm
+   receipt — stack it under its own label instead of squeezing it onto one
+   row, where it would wrap awkwardly against the right-aligned column. */
+.receipt-meta-address {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
 .receipt-items {
-  display: grid;
-  gap: 8px;
+  border: 1.5px solid var(--color-near-black);
+  border-radius: 3px;
+}
+
+.receipt-item {
+  padding: 7px 8px;
+}
+
+.receipt-item + .receipt-item {
+  border-top: 1px dashed var(--color-near-black);
 }
 
 .receipt-item-line {
@@ -8034,6 +8051,11 @@ a.pos-secondary-button {
   justify-content: space-between;
   gap: 10px;
   font-weight: 800;
+}
+
+.receipt-item-number {
+  display: inline-block;
+  min-width: 1.3em;
 }
 
 .receipt-item-sub {
@@ -8179,6 +8201,20 @@ a.pos-secondary-button {
     background: var(--color-white-pure);
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+  }
+
+  /* --color-near-black is #111, not pure black — on a screen or a real
+     grayscale printer that's an invisible difference, but a thermal head is
+     1-bit: it can't lay down "almost black," so its driver dithers every
+     pixel that isn't pure #000 into a stipple of dots trying to approximate
+     the shade. That's the "dots make it hard to read" look — not a stray
+     antialiasing edge, the entire glyph fill was being dithered. Forcing
+     true black (text and rule lines both) gives the driver a color it can
+     actually reproduce as a solid dot, no dithering needed. */
+  .receipt-paper,
+  .receipt-paper * {
+    color: #000 !important;
+    border-color: #000 !important;
   }
 
   .receipt-paper {

@@ -86,13 +86,27 @@ export default async function ReceiptPage({ params }: ReceiptPageParams) {
               <span>{customerPhone}</span>
             </div>
           ) : null}
+          {order.deliveryMethod ? (
+            <div>
+              <span>Delivery</span>
+              <span>{order.deliveryMethod.name}</span>
+            </div>
+          ) : null}
+          {order.customerSnapshot?.address ? (
+            <div className="receipt-meta-address">
+              <span>Location</span>
+              <span>{order.customerSnapshot.address}</span>
+            </div>
+          ) : null}
         </div>
         <div className="receipt-rule" aria-hidden="true" />
         <div className="receipt-items">
           {order.items.map((item, index) => (
             <div className="receipt-item" key={index}>
               <div className="receipt-item-line">
-                <span>{item.productTitle}</span>
+                <span className="receipt-item-title">
+                  <span className="receipt-item-number">{index + 1}.</span> {item.productTitle}
+                </span>
                 <span>{formatMoney(item.lineTotal)}</span>
               </div>
               <div className="receipt-item-sub">
