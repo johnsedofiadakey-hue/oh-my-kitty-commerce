@@ -200,11 +200,7 @@ export default async function AdminMaterialsPage({ searchParams }: PageProps) {
                   triggerClassName="admin-action ghost small"
                   triggerLabel="Edit"
                 >
-                  <MaterialManagementForm
-                    action={updateRawMaterialAction}
-                    disabled={disabled}
-                    material={rawCatalogue.rawMaterials.find((entry) => entry.id === material.id)}
-                  />
+                  <MaterialManagementForm action={updateRawMaterialAction} disabled={disabled} material={material} />
                 </AdminDrawer>
                 <DeleteMaterialButton
                   action={deleteRawMaterialAction}

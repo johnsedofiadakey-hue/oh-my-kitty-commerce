@@ -2,11 +2,30 @@
 
 import { useActionState } from "react";
 import { type AdminFormAction, initialAdminActionState } from "@/lib/admin/product-form";
-import type { RawMaterial } from "@/lib/commerce/types";
+import type { RawMaterialKind } from "@/lib/commerce/types";
+
+/**
+ * Deliberately NOT the full RawMaterial: that type carries createdAt /
+ * updatedAt, which are Firestore Timestamp class instances at runtime, and
+ * passing a class instance from a server component into a client one throws
+ * ("Only plain objects... can be passed to Client Components"). Naming only
+ * the fields this form actually edits makes the boundary safe by
+ * construction rather than by remembering to strip the object first.
+ */
+export type EditableMaterial = {
+  id: string;
+  name: string;
+  unit: string;
+  kind: RawMaterialKind;
+  costPerUnit: number;
+  stockOnHand: number;
+  lowStockThreshold: number;
+  supplier?: string;
+};
 
 type MaterialManagementFormProps = {
   action: AdminFormAction;
-  material?: RawMaterial;
+  material?: EditableMaterial;
   disabled: boolean;
 };
 
