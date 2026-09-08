@@ -113,7 +113,13 @@ const variantFieldsSchema = z.object({
 const rawMaterialFieldsSchema = z.object({
   name: z.string().min(1),
   unit: z.string().min(1),
+  kind: z.enum(["INGREDIENT", "PACKAGING", "OTHER"]).default("INGREDIENT"),
   costPerUnit: moneySchema,
+  // Stock can be negative: production is allowed to outrun the recorded
+  // counts rather than blocking her mid-task, and the shortfall is surfaced
+  // as a warning to reconcile.
+  stockOnHand: z.number().default(0),
+  lowStockThreshold: z.number().min(0).default(0),
   supplier: z.string().optional()
 });
 
@@ -124,6 +130,24 @@ export const updateRawMaterialInputSchema = rawMaterialFieldsSchema
   .extend({
     id: z.string().min(1)
   });
+
+export const createMaterialPurchaseInputSchema = z.object({
+  materialId: z.string().min(1),
+  quantity: z.number().positive("Quantity must be greater than zero."),
+  totalCost: moneySchema.refine((value) => value > 0, "Enter what you paid for it."),
+  date: z.date(),
+  supplier: z.string().optional(),
+  note: z.string().optional(),
+  /** Post the spend to Expenses too, under this category. */
+  expenseCategoryId: z.string().optional()
+});
+
+export const recordProductionRunInputSchema = z.object({
+  productId: z.string().min(1),
+  variantId: z.string().min(1),
+  quantityProduced: z.number().int().positive("Produce at least one unit."),
+  note: z.string().optional()
+});
 
 export const createVariantInputSchema = variantFieldsSchema.extend({
   optionValues: z.record(z.string(), z.string()).default({}),
@@ -193,7 +217,7 @@ export const completeSaleInputSchema = createOrderDraftInputSchema.extend({
 export const adjustInventoryInputSchema = z.object({
   productId: z.string().min(1),
   variantId: z.string().min(1),
-  type: z.enum(["STOCK_RECEIVED", "DAMAGE", "LOSS", "MANUAL_ADJUSTMENT"]),
+  type: z.enum(["STOCK_RECEIVED", "PRODUCTION", "DAMAGE", "LOSS", "MANUAL_ADJUSTMENT"]),
   quantityDelta: nonZeroQuantitySchema,
   reason: z.string().min(3)
 });
@@ -397,6 +421,8 @@ export type CreateRoleInput = z.input<typeof createRoleInputSchema>;
 export type UpdateRoleInput = z.input<typeof updateRoleInputSchema>;
 export type CreateRawMaterialInput = z.input<typeof createRawMaterialInputSchema>;
 export type UpdateRawMaterialInput = z.input<typeof updateRawMaterialInputSchema>;
+export type CreateMaterialPurchaseInput = z.input<typeof createMaterialPurchaseInputSchema>;
+export type RecordProductionRunInput = z.input<typeof recordProductionRunInputSchema>;
 export type UpdateStoreSettingsInput = z.input<typeof updateStoreSettingsInputSchema>;
 export type AdjustInventoryInput = z.input<typeof adjustInventoryInputSchema>;
 export type CreateCustomerInput = z.input<typeof createCustomerInputSchema>;

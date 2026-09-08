@@ -51,7 +51,9 @@ import {
   createPromotionInputSchema,
   createRoutineInputSchema,
   createVariantInputSchema,
+  createMaterialPurchaseInputSchema,
   createRawMaterialInputSchema,
+  recordProductionRunInputSchema,
   updateRawMaterialInputSchema,
   updateConcernInputSchema,
   updateProductInputSchema,
@@ -74,7 +76,9 @@ import {
   type UpdatePromotionInput,
   type UpdateProductInput,
   type UpdateVariantInput,
-  type PosReversalInput
+  type PosReversalInput,
+  type CreateMaterialPurchaseInput,
+  type RecordProductionRunInput
 } from "@/lib/commerce/schemas";
 import type {
   AuditLog,
@@ -103,6 +107,10 @@ import type {
   Promotion,
   PushSubscription,
   PushSubscriptionPlatform,
+  MaterialPurchase,
+  MoneyMinorUnit,
+  ProductionRun,
+  ProductionRunLine,
   RawMaterial,
   RecipeItem,
   RecurringExpenseTemplate,
@@ -981,6 +989,215 @@ export async function deleteRawMaterial(context: CommerceContext, actor: Commerc
     entityId: materialId,
     summary: `Deleted raw material ${existing.name}`
   });
+}
+
+/**
+ * Weighted average of what she has already paid: existing stock at its
+ * current cost, blended with the new delivery at what it actually cost.
+ * Buying 5L for GHS 200 on top of 2L held at GHS 30/L gives
+ * (60 + 200) / 7 = GHS 37.14/L.
+ *
+ * Exported for the unit tests, and for the purchase form's live preview so
+ * she sees the resulting unit cost before committing.
+ */
+export function blendUnitCost(
+  existingQuantity: number,
+  existingUnitCost: MoneyMinorUnit,
+  purchasedQuantity: number,
+  purchasedTotalCost: MoneyMinorUnit
+): MoneyMinorUnit {
+  // Negative stock means the records are behind reality; averaging against it
+  // would produce a nonsense unit cost, so the delivery simply sets the price.
+  const heldQuantity = Math.max(0, existingQuantity);
+  const totalQuantity = heldQuantity + purchasedQuantity;
+  if (totalQuantity <= 0) {
+    return purchasedTotalCost > 0 && purchasedQuantity > 0
+      ? Math.round(purchasedTotalCost / purchasedQuantity)
+      : existingUnitCost;
+  }
+
+  return Math.round((heldQuantity * existingUnitCost + purchasedTotalCost) / totalQuantity);
+}
+
+/**
+ * Records a supplier delivery: stock up, unit cost re-averaged, and — when a
+ * category is given — the spend posted to Expenses so it reaches the P&L
+ * exactly once. The recipe cost it feeds is deliberately kept out of the P&L
+ * (it is a pricing tool); counting both would charge her twice for the same
+ * materials.
+ */
+export async function createMaterialPurchase(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: CreateMaterialPurchaseInput
+) {
+  await assertCan(context, actor, "reports.financial");
+  const parsed = createMaterialPurchaseInputSchema.parse(input);
+
+  const material = await context.repo.getRawMaterial(parsed.materialId);
+  if (!material) {
+    throw new CommerceError("NOT_FOUND", "Raw material not found.");
+  }
+
+  const unitCostAfter = blendUnitCost(
+    material.stockOnHand ?? 0,
+    material.costPerUnit,
+    parsed.quantity,
+    parsed.totalCost
+  );
+
+  let expenseId: string | null = null;
+  if (parsed.expenseCategoryId) {
+    const expense = await createExpense(context, actor, {
+      categoryId: parsed.expenseCategoryId,
+      name: `${material.name} — ${parsed.quantity} ${material.unit}`,
+      amount: parsed.totalCost,
+      date: parsed.date,
+      note: parsed.supplier ? `Supplier: ${parsed.supplier}` : undefined
+    });
+    expenseId = expense.id;
+  }
+
+  const purchase: MaterialPurchase = {
+    id: createId(context, "purchase"),
+    materialId: material.id,
+    quantity: parsed.quantity,
+    totalCost: parsed.totalCost,
+    unitCostAfter,
+    date: parsed.date,
+    supplier: parsed.supplier,
+    note: parsed.note,
+    expenseId,
+    createdBy: actor.uid,
+    createdAt: getNow(context)
+  };
+
+  await context.repo.saveMaterialPurchase(purchase);
+  await context.repo.saveRawMaterial({
+    ...material,
+    stockOnHand: (material.stockOnHand ?? 0) + parsed.quantity,
+    costPerUnit: unitCostAfter,
+    supplier: parsed.supplier ?? material.supplier,
+    updatedAt: getNow(context)
+  });
+  await recomputeCostsForMaterial(context, material.id);
+  await writeAuditLog(context, actor, {
+    action: "materials.purchase",
+    entityType: "rawMaterial",
+    entityId: material.id,
+    summary: `Received ${parsed.quantity} ${material.unit} of ${material.name}`
+  });
+
+  return purchase;
+}
+
+/**
+ * Records a batch of finished goods: consumes the recipe's materials, raises
+ * finished stock through the normal inventory trail, and freezes the cost of
+ * this batch so a later price change cannot rewrite history.
+ *
+ * Shortfalls are recorded and reported, not blocked — her physical counts run
+ * ahead of the system, and refusing the save would stop real work over a
+ * bookkeeping lag.
+ */
+export async function recordProductionRun(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: RecordProductionRunInput
+) {
+  await assertCan(context, actor, "inventory.adjust");
+  const parsed = recordProductionRunInputSchema.parse(input);
+
+  const product = await requiredProduct(context, parsed.productId);
+  const variants = await context.repo.listVariants(parsed.productId);
+  const variant = variants.find((entry) => entry.id === parsed.variantId);
+  if (!variant) {
+    throw new CommerceError("NOT_FOUND", "Product variant not found.");
+  }
+  if (variant.bundleComponents && variant.bundleComponents.length > 0) {
+    throw new CommerceError(
+      "VALIDATION_ERROR",
+      "A set is made from its component products — record production against those instead."
+    );
+  }
+  if (!variant.recipe || variant.recipe.length === 0) {
+    throw new CommerceError("VALIDATION_ERROR", `${variant.title} has no recipe yet — add one first.`);
+  }
+
+  const materials = await context.repo.listRawMaterials();
+  const materialsById = new Map(materials.map((entry) => [entry.id, entry]));
+
+  const lines: ProductionRunLine[] = [];
+  const shortfallMaterialNames: string[] = [];
+  let totalCost = 0;
+
+  for (const item of variant.recipe) {
+    const material = materialsById.get(item.materialId);
+    if (!material) {
+      continue;
+    }
+
+    const quantityUsed = item.quantityPerUnit * parsed.quantityProduced;
+    const lineCost = Math.round(material.costPerUnit * quantityUsed);
+    totalCost += lineCost;
+    lines.push({
+      materialId: material.id,
+      materialName: material.name,
+      unit: material.unit,
+      kind: material.kind ?? "INGREDIENT",
+      quantityUsed,
+      unitCostAtTime: material.costPerUnit,
+      lineCost
+    });
+
+    const remaining = (material.stockOnHand ?? 0) - quantityUsed;
+    if (remaining < 0) {
+      shortfallMaterialNames.push(material.name);
+    }
+
+    await context.repo.saveRawMaterial({
+      ...material,
+      stockOnHand: remaining,
+      updatedAt: getNow(context)
+    });
+  }
+
+  const run: ProductionRun = {
+    id: createId(context, "production"),
+    productId: product.id,
+    variantId: variant.id,
+    productTitle: product.title,
+    variantTitle: variant.title,
+    quantityProduced: parsed.quantityProduced,
+    unitCost: Math.round(totalCost / parsed.quantityProduced),
+    totalCost,
+    lines,
+    shortfallMaterialNames,
+    note: parsed.note,
+    createdBy: actor.uid,
+    createdAt: getNow(context)
+  };
+
+  await context.repo.saveProductionRun(run);
+
+  // Finished goods go up through the same trail as restocks and sales, so a
+  // batch is visible in Inventory alongside everything else that moved stock.
+  await adjustInventory(context, actor, {
+    productId: product.id,
+    variantId: variant.id,
+    quantityDelta: parsed.quantityProduced,
+    type: "PRODUCTION",
+    reason: `Produced ${parsed.quantityProduced} × ${variant.title}`
+  });
+
+  await writeAuditLog(context, actor, {
+    action: "production.record",
+    entityType: "productionRun",
+    entityId: run.id,
+    summary: `Produced ${parsed.quantityProduced} × ${product.title} (${variant.title})`
+  });
+
+  return run;
 }
 
 /**

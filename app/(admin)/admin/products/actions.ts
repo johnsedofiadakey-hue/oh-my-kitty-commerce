@@ -135,7 +135,10 @@ export async function quickEditCatalogueItemAction(
       price: formMoneyMinorUnit(formData, "price"),
       compareAtPrice: formOptionalMoneyMinorUnit(formData, "compareAtPrice"),
       cost: formOptionalMoneyMinorUnit(formData, "cost"),
-      recipe: formRecipe(formData),
+      // Recipes are edited on Production -> Recipes, not here. Omitting the
+      // key entirely leaves the stored recipe untouched; sending [] would
+      // wipe it on every ordinary product save.
+      ...(hasRecipeFields(formData) ? { recipe: formRecipe(formData) } : {}),
       bundleComponents: formBundleComponents(formData),
       lowStockThreshold: formInteger(formData, "lowStockThreshold", 5)
     });
@@ -242,6 +245,15 @@ async function runAdminProductAction(
 }
 
 const RECIPE_FIELD_PREFIX = "recipeQuantity.";
+
+function hasRecipeFields(formData: FormData) {
+  for (const key of formData.keys()) {
+    if (key.startsWith(RECIPE_FIELD_PREFIX)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 function formRecipe(formData: FormData) {
   const items: { materialId: string; quantityPerUnit: number }[] = [];

@@ -37,6 +37,7 @@ export type InventoryMovementType =
   | "ADMIN_CREATED_SALE"
   | "RETURN_TO_STOCK"
   | "REFUND_NO_STOCK_RETURN"
+  | "PRODUCTION"
   | "DAMAGE"
   | "LOSS"
   | "MANUAL_ADJUSTMENT"
@@ -125,15 +126,86 @@ export type ProductVariant = {
   active: boolean;
 };
 
+/**
+ * Splits what goes *into* the product from what it ships *in*, so a recipe
+ * can report "GHS 11 product, GHS 4 packaging" rather than one opaque total.
+ */
+export type RawMaterialKind = "INGREDIENT" | "PACKAGING" | "OTHER";
+
 export type RawMaterial = {
   id: string;
   name: string;
   // Unit the material is measured/costed in, e.g. "ml", "g", "piece", "cap".
   unit: string;
+  kind: RawMaterialKind;
+  /**
+   * Maintained by purchases as a weighted average of what was actually paid,
+   * not typed by hand — see applyPurchaseToMaterial. Editable directly only
+   * for opening balances and corrections.
+   */
   costPerUnit: MoneyMinorUnit;
+  /** In the material's own `unit`. Can go negative when production outruns the records. */
+  stockOnHand: number;
+  lowStockThreshold: number;
   supplier?: string;
   createdAt?: Date;
   updatedAt?: Date;
+};
+
+/**
+ * A delivery of material from a supplier. Raises stock and re-averages
+ * costPerUnit. Optionally posts an Expense so the money leaving the account
+ * is recorded once, in the P&L, rather than twice.
+ */
+export type MaterialPurchase = {
+  id: string;
+  materialId: string;
+  /** In the material's own unit. */
+  quantity: number;
+  /** What was paid in total for that quantity — unit cost is derived, not entered. */
+  totalCost: MoneyMinorUnit;
+  /** Snapshot of the resulting weighted-average unit cost, for the history view. */
+  unitCostAfter: MoneyMinorUnit;
+  date: Date;
+  supplier?: string;
+  note?: string;
+  /** Set when this purchase also posted to Expenses. */
+  expenseId?: string | null;
+  createdBy: string;
+  createdAt?: Date;
+};
+
+/** One material consumed by a production run, frozen at the cost of that moment. */
+export type ProductionRunLine = {
+  materialId: string;
+  materialName: string;
+  unit: string;
+  kind: RawMaterialKind;
+  quantityUsed: number;
+  unitCostAtTime: MoneyMinorUnit;
+  lineCost: MoneyMinorUnit;
+};
+
+/**
+ * A batch of finished goods made in-house. Consumes materials, raises finished
+ * stock, and keeps its own cost snapshot — a later change to a material's
+ * price must not rewrite what a past batch cost to make.
+ */
+export type ProductionRun = {
+  id: string;
+  productId: string;
+  variantId: string;
+  productTitle: string;
+  variantTitle: string;
+  quantityProduced: number;
+  unitCost: MoneyMinorUnit;
+  totalCost: MoneyMinorUnit;
+  lines: ProductionRunLine[];
+  /** Materials that went negative on this run, for the warning banner in history. */
+  shortfallMaterialNames: string[];
+  note?: string;
+  createdBy: string;
+  createdAt?: Date;
 };
 
 export type Concern = {

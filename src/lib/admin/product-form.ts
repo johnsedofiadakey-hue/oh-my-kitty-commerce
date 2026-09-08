@@ -43,6 +43,21 @@ export function formInteger(formData: FormData, key: string, fallback = 0) {
   return parsed;
 }
 
+/** Decimal quantities — materials are measured in ml/g, not whole units. */
+export function formNumber(formData: FormData, key: string, fallback = 0) {
+  const value = formString(formData, key);
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`${key} must be a number.`);
+  }
+
+  return parsed;
+}
+
 export function formOptionalInteger(formData: FormData, key: string) {
   const value = formString(formData, key);
   if (!value) {

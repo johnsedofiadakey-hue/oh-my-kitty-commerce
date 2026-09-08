@@ -24,6 +24,8 @@ import type {
   ProductVariant,
   Promotion,
   PushSubscription,
+  MaterialPurchase,
+  ProductionRun,
   RawMaterial,
   RecurringExpenseTemplate,
   Routine,
@@ -173,6 +175,35 @@ export class FirestoreCommerceRepository implements CommerceRepository {
   async deleteRawMaterial(id: string) {
     this.rejectIfTransactional("deleteRawMaterial");
     await this.db.collection("rawMaterials").doc(id).delete();
+  }
+
+  async listMaterialPurchases() {
+    this.rejectIfTransactional("listMaterialPurchases");
+    const snapshot = await this.db.collection("materialPurchases").orderBy("date", "desc").limit(500).get();
+    return snapshot.docs.map((doc) => readDoc<MaterialPurchase>(doc)).filter(isDefined);
+  }
+
+  async saveMaterialPurchase(purchase: MaterialPurchase) {
+    this.rejectIfTransactional("saveMaterialPurchase");
+    await this.db.collection("materialPurchases").doc(purchase.id).set(cleanFirestoreData(purchase), {
+      merge: true
+    });
+  }
+
+  async deleteMaterialPurchase(id: string) {
+    this.rejectIfTransactional("deleteMaterialPurchase");
+    await this.db.collection("materialPurchases").doc(id).delete();
+  }
+
+  async listProductionRuns() {
+    this.rejectIfTransactional("listProductionRuns");
+    const snapshot = await this.db.collection("productionRuns").orderBy("createdAt", "desc").limit(500).get();
+    return snapshot.docs.map((doc) => readDoc<ProductionRun>(doc)).filter(isDefined);
+  }
+
+  async saveProductionRun(run: ProductionRun) {
+    this.rejectIfTransactional("saveProductionRun");
+    await this.db.collection("productionRuns").doc(run.id).set(cleanFirestoreData(run), { merge: true });
   }
 
   async listMedia() {

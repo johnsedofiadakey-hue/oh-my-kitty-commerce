@@ -23,6 +23,8 @@ import type {
   ProductVariant,
   Promotion,
   PushSubscription,
+  MaterialPurchase,
+  ProductionRun,
   RawMaterial,
   RecurringExpenseTemplate,
   Routine,
@@ -39,6 +41,8 @@ export class MemoryCommerceRepository implements CommerceRepository {
   productTypes = new Map<string, ProductType>();
   routines = new Map<string, Routine>();
   rawMaterials = new Map<string, RawMaterial>();
+  materialPurchases = new Map<string, MaterialPurchase>();
+  productionRuns = new Map<string, ProductionRun>();
   media = new Map<string, MediaAsset>();
   contentBlocks = new Map<string, ContentBlock>();
   customers = new Map<string, Customer>();
@@ -151,6 +155,30 @@ export class MemoryCommerceRepository implements CommerceRepository {
 
   async deleteRawMaterial(id: string) {
     this.rawMaterials.delete(id);
+  }
+
+  async listMaterialPurchases() {
+    return [...this.materialPurchases.values()].sort(
+      (first, second) => new Date(second.date).getTime() - new Date(first.date).getTime()
+    );
+  }
+
+  async saveMaterialPurchase(purchase: MaterialPurchase) {
+    this.materialPurchases.set(purchase.id, purchase);
+  }
+
+  async deleteMaterialPurchase(id: string) {
+    this.materialPurchases.delete(id);
+  }
+
+  async listProductionRuns() {
+    return [...this.productionRuns.values()].sort(
+      (first, second) => (second.createdAt?.getTime() ?? 0) - (first.createdAt?.getTime() ?? 0)
+    );
+  }
+
+  async saveProductionRun(run: ProductionRun) {
+    this.productionRuns.set(run.id, run);
   }
 
   async listMedia() {

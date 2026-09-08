@@ -442,31 +442,12 @@ function ProductEditDrawer({
               />
             </label>
           </div>
-          {catalogue.rawMaterials.length > 0 ? (
-            <div className="admin-field-group">
-              <span className="admin-field-group-label">
-                Recipe — how much of each material one unit uses. Leave a material at 0 if it&apos;s not
-                used. Cost per unit is calculated from these automatically.
-              </span>
-              {catalogue.rawMaterials.map((material) => {
-                const existing = variant.recipe?.find((item) => item.materialId === material.id);
-                return (
-                  <label className="admin-field recipe-field" key={material.id}>
-                    <span>
-                      {material.name} <small>({material.unit})</small>
-                    </span>
-                    <input
-                      defaultValue={existing?.quantityPerUnit ?? ""}
-                      inputMode="decimal"
-                      min="0"
-                      name={`recipeQuantity.${material.id}`}
-                      placeholder="0"
-                      step="any"
-                    />
-                  </label>
-                );
-              })}
-            </div>
+          {catalogue.rawMaterials.length > 0 && variant.recipe && variant.recipe.length > 0 ? (
+            <p className="admin-help">
+              Cost is calculated from this product&apos;s recipe ({variant.recipe.length} material
+              {variant.recipe.length === 1 ? "" : "s"}), so the box above is ignored. Edit the recipe under
+              Production &rarr; Recipes.
+            </p>
           ) : null}
           {catalogue.variants.length > 1 ? (
             <div className="admin-field-group">

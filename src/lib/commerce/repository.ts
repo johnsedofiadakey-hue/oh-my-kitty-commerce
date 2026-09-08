@@ -22,6 +22,8 @@ import type {
   ProductVariant,
   Promotion,
   PushSubscription,
+  MaterialPurchase,
+  ProductionRun,
   RawMaterial,
   RecurringExpenseTemplate,
   Routine,
@@ -52,6 +54,11 @@ export type CommerceRepository = {
   getRawMaterial(id: string): Promise<RawMaterial | null>;
   saveRawMaterial(material: RawMaterial): Promise<void>;
   deleteRawMaterial(id: string): Promise<void>;
+  listMaterialPurchases(): Promise<MaterialPurchase[]>;
+  saveMaterialPurchase(purchase: MaterialPurchase): Promise<void>;
+  deleteMaterialPurchase(id: string): Promise<void>;
+  listProductionRuns(): Promise<ProductionRun[]>;
+  saveProductionRun(run: ProductionRun): Promise<void>;
   listMedia(): Promise<MediaAsset[]>;
   // For the storefront: fetches only the specific media docs a page
   // actually references, instead of scanning the whole library — same

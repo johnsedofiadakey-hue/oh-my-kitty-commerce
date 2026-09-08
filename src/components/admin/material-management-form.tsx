@@ -27,7 +27,17 @@ export function MaterialManagementForm({ action, material, disabled }: MaterialM
             <input defaultValue={material?.unit} name="unit" placeholder="g, ml, piece" required />
           </label>
           <label className="admin-field">
-            <span>Cost per unit GHS</span>
+            <span>Type</span>
+            <select defaultValue={material?.kind ?? "INGREDIENT"} name="kind">
+              <option value="INGREDIENT">Ingredient — goes into the product</option>
+              <option value="PACKAGING">Packaging — bottle, label, box</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </label>
+        </div>
+        <div className="admin-form-grid">
+          <label className="admin-field">
+            <span>{material ? "Cost per unit GHS" : "Starting cost per unit GHS"}</span>
             <input
               defaultValue={material?.costPerUnit ? (material.costPerUnit / 100).toFixed(2) : ""}
               inputMode="decimal"
@@ -37,11 +47,36 @@ export function MaterialManagementForm({ action, material, disabled }: MaterialM
               required
             />
           </label>
+          <label className="admin-field">
+            <span>{material ? "Stock on hand" : "Starting stock"}</span>
+            <input
+              defaultValue={material?.stockOnHand ?? 0}
+              inputMode="decimal"
+              name="stockOnHand"
+              placeholder="0"
+            />
+          </label>
         </div>
-        <label className="admin-field">
-          <span>Supplier (optional)</span>
-          <input defaultValue={material?.supplier ?? ""} name="supplier" placeholder="e.g. Madina Market" />
-        </label>
+        <p className="admin-help">
+          After this, use <strong>Log purchase</strong> to add stock — it works out the cost per unit from what
+          you actually paid, so you never have to calculate it yourself.
+        </p>
+        <div className="admin-form-grid">
+          <label className="admin-field">
+            <span>Warn me below</span>
+            <input
+              defaultValue={material?.lowStockThreshold ?? 0}
+              inputMode="decimal"
+              min="0"
+              name="lowStockThreshold"
+              placeholder="0"
+            />
+          </label>
+          <label className="admin-field">
+            <span>Supplier (optional)</span>
+            <input defaultValue={material?.supplier ?? ""} name="supplier" placeholder="e.g. Madina Market" />
+          </label>
+        </div>
         {state.message ? (
           <p className={`admin-form-status ${state.status}`}>{state.message}</p>
         ) : null}

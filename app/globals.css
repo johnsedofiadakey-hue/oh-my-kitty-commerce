@@ -4503,8 +4503,45 @@ button {
 }
 
 .recipe-field small {
+  display: block;
   color: var(--color-muted);
   font-weight: 500;
+}
+
+/* Recipe editor: one column of material rows, two up once there's room. */
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px 20px;
+}
+
+/* The running "cost to make one" under the recipe, and the consumption
+   preview under the production form — both are read-only summaries of what
+   the inputs above add up to, so they share one calm surface. */
+.recipe-total,
+.production-preview {
+  margin-top: 16px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-small);
+  padding: 14px 16px;
+  background: var(--color-peach-mist);
+}
+
+.recipe-total .panel-header,
+.production-preview .panel-header {
+  margin: 0 0 6px;
+  padding: 0;
+  border: 0;
+}
+
+.recipe-total .panel-header span,
+.production-preview .panel-header span {
+  font-weight: 900;
+  font-size: 1.05rem;
+}
+
+.production-preview .stack-list {
+  margin-top: 8px;
 }
 
 .admin-chip-group {
