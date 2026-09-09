@@ -307,6 +307,7 @@ function ProductEditDrawer({
 
   const mediaId = (variant.mediaIds ?? [])[0] ?? (product.mediaIds ?? [])[0];
   const currentImageUrl = mediaId ? catalogue.media.find((asset) => asset.id === mediaId)?.url : undefined;
+  const isBundle = Boolean(variant.bundleComponents && variant.bundleComponents.length > 0);
 
   return (
     <AdminDrawer title={`Edit ${product.title}`} triggerClassName="admin-action ghost small" triggerLabel="Edit">
@@ -458,38 +459,49 @@ function ProductEditDrawer({
             </p>
           ) : null}
           {catalogue.variants.length > 1 ? (
-            <div className="admin-field-group">
-              <span className="admin-field-group-label">
-                Bundle contents — if this variant is a set assembled from other products, list how many of
-                each go into one set. Leave everything blank if this isn&apos;t a set.
-              </span>
-              {catalogue.variants
-                .filter((other) => other.id !== variant.id)
-                .map((other) => ({
-                  other,
-                  otherProductTitle: catalogue.products.find((p) => p.id === other.productId)?.title ?? "Unknown product"
-                }))
-                .sort((a, b) => a.otherProductTitle.localeCompare(b.otherProductTitle) || a.other.title.localeCompare(b.other.title))
-                .map(({ other, otherProductTitle }) => {
-                  const existing = variant.bundleComponents?.find((item) => item.variantId === other.id);
-                  return (
-                    <label className="admin-field recipe-field" key={other.id}>
-                      <span>
-                        {otherProductTitle} <small>({other.title})</small>
-                      </span>
-                      <input
-                        defaultValue={existing?.quantity ?? ""}
-                        inputMode="numeric"
-                        min="0"
-                        name={`bundleQuantity.${other.id}`}
-                        placeholder="0"
-                      />
-                    </label>
-                  );
-                })}
-            </div>
+            <details className="admin-panel admin-collapsible bundle-contents" open={isBundle}>
+              <summary className="panel-header">
+                <h2>Is this a set?</h2>
+                <span>
+                  {isBundle
+                    ? `Made from ${variant.bundleComponents?.length} other product${variant.bundleComponents?.length === 1 ? "" : "s"}`
+                    : "Not a set — assembled from raw materials or sold as-is"}
+                </span>
+              </summary>
+              <p className="admin-help">
+                A set has no chemicals or materials of its own — it&apos;s built entirely from other products
+                you already sell. Pick which ones, and how many of each go into one. Leave everything blank
+                if this isn&apos;t a set.
+              </p>
+              <div className="admin-field-group">
+                {catalogue.variants
+                  .filter((other) => other.id !== variant.id)
+                  .map((other) => ({
+                    other,
+                    otherProductTitle: catalogue.products.find((p) => p.id === other.productId)?.title ?? "Unknown product"
+                  }))
+                  .sort((a, b) => a.otherProductTitle.localeCompare(b.otherProductTitle) || a.other.title.localeCompare(b.other.title))
+                  .map(({ other, otherProductTitle }) => {
+                    const existing = variant.bundleComponents?.find((item) => item.variantId === other.id);
+                    return (
+                      <label className="admin-field recipe-field" key={other.id}>
+                        <span>
+                          {otherProductTitle} <small>({other.title})</small>
+                        </span>
+                        <input
+                          defaultValue={existing?.quantity ?? ""}
+                          inputMode="numeric"
+                          min="0"
+                          name={`bundleQuantity.${other.id}`}
+                          placeholder="0"
+                        />
+                      </label>
+                    );
+                  })}
+              </div>
+            </details>
           ) : null}
-          {variant.bundleComponents && variant.bundleComponents.length > 0 ? (
+          {isBundle ? (
             <p className="admin-help">
               This is a set — it has no stock of its own. Restock or adjust the components above instead.
             </p>
