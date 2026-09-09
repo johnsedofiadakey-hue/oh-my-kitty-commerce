@@ -9,6 +9,8 @@ import { verifyPaystackTransaction } from "@/lib/payments/paystack";
 import { formatMoney } from "@/lib/commerce/format";
 import { getContentValue } from "@/lib/storefront/content";
 import { buildContactCardDataUrl } from "@/lib/storefront/vcard";
+import { FREE_DELIVERY_RULE_ID, formatFreeDeliveryEstimate } from "@/lib/storefront/free-delivery-estimate";
+import { toRealDate } from "@/lib/admin/sample-admin-data";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +61,7 @@ export default async function PaystackCallbackPage({ searchParams }: PageProps) 
             <h1>{result.orderNumber}</h1>
             <p>Total: {formatMoney(result.total)}</p>
             <p>Your payment was verified with Paystack and your order is confirmed.</p>
+            {result.deliveryEstimate ? <p>{result.deliveryEstimate}</p> : null}
             <a
               className="text-button"
               download="oh-my-kitty.vcf"
@@ -85,7 +88,7 @@ export default async function PaystackCallbackPage({ searchParams }: PageProps) 
 }
 
 type ResolvedPayment =
-  | { state: "success"; orderNumber: string; total: number }
+  | { state: "success"; orderNumber: string; total: number; deliveryEstimate: string | null }
   | { state: "failed"; message: string };
 
 async function resolvePayment(reference: string | undefined): Promise<ResolvedPayment> {
@@ -105,7 +108,12 @@ async function resolvePayment(reference: string | undefined): Promise<ResolvedPa
     }
 
     if (order.paymentStatus === "PAID") {
-      return { state: "success", orderNumber: order.orderNumber, total: order.total };
+      return {
+        state: "success",
+        orderNumber: order.orderNumber,
+        total: order.total,
+        deliveryEstimate: buildDeliveryEstimate(order)
+      };
     }
 
     const verified = await verifyPaystackTransaction(reference);
@@ -122,8 +130,22 @@ async function resolvePayment(reference: string | undefined): Promise<ResolvedPa
       channel: verified.channel
     });
 
-    return { state: "success", orderNumber: confirmed.order.orderNumber, total: confirmed.order.total };
+    return {
+      state: "success",
+      orderNumber: confirmed.order.orderNumber,
+      total: confirmed.order.total,
+      deliveryEstimate: buildDeliveryEstimate(confirmed.order)
+    };
   } catch {
     return { state: "failed", message: "Something went wrong confirming your payment." };
   }
+}
+
+function buildDeliveryEstimate(order: { deliveryMethod?: { ruleId: string } | null; createdAt?: unknown }): string | null {
+  if (order.deliveryMethod?.ruleId !== FREE_DELIVERY_RULE_ID) {
+    return null;
+  }
+
+  const createdAt = toRealDate(order.createdAt) ?? new Date();
+  return formatFreeDeliveryEstimate(createdAt);
 }

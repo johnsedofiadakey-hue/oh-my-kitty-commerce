@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       deliveryTotal: order.deliveryTotal,
       createdAt: toIsoString(order.createdAt),
       deliveryAddress: order.customerSnapshot?.address ?? null,
+      deliveryRuleId: order.deliveryMethod?.ruleId ?? null,
       items: order.items.map((item) => ({
         productTitle: item.productTitle,
         variantTitle: item.variantTitle,

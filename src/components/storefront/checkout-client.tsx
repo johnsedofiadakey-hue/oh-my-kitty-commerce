@@ -7,6 +7,7 @@ import { onCartChanged, readCartLines, type CartLine } from "@/components/storef
 import { BagIcon } from "@/components/storefront/icons";
 import { formatMoney } from "@/lib/commerce/format";
 import { calculatePaystackFee } from "@/lib/payments/fee";
+import { FREE_DELIVERY_RULE_ID, formatFreeDeliveryEstimate } from "@/lib/storefront/free-delivery-estimate";
 import type { StorefrontDeliveryOption } from "@/lib/storefront/delivery";
 
 type CheckoutClientProps = {
@@ -311,7 +312,9 @@ export function CheckoutClient({
                   value={option.id}
                 />
                 <span className="delivery-option-name">{option.name}</span>
-                <span className="delivery-option-meta">{option.estimate ?? ""}</span>
+                <span className="delivery-option-meta">
+                  {option.id === FREE_DELIVERY_RULE_ID ? formatFreeDeliveryEstimate(new Date()) : option.estimate ?? ""}
+                </span>
                 {option.fee > 0 ? <strong>{option.formattedFee}</strong> : null}
               </label>
             ))}

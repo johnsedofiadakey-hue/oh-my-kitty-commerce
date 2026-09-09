@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { formatMoney } from "@/lib/commerce/format";
+import { FREE_DELIVERY_RULE_ID, formatFreeDeliveryEstimate } from "@/lib/storefront/free-delivery-estimate";
 
 type TrackResult = {
   orderNumber: string;
@@ -14,6 +15,7 @@ type TrackResult = {
   deliveryTotal: number;
   createdAt: string | null;
   deliveryAddress: string | null;
+  deliveryRuleId: string | null;
   items: { productTitle: string; variantTitle: string; quantity: number; mediaUrl: string | null }[];
 };
 
@@ -130,6 +132,15 @@ export function TrackOrderClient() {
               </div>
             ))}
           </div>
+          {result.deliveryRuleId === FREE_DELIVERY_RULE_ID &&
+          result.createdAt &&
+          result.fulfilmentStatus !== "FULFILLED" &&
+          result.fulfilmentStatus !== "CANCELLED" ? (
+            <div className="track-result-address">
+              <span>Delivery estimate</span>
+              <p>{formatFreeDeliveryEstimate(new Date(result.createdAt))}</p>
+            </div>
+          ) : null}
           {result.deliveryAddress ? (
             <div className="track-result-address">
               <span>Delivery address</span>
