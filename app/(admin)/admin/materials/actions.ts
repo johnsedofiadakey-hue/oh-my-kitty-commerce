@@ -136,7 +136,8 @@ export async function updateRecipeAction(
     const variant = await updateVariant(context, actor, {
       productId: formString(formData, "productId"),
       id: formString(formData, "variantId"),
-      recipe
+      recipe,
+      recipeInstructions: formOptionalString(formData, "recipeInstructions")
     });
 
     revalidatePath("/admin/materials");

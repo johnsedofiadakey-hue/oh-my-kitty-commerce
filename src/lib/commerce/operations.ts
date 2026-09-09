@@ -327,6 +327,10 @@ export async function updateVariant(
   const recipeCost = await computeRecipeCost(context, variant.recipe);
   if (recipeCost !== null) {
     variant.cost = recipeCost;
+  } else if (existing.recipe && existing.recipe.length > 0) {
+    // The recipe just got cleared — its derived cost must not linger and
+    // read as if it were manually entered.
+    variant.cost = null;
   }
 
   await context.repo.saveVariant(variant);

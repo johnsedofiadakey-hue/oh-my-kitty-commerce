@@ -101,6 +101,7 @@ const variantFieldsSchema = z.object({
   compareAtPrice: moneySchema.nullable().optional(),
   cost: moneySchema.nullable().optional(),
   recipe: z.array(recipeItemSchema).optional(),
+  recipeInstructions: z.string().optional(),
   bundleComponents: z.array(bundleComponentItemSchema).optional(),
   mediaIds: z.array(z.string().min(1)),
   trackInventory: z.boolean(),

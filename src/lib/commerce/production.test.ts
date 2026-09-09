@@ -159,6 +159,22 @@ describe("createMaterialPurchase", () => {
   });
 });
 
+describe("updateVariant recipe cost", () => {
+  it("resets cost to null when a recipe is cleared, instead of leaving the last derived value", async () => {
+    const context = createTestContext();
+    const { product, variant } = await seedRecipeProduct(context);
+    expect(variant.cost).toBe(1200);
+
+    const cleared = await updateVariant(context, owner, {
+      productId: product.id,
+      id: variant.id,
+      recipe: []
+    });
+
+    expect(cleared.cost).toBeNull();
+  });
+});
+
 describe("recordProductionRun", () => {
   it("consumes materials, raises finished stock, and freezes the batch cost", async () => {
     const context = createTestContext();

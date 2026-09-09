@@ -98,10 +98,18 @@ export default async function AdminMaterialsPage({ searchParams }: PageProps) {
         price: variant.price,
         cost: variant.cost ?? 0,
         stockOnHand: variant.stockOnHand,
-        recipe: variant.recipe ?? []
+        recipe: variant.recipe ?? [],
+        instructions: variant.recipeInstructions
       };
     })
-    .sort((a, b) => a.label.localeCompare(b.label));
+    // Whatever still needs a recipe surfaces first — otherwise it's easy to
+    // lose a handful of unset products among everything already done.
+    .sort((a, b) => {
+      if (a.recipe.length === 0 && b.recipe.length > 0) return -1;
+      if (a.recipe.length > 0 && b.recipe.length === 0) return 1;
+      return a.label.localeCompare(b.label);
+    });
+  const recipeCompleteCount = recipeTargets.filter((target) => target.recipe.length > 0).length;
 
   const producible: ProducibleVariant[] = recipeTargets
     .filter((target) => target.recipe.length > 0)
@@ -256,34 +264,41 @@ export default async function AdminMaterialsPage({ searchParams }: PageProps) {
       {materials.length === 0 ? (
         <p className="admin-help">Add materials first — there is nothing to build a recipe from yet.</p>
       ) : (
-        recipeTargets.map((target) => (
-          <details className="admin-panel admin-collapsible" key={target.variantId}>
-            <summary className="panel-header">
-              <h2>{target.label}</h2>
-              <span>
-                {target.recipe.length > 0
-                  ? `${formatMoney(target.cost)} to make · ${target.recipe.length} material${target.recipe.length === 1 ? "" : "s"}`
-                  : "No recipe yet"}
-              </span>
-            </summary>
-            <div className="admin-panel-section">
-              <RecipeEditor
-                action={updateRecipeAction}
-                disabled={disabled}
-                materials={recipeMaterials}
-                target={{
-                  productId: target.productId,
-                  variantId: target.variantId,
-                  label: target.label,
-                  price: target.price,
-                  quantities: Object.fromEntries(
-                    target.recipe.map((item) => [item.materialId, item.quantityPerUnit])
-                  )
-                }}
-              />
-            </div>
-          </details>
-        ))
+        <>
+          <p className="admin-help">
+            {recipeCompleteCount} of {recipeTargets.length} product{recipeTargets.length === 1 ? "" : "s"} have a
+            recipe set.
+          </p>
+          {recipeTargets.map((target) => (
+            <details className="admin-panel admin-collapsible" key={target.variantId}>
+              <summary className="panel-header">
+                <h2>{target.label}</h2>
+                <span>
+                  {target.recipe.length > 0
+                    ? `${formatMoney(target.cost)} to make · ${target.recipe.length} material${target.recipe.length === 1 ? "" : "s"}`
+                    : "No recipe yet"}
+                </span>
+              </summary>
+              <div className="admin-panel-section">
+                <RecipeEditor
+                  action={updateRecipeAction}
+                  disabled={disabled}
+                  materials={recipeMaterials}
+                  target={{
+                    productId: target.productId,
+                    variantId: target.variantId,
+                    label: target.label,
+                    price: target.price,
+                    quantities: Object.fromEntries(
+                      target.recipe.map((item) => [item.materialId, item.quantityPerUnit])
+                    ),
+                    instructions: target.instructions
+                  }}
+                />
+              </div>
+            </details>
+          ))}
+        </>
       )}
     </>
   );

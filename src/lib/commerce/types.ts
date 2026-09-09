@@ -110,6 +110,10 @@ export type ProductVariant = {
   // current prices, and manual edits to it are overwritten on save.
   cost?: MoneyMinorUnit | null;
   recipe?: RecipeItem[];
+  // Free-text production steps for this recipe — mixing ratios, cure time,
+  // assembly order, whatever the person actually making it needs to know.
+  // Not used in any cost/inventory calculation, purely instructional.
+  recipeInstructions?: string;
   // Non-empty means this variant is a "set" ("Chronic Infection Set" etc.)
   // built from other product variants, not raw materials. A set has no
   // stock of its own — see computeAvailableStock() and

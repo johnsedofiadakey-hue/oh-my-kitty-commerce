@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { DeleteProductButton } from "@/components/admin/delete-product-button";
@@ -431,7 +432,7 @@ function ProductEditDrawer({
             <label className="admin-field">
               <span>
                 Cost per unit GHS
-                {catalogue.rawMaterials.length > 0 ? " (ignored if you set a recipe below)" : " (for profit reports — leave blank if unknown)"}
+                {catalogue.rawMaterials.length > 0 ? " (ignored if this product has a recipe)" : " (for profit reports — leave blank if unknown)"}
               </span>
               <input
                 defaultValue={variant.cost ? (variant.cost / 100).toFixed(2) : ""}
@@ -442,11 +443,18 @@ function ProductEditDrawer({
               />
             </label>
           </div>
-          {catalogue.rawMaterials.length > 0 && variant.recipe && variant.recipe.length > 0 ? (
+          {catalogue.rawMaterials.length > 0 ? (
             <p className="admin-help">
-              Cost is calculated from this product&apos;s recipe ({variant.recipe.length} material
-              {variant.recipe.length === 1 ? "" : "s"}), so the box above is ignored. Edit the recipe under
-              Production &rarr; Recipes.
+              {variant.recipe && variant.recipe.length > 0 ? (
+                <>
+                  Cost is calculated from this product&apos;s recipe ({variant.recipe.length} material
+                  {variant.recipe.length === 1 ? "" : "s"}), so the box above is ignored.{" "}
+                </>
+              ) : null}
+              <Link className="text-button" href="/admin/materials?tab=recipes">
+                {variant.recipe && variant.recipe.length > 0 ? "Edit the recipe" : "Set up a recipe"} for this
+                product &rarr;
+              </Link>
             </p>
           ) : null}
           {catalogue.variants.length > 1 ? (

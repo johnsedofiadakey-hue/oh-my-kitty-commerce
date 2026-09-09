@@ -18,6 +18,7 @@ export type RecipeTarget = {
   label: string;
   price: number;
   quantities: Record<string, number>;
+  instructions?: string;
 };
 
 const KIND_LABEL: Record<RecipeMaterial["kind"], string> = {
@@ -47,24 +48,29 @@ export function RecipeEditor({
     Object.fromEntries(materials.map((material) => [material.id, String(target.quantities[material.id] ?? "")]))
   );
 
+  // A material saved before `kind` existed (or with a bad value) must still
+  // show up somewhere, not silently vanish from the picker — fall back to
+  // "Other" rather than dropping the row entirely.
   const priced = materials.map((material) => {
     const parsed = Number.parseFloat(quantities[material.id] ?? "");
     const quantity = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
-    return { material, quantity, lineCost: Math.round(material.costPerUnit * quantity) };
+    const kind: RecipeMaterial["kind"] =
+      material.kind === "INGREDIENT" || material.kind === "PACKAGING" ? material.kind : "OTHER";
+    return { material, kind, quantity, lineCost: Math.round(material.costPerUnit * quantity) };
   });
 
   const used = priced.filter((row) => row.quantity > 0);
   const totalCost = used.reduce((total, row) => total + row.lineCost, 0);
   const ingredientCost = used
-    .filter((row) => row.material.kind === "INGREDIENT")
+    .filter((row) => row.kind === "INGREDIENT")
     .reduce((total, row) => total + row.lineCost, 0);
   const packagingCost = used
-    .filter((row) => row.material.kind === "PACKAGING")
+    .filter((row) => row.kind === "PACKAGING")
     .reduce((total, row) => total + row.lineCost, 0);
   const margin = target.price > 0 ? Math.round(((target.price - totalCost) / target.price) * 100) : null;
 
   const groups = (["INGREDIENT", "PACKAGING", "OTHER"] as const)
-    .map((kind) => ({ kind, rows: priced.filter((row) => row.material.kind === kind) }))
+    .map((kind) => ({ kind, rows: priced.filter((row) => row.kind === kind) }))
     .filter((group) => group.rows.length > 0);
 
   return (
@@ -117,6 +123,16 @@ export function RecipeEditor({
             </p>
           ) : null}
         </div>
+
+        <label className="admin-field">
+          <span>Production steps (optional)</span>
+          <textarea
+            defaultValue={target.instructions ?? ""}
+            name="recipeInstructions"
+            placeholder="e.g. mixing ratios, cure time, assembly order — whatever the person making it needs to know"
+            rows={4}
+          />
+        </label>
 
         {state.message ? <p className={`admin-form-status ${state.status}`}>{state.message}</p> : null}
         <button className="admin-action" type="submit">

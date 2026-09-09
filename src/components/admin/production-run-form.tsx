@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import Link from "next/link";
 import { initialAdminActionState, type AdminFormAction } from "@/lib/admin/product-form";
 import { formatMoney } from "@/lib/commerce/format";
 
@@ -65,8 +66,11 @@ export function ProductionRunForm({
   if (variants.length === 0) {
     return (
       <p className="admin-help">
-        No product has a recipe yet. Build one under the Recipes tab first, then you can record production
-        against it.
+        No product has a recipe yet.{" "}
+        <Link className="text-button" href="/admin/materials?tab=recipes">
+          Build one under Recipes &rarr;
+        </Link>{" "}
+        then you can record production against it.
       </p>
     );
   }
