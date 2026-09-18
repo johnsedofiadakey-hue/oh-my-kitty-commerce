@@ -143,6 +143,28 @@ export const createMaterialPurchaseInputSchema = z.object({
   expenseCategoryId: z.string().optional()
 });
 
+export const packOrderInputSchema = z.object({
+  orderId: z.string().min(1),
+  /** Required only when re-packing after a return or loss — see Parcel.reshipOfParcelId. */
+  reshipReason: z.string().min(3).optional()
+});
+
+export const holdOrderPackingInputSchema = z.object({
+  orderId: z.string().min(1),
+  reason: z.string().min(3, "Say what is blocking it, so the next person doesn't retry blindly.")
+});
+
+export const dispatchParcelsInputSchema = z.object({
+  parcelIds: z.array(z.string().min(1)).min(1),
+  courier: z.string().optional()
+});
+
+export const returnParcelInputSchema = z.object({
+  parcelId: z.string().min(1),
+  reason: z.string().min(3, "Say why it came back."),
+  restock: z.boolean().default(true)
+});
+
 export const recordProductionRunInputSchema = z.object({
   productId: z.string().min(1),
   variantId: z.string().min(1),
@@ -290,11 +312,19 @@ export const updateOrderFulfilmentInputSchema = z.object({
   fulfilmentStatus: z.enum([
     "UNFULFILLED",
     "PROCESSING",
+    "PACKED",
     "READY_FOR_PICKUP",
     "OUT_FOR_DELIVERY",
     "FULFILLED",
+    "RETURNED",
     "CANCELLED"
-  ])
+  ]),
+  /**
+   * Moving an order backwards is how it gets packed a second time, so it is
+   * refused unless a reason is given — and the caller must also hold
+   * fulfilment.override, which ordinary packing staff do not.
+   */
+  reason: z.string().min(3).optional()
 });
 
 const taxonomyEntryFieldsSchema = z.object({
@@ -424,6 +454,10 @@ export type CreateRawMaterialInput = z.input<typeof createRawMaterialInputSchema
 export type UpdateRawMaterialInput = z.input<typeof updateRawMaterialInputSchema>;
 export type CreateMaterialPurchaseInput = z.input<typeof createMaterialPurchaseInputSchema>;
 export type RecordProductionRunInput = z.input<typeof recordProductionRunInputSchema>;
+export type PackOrderInput = z.input<typeof packOrderInputSchema>;
+export type HoldOrderPackingInput = z.input<typeof holdOrderPackingInputSchema>;
+export type DispatchParcelsInput = z.input<typeof dispatchParcelsInputSchema>;
+export type ReturnParcelInput = z.input<typeof returnParcelInputSchema>;
 export type UpdateStoreSettingsInput = z.input<typeof updateStoreSettingsInputSchema>;
 export type AdjustInventoryInput = z.input<typeof adjustInventoryInputSchema>;
 export type CreateCustomerInput = z.input<typeof createCustomerInputSchema>;

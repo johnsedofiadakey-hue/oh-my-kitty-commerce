@@ -11321,3 +11321,49 @@ a.pos-secondary-button {
     left: 10%;
   }
 }
+
+/* ---------- Dispatch: pick list, parcel selection ---------- */
+
+/* Shown before packing starts, so the slip doubles as the pick list. */
+.pick-list {
+  margin-bottom: 14px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-small);
+  padding: 14px 16px;
+  background: var(--color-peach-mist);
+}
+
+.pick-list .panel-header {
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+}
+
+.pick-line {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 5px 0;
+  border-top: 1px solid rgb(255 255 255 / 70%);
+}
+
+.pick-line:first-of-type {
+  border-top: 0;
+}
+
+.pick-line strong {
+  min-width: 34px;
+  font-weight: 900;
+}
+
+/* Whole row is the checkbox label, so it's tappable on a phone at the bench. */
+.stack-row.dispatch-row {
+  align-items: center;
+  cursor: pointer;
+}
+
+.stack-row.dispatch-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-rose);
+}

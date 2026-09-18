@@ -69,6 +69,7 @@ const navConfig: NavConfigGroup[] = [
         requiredPermission: "orders.view",
         badgeKey: "orders"
       },
+      { label: "Dispatch", href: "/admin/dispatch", icon: "delivery", requiredPermission: "parcels.pack" },
       { label: "Customers", href: "/admin/customers", icon: "customers", requiredPermission: "customers.view" },
       { label: "Promotions", href: "/admin/promotions", icon: "promotions", requiredPermission: "promotions.view" }
     ]

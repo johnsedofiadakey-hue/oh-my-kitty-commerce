@@ -54,10 +54,30 @@ export type PaymentMethod = "cash" | "mobile_money" | "card" | "manual_transfer"
 export type FulfilmentStatus =
   | "UNFULFILLED"
   | "PROCESSING"
+  | "PACKED"
   | "READY_FOR_PICKUP"
   | "OUT_FOR_DELIVERY"
   | "FULFILLED"
+  | "RETURNED"
   | "CANCELLED";
+
+/**
+ * How far along an order is, for the forward-only guard. A change that moves
+ * to a lower rank is going backwards and needs an explicit override — that is
+ * the move which lets an order be packed a second time.
+ * CANCELLED and RETURNED sit outside the ladder: they are ends, reachable
+ * from anywhere before completion.
+ */
+export const FULFILMENT_RANK: Record<FulfilmentStatus, number> = {
+  UNFULFILLED: 0,
+  PROCESSING: 1,
+  PACKED: 2,
+  READY_FOR_PICKUP: 3,
+  OUT_FOR_DELIVERY: 3,
+  FULFILLED: 4,
+  RETURNED: -1,
+  CANCELLED: -1
+};
 
 export type Product = {
   id: string;
@@ -328,6 +348,8 @@ export type Order = {
   staffId?: string | null;
   posShiftId?: string | null;
   idempotencyKey: string;
+  /** Set when packing was attempted and blocked — see PackHold. */
+  packHold?: PackHold | null;
   createdAt?: Date;
   promotionId?: string | null;
   promoCode?: string | null;
@@ -402,6 +424,73 @@ export type DeliveryMethodSnapshot = {
   name: string;
   type: DeliveryRule["type"];
   estimate?: string;
+};
+
+export type ParcelStatus = "PACKED" | "DISPATCHED" | "DELIVERED" | "RETURNED";
+
+/**
+ * One physical line on the packing slip. Sets are expanded into the items
+ * actually going in the box: an order line reading "Chronic Infection Set x1"
+ * is useless to whoever is picking it, so each component is listed with the
+ * set it came from.
+ */
+export type ParcelItem = {
+  productTitle: string;
+  variantTitle: string;
+  sku: string;
+  quantity: number;
+  /** Set this component belongs to, when the order line was a set. */
+  viaSetTitle?: string;
+};
+
+/**
+ * The parcel is the physical thing, tracked apart from the order. Its whole
+ * reason for existing is that an order may only have one live parcel: packing
+ * an order that already has one is refused outright, which is what stops the
+ * same order being packed and sent twice.
+ *
+ * A genuine second parcel (first one lost, or returned and going back out)
+ * carries reshipOfParcelId and a reason, so it reads as the exception it is
+ * rather than hiding among ordinary packs.
+ */
+export type Parcel = {
+  id: string;
+  /** Human-readable, printed on the slip: OMK-OVMZNAUA-P1. */
+  parcelNumber: string;
+  orderId: string;
+  orderNumber: string;
+  status: ParcelStatus;
+  items: ParcelItem[];
+  customerName?: string;
+  customerPhone?: string;
+  customerAddress?: string;
+  deliveryMethodName?: string;
+  isPickup: boolean;
+  packedBy: string;
+  packedByName?: string;
+  packedAt: Date;
+  dispatchedAt?: Date | null;
+  dispatchedBy?: string | null;
+  /** Rider or courier who took it — free text, they are not system users. */
+  courier?: string;
+  deliveredAt?: Date | null;
+  returnedAt?: Date | null;
+  returnedBy?: string | null;
+  returnReason?: string;
+  reshipOfParcelId?: string | null;
+  reshipReason?: string;
+  createdAt?: Date;
+};
+
+/**
+ * Why an order could not be packed — a missing item, usually. Recorded on the
+ * order so the next person sees the reason instead of trying again and hitting
+ * the same wall.
+ */
+export type PackHold = {
+  reason: string;
+  heldBy: string;
+  heldAt: Date;
 };
 
 export type PosShift = {

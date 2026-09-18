@@ -23,6 +23,7 @@ import type {
   Promotion,
   PushSubscription,
   MaterialPurchase,
+  Parcel,
   ProductionRun,
   RawMaterial,
   RecurringExpenseTemplate,
@@ -57,6 +58,10 @@ export type CommerceRepository = {
   listMaterialPurchases(): Promise<MaterialPurchase[]>;
   saveMaterialPurchase(purchase: MaterialPurchase): Promise<void>;
   deleteMaterialPurchase(id: string): Promise<void>;
+  listParcels(): Promise<Parcel[]>;
+  getParcel(id: string): Promise<Parcel | null>;
+  findParcelsByOrderId(orderId: string): Promise<Parcel[]>;
+  saveParcel(parcel: Parcel): Promise<void>;
   listProductionRuns(): Promise<ProductionRun[]>;
   saveProductionRun(run: ProductionRun): Promise<void>;
   listMedia(): Promise<MediaAsset[]>;

@@ -22,6 +22,10 @@ export const permissions = [
   "orders.delete",
   "fulfilment.view",
   "fulfilment.update",
+  "fulfilment.override",
+  "parcels.pack",
+  "parcels.dispatch",
+  "parcels.return",
   "inventory.view",
   "inventory.receive",
   "inventory.adjust",
@@ -158,6 +162,10 @@ export const defaultRoles: Role[] = [
       "orders.void",
       "fulfilment.view",
       "fulfilment.update",
+      "fulfilment.override",
+      "parcels.pack",
+      "parcels.dispatch",
+      "parcels.return",
       "inventory.view",
       "inventory.receive",
       "inventory.adjust",
@@ -203,6 +211,12 @@ export const defaultRoles: Role[] = [
       "pos.access",
       "pos.sell",
       "orders.view",
+      "fulfilment.view",
+      // Packing and handing to a courier, but deliberately NOT parcels.return
+      // or fulfilment.override: marking a parcel returned is what would let
+      // someone pack the same order twice, so it stays with a manager.
+      "parcels.pack",
+      "parcels.dispatch",
       "pos.receipts.view",
       "pos.shift.open",
       "pos.shift.close"

@@ -25,6 +25,7 @@ import type {
   Promotion,
   PushSubscription,
   MaterialPurchase,
+  Parcel,
   ProductionRun,
   RawMaterial,
   RecurringExpenseTemplate,
@@ -193,6 +194,28 @@ export class FirestoreCommerceRepository implements CommerceRepository {
   async deleteMaterialPurchase(id: string) {
     this.rejectIfTransactional("deleteMaterialPurchase");
     await this.db.collection("materialPurchases").doc(id).delete();
+  }
+
+  async listParcels() {
+    this.rejectIfTransactional("listParcels");
+    const snapshot = await this.db.collection("parcels").orderBy("packedAt", "desc").limit(500).get();
+    return snapshot.docs.map((doc) => readDoc<Parcel>(doc)).filter(isDefined);
+  }
+
+  async getParcel(id: string) {
+    this.rejectIfTransactional("getParcel");
+    return readDoc<Parcel>(await this.db.collection("parcels").doc(id).get());
+  }
+
+  async findParcelsByOrderId(orderId: string) {
+    this.rejectIfTransactional("findParcelsByOrderId");
+    const snapshot = await this.db.collection("parcels").where("orderId", "==", orderId).get();
+    return snapshot.docs.map((doc) => readDoc<Parcel>(doc)).filter(isDefined);
+  }
+
+  async saveParcel(parcel: Parcel) {
+    this.rejectIfTransactional("saveParcel");
+    await this.db.collection("parcels").doc(parcel.id).set(cleanFirestoreData(parcel), { merge: true });
   }
 
   async listProductionRuns() {

@@ -78,6 +78,14 @@ import {
   type UpdateVariantInput,
   type PosReversalInput,
   type CreateMaterialPurchaseInput,
+  type PackOrderInput,
+  type HoldOrderPackingInput,
+  type DispatchParcelsInput,
+  type ReturnParcelInput,
+  packOrderInputSchema,
+  holdOrderPackingInputSchema,
+  dispatchParcelsInputSchema,
+  returnParcelInputSchema,
   type RecordProductionRunInput
 } from "@/lib/commerce/schemas";
 import type {
@@ -110,6 +118,8 @@ import type {
   MaterialPurchase,
   MoneyMinorUnit,
   ProductionRun,
+  Parcel,
+  ParcelItem,
   ProductionRunLine,
   RawMaterial,
   RecipeItem,
@@ -120,6 +130,7 @@ import type {
   StoreSettings,
   Worker
 } from "@/lib/commerce/types";
+import { FULFILMENT_RANK } from "@/lib/commerce/types";
 import { notifyAdminOfNewOrder, notifyOrderEvent, summarizeItems } from "@/lib/notifications/order-notifications";
 import { buildGuidanceReplyPrefill, toWhatsAppLink } from "@/lib/storefront/whatsapp";
 import { getAdminMessaging } from "@/lib/firebase/server";
@@ -2415,6 +2426,334 @@ async function requireReversalAuthorization(
   }
 }
 
+
+/** A parcel that is still the live one for its order — anything but RETURNED. */
+function isLiveParcel(parcel: Parcel) {
+  return parcel.status !== "RETURNED";
+}
+
+/**
+ * Expands the order into what physically goes in the box. A set is one order
+ * line but several things to pick, so each component is listed against the set
+ * it belongs to — a slip reading "Chronic Infection Set x1" tells whoever is
+ * packing it nothing.
+ */
+async function buildParcelItems(context: CommerceContext, order: Order): Promise<ParcelItem[]> {
+  const allVariants = await context.repo.listAllVariants();
+  const variantsById = new Map(allVariants.map((variant) => [variant.id, variant]));
+  const products = await context.repo.listProducts();
+  const productsById = new Map(products.map((product) => [product.id, product]));
+
+  const items: ParcelItem[] = [];
+  for (const item of order.items) {
+    const variant = variantsById.get(item.variantId);
+
+    if (variant && isSetVariant(variant)) {
+      for (const component of variant.bundleComponents ?? []) {
+        const componentVariant = variantsById.get(component.variantId);
+        if (!componentVariant) {
+          continue;
+        }
+        items.push({
+          productTitle: productsById.get(componentVariant.productId)?.title ?? componentVariant.sku,
+          variantTitle: componentVariant.title,
+          sku: componentVariant.sku,
+          quantity: component.quantity * item.quantity,
+          viaSetTitle: item.productTitle
+        });
+      }
+      continue;
+    }
+
+    items.push({
+      productTitle: item.productTitle,
+      variantTitle: variant?.title ?? item.variantTitle,
+      sku: variant?.sku ?? item.sku,
+      quantity: item.quantity
+    });
+  }
+
+  return items;
+}
+
+/**
+ * Packs an order into a parcel. The whole point: an order may only have one
+ * live parcel, so a second attempt is refused outright naming who packed the
+ * first and when. That is what stops the same order going out twice.
+ *
+ * Packing a genuine replacement (the first was returned or lost) is allowed
+ * but demands a reason, and the new parcel records which one it replaces.
+ */
+export async function packOrder(context: CommerceContext, actor: CommerceActor, input: PackOrderInput) {
+  await assertCan(context, actor, "parcels.pack");
+  const parsed = packOrderInputSchema.parse(input);
+
+  const order = await context.repo.getOrder(parsed.orderId);
+  if (!order) {
+    throw new CommerceError("NOT_FOUND", "Order not found.");
+  }
+  if (order.paymentStatus !== "PAID") {
+    throw new CommerceError("INVALID_STATE", `${order.orderNumber} isn't paid yet — don't pack it.`);
+  }
+  if (order.fulfilmentStatus === "CANCELLED") {
+    throw new CommerceError("INVALID_STATE", `${order.orderNumber} was cancelled.`);
+  }
+
+  const existing = await context.repo.findParcelsByOrderId(order.id);
+  const live = existing.find(isLiveParcel);
+  if (live) {
+    throw new CommerceError(
+      "INVALID_STATE",
+      `${order.orderNumber} is already packed — parcel ${live.parcelNumber}, by ${
+        live.packedByName ?? "staff"
+      } on ${new Date(live.packedAt).toLocaleString("en-GB")}. Don't pack it again.`
+    );
+  }
+  // No parcel at all, yet the order is already past packing: it predates
+  // parcels and has plainly been sent. Packing it now would duplicate it.
+  // RETURNED is the one past-packing state that legitimately packs again.
+  if (
+    existing.length === 0 &&
+    order.fulfilmentStatus !== "RETURNED" &&
+    FULFILMENT_RANK[order.fulfilmentStatus] >= FULFILMENT_RANK.PACKED
+  ) {
+    throw new CommerceError(
+      "INVALID_STATE",
+      `${order.orderNumber} is already ${order.fulfilmentStatus.toLowerCase().replace(/_/g, " ")} — it has been sent.`
+    );
+  }
+  // Every earlier parcel came back, so this is a reship and must say why.
+  if (existing.length > 0 && !parsed.reshipReason) {
+    throw new CommerceError(
+      "VALIDATION_ERROR",
+      `${order.orderNumber} has been packed before and returned. Give a reason for sending it again.`
+    );
+  }
+
+  const items = await buildParcelItems(context, order);
+  const isPickup = order.deliveryMethod?.type === "PICKUP";
+  const parcel: Parcel = {
+    id: createId(context, "parcel"),
+    parcelNumber: `${order.orderNumber}-P${existing.length + 1}`,
+    orderId: order.id,
+    orderNumber: order.orderNumber,
+    status: "PACKED",
+    items,
+    customerName: order.customerSnapshot?.name,
+    customerPhone: order.customerSnapshot?.phone ?? undefined,
+    customerAddress: order.customerSnapshot?.address ?? undefined,
+    deliveryMethodName: order.deliveryMethod?.name,
+    isPickup,
+    packedBy: actor.uid,
+    packedByName: actor.displayName ?? actor.email,
+    packedAt: getNow(context),
+    reshipOfParcelId: existing.length > 0 ? (existing[existing.length - 1]?.id ?? null) : null,
+    reshipReason: parsed.reshipReason,
+    createdAt: getNow(context)
+  };
+
+  await context.repo.saveParcel(parcel);
+  // Packing clears any hold — whatever was blocking it evidently isn't now.
+  await context.repo.saveOrder({ ...order, fulfilmentStatus: "PACKED", packHold: null });
+  await writeAuditLog(context, actor, {
+    action: "parcels.pack",
+    entityType: "parcel",
+    entityId: parcel.id,
+    summary: `Packed ${order.orderNumber} as ${parcel.parcelNumber}`,
+    reason: parsed.reshipReason
+  });
+
+  return parcel;
+}
+
+/**
+ * Records that an order couldn't be packed and why, so the next person reads
+ * the reason instead of pulling the same shelf and hitting the same gap.
+ */
+export async function holdOrderPacking(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: HoldOrderPackingInput
+) {
+  await assertCan(context, actor, "parcels.pack");
+  const parsed = holdOrderPackingInputSchema.parse(input);
+
+  const order = await context.repo.getOrder(parsed.orderId);
+  if (!order) {
+    throw new CommerceError("NOT_FOUND", "Order not found.");
+  }
+
+  const updated: Order = {
+    ...order,
+    packHold: { reason: parsed.reason, heldBy: actor.uid, heldAt: getNow(context) }
+  };
+  await context.repo.saveOrder(updated);
+  await writeAuditLog(context, actor, {
+    action: "parcels.hold",
+    entityType: "order",
+    entityId: order.id,
+    summary: `Held packing on ${order.orderNumber}`,
+    reason: parsed.reason
+  });
+
+  return updated;
+}
+
+/** Hands packed parcels to a rider or courier — one, or a whole Tuesday batch. */
+export async function dispatchParcels(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: DispatchParcelsInput
+) {
+  await assertCan(context, actor, "parcels.dispatch");
+  const parsed = dispatchParcelsInputSchema.parse(input);
+
+  const dispatched: Parcel[] = [];
+  for (const parcelId of parsed.parcelIds) {
+    const parcel = await context.repo.getParcel(parcelId);
+    if (!parcel || parcel.status !== "PACKED") {
+      continue;
+    }
+
+    const updated: Parcel = {
+      ...parcel,
+      status: "DISPATCHED",
+      dispatchedAt: getNow(context),
+      dispatchedBy: actor.uid,
+      courier: parsed.courier
+    };
+    await context.repo.saveParcel(updated);
+    dispatched.push(updated);
+
+    const order = await context.repo.getOrder(parcel.orderId);
+    if (order) {
+      const next: FulfilmentStatus = parcel.isPickup ? "READY_FOR_PICKUP" : "OUT_FOR_DELIVERY";
+      await context.repo.saveOrder({ ...order, fulfilmentStatus: next });
+      void notifyOrderEvent(
+        { ...order, fulfilmentStatus: next },
+        parcel.isPickup ? "READY_FOR_PICKUP" : "OUT_FOR_DELIVERY"
+      );
+    }
+  }
+
+  await writeAuditLog(context, actor, {
+    action: "parcels.dispatch",
+    entityType: "parcel",
+    entityId: dispatched[0]?.id ?? "none",
+    summary: `Dispatched ${dispatched.length} parcel${dispatched.length === 1 ? "" : "s"}${
+      parsed.courier ? ` with ${parsed.courier}` : ""
+    }`
+  });
+
+  return dispatched;
+}
+
+/** Closes a parcel out as delivered or collected. */
+export async function markParcelDelivered(context: CommerceContext, actor: CommerceActor, parcelId: string) {
+  await assertCan(context, actor, "parcels.dispatch");
+  const parcel = await context.repo.getParcel(parcelId);
+  if (!parcel) {
+    throw new CommerceError("NOT_FOUND", "Parcel not found.");
+  }
+  if (parcel.status === "RETURNED") {
+    throw new CommerceError("INVALID_STATE", `${parcel.parcelNumber} came back — it can't be delivered.`);
+  }
+
+  const updated: Parcel = { ...parcel, status: "DELIVERED", deliveredAt: getNow(context) };
+  await context.repo.saveParcel(updated);
+
+  const order = await context.repo.getOrder(parcel.orderId);
+  if (order) {
+    await context.repo.saveOrder({ ...order, fulfilmentStatus: "FULFILLED" });
+  }
+
+  await writeAuditLog(context, actor, {
+    action: "parcels.deliver",
+    entityType: "parcel",
+    entityId: parcel.id,
+    summary: `${parcel.parcelNumber} delivered`
+  });
+
+  return updated;
+}
+
+/**
+ * Marks a parcel as having come back, and puts the stock back.
+ *
+ * Manager-only on purpose. Returning a parcel is the one move that frees an
+ * order to be packed again, so if packing staff could do it themselves they
+ * could mark a parcel returned that never came back and send a second one —
+ * the control would defeat itself.
+ */
+export async function returnParcel(context: CommerceContext, actor: CommerceActor, input: ReturnParcelInput) {
+  await assertCan(context, actor, "parcels.return");
+  const parsed = returnParcelInputSchema.parse(input);
+
+  const parcel = await context.repo.getParcel(parsed.parcelId);
+  if (!parcel) {
+    throw new CommerceError("NOT_FOUND", "Parcel not found.");
+  }
+  if (parcel.status === "RETURNED") {
+    throw new CommerceError("INVALID_STATE", `${parcel.parcelNumber} is already recorded as returned.`);
+  }
+
+  const updated: Parcel = {
+    ...parcel,
+    status: "RETURNED",
+    returnedAt: getNow(context),
+    returnedBy: actor.uid,
+    returnReason: parsed.reason
+  };
+  await context.repo.saveParcel(updated);
+
+  const order = await context.repo.getOrder(parcel.orderId);
+  if (order) {
+    await context.repo.saveOrder({ ...order, fulfilmentStatus: "RETURNED" });
+
+    if (parsed.restock) {
+      // Put back what physically came back — the parcel's own exploded lines,
+      // not the order lines, so a set restores its components.
+      const allVariants = await context.repo.listAllVariants();
+      const variantsBySku = new Map(allVariants.map((variant) => [variant.sku, variant]));
+      for (const item of parcel.items) {
+        const variant = variantsBySku.get(item.sku);
+        if (!variant) {
+          continue;
+        }
+        const restocked: ProductVariant = {
+          ...variant,
+          stockOnHand: variant.stockOnHand + item.quantity,
+          stockAvailable: variant.stockAvailable + item.quantity
+        };
+        await context.repo.saveVariant(restocked);
+        await context.repo.saveInventoryMovement({
+          id: createId(context, "movement"),
+          productId: variant.productId,
+          variantId: variant.id,
+          type: "RETURN_TO_STOCK",
+          quantityDelta: item.quantity,
+          stockAfter: restocked.stockAvailable,
+          orderId: order.id,
+          reason: `${parcel.parcelNumber} returned: ${parsed.reason}`,
+          actorId: actor.uid,
+          channel: order.channel,
+          createdAt: getNow(context)
+        });
+      }
+    }
+  }
+
+  await writeAuditLog(context, actor, {
+    action: "parcels.return",
+    entityType: "parcel",
+    entityId: parcel.id,
+    summary: `${parcel.parcelNumber} returned`,
+    reason: parsed.reason
+  });
+
+  return updated;
+}
+
 export async function updateOrderFulfilment(
   context: CommerceContext,
   actor: CommerceActor,
@@ -2427,6 +2766,23 @@ export async function updateOrderFulfilment(
     throw new CommerceError("NOT_FOUND", `Order not found: ${parsed.id}`);
   }
 
+  // Forward-only. Anything can go to CANCELLED or RETURNED, but moving an
+  // order back up the ladder — FULFILLED to PROCESSING, say — is how it ends
+  // up packed and sent a second time, so it needs both the override
+  // permission and a stated reason.
+  const from = FULFILMENT_RANK[order.fulfilmentStatus];
+  const to = FULFILMENT_RANK[parsed.fulfilmentStatus];
+  const goingBackwards = to >= 0 && to < from;
+  if (goingBackwards) {
+    await assertCan(context, actor, "fulfilment.override");
+    if (!parsed.reason) {
+      throw new CommerceError(
+        "VALIDATION_ERROR",
+        `Moving ${order.orderNumber} back from ${order.fulfilmentStatus} to ${parsed.fulfilmentStatus} needs a reason.`
+      );
+    }
+  }
+
   const statusChanged = order.fulfilmentStatus !== parsed.fulfilmentStatus;
   const updatedOrder: Order = { ...order, fulfilmentStatus: parsed.fulfilmentStatus };
 
@@ -2435,7 +2791,10 @@ export async function updateOrderFulfilment(
     action: "orders.update_fulfilment",
     entityType: "order",
     entityId: order.id,
-    summary: `Set ${order.orderNumber} fulfilment to ${parsed.fulfilmentStatus}`
+    summary: goingBackwards
+      ? `Reversed ${order.orderNumber} from ${order.fulfilmentStatus} to ${parsed.fulfilmentStatus}`
+      : `Set ${order.orderNumber} fulfilment to ${parsed.fulfilmentStatus}`,
+    reason: parsed.reason
   });
 
   if (statusChanged && parsed.fulfilmentStatus === "READY_FOR_PICKUP") {
