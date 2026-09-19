@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Oh My Kitty — Dispatch Guide</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 16mm; }
+
+  :root {
+    --ink: #1a1416;
+    --muted: #6b5b60;
+    --rose: #b9345f;
+    --rose-soft: #fdeef2;
+    --line: #e8dcd8;
+    --cream: #fdf8f5;
+    --green: #2f6f4f;
+    --amber: #8c5a10;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    color: var(--ink);
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.55;
+  }
+
+  h1, h2, h3 { line-height: 1.2; margin: 0; }
+
+  /* ---- Cover ---- */
+  .cover {
+    height: 247mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    page-break-after: always;
+    background: var(--cream);
+    padding: 24mm 18mm;
+    border-radius: 4mm;
+  }
+  .cover .kicker {
+    color: var(--rose);
+    font-size: 9pt;
+    font-weight: 800;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+  .cover h1 {
+    margin: 6mm 0 4mm;
+    font-size: 34pt;
+    font-weight: 800;
+    letter-spacing: -.02em;
+  }
+  .cover .sub { font-size: 13pt; color: var(--muted); max-width: 120mm; }
+  .cover .meta {
+    margin-top: 16mm;
+    padding-top: 6mm;
+    border-top: 1px solid var(--line);
+    font-size: 9.5pt;
+    color: var(--muted);
+  }
+  .cover .meta strong { color: var(--ink); }
+
+  /* ---- Sections ---- */
+  .section { page-break-before: always; }
+  .section > h2 {
+    font-size: 19pt;
+    font-weight: 800;
+    letter-spacing: -.01em;
+    padding-bottom: 3mm;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 5mm;
+  }
+  .section-number {
+    display: block;
+    color: var(--rose);
+    font-size: 9pt;
+    font-weight: 800;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    margin-bottom: 1.5mm;
+  }
+
+  h3 {
+    font-size: 12pt;
+    font-weight: 800;
+    margin: 7mm 0 2.5mm;
+  }
+
+  p { margin: 0 0 3.5mm; }
+  ul, ol { margin: 0 0 4mm; padding-left: 5.5mm; }
+  li { margin-bottom: 1.8mm; }
+
+  strong { font-weight: 700; }
+
+  /* ---- Step blocks ---- */
+  .step {
+    display: grid;
+    grid-template-columns: 9mm 1fr;
+    gap: 4mm;
+    margin-bottom: 3.5mm;
+    page-break-inside: avoid;
+  }
+  .step-num {
+    width: 9mm; height: 9mm;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: var(--rose);
+    color: #fff;
+    font-size: 10pt;
+    font-weight: 800;
+  }
+  .step-body h4 {
+    margin: 1mm 0 1.5mm;
+    font-size: 11pt;
+    font-weight: 800;
+  }
+  .step-body p { margin: 0 0 2mm; }
+
+  /* ---- Callouts ---- */
+  .note, .warn, .tip {
+    padding: 3.5mm 5mm;
+    border-radius: 2mm;
+    margin: 0 0 4mm;
+    page-break-inside: avoid;
+    font-size: 10pt;
+  }
+  .note { background: var(--rose-soft); border-left: 3px solid var(--rose); }
+  .warn { background: #fdf3e6; border-left: 3px solid var(--amber); }
+  .tip  { background: #eef6f1; border-left: 3px solid var(--green); }
+  .note p:last-child, .warn p:last-child, .tip p:last-child { margin-bottom: 0; }
+  .note .label, .warn .label, .tip .label {
+    display: block;
+    font-size: 8.5pt;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 1.5mm;
+  }
+  .note .label { color: var(--rose); }
+  .warn .label { color: var(--amber); }
+  .tip .label { color: var(--green); }
+
+  /* ---- Tables ---- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 5mm;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+  }
+  th {
+    text-align: left;
+    padding: 2.5mm 3mm;
+    background: var(--cream);
+    border-bottom: 1.5px solid var(--ink);
+    font-weight: 800;
+    font-size: 9pt;
+  }
+  td {
+    padding: 2.5mm 3mm;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  td.yes { color: var(--green); font-weight: 700; }
+  td.no  { color: var(--rose); font-weight: 700; }
+
+  /* ---- Flow diagram ---- */
+  .flow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 0 0 5mm;
+    page-break-inside: avoid;
+  }
+  .flow-step {
+    flex: 1;
+    padding: 3.5mm 2mm;
+    text-align: center;
+    background: var(--cream);
+    border: 1px solid var(--line);
+  }
+  .flow-step:first-child { border-radius: 2mm 0 0 2mm; }
+  .flow-step:last-child { border-radius: 0 2mm 2mm 0; }
+  .flow-step .s-name { font-weight: 800; font-size: 9.5pt; display: block; }
+  .flow-step .s-who { font-size: 8pt; color: var(--muted); }
+
+  /* ---- Screen mock ---- */
+  .screen {
+    border: 1px solid var(--line);
+    border-radius: 2mm;
+    overflow: hidden;
+    margin: 0 0 4mm;
+    page-break-inside: avoid;
+  }
+  .screen-bar {
+    background: var(--ink);
+    color: #fff;
+    padding: 2.5mm 4mm;
+    font-size: 9pt;
+    font-weight: 700;
+  }
+  .screen-tabs {
+    display: flex;
+    gap: 0;
+    background: var(--cream);
+    border-bottom: 1px solid var(--line);
+  }
+  .screen-tabs span {
+    padding: 2.5mm 4mm;
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .screen-tabs span.on {
+    background: #fff;
+    color: var(--ink);
+    border-bottom: 2px solid var(--rose);
+  }
+  .screen-body { padding: 3mm 4mm; background: #fff; }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 3mm;
+    padding: 2.5mm 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 9.5pt;
+  }
+  .row:last-child { border-bottom: 0; }
+  .row .r-main { font-weight: 800; }
+  .row .r-sub { color: var(--muted); font-size: 8.5pt; }
+  .btn {
+    display: inline-block;
+    padding: 1.2mm 3mm;
+    border-radius: 1.5mm;
+    background: var(--rose);
+    color: #fff;
+    font-size: 8.5pt;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .btn.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+
+  /* ---- Slip mock ---- */
+  .slip {
+    width: 72mm;
+    border: 1px dashed #999;
+    padding: 4mm;
+    font-family: "Courier New", monospace;
+    font-size: 8.5pt;
+    line-height: 1.45;
+    background: #fff;
+    page-break-inside: avoid;
+  }
+  .slip .s-head { text-align: center; font-weight: 700; margin-bottom: 2mm; }
+  .slip hr { border: 0; border-top: 1px dashed #666; margin: 2mm 0; }
+  .slip .s-line { display: flex; justify-content: space-between; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; align-items: start; }
+
+  .faq-q { font-weight: 800; margin-bottom: 1mm; }
+  .faq-a { margin-bottom: 4.5mm; color: var(--ink); }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <span class="kicker">Oh My Kitty · Admin Portal</span>
+  <h1>Dispatch &amp; Parcel Tracking</h1>
+  <p class="sub">How orders get packed, handed over, and tracked — and how the system stops the same order being sent out twice.</p>
+  <div class="meta">
+    <p><strong>Who this is for</strong> — the owner, and anyone who packs orders.</p>
+    <p><strong>Where to find it</strong> — Admin portal → <strong>Dispatch</strong> in the left menu.</p>
+    <p><strong>Version</strong> — September 2026</p>
+  </div>
+</div>
+
+<!-- ================= 1 ================= -->
+<div class="section">
+  <h2><span class="section-number">Section 1</span>Why this exists</h2>
+
+  <p>When an order is paid for online, the money is already settled. The thing still at risk is the <strong>stock</strong> — and the way it gets lost is by packing the same order twice.</p>
+
+  <p>It happens easily. Two people look at the same list of paid orders. Both see one that needs packing. Both pack it. Two parcels go out, one payment came in. Or one person packs an order, gets interrupted, comes back an hour later and doesn't remember.</p>
+
+  <p>Before this change, nothing in the system recorded the physical act of packing. The order list showed what was paid, not what had already been put in a box.</p>
+
+  <div class="note">
+    <span class="label">The core rule</span>
+    <p><strong>One order can only have one parcel out at a time.</strong> Once an order is packed, trying to pack it again is refused — and the message says who packed it and when.</p>
+  </div>
+
+  <div class="tip">
+    <span class="label">If someone tries to pack it again</span>
+    <p>They'll get a message like: <em>"OMK-OVMZNAUA is already packed — parcel OMK-OVMZNAUA-P1, by Ama on 18/09/2026 14:32. Don't pack it again."</em> Nothing is sent twice, and it's clear who to ask.</p>
+  </div>
+
+  <h3>What else it gives you</h3>
+  <ul>
+    <li><strong>A pick list for every order</strong>, with sets broken down into the actual items to fetch.</li>
+    <li><strong>A printed slip</strong> that stays on the parcel, so anyone can see at a glance it's already done.</li>
+    <li><strong>A record of who packed what</strong>, and when.</li>
+    <li><strong>Returns tracking</strong> — what came back, why, and how often.</li>
+    <li><strong>Safe delegation.</strong> Staff can now pack and hand over without being able to quietly undo anything.</li>
+  </ul>
+</div>
+
+<!-- ================= 2 ================= -->
+<div class="section">
+  <h2><span class="section-number">Section 2</span>The journey of an order</h2>
+
+  <p>Every paid online order moves left to right through these stages. It cannot skip backwards without a manager's override and a written reason.</p>
+
+  <div class="flow">
+    <div class="flow-step"><span class="s-name">To pack</span><span class="s-who">paid, not yet boxed</span></div>
+    <div class="flow-step"><span class="s-name">Packed</span><span class="s-who">in a box, on the bench</span></div>
+    <div class="flow-step"><span class="s-name">Out</span><span class="s-who">with the rider</span></div>
+    <div class="flow-step"><span class="s-name">Delivered</span><span class="s-who">done</span></div>
+  </div>
+
+  <p>With one branch: if a parcel comes back undelivered, it becomes a <strong>Return</strong>. That's the only thing that frees the order to be packed and sent again.</p>
+
+  <h3>The four tabs</h3>
+  <p>The Dispatch page has one tab per stage, in the order you work through them.</p>
+
+  <table>
+    <tr><th style="width:28mm">Tab</th><th>What's in it</th><th style="width:38mm">What you do here</th></tr>
+    <tr><td><strong>To pack</strong></td><td>Paid online orders that don't have a parcel yet</td><td>Pack it, or mark it as can't-pack</td></tr>
+    <tr><td><strong>Packed</strong></td><td>Boxed parcels waiting to go — split into rider deliveries and customer pickups</td><td>Print slips, hand to a rider</td></tr>
+    <tr><td><strong>Out</strong></td><td>Parcels that have left with a rider</td><td>Mark delivered, or record a return</td></tr>
+    <tr><td><strong>Returns</strong></td><td>Parcels that came back, plus any order sent a second time</td><td>Review, spot patterns</td></tr>
+  </table>
+
+  <div class="note">
+    <span class="label">Note</span>
+    <p>Counter sales through the POS never appear here. Payment and handover happen in the same moment, so there's nothing to track.</p>
+  </div>
+</div>
+
+<!-- ================= 3 ================= -->
+<div class="section">
+  <h2><span class="section-number">Section 3</span>Packing an order, step by step</h2>
+
+  <div class="warn">
+    <span class="label">Most important habit</span>
+    <p>Tap <strong>Pack</strong> <em>before</em> you walk to the shelf — not after you've filled the box. The moment you tap it, the order is locked to you, and nobody else can pack it behind your back. If you pack first and tap later, that gap is exactly where two people collide.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h4>Open Dispatch → To pack</h4>
+      <p>Every paid order without a parcel is listed, newest first, with the customer's name, their delivery method and location, and the order value.</p>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-bar">Dispatch</div>
+    <div class="screen-tabs"><span class="on">To pack (3)</span><span>Packed (2)</span><span>Out</span><span>Returns</span></div>
+    <div class="screen-body">
+      <div class="row">
+        <div><span class="r-main">OMK-OVMZNAUA</span><br><span class="r-sub">Sarah · Free Delivery · Madina</span></div>
+        <div><span class="btn">Pack</span> <span class="btn ghost">Can't pack</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h4>Tap Pack — check the list that appears</h4>
+      <p>A panel opens showing exactly what goes in this parcel, with a total item count. <strong>Read this before you fetch anything.</strong></p>
+      <p>If the order contains a set, it is broken down into the individual products inside it — you'll see <em>"6× Feminine Wash · from Chronic Infection Set"</em>, not just the set name. This is the difference between packing it right and short-shipping someone.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h4>Tap "Pack it"</h4>
+      <p>The order is now locked. It disappears from To pack and appears under Packed. The confirmation tells you the parcel number, for example <strong>OMK-OVMZNAUA-P1</strong>.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h4>Go to Packed and print the slip</h4>
+      <p>Find the parcel, tap <strong>Slip</strong>. It prints on the same small thermal printer as your receipts. Use it as your pick list while you fill the box, then tape it to the outside.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <h4>Fill the box and seal it</h4>
+      <p>The slip stays on the parcel. That's the visible signal to everyone else that this one is finished.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= 4 ================= -->
+<div class="section">
+  <h2><span class="section-number">Section 4</span>The packing slip</h2>
+
+  <p>The slip does two jobs. While you're packing it's your <strong>pick list</strong>. Once the box is sealed it's the <strong>marker</strong> that says this order is already done.</p>
+
+  <div class="two-col">
+    <div class="slip">
+      <div class="s-head">OH MY KITTY<br>Packing slip</div>
+      <hr>
+      <div class="s-line"><span>Parcel</span><strong>OMK-OVMZNAUA-P1</strong></div>
+      <div class="s-line"><span>Order</span><strong>OMK-OVMZNAUA</strong></div>
+      <div class="s-line"><span>Packed</span><span>18 Sep 14:32</span></div>
+      <div class="s-line"><span>By</span><span>Ama</span></div>
+      <hr>
+      <div class="s-line"><span>To</span><strong>Sarah</strong></div>
+      <div class="s-line"><span>Phone</span><span>024 000 0000</span></div>
+      <div class="s-line"><span>Location</span><span>Madina</span></div>
+      <div class="s-line"><span>Method</span><span>Free Delivery</span></div>
+      <hr>
+      <div>2 × Feminine Wash</div>
+      <div style="padding-left:3mm">100ml · OMK-WASH-100</div>
+      <div>6 × Boric Acid</div>
+      <div style="padding-left:3mm">OMK-BA-S · part of Chronic Infection Set</div>
+      <hr>
+      <div class="s-line"><strong>Items</strong><strong>8</strong></div>
+      <hr>
+      <div style="text-align:center">Leave this on the parcel.</div>
+    </div>
+    <div>
+      <h3>What's on it</h3>
+      <ul>
+        <li><strong>Parcel number</strong> — the order number plus <em>-P1</em>. A second parcel for the same order would be <em>-P2</em>.</li>
+        <li><strong>Packed by and when</strong> — so any question has a name attached.</li>
+        <li><strong>Where it's going</strong> — customer, phone, location, and which delivery method they chose.</li>
+        <li><strong>Every item</strong>, with sets already broken down. Anything that came from a set says so.</li>
+        <li><strong>Total item count</strong> — a quick check against what's in the box before sealing.</li>
+      </ul>
+      <div class="warn">
+        <span class="label">Watch for this line</span>
+        <p>If the slip says <strong>"REPEAT SEND"</strong> at the bottom, this order has been sent before and came back. Double-check the address before it goes out again.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 5 ================= -->
+<div class="section">
+  <h2><span class="section-number">Section 5</span>Handing parcels to a rider</h2>
+
+  <p>The <strong>Packed</strong> tab has two separate lists, deliberately kept apart.</p>
+
+  <h3>Ready to go out</h3>
+  <p>Parcels waiting for a rider. Works for a whole Tuesday batch or a single urgent handover — the process is the same.</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><h4>Tick the parcels going out</h4><p>Or use <strong>Select all</strong> if the rider is taking everything.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><h4>Type who's taking them</h4><p>The rider or courier's name. Optional, but it's what lets you trace a missing parcel back to a person later.</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><h4>Tap Dispatch</h4><p>All ticked parcels move to <strong>Out</strong>, and each customer gets their "on the way" text message automatically.</p></div>
+  </div>
+
+  <h3>Waiting for collection</h3>
+  <p>Pickup orders sit in their own list. They're packed and ready, but nobody is coming to fetch them on a schedule — the customer comes in when they come in. Keeping them separate stops them cluttering the rider queue.</p>
+  <p>When the customer collects, tap <strong>Delivered</strong> on that parcel.</p>
+
+  <div class="note">
+    <span class="label">The working assumption</span>
+    <p>Once a parcel is out, treat it as delivered unless it comes back. You don't need to confirm each one individually — just record the ones that return. That keeps the daily work light while still giving you an accurate count.</p>
+  </div>
+</div>
+
+<!-- ================= 6 ================= -->
+<div class="section">
+  <h2><span class="section-number">Section 6</span>When things don't go to plan</h2>
+
+  <h3>An item is missing — you can't pack it</h3>
+  <p>Don't just leave the order sitting there. Tap <strong>Can't pack</strong> and write what's blocking it, for example <em>"out of 100ml bottles until Thursday"</em>.</p>
+  <p>The reason then shows on that order in the list, so the next person reads it instead of walking to the shelf and finding the same gap. When you do finally pack it, the hold clears itself.</p>
+
+  <h3>A parcel comes back</h3>
+  <p>On the <strong>Out</strong> tab, find the parcel and tap <strong>Came back</strong>. Write why — unreachable, refused, wrong address. Leave <em>"Put the items back into stock"</em> ticked unless the goods are damaged.</p>
+  <p>The stock goes back automatically. If the parcel contained a set, the individual products inside it are what get restored, not the set.</p>
+
+  <div class="warn">
+    <span class="label">Only record a return once the parcel is physically back</span>
+    <p>Recording a return is the one action that unlocks an order to be packed and sent again. Doing it before the box is actually in your hands defeats the whole system. This is why only you and managers can do it — packing staff cannot.</p>
+  </div>
+
+  <h3>Sending an order again after a return</h3>
+  <p>Once a parcel is marked returned, the order reappears under <strong>To pack</strong> marked <em>reship</em>. Packing it asks one extra question: <strong>why are you sending it again?</strong></p>
+  <p>The new parcel is numbered <em>-P2</em>, the reason is recorded against it, and it's listed under Returns → Sent a second time. The slip prints with a REPEAT SEND warning.</p>
+
+  <h3>Something was marked wrong</h3>
+  <p>If an order was marked delivered by mistake, only an owner or manager can move it back, and the system requires a written reason. That reason is stored permanently in the audit log. It's meant to be a small amount of friction — going backwards is exactly how an order gets sent twice.</p>
+</div>
+
+<!-- ================= 7 ================= -->
+<div class="section">
+  <h2><span class="section-number">Section 7</span>Who can do what</h2>
+
+  <p>Sales Staff can now pack and hand over orders, which they could not do before. What they cannot do is undo anything.</p>
+
+  <table>
+    <tr><th>Action</th><th style="width:30mm">Sales Staff</th><th style="width:30mm">Manager</th><th style="width:26mm">Owner</th></tr>
+    <tr><td>See the Dispatch page</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+    <tr><td>Pack an order</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+    <tr><td>Mark "can't pack"</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+    <tr><td>Print a packing slip</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+    <tr><td>Hand parcels to a rider</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+    <tr><td>Mark a parcel delivered</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+    <tr><td><strong>Record a return</strong></td><td class="no">No</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+    <tr><td><strong>Move an order backwards</strong></td><td class="no">No</td><td class="yes">Yes</td><td class="yes">Yes</td></tr>
+  </table>
+
+  <div class="note">
+    <span class="label">Why returns are restricted</span>
+    <p>Marking a parcel returned is the only way to free an order for a second send. If packing staff could do it themselves, someone could mark a parcel returned that never came back, pack it again, and take the second one. Keeping that one action with a manager is what makes everything else safe to delegate.</p>
+  </div>
+
+  <p>Every action above is written to the audit log with a name and a timestamp — including reasons given for holds, returns, repeat sends, and reversals.</p>
+</div>
+
+<!-- ================= 8 ================= -->
+<div class="section">
+  <h2><span class="section-number">Section 8</span>What to watch</h2>
+
+  <p>The <strong>Returns</strong> tab carries the two numbers worth checking regularly.</p>
+
+  <h3>Return rate</h3>
+  <p>Shown at the top of the Returns tab as a percentage of everything dispatched. A few returns are normal in rider delivery. A rising rate usually means addresses are being taken down badly at checkout, or customers aren't being reached before the rider sets off.</p>
+
+  <h3>Sent a second time</h3>
+  <p>Every order that went out more than once, with the reason given each time. A short list is ordinary. A growing one is worth investigating — either deliveries are failing repeatedly, or parcels are being recorded as returned when they weren't.</p>
+
+  <div class="tip">
+    <span class="label">A quick weekly check</span>
+    <p>Open Returns once a week. If the rate is steady and the repeat-send list is short, dispatch is healthy and you can leave it alone.</p>
+  </div>
+
+  <h3>Common questions</h3>
+
+  <p class="faq-q">Can I still pack an order the old way, without a parcel?</p>
+  <p class="faq-a">No. Packing always creates a parcel now. That's what makes the double-send check possible.</p>
+
+  <p class="faq-q">What about orders that were already out before this was switched on?</p>
+  <p class="faq-a">They finish exactly as they are. They don't appear in To pack and can't be accidentally re-packed — the system recognises they've already gone.</p>
+
+  <p class="faq-q">Does the customer see any of this?</p>
+  <p class="faq-a">Only the text message they already got — that their order is on the way, or ready for collection. Parcel numbers and slips are internal.</p>
+
+  <p class="faq-q">What if the printer isn't working?</p>
+  <p class="faq-a">Packing still works — printing is separate. But without the slip on the box you lose the visual marker, so print it as soon as the printer is back, or write the parcel number on the box by hand.</p>
+
+  <p class="faq-q">Can two people pack different orders at the same time?</p>
+  <p class="faq-a">Yes. The lock is per order, not per person. Only packing the <em>same</em> order twice is blocked.</p>
+</div>
+
+</body>
+</html>
