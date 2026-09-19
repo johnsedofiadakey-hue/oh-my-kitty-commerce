@@ -220,7 +220,8 @@ export default async function AdminDispatchPage({ searchParams }: PageProps) {
                 parcelNumber: parcel.parcelNumber,
                 orderNumber: parcel.orderNumber,
                 customerName: parcel.customerName,
-                destination: parcel.customerAddress
+                destination: parcel.customerAddress,
+                slipHref: `/packing-slip/${parcel.id}`
               }))}
             />
           </div>

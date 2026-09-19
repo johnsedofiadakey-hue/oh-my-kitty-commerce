@@ -68,7 +68,7 @@ export function PackOrderForm({
 
         {state.message ? <p className={`admin-form-status ${state.status}`}>{state.message}</p> : null}
         <button className="admin-action" type="submit">
-          {pending ? "Packing..." : "Pack it — print the slip"}
+          {pending ? "Packing..." : "Pack it"}
         </button>
       </fieldset>
     </form>
@@ -110,6 +110,9 @@ export type DispatchableParcel = {
   orderNumber: string;
   customerName?: string;
   destination?: string;
+  /** The slip has to be reachable while the parcel is still on the bench — it
+      is the pick list, so a link only after dispatch would be too late. */
+  slipHref: string;
 };
 
 /** Hands a batch — or a single parcel — to a rider. */
@@ -158,6 +161,15 @@ export function DispatchParcelsForm({
                 {parcel.customerName ?? "Customer"}
                 {parcel.destination ? ` · ${parcel.destination}` : ""}
               </span>
+              <a
+                className="text-button"
+                href={parcel.slipHref}
+                onClick={(event) => event.stopPropagation()}
+                rel="noopener"
+                target="_blank"
+              >
+                Slip
+              </a>
             </label>
           ))}
         </div>

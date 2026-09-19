@@ -25,7 +25,7 @@ export async function packOrderAction(
       reshipReason: formOptionalString(formData, "reshipReason")
     });
 
-    return `Packed as ${parcel.parcelNumber}. Print the slip and pick from it.`;
+    return `Packed as ${parcel.parcelNumber}. Open Packed \u2192 Slip to print it, then pick from the slip.`;
   });
 }
 
