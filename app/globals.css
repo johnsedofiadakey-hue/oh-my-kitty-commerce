@@ -8014,20 +8014,21 @@ a.pos-secondary-button {
   text-align: center;
 }
 
+/* Uses oh-my-kitty-logo-print.png, a genuinely 1-bit version of the brand
+   mark generated from the original. The source JPEG is a pale pink
+   illustration — measured, only 0.9% of its pixels are darker than mid-grey —
+   so on a thermal head it printed as nothing at all. No CSS filter can fix
+   that: filters produce grey, and grey is precisely what a 1-bit head cannot
+   print. Thresholding the artwork to solid black up front gives the printer
+   something it can lay down as real dots.
+
+   Deliberately no border-radius or object-fit: cover here. The mark is a cat
+   above a "Best & Biggest" lockup, and a circular crop cut the words off. */
 .receipt-logo {
-  width: 72px;
-  height: 72px;
-  margin-bottom: 4px;
-  border-radius: 999px;
-  object-fit: cover;
-  /* Thermal printers are monochrome regardless — converting up front makes
-     the on-screen preview match what actually comes out of the printer.
-     This logo is a pale, soft-pink illustration — mostly light tones with
-     thin outlines — which all but disappears at small size with only a
-     mild contrast bump. Larger size plus a much stronger contrast curve
-     (tested against several values) is what actually makes the outline,
-     whiskers, and small text underneath legible once printed. */
-  filter: grayscale(1) contrast(1.8) brightness(1.05);
+  width: 88px;
+  height: auto;
+  margin-bottom: 6px;
+  object-fit: contain;
 }
 
 .receipt-header strong {
@@ -8070,17 +8071,65 @@ a.pos-secondary-button {
   gap: 1px;
 }
 
-.receipt-items {
-  border: 1.5px solid var(--color-near-black);
-  border-radius: 3px;
+/* Invoice-style item table. 80mm paper leaves roughly 72mm of printable
+   width, so the columns are proportioned rather than fixed: the name takes
+   whatever is left after the three numeric columns, and wraps instead of
+   pushing the totals off the edge. */
+.receipt-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.8rem;
 }
 
-.receipt-item {
-  padding: 7px 8px;
+.receipt-table th {
+  padding: 4px 2px;
+  border-top: 1.5px solid var(--color-near-black);
+  border-bottom: 1.5px solid var(--color-near-black);
+  font-weight: 900;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
-.receipt-item + .receipt-item {
-  border-top: 1px dashed var(--color-near-black);
+.receipt-table th:first-child { width: 44%; }
+.receipt-table th:nth-child(2) { width: 12%; }
+.receipt-table th:nth-child(3),
+.receipt-table th:nth-child(4) { width: 22%; }
+
+.receipt-table th:not(:first-child),
+.receipt-table td.num {
+  text-align: right;
+}
+
+/* A figure must never break across lines — "290.0" above "0" reads as a
+   broken layout, not a number. Sized so four digits plus decimals still fit. */
+.receipt-table td.num {
+  white-space: nowrap;
+}
+
+.receipt-table td {
+  padding: 5px 2px;
+  border-bottom: 1px dashed var(--color-near-black);
+  vertical-align: top;
+  font-weight: 800;
+  word-break: break-word;
+}
+
+.receipt-table tbody tr:last-child td {
+  border-bottom: 1.5px solid var(--color-near-black);
+}
+
+/* The packing slip lists what to fetch, not what it cost — two columns, and
+   the name gets everything the quantity doesn't need. */
+.packing-slip-page .receipt-table th:first-child { width: 82%; }
+.packing-slip-page .receipt-table th:nth-child(2) { width: 18%; }
+/* Variant sits under the product name rather than in its own column — there
+   is no room for a fifth column, and it is descriptive, not a figure. */
+.receipt-table td small {
+  display: block;
+  font-size: 0.78em;
+  font-weight: 700;
 }
 
 .receipt-item-line {

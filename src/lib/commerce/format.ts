@@ -46,3 +46,16 @@ export function formatPaymentStatus(status: string) {
 export function formatPaymentMethod(method: string) {
   return PAYMENT_METHOD_LABELS[method] ?? method.replaceAll("_", " ");
 }
+
+/**
+ * The number alone, no currency prefix — for tables that state the currency
+ * once in a header or total rather than repeating it in every cell. On an
+ * 80mm receipt "GHS 45.00" is wide enough to wrap mid-figure, which reads as
+ * a broken layout.
+ */
+export function formatAmount(amount: number) {
+  return (amount / 100).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}

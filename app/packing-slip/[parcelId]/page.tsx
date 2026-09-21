@@ -40,7 +40,7 @@ export default async function PackingSlipPage({ params }: PageProps) {
   const totalItems = parcel.items.reduce((total, item) => total + item.quantity, 0);
 
   return (
-    <main className="receipt-page">
+    <main className="receipt-page packing-slip-page">
       <ReceiptPageSize heightMm={estimateReceiptHeightMm(parcel.items.length, 6)} />
       <PrintPageButton label="Print slip" />
       <div className="receipt-paper">
@@ -99,22 +99,29 @@ export default async function PackingSlipPage({ params }: PageProps) {
 
         <div className="receipt-rule" aria-hidden="true" />
 
-        <div className="receipt-items">
-          {parcel.items.map((item) => (
-            <div key={`${item.sku}-${item.viaSetTitle ?? ""}`}>
-              <div className="receipt-item-line">
-                <span>
-                  {item.quantity} &times; {item.productTitle}
-                </span>
-              </div>
-              <div className="receipt-item-sub">
-                {item.variantTitle && item.variantTitle !== "Default" ? `${item.variantTitle} · ` : ""}
-                {item.sku}
-                {item.viaSetTitle ? ` · part of ${item.viaSetTitle}` : ""}
-              </div>
-            </div>
-          ))}
-        </div>
+        <table className="receipt-table">
+          <thead>
+            <tr>
+              <th scope="col">Item</th>
+              <th scope="col">Qty</th>
+            </tr>
+          </thead>
+          <tbody>
+            {parcel.items.map((item) => (
+              <tr key={`${item.sku}-${item.viaSetTitle ?? ""}`}>
+                <td>
+                  {item.productTitle}
+                  <small>
+                    {item.variantTitle && item.variantTitle !== "Default" ? `${item.variantTitle} · ` : ""}
+                    {item.sku}
+                    {item.viaSetTitle ? ` · part of ${item.viaSetTitle}` : ""}
+                  </small>
+                </td>
+                <td className="num">{item.quantity}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
         <div className="receipt-rule" aria-hidden="true" />
 

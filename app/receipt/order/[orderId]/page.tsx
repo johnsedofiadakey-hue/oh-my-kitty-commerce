@@ -5,7 +5,7 @@ import { getEffectiveRoles, type CommerceActor } from "@/lib/commerce/operations
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getRequiredAdminActor } from "@/lib/auth/server";
 import { hasPermission } from "@/lib/permissions/permissions";
-import { formatMoney } from "@/lib/commerce/format";
+import { formatAmount, formatMoney } from "@/lib/commerce/format";
 import { formatDate, getOrderCustomerName } from "@/lib/admin/sample-admin-data";
 import { PrintReceiptButton } from "@/components/pos/print-receipt-button";
 
@@ -58,7 +58,7 @@ export default async function ReceiptPage({ params }: ReceiptPageParams) {
       <div className="receipt-paper">
         <div className="receipt-header">
           {/* eslint-disable-next-line @next/next/no-img-element -- printed output needs a plain, immediately-available img, not next/image's lazy/responsive srcset. */}
-          <img alt="" className="receipt-logo" src="/brand/oh-my-kitty-logo.jpeg" />
+          <img alt="" className="receipt-logo" src="/brand/oh-my-kitty-logo-print.png" />
           <strong>{storeName}</strong>
           <span>Intimate care, made for every version of her.</span>
         </div>
@@ -102,21 +102,31 @@ export default async function ReceiptPage({ params }: ReceiptPageParams) {
           ) : null}
         </div>
         <div className="receipt-rule" aria-hidden="true" />
-        <div className="receipt-items">
-          {order.items.map((item, index) => (
-            <div className="receipt-item" key={index}>
-              <div className="receipt-item-line">
-                <span className="receipt-item-title">
-                  <span className="receipt-item-number">{index + 1}.</span> {item.productTitle}
-                </span>
-                <span>{formatMoney(item.lineTotal)}</span>
-              </div>
-              <div className="receipt-item-sub">
-                {item.variantTitle} &times; {item.quantity} @ {formatMoney(item.unitPrice)}
-              </div>
-            </div>
-          ))}
-        </div>
+        <table className="receipt-table">
+          <thead>
+            <tr>
+              <th scope="col">Item</th>
+              <th scope="col">Qty</th>
+              <th scope="col">Price</th>
+              <th scope="col">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {order.items.map((item, index) => (
+              <tr key={index}>
+                <td>
+                  {item.productTitle}
+                  {item.variantTitle && item.variantTitle !== "Default" ? (
+                    <small>{item.variantTitle}</small>
+                  ) : null}
+                </td>
+                <td className="num">{item.quantity}</td>
+                <td className="num">{formatAmount(item.unitPrice)}</td>
+                <td className="num">{formatAmount(item.lineTotal)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
         <div className="receipt-rule" aria-hidden="true" />
         <div className="receipt-totals">
           <div>
