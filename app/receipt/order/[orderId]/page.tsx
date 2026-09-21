@@ -1,3 +1,4 @@
+import { ReceiptPageSize, estimateReceiptHeightMm } from "@/components/admin/receipt-page-size";
 import { redirect } from "next/navigation";
 import { CommerceError } from "@/lib/commerce/errors";
 import { getEffectiveRoles, type CommerceActor } from "@/lib/commerce/operations";
@@ -52,6 +53,7 @@ export default async function ReceiptPage({ params }: ReceiptPageParams) {
 
   return (
     <main className="receipt-page">
+      <ReceiptPageSize heightMm={estimateReceiptHeightMm(order.items.length, 4)} />
       <PrintReceiptButton />
       <div className="receipt-paper">
         <div className="receipt-header">

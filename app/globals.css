@@ -7988,9 +7988,9 @@ a.pos-secondary-button {
   box-shadow: 0 12px 32px rgb(17 17 17 / 10%);
   color: var(--color-near-black);
   font-family: "Courier New", ui-monospace, monospace;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  line-height: 1.55;
+  line-height: 1.5;
   /* A real 80mm thermal print head is 1-bit — it can only place a dot or
      leave it blank, unlike the statement page's normal printer/PDF output
      which has true grayscale to smooth an edge with. The text-stroke trick
@@ -8231,6 +8231,22 @@ a.pos-secondary-button {
     display: none !important;
   }
 
+  /* The page's own background is a soft gradient. It is invisible on screen
+     as anything but "white-ish", but if the print dialog has background
+     graphics enabled a 1-bit thermal head cannot render a light tint at all —
+     it dithers the whole sheet into a field of dots, which is exactly the
+     speckled receipt this keeps chasing. Force true white so there is simply
+     nothing to dither. */
+  html,
+  body,
+  .receipt-page,
+  .receipt-paper,
+  .statement-page,
+  .statement-paper {
+    background: #fff !important;
+    background-image: none !important;
+  }
+
   .receipt-page {
     display: block;
     min-height: 0;
@@ -8254,23 +8270,41 @@ a.pos-secondary-button {
     border-color: #000 !important;
   }
 
+  /* A thermal head resolves a heavier glyph far better than a thin one, and
+     Courier New's bold face is a real face rather than a synthesised one, so
+     asking for it everywhere genuinely thickens the strokes. Sub-lines drop
+     to 700 rather than staying light, since "small and thin" is what the
+     printer struggles with most. */
+  .receipt-paper {
+    font-weight: 800;
+  }
+
+  .receipt-item-sub,
+  .receipt-header span,
+  .receipt-footer {
+    font-weight: 700;
+  }
+
+  .receipt-grand-total {
+    font-size: 1.05rem;
+    border-top-width: 3px;
+  }
+
+  .receipt-rule {
+    border-top-width: 2px;
+  }
+
   .receipt-paper {
     width: 100%;
     border: 0;
     box-shadow: none;
   }
 
-  /* Named page, scoped to the receipt only via `page: receipt` below — an
-     unscoped @page rule here would force every other printed page in the
-     app (the financial statements) onto the same 80mm thermal-paper width. */
-  @page receipt {
-    size: 80mm auto;
-    margin: 4mm;
-  }
-
-  .receipt-page {
-    page: receipt;
-  }
+  /* The 80mm paper size is NOT set here. A named @page scoped with
+     `page: receipt` is what the spec provides, but Chrome ignores it and the
+     receipt silently fell back to Letter. It is emitted per route instead —
+     see <ReceiptPageSize /> — because an unnamed @page is document-wide, and
+     globals.css is shared with the full-width financial statements. */
 
   .statement-page {
     display: block;

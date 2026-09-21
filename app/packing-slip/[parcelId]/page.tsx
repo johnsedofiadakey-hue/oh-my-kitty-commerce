@@ -1,3 +1,4 @@
+import { ReceiptPageSize, estimateReceiptHeightMm } from "@/components/admin/receipt-page-size";
 import type { Metadata, Route } from "next";
 import { getRequiredAdminActor } from "@/lib/auth/server";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
@@ -40,6 +41,7 @@ export default async function PackingSlipPage({ params }: PageProps) {
 
   return (
     <main className="receipt-page">
+      <ReceiptPageSize heightMm={estimateReceiptHeightMm(parcel.items.length, 6)} />
       <PrintPageButton label="Print slip" />
       <div className="receipt-paper">
         <div className="receipt-header">
