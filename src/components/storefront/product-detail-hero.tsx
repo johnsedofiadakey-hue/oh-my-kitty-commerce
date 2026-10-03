@@ -109,7 +109,7 @@ export function ProductDetailHero({ variants }: ProductDetailHeroProps) {
             label={
               <>
                 <BagIcon className="cta-icon" />
-                <span>Add to bag</span>
+                <span>Add to cart</span>
               </>
             }
             line={toCartLine(selected, quantity)}

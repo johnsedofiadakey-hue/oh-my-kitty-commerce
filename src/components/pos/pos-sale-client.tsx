@@ -545,7 +545,7 @@ export function PosSaleClient({
         </span>
         <strong>{formatMoney(subtotal)}</strong>
         <span aria-hidden="true" className="pos-cart-summary-chevron">
-          {cartSheetOpen ? "Close" : "View bag"}
+          {cartSheetOpen ? "Close" : "View cart"}
         </span>
       </button>
       {cartSheetOpen ? (

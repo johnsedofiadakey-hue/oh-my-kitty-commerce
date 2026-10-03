@@ -355,7 +355,7 @@ export function MatrixHome({ products, sourceMessage }: MatrixHomeProps) {
                     <div>
                       <strong>{product.formattedPrice}</strong>
                       <button
-                        aria-label={`Add ${product.title} to bag`}
+                        aria-label={`Add ${product.title} to cart`}
                         onClick={() => addToBag(product)}
                         type="button"
                       >
