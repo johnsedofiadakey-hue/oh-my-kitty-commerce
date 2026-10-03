@@ -10,6 +10,9 @@ export function FooterGate({ whatsappNumber }: { whatsappNumber: string }) {
   const isTransactional = TRANSACTIONAL_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
   return (
-    <StorefrontFooter variant={isTransactional ? "minimal" : "full"} whatsappNumber={whatsappNumber} />
+    <StorefrontFooter
+      variant={isTransactional ? "minimal" : pathname === "/" ? "matrix" : "full"}
+      whatsappNumber={whatsappNumber}
+    />
   );
 }

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { toWhatsAppLink } from "@/lib/storefront/whatsapp";
 
 type StorefrontFooterProps = {
-  variant?: "full" | "minimal";
+  variant?: "full" | "minimal" | "matrix";
   whatsappNumber: string;
 };
 
@@ -48,7 +48,7 @@ export function StorefrontFooter({ variant = "full", whatsappNumber }: Storefron
   ];
 
   return (
-    <footer className="storefront-footer">
+    <footer className={`storefront-footer ${variant === "matrix" ? "storefront-footer-matrix" : ""}`}>
       <div className="footer-dock-shell">
         <div className="footer-dock">
           <Link aria-label="Oh My Kitty home" className="footer-dock-brand" href="/">
@@ -93,7 +93,7 @@ export function StorefrontFooter({ variant = "full", whatsappNumber }: Storefron
           </div>
         </div>
 
-        {variant === "full" ? (
+        {variant === "full" || variant === "matrix" ? (
           <nav className="footer-support-row" aria-label="Support">
             {SUPPORT_LINKS.map((link) => (
               <a href={link.href} key={link.href}>
@@ -101,6 +101,14 @@ export function StorefrontFooter({ variant = "full", whatsappNumber }: Storefron
               </a>
             ))}
           </nav>
+        ) : null}
+
+        {variant === "matrix" ? (
+          <section className="footer-matrix-trust" aria-label="Payment options">
+            <span>Checkout your way</span>
+            <strong>Secure payment via Paystack</strong>
+            <p>Mobile Money · Cards · Bank transfer</p>
+          </section>
         ) : null}
 
         <p className="footer-credit">

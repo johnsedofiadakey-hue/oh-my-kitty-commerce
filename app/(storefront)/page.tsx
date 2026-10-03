@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CinematicHome } from "@/components/storefront/cinematic-home";
+import { MatrixHome } from "@/components/storefront/matrix-home";
 import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefront/catalogue";
 import { getContentBlocks } from "@/lib/storefront/content";
 
@@ -13,11 +14,27 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function StorefrontHomePage() {
-  const [catalogue, content] = await Promise.all([getStorefrontCatalogue(), getContentBlocks()]);
+  const catalogue = await getStorefrontCatalogue();
+
+  // The redesign is deliberately opt-in in production. A deploy can carry the
+  // new public experience without switching customers away from the proven
+  // homepage; HOME_EXPERIENCE=matrix enables it after staging approval.
+  const homeExperience = process.env.HOME_EXPERIENCE ?? (process.env.APP_ENV === "production" ? "cinematic" : "matrix");
+
+  if (homeExperience !== "matrix") {
+    const content = await getContentBlocks();
+    return (
+      <CinematicHome
+        products={toStorefrontProductViews(catalogue)}
+        sourceMessage={catalogue.sourceMessage}
+        whatsappNumber={content["whatsapp-number"]}
+      />
+    );
+  }
+
   return (
-    <CinematicHome
+    <MatrixHome
       products={toStorefrontProductViews(catalogue)}
-      whatsappNumber={content["whatsapp-number"]}
       sourceMessage={catalogue.sourceMessage}
     />
   );

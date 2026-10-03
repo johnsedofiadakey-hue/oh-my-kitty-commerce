@@ -51,6 +51,11 @@ function sampleEdgeColor(ctx: CanvasRenderingContext2D, width: number, height: n
   for (const [x, y] of points) {
     if (x < 0 || y < 0 || x >= width || y >= height) continue;
     const data = ctx.getImageData(x, y, 1, 1).data;
+    // PNG packshots may have transparent padding around the product. Those
+    // pixels read as black on a canvas, which would make the surrounding card
+    // look unrelated to the visible image. Ignore them and retain the CSS
+    // fallback when there is no real photo edge to sample.
+    if (data[3] < 24) continue;
     r += data[0];
     g += data[1];
     b += data[2];

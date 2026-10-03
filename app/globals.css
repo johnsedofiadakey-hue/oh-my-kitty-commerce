@@ -9,6 +9,248 @@
   font-display: swap;
 }
 
+/* Homepage art-direction pass ------------------------------------------------
+   The transparent client packshots need a deliberate hierarchy: a readable
+   lead product, a quieter companion and generous open space. This keeps the
+   surface feminine and retail-led without altering a single product image. */
+.matrix-home {
+  --matrix-cream: #fffafc;
+  --matrix-peach: #f6cfdd;
+  --matrix-peach-wash: #fbe8ef;
+  --matrix-ink: #3d2535;
+  --matrix-rose: #cf7898;
+  --matrix-green: #74816c;
+}
+
+.matrix-home-duality {
+  background: #fffafc;
+}
+
+.matrix-home-duality-panel-dark {
+  background: #3d2535;
+}
+
+.matrix-home-duality-panel-peach,
+.matrix-home-rhythm-copy {
+  background: #f6cfdd;
+}
+
+.matrix-home-duality-panel::after {
+  opacity: 0.12;
+}
+
+.matrix-home-world-products {
+  right: 0;
+  bottom: 0;
+  width: 52%;
+  height: 92%;
+}
+
+.matrix-home-world-product,
+.matrix-home-find-cutout,
+.matrix-home-rhythm-product {
+  filter: drop-shadow(0 20px 22px rgb(61 37 53 / 15%));
+}
+
+.matrix-home-world-product-mist {
+  right: 7%;
+  bottom: 4%;
+  width: 49%;
+  height: 82%;
+  transform: rotate(-3deg);
+}
+
+.matrix-home-world-product-wash {
+  right: 52%;
+  bottom: 7%;
+  width: 37%;
+  height: 59%;
+  transform: rotate(7deg);
+}
+
+.matrix-home-world-product-flusher {
+  right: 1%;
+  bottom: 10%;
+  width: 61%;
+  height: 57%;
+  transform: rotate(-5deg);
+}
+
+.matrix-home-world-product-boric {
+  right: 59%;
+  bottom: 7%;
+  width: 30%;
+  height: 62%;
+  transform: rotate(7deg);
+}
+
+.matrix-home-world-product-mist .matrix-home-cutout-mist,
+.matrix-home-rhythm-product-mist .matrix-home-cutout-mist {
+  transform: scale(1.34) translateY(-1%);
+}
+
+.matrix-home-world-product-wash .matrix-home-cutout-wash,
+.matrix-home-rhythm-product-wash .matrix-home-cutout-wash {
+  transform: scale(1.2);
+}
+
+.matrix-home-world-product-boric .matrix-home-cutout-boric {
+  transform: scale(1.24);
+}
+
+.matrix-home-find {
+  background: #fbe8ef;
+}
+
+.matrix-home-find-result {
+  min-height: 460px;
+  border-color: rgb(61 37 53 / 8%);
+  background:
+    radial-gradient(circle at 84% 58%, rgb(246 207 221 / 82%), transparent 34%),
+    #fffafc;
+}
+
+.matrix-home-find-result h3 {
+  max-width: 9ch;
+}
+
+.matrix-home-find-cutouts {
+  right: 1%;
+  bottom: 0;
+  width: 45%;
+  height: 90%;
+}
+
+.matrix-home-find-cutout-1 {
+  right: 2%;
+  bottom: 5%;
+  width: 56%;
+  height: 75%;
+  transform: rotate(-4deg);
+}
+
+.matrix-home-find-cutout-2 {
+  top: auto;
+  right: 53%;
+  bottom: 11%;
+  width: 42%;
+  height: 55%;
+  transform: rotate(7deg);
+}
+
+.matrix-home-find-cutout-mist .matrix-home-cutout-mist {
+  transform: scale(1.32);
+}
+
+.matrix-home-find-cutout-wash .matrix-home-cutout-wash {
+  transform: scale(1.16);
+}
+
+.matrix-home-rhythm {
+  min-height: 640px;
+  background: #fffafc;
+}
+
+.matrix-home-rhythm-art {
+  min-height: 510px;
+  background:
+    radial-gradient(circle at 52% 54%, rgb(246 207 221 / 62%), transparent 38%),
+    #fffafc;
+}
+
+.matrix-home-rhythm-product-mist {
+  top: 7%;
+  left: 27%;
+  width: 43%;
+  height: 79%;
+  transform: rotate(-4deg);
+}
+
+.matrix-home-rhythm-product-wash {
+  right: 7%;
+  bottom: 8%;
+  width: 32%;
+  height: 56%;
+  transform: rotate(8deg);
+}
+
+.matrix-home-rhythm-copy h2 {
+  max-width: 7.7ch;
+  font-size: clamp(3.5rem, 7vw, 6.3rem);
+}
+
+@media (min-width: 720px) {
+  .matrix-home-duality-panel {
+    min-height: 520px;
+    padding: 46px;
+  }
+
+  .matrix-home-duality-panel h3 {
+    max-width: 6.5ch;
+  }
+
+  .matrix-home-duality-panel p {
+    max-width: 22ch;
+  }
+
+  .matrix-home-find-layout {
+    grid-template-columns: minmax(250px, 0.74fr) minmax(0, 1.26fr);
+    gap: 42px;
+  }
+
+  .matrix-home-find-result {
+    min-height: 540px;
+    padding: 48px 48%;
+  }
+
+  .matrix-home-find-cutouts {
+    width: 46%;
+  }
+
+  .matrix-home-rhythm {
+    grid-template-columns: 1.06fr 0.94fr;
+    min-height: 660px;
+  }
+
+  .matrix-home-rhythm-art {
+    min-height: 660px;
+  }
+
+  .matrix-home-rhythm-copy {
+    padding: 86px 7vw;
+  }
+
+  .matrix-home-rhythm-copy h2 {
+    max-width: 7.8ch;
+    font-size: clamp(4rem, 5.3vw, 6.25rem);
+  }
+}
+
+@media (max-width: 719px) {
+  .matrix-home-world-products {
+    width: 53%;
+    height: 84%;
+  }
+
+  .matrix-home-find-result {
+    min-height: 470px;
+    padding-right: 46%;
+  }
+
+  .matrix-home-find-cutouts {
+    width: 51%;
+  }
+
+  .matrix-home-rhythm-art {
+    min-height: 450px;
+  }
+
+  .matrix-home-rhythm-copy h2 {
+    max-width: 8ch;
+    font-size: clamp(3.6rem, 15vw, 5.2rem);
+  }
+}
+
 @font-face {
   font-family: "Satoshi";
   src: url("/fonts/satoshi/Satoshi-Medium.woff2") format("woff2");
@@ -144,6 +386,38 @@ button {
   color: var(--color-near-black);
 }
 
+.storefront-nav-actions {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.storefront-nav-shop {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  padding: 0 18px;
+  background: rgb(255 255 255 / 72%);
+  font-size: 0.8rem;
+  font-weight: 800;
+  transition: color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.storefront-nav-shop:hover,
+.storefront-nav-shop:focus-visible {
+  color: var(--color-white-pure);
+  background: var(--color-near-black);
+  transform: translateY(-1px);
+}
+
+.storefront-nav-cart-copy {
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
 /* Solid, not translucent — a gradient fading to 0% opacity let scrolled
    product text and images bleed straight through the nav as they passed
    underneath it (same bug .shop-filter-bar was already fixed for below). */
@@ -187,6 +461,316 @@ button {
     transition: none;
   }
 }
+
+/* Campaign hero reset: one photographed environment, two authentic product
+   packshots and a protected copy field. The empty studio photo is intentionally
+   separate from the product files, so labels remain accurate and readable. */
+.matrix-home-hero-sticky {
+  color: var(--matrix-ink);
+  background: #fff5ef;
+}
+
+.matrix-home-hero-backdrop {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+}
+
+.matrix-home-hero-backdrop::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgb(255 249 245 / 82%) 0%, rgb(255 249 245 / 57%) 35%, rgb(255 249 245 / 8%) 68%, rgb(255 249 245 / 12%) 100%);
+  content: "";
+}
+
+.matrix-home-hero-backdrop img {
+  object-fit: cover;
+  object-position: center;
+}
+
+.matrix-home-hero-sticky .matrix-home-grid,
+.matrix-home-hero-sticky .matrix-home-orbit,
+.matrix-home-hero-threads {
+  display: none;
+}
+
+.matrix-home-hero .matrix-home-hero-copy {
+  top: 48%;
+  left: 6.5vw;
+  width: min(430px, 37vw);
+  color: var(--matrix-ink);
+  text-align: left;
+  transform: translateY(-50%);
+}
+
+.matrix-home-hero-copy h1 {
+  max-width: 5.4ch;
+  color: var(--matrix-ink);
+}
+
+.matrix-home-hero h1 em,
+.matrix-home-hero-copy .matrix-home-eyebrow {
+  color: #c46f91;
+}
+
+.matrix-home-hero-copy > p,
+.matrix-home-hero-intro > p {
+  margin-right: 0;
+  margin-left: 0;
+  color: rgb(61 37 53 / 72%);
+}
+
+.matrix-home-hero-actions,
+.matrix-home-trust,
+.matrix-home-hero-needs {
+  justify-content: flex-start;
+}
+
+.matrix-home-hero-products {
+  z-index: 2;
+  inset: 0;
+}
+
+.matrix-home-hero-product {
+  filter: drop-shadow(0 26px 22px rgb(72 42 51 / 20%));
+}
+
+.matrix-home-hero .matrix-home-hero-product-1 {
+  top: auto;
+  right: 10.5%;
+  bottom: 8%;
+  left: auto;
+  width: clamp(220px, 20vw, 340px);
+  height: clamp(360px, 56vh, 600px);
+}
+
+.matrix-home-hero .matrix-home-hero-product-2 {
+  top: auto;
+  right: 34%;
+  bottom: 12%;
+  left: auto;
+  width: clamp(150px, 13vw, 220px);
+  height: clamp(250px, 42vh, 450px);
+}
+
+.matrix-home-hero-product-1 .matrix-home-cutout-wash { transform: scale(1.24) translateY(-2%); }
+.matrix-home-hero-product-2 .matrix-home-cutout-mist { transform: scale(1.38) translateY(-2%); }
+
+.matrix-home-hero-note {
+  right: auto;
+  bottom: 5.5%;
+  left: 6.5vw;
+  color: rgb(61 37 53 / 58%);
+}
+
+.matrix-home-hero-payoff h2 { color: var(--matrix-ink); }
+.matrix-home-hero-payoff p { color: rgb(61 37 53 / 72%); }
+
+@media (max-width: 719px) {
+  .matrix-home-hero-sticky { min-height: 730px; }
+  .matrix-home-hero-backdrop img { object-position: 59% center; }
+  .matrix-home-hero-backdrop::after { background: linear-gradient(180deg, rgb(255 249 245 / 76%) 0%, rgb(255 249 245 / 45%) 50%, rgb(255 249 245 / 6%) 100%); }
+
+  .matrix-home-hero .matrix-home-hero-copy {
+    top: 17%;
+    right: 20px;
+    left: 20px;
+    width: auto;
+    text-align: left;
+    transform: none;
+  }
+
+  .matrix-home-hero-copy h1 { max-width: 6.1ch; font-size: clamp(3.5rem, 15vw, 4.35rem); }
+  .matrix-home-hero-actions,
+  .matrix-home-trust,
+  .matrix-home-hero-needs { justify-content: flex-start; }
+  .matrix-home-hero-intro > .matrix-home-eyebrow { display: inline-block; }
+
+  .matrix-home-hero .matrix-home-hero-product-1 {
+    right: 3%;
+    bottom: 4%;
+    width: min(45vw, 196px);
+    height: 47vh;
+  }
+
+  .matrix-home-hero .matrix-home-hero-product-2 {
+    right: 40%;
+    bottom: 6%;
+    width: min(30vw, 132px);
+    height: 35vh;
+  }
+
+  .matrix-home-hero-note { right: 20px; bottom: 1.6%; left: 20px; }
+}
+
+/* The first ritual chapter gets its own physical world instead of another
+   colour block. The real product cut-outs remain above this empty set. */
+.matrix-home-world-backdrop {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+}
+
+.matrix-home-world-backdrop::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgb(255 251 247 / 92%) 0%, rgb(255 251 247 / 68%) 43%, rgb(255 251 247 / 8%) 84%);
+  content: "";
+}
+
+.matrix-home-world-backdrop img { object-fit: cover; object-position: center; }
+.matrix-home-duality-panel-dark { color: var(--matrix-ink); background: #fffafc; }
+.matrix-home-duality-panel-dark .matrix-home-eyebrow,
+.matrix-home-duality-panel-dark p { color: rgb(61 37 53 / 70%); }
+.matrix-home-duality-panel > :not(.matrix-home-world-products):not(.matrix-home-world-backdrop) {
+  position: relative;
+  z-index: 2;
+}
+.matrix-home-duality-panel-dark .matrix-home-world-products { z-index: 1; }
+.matrix-home-duality-panel-dark::before,
+.matrix-home-duality-panel-dark::after { display: none; }
+
+/* Product photography pass --------------------------------------------------
+   The homepage uses real product references re-shot as close campaign scenes.
+   This removes the inconsistent invisible canvases and gives each selling
+   moment one deliberate crop. */
+.matrix-home-hero-campaign-shot {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(52vw, 760px);
+  overflow: hidden;
+}
+
+.matrix-home-hero-campaign-shot::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #fff5ef 0%, rgb(255 245 239 / 45%) 18%, transparent 46%);
+  content: "";
+  pointer-events: none;
+}
+
+.matrix-home-hero-campaign-shot img {
+  object-fit: cover;
+  object-position: 61% center;
+  will-change: transform;
+}
+
+.matrix-home-hero .matrix-home-hero-copy,
+.matrix-home-hero-note { z-index: 3; }
+
+.matrix-home-duality-panel { overflow: hidden; }
+.matrix-home-duality-panel > .matrix-home-world-backdrop { position: absolute; z-index: 0; inset: 0; }
+.matrix-home-duality-panel .matrix-home-world-backdrop::after {
+  background: linear-gradient(90deg, rgb(255 251 247 / 94%) 0%, rgb(255 251 247 / 74%) 43%, rgb(255 251 247 / 12%) 79%);
+}
+.matrix-home-duality-panel .matrix-home-world-backdrop img { object-fit: cover; object-position: center; }
+.matrix-home-duality-panel-peach { color: var(--matrix-ink); background: #f8d9e3; }
+.matrix-home-duality-panel-peach .matrix-home-world-backdrop::after {
+  background: linear-gradient(90deg, rgb(255 240 245 / 95%) 0%, rgb(255 240 245 / 68%) 45%, rgb(255 240 245 / 8%) 84%);
+}
+.matrix-home-duality-panel-peach > :not(.matrix-home-world-backdrop) { position: relative; z-index: 2; }
+
+.matrix-home-find-result { position: relative; overflow: hidden; }
+.matrix-home-find-campaign-shot {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 47%;
+  overflow: hidden;
+}
+.matrix-home-find-campaign-shot::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgb(255 250 252 / 89%) 0%, rgb(255 250 252 / 34%) 34%, transparent 68%);
+  content: "";
+}
+.matrix-home-find-campaign-shot img { object-fit: cover; object-position: 64% center; }
+.matrix-home-find-result > :not(.matrix-home-find-campaign-shot) { position: relative; z-index: 2; }
+
+.matrix-home-product-card > a:has(.matrix-home-campaign-product-photo) { background: #f8d9e3; }
+.matrix-home-product-card > a .matrix-home-campaign-product-photo {
+  padding: 0;
+  object-fit: cover;
+  object-position: center 56%;
+}
+.matrix-home-product-card:has(.matrix-home-campaign-product-photo) .matrix-home-product-copy { background: #fffafc; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home-hero-campaign-shot img { animation: matrixCampaignKenBurns 18s ease-in-out infinite alternate; }
+  .matrix-home-hero-campaign-shot { animation: matrixCampaignFloat 9s ease-in-out infinite alternate; }
+}
+
+@keyframes matrixCampaignKenBurns {
+  from { transform: scale(1.025) translate3d(-0.5%, 0.5%, 0); }
+  to { transform: scale(1.085) translate3d(1.5%, -1.2%, 0); }
+}
+
+@keyframes matrixCampaignFloat {
+  from { translate: 0 0; }
+  to { translate: 0 -7px; }
+}
+
+@media (max-width: 719px) {
+  .matrix-home-hero-campaign-shot {
+    top: 40%;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+  }
+  .matrix-home-hero-campaign-shot::after {
+    background: linear-gradient(180deg, rgb(255 245 239 / 72%) 0%, rgb(255 245 239 / 13%) 56%, transparent 100%);
+  }
+  .matrix-home-hero-campaign-shot img { object-position: 58% 52%; }
+  .matrix-home-find-campaign-shot { width: 52%; }
+}
+
+/* Daily ritual photograph: a genuine material scene behind the unchanged
+   product cutouts, giving the second chapter its own visual identity. */
+.matrix-home-world-backdrop {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+}
+
+.matrix-home-world-backdrop::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgb(255 251 247 / 90%) 0%, rgb(255 251 247 / 68%) 43%, rgb(255 251 247 / 8%) 84%);
+  content: "";
+}
+
+.matrix-home-world-backdrop img {
+  object-fit: cover;
+  object-position: center;
+}
+
+.matrix-home-duality-panel-dark {
+  color: var(--matrix-ink);
+  background: #fffafc;
+}
+
+.matrix-home-duality-panel-dark .matrix-home-eyebrow,
+.matrix-home-duality-panel-dark p {
+  color: rgb(61 37 53 / 70%);
+}
+
+.matrix-home-duality-panel > :not(.matrix-home-world-products):not(.matrix-home-world-backdrop) {
+  position: relative;
+  z-index: 2;
+}
+
+.matrix-home-duality-panel-dark .matrix-home-world-products { z-index: 1; }
+.matrix-home-duality-panel-dark::before,
+.matrix-home-duality-panel-dark::after { display: none; }
 
 .brand-lockup-text {
   display: flex;
@@ -1324,6 +1908,965 @@ button {
 
 .checkout-path span:nth-child(3) {
   margin-left: 68px;
+}
+
+/* --------------------------------------------------------------------------
+   Matrix-home storefront direction
+   This is intentionally isolated to the homepage. Operational layouts and
+   conventional shop / product / checkout screens keep their existing system.
+   -------------------------------------------------------------------------- */
+
+.matrix-home {
+  --matrix-ink: var(--color-near-black);
+  --matrix-cream: var(--color-white);
+  --matrix-peach: var(--color-peach);
+  --matrix-peach-wash: var(--color-peach-mist);
+  --matrix-green: var(--color-green);
+  overflow: clip;
+  background: var(--matrix-cream);
+}
+
+.matrix-home-header {
+  position: absolute;
+  z-index: 20;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  color: var(--color-white-pure);
+}
+
+.matrix-home-header::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 -30px;
+  background: linear-gradient(180deg, rgb(32 17 27 / 76%) 0%, rgb(32 17 27 / 37%) 58%, transparent 100%);
+  content: "";
+  pointer-events: none;
+}
+
+.matrix-home-brand,
+.matrix-home-header-actions,
+.matrix-home-cart,
+.matrix-home-hero-actions,
+.matrix-home-product-copy > div,
+.matrix-home-bottom-bar {
+  display: flex;
+  align-items: center;
+}
+
+.matrix-home-brand {
+  gap: 9px;
+  color: inherit;
+}
+
+.matrix-home-brand-mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 55%);
+  border-radius: 50%;
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+}
+
+.matrix-home-brand strong,
+.matrix-home-brand small {
+  display: block;
+}
+
+.matrix-home-brand strong {
+  font-family: var(--font-serif);
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.matrix-home-brand small {
+  margin-top: 1px;
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.matrix-home-header-actions {
+  gap: 12px;
+}
+
+.matrix-home-shop-link,
+.matrix-home-cart {
+  min-height: 40px;
+  border: 1px solid rgb(255 255 255 / 44%);
+  border-radius: 999px;
+  color: inherit;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.matrix-home-shop-link {
+  display: none;
+  padding: 0 15px;
+}
+
+.matrix-home-cart {
+  gap: 6px;
+  padding: 0 11px;
+}
+
+.matrix-home-cart svg {
+  width: 17px;
+  height: 17px;
+}
+
+.matrix-home-cart b {
+  font-weight: 800;
+}
+
+.matrix-home-cart-label {
+  display: none;
+}
+
+.matrix-home-hero {
+  position: relative;
+  display: grid;
+  min-height: 100svh;
+  padding: 128px 20px 90px;
+  overflow: hidden;
+  isolation: isolate;
+  color: var(--color-white-pure);
+  background:
+    radial-gradient(ellipse 58% 48% at 50% 56%, rgb(243 169 157 / 42%), transparent 68%),
+    radial-gradient(ellipse 54% 42% at 90% 17%, rgb(243 169 157 / 20%), transparent 72%),
+    linear-gradient(145deg, #181313 0%, var(--matrix-ink) 48%, #211515 100%);
+}
+
+.matrix-home-grid {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  opacity: 0.24;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 16%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 16%) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at 50% 52%, black 0%, transparent 78%);
+}
+
+.matrix-home-orbit {
+  position: absolute;
+  z-index: -1;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.matrix-home-orbit-a {
+  top: 44%;
+  left: 50%;
+  width: min(142vw, 660px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+}
+
+.matrix-home-orbit-b {
+  top: 55%;
+  left: 50%;
+  width: min(108vw, 500px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+}
+
+.matrix-home-hero-copy {
+  position: absolute;
+  z-index: 3;
+  top: 29%;
+  right: 20px;
+  left: 20px;
+  max-width: 410px;
+  margin: auto;
+  text-align: center;
+}
+
+.matrix-home-eyebrow {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.matrix-home-hero-copy .matrix-home-eyebrow {
+  color: var(--color-peach-light);
+}
+
+.matrix-home-hero h1,
+.matrix-home-section-intro h2,
+.matrix-home-duality h2,
+.matrix-home-closing h2 {
+  margin: 14px 0 0;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.065em;
+  line-height: 0.88;
+}
+
+.matrix-home-hero h1 {
+  max-width: 9ch;
+  margin-right: auto;
+  margin-left: auto;
+  font-size: clamp(3.25rem, 15vw, 6.9rem);
+}
+
+.matrix-home-hero h1 em {
+  display: block;
+  font-weight: 400;
+  font-style: normal;
+  color: var(--color-peach);
+}
+
+.matrix-home-hero-copy > p {
+  max-width: 30ch;
+  margin: 16px auto 0;
+  color: rgb(255 255 255 / 74%);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.matrix-home-hero-actions {
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 23px;
+}
+
+.matrix-home-button {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 0 17px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 900;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.matrix-home-button:hover {
+  transform: translateY(-2px);
+}
+
+.matrix-home-button-light {
+  color: var(--matrix-ink);
+  background: var(--color-white-pure);
+}
+
+.matrix-home-button-outline {
+  border-color: rgb(255 255 255 / 48%);
+  color: var(--color-white-pure);
+}
+
+.matrix-home-hero-products {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+}
+
+.matrix-home-hero-product {
+  position: absolute;
+  display: block;
+  width: clamp(96px, 28vw, 200px);
+  aspect-ratio: 0.68;
+  pointer-events: auto;
+  filter: drop-shadow(0 22px 18px rgb(0 0 0 / 26%));
+  transition: transform 260ms ease;
+}
+
+.matrix-home-hero-product:hover {
+  transform: translateY(-7px) rotate(2deg);
+}
+
+.matrix-home-hero-product-1 {
+  top: 11%;
+  left: 5%;
+  width: clamp(112px, 31vw, 190px);
+  aspect-ratio: 1.5;
+  transform: rotate(-4deg);
+}
+
+.matrix-home-hero-product-2 {
+  top: 14%;
+  right: 5%;
+  width: clamp(100px, 29vw, 180px);
+  aspect-ratio: 1.32;
+  transform: rotate(5deg);
+}
+
+.matrix-home-hero-product-3 {
+  bottom: 7%;
+  left: 7%;
+  width: clamp(86px, 25vw, 170px);
+  transform: rotate(-5deg);
+}
+
+.matrix-home-hero-product-4 {
+  right: 9%;
+  bottom: 8%;
+  width: clamp(78px, 22vw, 150px);
+  transform: rotate(5deg);
+}
+
+.matrix-home-hero-product img {
+  object-position: center;
+}
+
+.matrix-home-hero-note {
+  position: absolute;
+  right: 20px;
+  bottom: 104px;
+  left: 20px;
+  z-index: 4;
+  margin: 0;
+  color: rgb(255 255 255 / 58%);
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-align: center;
+}
+
+.matrix-home-source-note,
+.matrix-home-empty {
+  width: min(calc(100% - 40px), 1180px);
+  margin: 20px auto;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.matrix-home-paths,
+.matrix-home-favourites {
+  padding: 88px 20px;
+}
+
+.matrix-home-paths {
+  background: var(--matrix-cream);
+}
+
+.matrix-home-section-intro {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+}
+
+.matrix-home-section-intro .matrix-home-eyebrow,
+.matrix-home-path-result .matrix-home-eyebrow,
+.matrix-home-favourites .matrix-home-eyebrow {
+  color: var(--matrix-green);
+}
+
+.matrix-home-section-intro h2,
+.matrix-home-duality h2,
+.matrix-home-closing h2 {
+  max-width: 8ch;
+  color: var(--matrix-ink);
+  font-size: clamp(2.75rem, 12vw, 5.9rem);
+}
+
+.matrix-home-section-intro > p {
+  max-width: 34ch;
+  margin: 16px 0 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.matrix-home-path-layout {
+  display: grid;
+  gap: 38px;
+  width: min(100%, 1180px);
+  margin: 42px auto 0;
+  border-top: 1px solid var(--color-line);
+}
+
+.matrix-home-path-tabs {
+  display: grid;
+}
+
+.matrix-home-path-tabs button {
+  display: grid;
+  min-height: 70px;
+  grid-template-columns: 36px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-bottom: 1px solid var(--color-line);
+  color: var(--matrix-ink);
+  background: transparent;
+  font-family: var(--font-serif);
+  font-size: clamp(1.45rem, 6vw, 2.5rem);
+  letter-spacing: -0.055em;
+  text-align: left;
+}
+
+.matrix-home-path-tabs button span {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.matrix-home-path-tabs button i {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-style: normal;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.matrix-home-path-tabs button.is-active {
+  color: var(--matrix-green);
+}
+
+.matrix-home-path-tabs button.is-active i {
+  opacity: 1;
+  transform: none;
+}
+
+.matrix-home-path-result {
+  position: relative;
+  min-height: 368px;
+  padding: 28px;
+  overflow: hidden;
+  color: var(--matrix-ink);
+  background:
+    radial-gradient(circle at 84% 18%, rgb(243 169 157 / 60%), transparent 26%),
+    linear-gradient(135deg, var(--color-peach-light), var(--matrix-peach-wash));
+}
+
+.matrix-home-path-result h3 {
+  max-width: 8ch;
+  margin: 14px 0 0;
+  font-family: var(--font-serif);
+  font-size: clamp(2.4rem, 10vw, 4.5rem);
+  font-weight: 500;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+}
+
+.matrix-home-path-result > p {
+  max-width: 28ch;
+  margin: 16px 0 0;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.matrix-home-path-products {
+  position: absolute;
+  right: -15px;
+  bottom: 7px;
+  display: flex;
+  align-items: end;
+  gap: 0;
+}
+
+.matrix-home-path-products a {
+  position: relative;
+  display: block;
+  width: 132px;
+  height: 188px;
+  color: var(--matrix-ink);
+}
+
+.matrix-home-path-products a:nth-child(2) {
+  width: 112px;
+  transform: translate(-20px, 13px) rotate(7deg);
+}
+
+.matrix-home-path-products a span {
+  position: absolute;
+  right: 0;
+  bottom: -13px;
+  left: 0;
+  overflow: hidden;
+  font-size: 0.55rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.matrix-home-text-link,
+.matrix-home-duality-panel a {
+  display: inline-flex;
+  gap: 8px;
+  margin-top: 28px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.matrix-home-path-result .matrix-home-text-link {
+  position: absolute;
+  bottom: 25px;
+  left: 28px;
+}
+
+.matrix-home-duality {
+  padding: 88px 20px;
+  background: var(--color-cream);
+}
+
+.matrix-home-duality-heading,
+.matrix-home-duality-panels {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+}
+
+.matrix-home-duality-heading .matrix-home-eyebrow {
+  color: var(--matrix-green);
+}
+
+.matrix-home-duality-panels {
+  display: grid;
+  gap: 1px;
+  margin-top: 38px;
+}
+
+.matrix-home-duality-panel {
+  position: relative;
+  min-height: 330px;
+  padding: 30px;
+  overflow: hidden;
+}
+
+.matrix-home-duality-panel::after {
+  position: absolute;
+  right: -48px;
+  bottom: -74px;
+  width: 220px;
+  height: 220px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  content: "";
+  opacity: 0.22;
+}
+
+.matrix-home-duality-panel-dark {
+  color: var(--color-white-pure);
+  background: var(--matrix-ink);
+}
+
+.matrix-home-duality-panel-dark .matrix-home-eyebrow,
+.matrix-home-duality-panel-dark p {
+  color: rgb(255 255 255 / 66%);
+}
+
+.matrix-home-duality-panel-peach {
+  color: var(--matrix-ink);
+  background: var(--matrix-peach);
+}
+
+.matrix-home-duality-panel h3 {
+  max-width: 7ch;
+  margin: 24px 0 0;
+  font-family: var(--font-serif);
+  font-size: clamp(3rem, 12vw, 5.2rem);
+  font-weight: 500;
+  letter-spacing: -0.07em;
+  line-height: 0.87;
+}
+
+.matrix-home-duality-panel p {
+  max-width: 28ch;
+  margin: 17px 0 0;
+  font-size: 0.83rem;
+  line-height: 1.55;
+}
+
+.matrix-home-duality-panel a {
+  position: relative;
+  z-index: 1;
+}
+
+.matrix-home-section-intro-row {
+  display: grid;
+  gap: 14px;
+}
+
+.matrix-home-section-intro-row > p {
+  margin: 0;
+}
+
+.matrix-home-product-rail {
+  display: flex;
+  gap: 14px;
+  margin-top: 38px;
+  padding: 0 20px 10px;
+  margin-right: -20px;
+  margin-left: -20px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.matrix-home-product-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.matrix-home-product-card {
+  display: grid;
+  flex: 0 0 min(78vw, 390px);
+  min-height: 540px;
+  grid-template-rows: 1fr auto;
+  overflow: hidden;
+  color: var(--matrix-ink);
+  background: var(--matrix-peach-wash);
+  scroll-snap-align: start;
+}
+
+.matrix-home-product-card > a {
+  position: relative;
+  min-height: 320px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 70%, rgb(243 169 157 / 44%), transparent 45%),
+    var(--matrix-peach-wash);
+}
+
+.matrix-home-product-card:nth-child(3n + 2) > a {
+  background:
+    radial-gradient(circle at 50% 74%, rgb(85 107 69 / 18%), transparent 45%),
+    var(--color-cream);
+}
+
+.matrix-home-product-card:nth-child(3n) > a {
+  background:
+    radial-gradient(circle at 50% 70%, rgb(243 169 157 / 36%), transparent 48%),
+    var(--color-peach-light);
+}
+
+.matrix-home-product-card > a img {
+  padding: 23px;
+}
+
+.matrix-home-product-index {
+  position: absolute;
+  z-index: 1;
+  top: 18px;
+  left: 19px;
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.matrix-home-product-copy {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  padding: 20px;
+  background: var(--matrix-cream);
+}
+
+.matrix-home-product-copy > span {
+  color: var(--matrix-green);
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.matrix-home-product-copy h3 {
+  margin: 2px 0 0;
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 0.95;
+}
+
+.matrix-home-product-copy p {
+  min-height: 38px;
+  margin: 4px 0 0;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.matrix-home-product-copy > div {
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 13px;
+}
+
+.matrix-home-product-copy strong {
+  font-family: var(--font-serif);
+  font-size: 1.04rem;
+}
+
+.matrix-home-product-copy button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--color-white-pure);
+  background: var(--matrix-ink);
+  font-size: 0.65rem;
+  font-weight: 900;
+}
+
+.matrix-home-product-copy button span {
+  margin-left: 5px;
+  font-size: 0.95rem;
+}
+
+.matrix-home-closing {
+  position: relative;
+  display: grid;
+  min-height: 78svh;
+  place-content: center;
+  padding: 90px 20px;
+  overflow: hidden;
+  color: var(--color-white-pure);
+  text-align: center;
+  background: var(--matrix-ink);
+}
+
+.matrix-home-closing-halo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(118vw, 680px);
+  aspect-ratio: 1;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.matrix-home-closing-halo::before,
+.matrix-home-closing-halo::after {
+  position: absolute;
+  border: 1px solid rgb(243 169 157 / 36%);
+  border-radius: inherit;
+  content: "";
+}
+
+.matrix-home-closing-halo::before {
+  inset: 12%;
+}
+
+.matrix-home-closing-halo::after {
+  inset: 28%;
+}
+
+.matrix-home-closing > *:not(.matrix-home-closing-halo) {
+  position: relative;
+  z-index: 1;
+  justify-self: center;
+}
+
+.matrix-home-closing .matrix-home-eyebrow {
+  color: var(--color-peach);
+}
+
+.matrix-home-closing h2 {
+  max-width: none;
+  color: inherit;
+  font-size: clamp(3.6rem, 17vw, 8.2rem);
+}
+
+.matrix-home-closing p {
+  margin: 17px 0 26px;
+  color: rgb(255 255 255 / 68%);
+  font-size: 0.88rem;
+}
+
+.matrix-home-bottom-bar {
+  position: fixed;
+  z-index: 25;
+  right: 50%;
+  bottom: 16px;
+  gap: 12px;
+  min-height: 46px;
+  padding: 0 17px;
+  border: 1px solid rgb(17 17 17 / 8%);
+  border-radius: 999px;
+  color: var(--matrix-ink);
+  background: rgb(255 255 255 / 82%);
+  box-shadow: 0 13px 35px rgb(17 17 17 / 14%);
+  backdrop-filter: blur(16px);
+  transform: translateX(50%);
+}
+
+.matrix-home-bottom-bar > a,
+.matrix-home-bottom-cart {
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.matrix-home-bottom-bar > span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--matrix-peach);
+}
+
+.matrix-home-product-placeholder {
+  position: absolute;
+  inset: 18%;
+  border: 1px solid rgb(17 17 17 / 12%);
+  border-radius: 999px 999px 24px 24px;
+}
+
+@media (min-width: 720px) {
+  .matrix-home-header {
+    padding: 25px 5.5vw;
+  }
+
+  .matrix-home-shop-link {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .matrix-home-hero {
+    min-height: min(880px, 100svh);
+    padding: 25vh 5.5vw 7vh;
+  }
+
+  .matrix-home-hero-copy {
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
+    max-width: 48%;
+    margin: 0;
+    text-align: left;
+  }
+
+  .matrix-home-hero h1,
+  .matrix-home-hero-copy > p {
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  .matrix-home-hero-actions {
+    justify-content: flex-start;
+  }
+
+  .matrix-home-hero h1 {
+    font-size: clamp(5.2rem, 9.3vw, 9rem);
+  }
+
+  .matrix-home-hero-product-1 {
+    top: 19%;
+    left: 49%;
+    width: clamp(190px, 20vw, 300px);
+    aspect-ratio: 0.68;
+  }
+
+  .matrix-home-hero-product-2 {
+    top: 19%;
+    right: 7%;
+    width: clamp(200px, 21vw, 320px);
+    aspect-ratio: 0.68;
+  }
+
+  .matrix-home-hero-product-3 {
+    bottom: 4%;
+    left: 41%;
+    width: clamp(180px, 18vw, 280px);
+  }
+
+  .matrix-home-hero-product-4 {
+    right: 4%;
+    bottom: 6%;
+    width: clamp(160px, 16vw, 245px);
+  }
+
+  .matrix-home-paths,
+  .matrix-home-favourites,
+  .matrix-home-duality {
+    padding: 140px 5.5vw;
+  }
+
+  .matrix-home-section-intro h2,
+  .matrix-home-duality h2 {
+    font-size: clamp(4rem, 6vw, 6.9rem);
+  }
+
+  .matrix-home-path-layout {
+    grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+  }
+
+  .matrix-home-path-result {
+    min-height: 465px;
+    padding: 42px;
+  }
+
+  .matrix-home-path-result .matrix-home-text-link {
+    bottom: 38px;
+    left: 42px;
+  }
+
+  .matrix-home-path-products a {
+    width: 180px;
+    height: 260px;
+  }
+
+  .matrix-home-path-products a:nth-child(2) {
+    width: 150px;
+  }
+
+  .matrix-home-duality-panels {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .matrix-home-duality-panel {
+    min-height: 475px;
+    padding: 42px;
+  }
+
+  .matrix-home-section-intro-row {
+    grid-template-columns: 1fr minmax(200px, 0.34fr);
+    align-items: end;
+  }
+
+  .matrix-home-product-rail {
+    gap: 22px;
+    padding: 0;
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  .matrix-home-product-card {
+    flex-basis: min(46vw, 500px);
+  }
+
+  .matrix-home-bottom-bar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .matrix-home *,
+  .matrix-home *::before,
+  .matrix-home *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Homepage continuation: Horizontal Product World */
@@ -8407,6 +9950,32 @@ a.pos-secondary-button {
   backdrop-filter: blur(18px);
 }
 
+/* The public shop and product pages use the same clean, quiet header rhythm
+   as the campaign hero. Their visual worlds can change below it, while the
+   brand, shop shortcut, and familiar bag control stay in one place. */
+.depth-shop .storefront-nav.glass,
+.product-detail-page .storefront-nav.glass {
+  top: 0;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  padding: 16px max(20px, calc((100vw - var(--shell-max)) / 2 + 20px));
+  background: rgb(255 249 246 / 84%);
+  box-shadow: 0 1px 0 rgb(60 31 48 / 8%);
+  transform: none;
+  backdrop-filter: blur(16px);
+}
+
+.depth-shop .storefront-nav .bag-pill,
+.product-detail-page .storefront-nav .bag-pill {
+  min-height: 44px;
+  gap: 7px;
+  padding: 0 14px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 72%);
+}
+
 .depth-shop .brand-lockup-text small,
 .product-detail-page .brand-lockup-text small,
 .cart-page .brand-lockup-text small,
@@ -9550,6 +11119,696 @@ a.pos-secondary-button {
   .footer-social-button,
   .footer-dock-legal a {
     transition: none;
+  }
+}
+
+/* Homepage matrix scenes — intentionally scoped to the root storefront only. */
+.matrix-home-trust {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px 12px;
+  margin-top: 18px;
+  color: rgb(255 255 255 / 61%);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.matrix-home-trust i {
+  font-style: normal;
+}
+
+.matrix-home-trust i::before {
+  margin-right: 5px;
+  color: var(--color-peach);
+  content: "•";
+}
+
+.matrix-home-hero-needs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 13px;
+}
+
+.matrix-home-hero-needs button {
+  border: 1px solid rgb(255 255 255 / 23%);
+  border-radius: 999px;
+  padding: 6px 9px;
+  color: rgb(255 255 255 / 72%);
+  background: rgb(17 17 17 / 16%);
+  font-size: 0.54rem;
+  font-weight: 800;
+}
+
+.matrix-home-world-products {
+  position: absolute;
+  z-index: 0;
+  right: -2%;
+  bottom: -8%;
+  width: 57%;
+  height: 66%;
+  pointer-events: none;
+}
+
+.matrix-home-world-product {
+  position: absolute;
+  filter: drop-shadow(0 18px 14px rgb(0 0 0 / 20%));
+}
+
+.matrix-home-world-product-1 {
+  right: 8%;
+  bottom: 4%;
+  width: 66%;
+  height: 82%;
+  transform: rotate(-7deg);
+}
+
+.matrix-home-world-product-2 {
+  top: 8%;
+  right: 48%;
+  width: 54%;
+  height: 62%;
+  transform: rotate(8deg);
+}
+
+.matrix-home-world-products-warm .matrix-home-world-product {
+  filter: drop-shadow(0 18px 16px rgb(73 39 34 / 18%));
+}
+
+.matrix-home-duality-panel > :not(.matrix-home-world-products) {
+  position: relative;
+  z-index: 1;
+}
+
+.matrix-home-duality-panel p {
+  max-width: 20ch;
+}
+
+.matrix-home-find {
+  padding: 88px 20px;
+  color: var(--matrix-ink);
+  background:
+    radial-gradient(circle at 87% 12%, rgb(243 169 157 / 35%), transparent 28%),
+    var(--matrix-cream);
+}
+
+.matrix-home-find-intro,
+.matrix-home-find-layout {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+}
+
+.matrix-home-find-intro .matrix-home-eyebrow {
+  color: var(--matrix-green);
+}
+
+.matrix-home-find-intro h2,
+.matrix-home-rhythm h2,
+.matrix-home-edit h2 {
+  max-width: 8ch;
+  margin: 14px 0 0;
+  font-family: var(--font-serif);
+  font-size: clamp(3rem, 12vw, 6.6rem);
+  font-weight: 500;
+  letter-spacing: -0.07em;
+  line-height: 0.88;
+}
+
+.matrix-home-find-intro > p {
+  max-width: 34ch;
+  margin: 17px 0 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.matrix-home-find-layout {
+  display: grid;
+  gap: 34px;
+  margin-top: 40px;
+}
+
+.matrix-home-find-list {
+  border-top: 1px solid var(--color-line);
+}
+
+.matrix-home-find-list button {
+  display: grid;
+  width: 100%;
+  min-height: 71px;
+  grid-template-columns: 38px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-bottom: 1px solid var(--color-line);
+  color: var(--matrix-ink);
+  background: transparent;
+  font-family: var(--font-serif);
+  font-size: clamp(1.55rem, 6.5vw, 2.6rem);
+  letter-spacing: -0.06em;
+  text-align: left;
+}
+
+.matrix-home-find-list small {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.matrix-home-find-list i {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-style: normal;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.matrix-home-find-list button.is-active {
+  color: var(--matrix-green);
+}
+
+.matrix-home-find-list button.is-active i {
+  opacity: 1;
+  transform: none;
+}
+
+.matrix-home-find-result {
+  position: relative;
+  min-height: 420px;
+  padding: 30px;
+  overflow: hidden;
+  color: var(--matrix-ink);
+  background:
+    radial-gradient(circle at 82% 23%, rgb(255 255 255 / 58%), transparent 20%),
+    radial-gradient(circle at 78% 74%, rgb(243 169 157 / 62%), transparent 38%),
+    linear-gradient(132deg, var(--color-peach-light), var(--matrix-peach-wash));
+}
+
+.matrix-home-find-result > :not(.matrix-home-find-cutouts) {
+  position: relative;
+  z-index: 1;
+}
+
+.matrix-home-find-result .matrix-home-eyebrow {
+  color: var(--matrix-green);
+}
+
+.matrix-home-find-result h3 {
+  max-width: 8ch;
+  margin: 14px 0 0;
+  font-family: var(--font-serif);
+  font-size: clamp(2.8rem, 11vw, 5.2rem);
+  font-weight: 500;
+  letter-spacing: -0.07em;
+  line-height: 0.87;
+}
+
+.matrix-home-find-result > p {
+  max-width: 23ch;
+  margin: 15px 0 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.matrix-home-find-notes {
+  display: grid;
+  gap: 7px;
+  margin-top: 20px;
+}
+
+.matrix-home-find-notes span {
+  color: var(--matrix-ink);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.matrix-home-find-notes b {
+  display: inline-block;
+  width: 27px;
+  color: var(--matrix-green);
+  font-size: 0.54rem;
+  letter-spacing: 0.07em;
+}
+
+.matrix-home-button-dark {
+  position: absolute !important;
+  bottom: 28px;
+  left: 30px;
+  color: var(--color-white-pure);
+  background: var(--matrix-ink);
+}
+
+.matrix-home-find-cutouts {
+  position: absolute;
+  right: -3%;
+  bottom: -3%;
+  width: 52%;
+  height: 84%;
+  pointer-events: none;
+}
+
+.matrix-home-find-cutout {
+  position: absolute;
+  filter: drop-shadow(0 18px 16px rgb(72 39 33 / 18%));
+}
+
+.matrix-home-find-cutout-1 {
+  right: 3%;
+  bottom: 4%;
+  width: 74%;
+  height: 78%;
+  transform: rotate(7deg);
+}
+
+.matrix-home-find-cutout-2 {
+  top: 10%;
+  right: 57%;
+  width: 58%;
+  height: 58%;
+  transform: rotate(-8deg);
+}
+
+.matrix-home-product-card {
+  background: transparent;
+}
+
+.matrix-home-product-card > a,
+.matrix-home-product-card:nth-child(3n + 2) > a,
+.matrix-home-product-card:nth-child(3n) > a {
+  background:
+    radial-gradient(circle at 50% 68%, rgb(243 169 157 / 43%), transparent 43%),
+    linear-gradient(135deg, rgb(255 250 247 / 92%), var(--matrix-peach-wash));
+}
+
+.matrix-home-product-card:nth-child(3n + 2) > a {
+  background:
+    radial-gradient(circle at 50% 68%, rgb(85 107 69 / 16%), transparent 45%),
+    linear-gradient(135deg, var(--color-cream), rgb(238 242 230 / 88%));
+}
+
+.matrix-home-product-card:nth-child(3n) > a {
+  background:
+    radial-gradient(circle at 50% 68%, rgb(255 255 255 / 46%), transparent 42%),
+    linear-gradient(135deg, var(--color-peach-light), var(--matrix-peach));
+}
+
+.matrix-home-product-card > a img {
+  padding: 12px 30px 4px;
+}
+
+.matrix-home-product-copy {
+  border-top: 1px solid rgb(17 17 17 / 7%);
+  background: rgb(255 255 255 / 82%);
+}
+
+.matrix-home-rhythm {
+  display: grid;
+  color: var(--matrix-ink);
+  background: var(--matrix-ink);
+}
+
+.matrix-home-rhythm-art {
+  position: relative;
+  min-height: 430px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 48%, rgb(243 169 157 / 48%), transparent 33%),
+    linear-gradient(140deg, #1d1515, #0e0d0d);
+}
+
+.matrix-home-rhythm-orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border: 1px solid rgb(255 255 255 / 17%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.matrix-home-rhythm-orbit-a {
+  width: 82%;
+  aspect-ratio: 1;
+}
+
+.matrix-home-rhythm-orbit-b {
+  width: 52%;
+  aspect-ratio: 1;
+}
+
+.matrix-home-rhythm-product {
+  position: absolute;
+  filter: drop-shadow(0 24px 18px rgb(0 0 0 / 30%));
+}
+
+.matrix-home-rhythm-product-1 {
+  top: 11%;
+  left: 17%;
+  width: 46%;
+  height: 74%;
+  transform: rotate(-7deg);
+}
+
+.matrix-home-rhythm-product-2 {
+  right: 8%;
+  bottom: 5%;
+  width: 43%;
+  height: 66%;
+  transform: rotate(9deg);
+}
+
+.matrix-home-rhythm-copy {
+  padding: 58px 20px 70px;
+  color: var(--matrix-ink);
+  background: var(--color-peach);
+}
+
+.matrix-home-rhythm-copy .matrix-home-eyebrow {
+  color: var(--matrix-green);
+}
+
+.matrix-home-rhythm-copy > p {
+  max-width: 33ch;
+  margin: 18px 0 0;
+  color: rgb(17 17 17 / 66%);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.matrix-home-rhythm-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 25px;
+}
+
+.matrix-home-rhythm-switcher button {
+  border: 1px solid rgb(17 17 17 / 22%);
+  border-radius: 999px;
+  padding: 8px 11px;
+  color: var(--matrix-ink);
+  background: transparent;
+  font-size: 0.63rem;
+  font-weight: 900;
+}
+
+.matrix-home-rhythm-switcher button.is-active {
+  border-color: var(--matrix-ink);
+  color: var(--color-white-pure);
+  background: var(--matrix-ink);
+}
+
+.matrix-home-edit {
+  position: relative;
+  padding: 100px 20px;
+  overflow: hidden;
+  color: var(--matrix-ink);
+  text-align: center;
+  background:
+    linear-gradient(90deg, rgb(17 17 17 / 6%) 1px, transparent 1px),
+    linear-gradient(rgb(17 17 17 / 6%) 1px, transparent 1px),
+    var(--matrix-cream);
+  background-size: 46px 46px;
+}
+
+.matrix-home-edit::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(92vw, 720px);
+  aspect-ratio: 1;
+  border: 1px solid rgb(85 107 69 / 28%);
+  border-radius: 50%;
+  content: "";
+  transform: translate(-50%, -50%);
+}
+
+.matrix-home-edit > * {
+  position: relative;
+  z-index: 1;
+}
+
+.matrix-home-edit h2,
+.matrix-home-edit > p {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.matrix-home-edit > p {
+  max-width: 31ch;
+  margin-top: 18px;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.matrix-home-edit-words {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+  max-width: 720px;
+  margin: 35px auto 0;
+  color: var(--matrix-green);
+  font-family: var(--font-serif);
+  font-size: clamp(1.4rem, 5vw, 2.6rem);
+  letter-spacing: -0.06em;
+}
+
+.matrix-home-edit .matrix-home-text-link {
+  color: var(--matrix-ink);
+}
+
+.storefront-footer-matrix {
+  border-top: 1px solid rgb(17 17 17 / 10%);
+  background: var(--color-white-pure);
+}
+
+.storefront-footer-matrix .footer-dock-shell {
+  width: min(100%, 1280px);
+  margin: 0 auto;
+  padding: 50px 5.5vw 28px;
+}
+
+.storefront-footer-matrix .footer-dock {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.2fr;
+  width: 100%;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  padding: 0 0 34px;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.storefront-footer-matrix .footer-dock-brand {
+  align-self: start;
+}
+
+.storefront-footer-matrix .footer-dock-brand-text {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 500;
+}
+
+.storefront-footer-matrix .footer-dock-socials {
+  justify-content: start;
+}
+
+.storefront-footer-matrix .footer-social-button {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.storefront-footer-matrix .footer-dock-tail {
+  justify-content: flex-end;
+}
+
+.storefront-footer-matrix .footer-admin-peek {
+  right: 0;
+  padding-right: 14px;
+  transform: none;
+}
+
+.storefront-footer-matrix .footer-admin-peek:hover,
+.storefront-footer-matrix .footer-admin-peek:focus-visible {
+  transform: translateY(-2px);
+}
+
+.storefront-footer-matrix .footer-support-row {
+  justify-content: flex-start;
+  width: 100%;
+  margin: 0;
+  border-top: 1px solid var(--color-line);
+  border-bottom: 1px solid var(--color-line);
+  padding: 17px 0;
+}
+
+.footer-matrix-trust {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px;
+  margin-top: 20px;
+  color: var(--matrix-ink);
+}
+
+.footer-matrix-trust span,
+.footer-matrix-trust p {
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.footer-matrix-trust strong {
+  font-family: var(--font-serif);
+  font-size: 1.28rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.footer-matrix-trust p {
+  margin: 0;
+}
+
+.storefront-footer-matrix .footer-credit {
+  margin-top: 24px;
+  text-align: left;
+}
+
+@media (min-width: 720px) {
+  .matrix-home-hero-needs,
+  .matrix-home-trust {
+    justify-content: flex-start;
+  }
+
+  .matrix-home-find,
+  .matrix-home-rhythm-copy,
+  .matrix-home-edit {
+    padding-right: 5.5vw;
+    padding-left: 5.5vw;
+  }
+
+  .matrix-home-find-layout {
+    grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+    align-items: stretch;
+  }
+
+  .matrix-home-find-result {
+    min-height: 510px;
+    padding: 42px;
+  }
+
+  .matrix-home-button-dark {
+    bottom: 42px;
+    left: 42px;
+  }
+
+  .matrix-home-find-cutouts {
+    width: 49%;
+  }
+
+  .matrix-home-rhythm {
+    grid-template-columns: 1fr 1fr;
+    min-height: 610px;
+  }
+
+  .matrix-home-rhythm-art {
+    min-height: 610px;
+  }
+
+  .matrix-home-rhythm-copy {
+    display: grid;
+    align-content: center;
+    padding-top: 90px;
+    padding-bottom: 90px;
+  }
+
+  .matrix-home-edit {
+    padding-top: 150px;
+    padding-bottom: 150px;
+  }
+
+  .storefront-footer-matrix .footer-dock-socials {
+    justify-content: center;
+  }
+
+  .footer-matrix-trust {
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: center;
+  }
+
+  .footer-matrix-trust p {
+    text-align: right;
+  }
+}
+
+@media (max-width: 719px) {
+  .matrix-home-duality-panel h3 {
+    max-width: 5ch;
+  }
+
+  .matrix-home-find-result {
+    min-height: 440px;
+  }
+
+  .matrix-home-find-cutouts {
+    right: -5%;
+    width: 53%;
+  }
+
+  .storefront-footer-matrix .footer-dock-shell {
+    padding: 42px 20px 28px;
+  }
+
+  .storefront-footer-matrix .footer-dock {
+    display: grid;
+    width: 100%;
+    gap: 24px;
+    border: 0;
+    border-radius: 0;
+    padding: 0 0 26px;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .storefront-footer-matrix .footer-dock-brand,
+  .storefront-footer-matrix .footer-dock-socials,
+  .storefront-footer-matrix .footer-dock-tail {
+    justify-content: flex-start;
+  }
+
+  .storefront-footer-matrix .footer-dock-tail {
+    gap: 14px;
+  }
+
+  .storefront-footer-matrix .footer-admin-peek {
+    right: 0;
+    transform: none;
+  }
+
+  .storefront-footer-matrix .footer-support-row {
+    width: 100%;
+    justify-content: flex-start;
+    margin: 0;
+    border-top: 1px solid var(--color-line);
+    border-bottom: 1px solid var(--color-line);
+    padding: 15px 0;
+  }
+
+  .storefront-footer-matrix .footer-credit {
+    text-align: left;
   }
 }
 
@@ -11449,4 +13708,4028 @@ a.pos-secondary-button {
   width: 20px;
   height: 20px;
   accent-color: var(--color-rose);
+}
+
+/* SkinMatrix uses Outfit throughout its public experience. This is deliberately
+   scoped to the redesigned homepage and its matching footer. */
+.matrix-home,
+.storefront-footer-matrix {
+  --font-sans: var(--font-outfit), Outfit, ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-outfit), Outfit, ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Exact structural carry-over from the SkinMatrix homepage: a two-screen
+   sticky opening scene hands into the path picker while the art stays alive. */
+.matrix-home {
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
+.matrix-home-hero {
+  min-height: 200svh;
+  padding: 0;
+  overflow: visible;
+  background: var(--matrix-ink);
+}
+
+.matrix-home-hero-sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  min-height: 680px;
+  padding: 0;
+  overflow: hidden;
+  isolation: isolate;
+  color: var(--color-white-pure);
+  background:
+    radial-gradient(ellipse 52% 62% at 50% 46%, rgb(243 169 157 / 38%), transparent 73%),
+    radial-gradient(ellipse 36% 54% at 4% 82%, rgb(85 107 69 / 24%), transparent 74%),
+    radial-gradient(ellipse 34% 50% at 96% 14%, rgb(243 169 157 / 28%), transparent 76%),
+    linear-gradient(135deg, #171111 0%, #28181a 48%, #111010 100%);
+}
+
+.matrix-home-hero-sticky .matrix-home-grid,
+.matrix-home-hero-sticky .matrix-home-orbit,
+.matrix-home-hero-sticky .matrix-home-hero-products,
+.matrix-home-hero-sticky .matrix-home-hero-threads,
+.matrix-home-hero-sticky .matrix-home-hero-note {
+  position: absolute;
+}
+
+.matrix-home-hero-sticky .matrix-home-grid {
+  z-index: 0;
+}
+
+.matrix-home-hero-sticky .matrix-home-orbit {
+  z-index: 1;
+}
+
+.matrix-home-hero .matrix-home-hero-copy {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  right: auto;
+  left: 50%;
+  width: min(500px, calc(100% - 40px));
+  max-width: none;
+  margin: 0;
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+.matrix-home-hero-copy h1 {
+  max-width: 8ch;
+  font-size: clamp(4.4rem, 7.5vw, 7.25rem);
+}
+
+.matrix-home-hero-copy > p,
+.matrix-home-hero-intro > p {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.matrix-home-hero-actions,
+.matrix-home-trust,
+.matrix-home-hero-needs {
+  justify-content: center;
+}
+
+.matrix-home-hero-needs button.is-active {
+  border-color: rgb(255 255 255 / 90%);
+  color: var(--matrix-ink);
+  background: var(--color-white-pure);
+}
+
+.matrix-home-hero-payoff {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 300ms ease, transform 300ms ease, visibility 300ms ease;
+}
+
+.matrix-home-hero-payoff h2 {
+  max-width: 7ch;
+  margin: 13px 0 16px;
+  color: var(--color-white-pure);
+  font-family: var(--font-serif);
+  font-size: clamp(3.4rem, 5.8vw, 5.7rem);
+  font-weight: 500;
+  letter-spacing: -0.07em;
+  line-height: 0.88;
+}
+
+.matrix-home-hero-payoff p {
+  max-width: 32ch;
+  margin: 0 0 19px;
+  color: rgb(255 255 255 / 76%);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.matrix-home-hero-payoff .matrix-home-button {
+  margin-top: 19px;
+}
+
+.matrix-home-hero.is-focus-active .matrix-home-hero-intro {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-18px);
+  transition: opacity 250ms ease, transform 250ms ease, visibility 250ms ease;
+}
+
+.matrix-home-hero.is-focus-active .matrix-home-hero-payoff {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+}
+
+.matrix-home-hero-products {
+  z-index: 3;
+}
+
+.matrix-home-hero-product {
+  transition: opacity 360ms ease, filter 360ms ease, transform 360ms ease;
+}
+
+.matrix-home-hero.is-focus-active .matrix-home-hero-product:not(.is-focus-product) {
+  opacity: 0.16;
+  filter: grayscale(0.65) saturate(0.35);
+}
+
+.matrix-home-hero.is-focus-active .matrix-home-hero-product.is-focus-product {
+  z-index: 6;
+  filter: drop-shadow(0 28px 26px rgb(0 0 0 / 42%));
+}
+
+.matrix-home-hero-threads {
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+}
+
+.matrix-home-hero-thread {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 31%;
+  height: 1px;
+  opacity: 0;
+  background: linear-gradient(90deg, rgb(255 255 255 / 90%), rgb(243 169 157 / 58%), transparent);
+  filter: drop-shadow(0 0 8px rgb(243 169 157 / 60%));
+  transform-origin: 0 50%;
+  transition: opacity 300ms ease;
+}
+
+.matrix-home-hero-thread::after {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-white-pure);
+  box-shadow: 0 0 13px 4px rgb(243 169 157 / 55%);
+  content: "";
+  transform: translate(50%, -50%);
+}
+
+.matrix-home-hero-thread-1 { transform: rotate(206deg); }
+.matrix-home-hero-thread-2 { transform: rotate(-25deg); }
+.matrix-home-hero-thread-3 { transform: rotate(145deg); }
+.matrix-home-hero-thread-4 { transform: rotate(38deg); }
+.matrix-home-hero.is-focus-active .matrix-home-hero-thread.is-active { opacity: 1; }
+
+.matrix-home-paths {
+  position: relative;
+  z-index: 10;
+  margin-top: -100svh;
+  padding: clamp(78px, 10vw, 142px) 5.5vw 76px;
+  overflow: hidden;
+  border-radius: 30px 30px 0 0;
+  color: var(--color-white-pure);
+  background:
+    radial-gradient(circle at 84% 10%, rgb(243 169 157 / 25%), transparent 26%),
+    radial-gradient(circle at 15% 95%, rgb(85 107 69 / 26%), transparent 30%),
+    linear-gradient(135deg, #181111 0%, #2d1a1d 52%, #151010 100%);
+  box-shadow: 0 -20px 56px rgb(5 5 5 / 34%);
+}
+
+.matrix-home-paths::before {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  width: 46px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 28%);
+  content: "";
+  transform: translateX(-50%);
+}
+
+.matrix-home-paths::after {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  opacity: 0.17;
+  background-image: linear-gradient(rgb(255 255 255 / 12%) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 12%) 1px, transparent 1px);
+  background-size: 46px 46px;
+  content: "";
+  mask-image: linear-gradient(120deg, transparent 18%, #000 74%);
+}
+
+.matrix-home-paths > * {
+  position: relative;
+  z-index: 1;
+}
+
+.matrix-home-paths .matrix-home-section-intro .matrix-home-eyebrow,
+.matrix-home-paths .matrix-home-path-result .matrix-home-eyebrow {
+  color: var(--color-peach-light);
+}
+
+.matrix-home-paths .matrix-home-section-intro h2,
+.matrix-home-paths .matrix-home-section-intro > p {
+  color: inherit;
+}
+
+.matrix-home-paths .matrix-home-section-intro > p {
+  color: rgb(255 255 255 / 74%);
+}
+
+.matrix-home-path-layout {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  width: min(100%, 1240px);
+  margin-top: 46px;
+  border: 0;
+}
+
+.matrix-home-path-tabs {
+  display: contents;
+}
+
+.matrix-home-path-tabs button {
+  min-height: 88px;
+  grid-template-columns: 1fr auto;
+  align-content: space-between;
+  gap: 0;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 12px;
+  color: rgb(255 255 255 / 73%);
+  background: rgb(255 255 255 / 6%);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+}
+
+.matrix-home-path-tabs button span {
+  color: var(--color-peach);
+}
+
+.matrix-home-path-tabs button i {
+  align-self: end;
+  opacity: 0.45;
+  transform: none;
+}
+
+.matrix-home-path-tabs button.is-active {
+  border-color: var(--color-peach);
+  color: var(--color-white-pure);
+  background: rgb(255 255 255 / 13%);
+}
+
+.matrix-home-path-tabs button.is-active i {
+  opacity: 1;
+}
+
+.matrix-home-path-result {
+  display: grid;
+  min-height: 430px;
+  grid-column: 1 / -1;
+  margin-top: 6px;
+  padding: clamp(30px, 5vw, 68px);
+  overflow: hidden;
+  color: var(--color-white-pure);
+  background:
+    radial-gradient(circle at 84% 25%, rgb(243 169 157 / 25%), transparent 28%),
+    linear-gradient(115deg, rgb(255 255 255 / 13%), rgb(255 255 255 / 4%));
+  box-shadow: 0 28px 60px rgb(5 5 5 / 28%);
+}
+
+.matrix-home-path-result h3 {
+  position: relative;
+  z-index: 2;
+  max-width: 8ch;
+}
+
+.matrix-home-path-result > p {
+  position: relative;
+  z-index: 2;
+  color: rgb(255 255 255 / 76%);
+}
+
+.matrix-home-path-tags {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  max-width: 360px;
+  margin-top: 22px;
+}
+
+.matrix-home-path-tags span {
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 999px;
+  padding: 7px 9px;
+  color: rgb(255 255 255 / 84%);
+  background: rgb(17 17 17 / 20%);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.matrix-home-path-result .matrix-home-text-link {
+  z-index: 3;
+  color: var(--color-white-pure);
+}
+
+.matrix-home-path-products {
+  right: 2%;
+  bottom: 0;
+  width: 48%;
+  height: 100%;
+}
+
+.matrix-home-path-products a {
+  z-index: 2;
+  width: min(42%, 215px);
+  height: min(78%, 310px);
+  filter: drop-shadow(0 22px 20px rgb(0 0 0 / 30%));
+}
+
+.matrix-home-path-products a:nth-child(4) {
+  width: min(40%, 200px);
+  transform: translate(-42%, 12%) rotate(7deg);
+}
+
+.matrix-home-path-orbit {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  display: block;
+  border: 1px solid rgb(243 169 157 / 43%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.matrix-home-path-orbit-a {
+  width: min(42vw, 460px);
+  aspect-ratio: 1;
+}
+
+.matrix-home-path-orbit-b {
+  width: min(29vw, 300px);
+  aspect-ratio: 1;
+  border-style: dashed;
+  transform: translate(-50%, -50%) rotate(55deg);
+}
+
+/* The homepage footer follows the same final dark trust surface as SkinMatrix. */
+.storefront-footer-matrix {
+  position: relative;
+  overflow: hidden;
+  border: 0;
+  color: #eee6e6;
+  background:
+    radial-gradient(circle at 86% 17%, rgb(243 169 157 / 25%), transparent 23%),
+    radial-gradient(circle at 8% 95%, rgb(85 107 69 / 22%), transparent 28%),
+    #161010;
+}
+
+.storefront-footer-matrix::before,
+.storefront-footer-matrix::after {
+  position: absolute;
+  z-index: 0;
+  border: 1px solid rgb(255 255 255 / 11%);
+  border-radius: 50%;
+  content: "";
+}
+
+.storefront-footer-matrix::before {
+  top: -256px;
+  right: -245px;
+  width: 460px;
+  height: 460px;
+}
+
+.storefront-footer-matrix::after {
+  bottom: -185px;
+  left: -190px;
+  width: 310px;
+  height: 310px;
+}
+
+.storefront-footer-matrix .footer-dock-shell {
+  position: relative;
+  z-index: 1;
+}
+
+.storefront-footer-matrix .footer-dock-brand-text,
+.storefront-footer-matrix .footer-dock-legal a,
+.storefront-footer-matrix .footer-social-button,
+.storefront-footer-matrix .footer-support-row a,
+.storefront-footer-matrix .footer-matrix-trust,
+.storefront-footer-matrix .footer-matrix-trust strong {
+  color: var(--color-white-pure);
+}
+
+.storefront-footer-matrix .footer-social-button {
+  color: rgb(255 255 255 / 82%);
+}
+
+.storefront-footer-matrix .footer-social-button:hover,
+.storefront-footer-matrix .footer-social-button:focus-visible,
+.storefront-footer-matrix .footer-dock-legal a:hover,
+.storefront-footer-matrix .footer-dock-legal a:focus-visible {
+  color: var(--color-peach);
+  background: transparent;
+}
+
+.storefront-footer-matrix .footer-support-row {
+  border-color: rgb(255 255 255 / 16%);
+}
+
+.storefront-footer-matrix .footer-matrix-trust span,
+.storefront-footer-matrix .footer-matrix-trust p,
+.storefront-footer-matrix .footer-credit {
+  color: rgb(255 255 255 / 63%);
+}
+
+@media (max-width: 719px) {
+  .matrix-home-hero {
+    /* Keep all four transparent packshots inside the first phone scene. The
+       following section still enters as a second-screen reveal. */
+    min-height: 200svh;
+  }
+
+  .matrix-home-hero-sticky {
+    height: 100svh;
+    min-height: 0;
+  }
+
+  .matrix-home-hero .matrix-home-hero-copy {
+    top: 48%;
+    width: calc(100% - 32px);
+  }
+
+  /* The header already names the brand. Removing this duplicate line gives
+     the cutouts a clear top band rather than making the packshots cross copy. */
+  .matrix-home-hero-intro > .matrix-home-eyebrow {
+    display: none;
+  }
+
+  .matrix-home-hero-copy h1 {
+    font-size: clamp(3.2rem, 14vw, 3.8rem);
+  }
+
+  .matrix-home-hero-copy > p {
+    max-width: 27ch;
+    margin-top: 12px;
+  }
+
+  .matrix-home-hero-actions {
+    margin-top: 17px;
+  }
+
+  .matrix-home-trust,
+  .matrix-home-hero-needs {
+    margin-top: 10px;
+  }
+
+  .matrix-home-hero-product-1 {
+    top: 11%;
+    left: -2%;
+    width: clamp(108px, 32vw, 150px);
+  }
+
+  .matrix-home-hero-product-2 {
+    top: 10%;
+    right: 0;
+    width: clamp(102px, 30vw, 142px);
+  }
+
+  .matrix-home-hero-product-3 {
+    bottom: 3%;
+    left: 5%;
+    width: clamp(100px, 29vw, 136px);
+  }
+
+  .matrix-home-hero-product-4 {
+    right: 5%;
+    bottom: 3%;
+    width: clamp(92px, 26vw, 126px);
+  }
+
+  .matrix-home-hero-product .matrix-home-cutout-chronic {
+    transform: scale(1.12) translateY(-10%);
+  }
+
+  .matrix-home-hero-product .matrix-home-cutout-flusher {
+    transform: scale(1.02);
+  }
+
+  .matrix-home-hero-product .matrix-home-cutout-boric {
+    transform: scale(1.11) translateY(-2%);
+  }
+
+  .matrix-home-hero-product .matrix-home-cutout-mist {
+    transform: scale(1.16) translateY(-2%);
+  }
+
+  .matrix-home-hero-note {
+    right: 16px;
+    bottom: 1.4%;
+    left: 16px;
+    font-size: 0.48rem;
+  }
+
+  .matrix-home-hero-payoff {
+    display: none;
+  }
+
+  .matrix-home-hero.is-focus-active .matrix-home-hero-intro {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+  }
+
+  .matrix-home-hero.is-focus-active .matrix-home-hero-product:not(.is-focus-product) {
+    opacity: 0.12;
+  }
+
+  .matrix-home-hero-threads {
+    display: none;
+  }
+
+  .matrix-home-paths {
+    margin-top: -100svh;
+    padding: 62px 16px 50px;
+    border-radius: 24px 24px 0 0;
+  }
+
+  .matrix-home-path-layout {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 7px;
+    margin-top: 30px;
+  }
+
+  .matrix-home-path-tabs button {
+    min-height: 70px;
+    padding: 11px 12px;
+    font-size: 0.88rem;
+  }
+
+  .matrix-home-path-result {
+    min-height: 505px;
+    padding: 28px 22px 30px;
+  }
+
+  .matrix-home-path-result h3 {
+    font-size: clamp(2.65rem, 10vw, 3.5rem);
+  }
+
+  .matrix-home-path-result > p {
+    max-width: 23ch;
+  }
+
+  .matrix-home-path-products {
+    right: -3%;
+    width: 55%;
+  }
+
+  .matrix-home-path-products a {
+    width: 58%;
+    height: 52%;
+  }
+
+  .matrix-home-path-orbit-a { width: 285px; }
+  .matrix-home-path-orbit-b { width: 184px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home-hero-thread {
+    animation: matrixThreadTravel 2.8s linear infinite;
+  }
+
+  .matrix-home-path-orbit-a {
+    animation: matrixPathSpin 20s linear infinite;
+  }
+
+  .matrix-home-path-orbit-b {
+    animation: matrixPathSpin 15s linear infinite reverse;
+  }
+}
+
+@keyframes matrixThreadTravel {
+  to { opacity: 0.92; }
+}
+
+@keyframes matrixPathSpin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Four product anchors deliberately leave the central hero decision unobstructed. */
+@media (min-width: 720px) {
+  .matrix-home-hero .matrix-home-hero-product-1 {
+    top: 11%;
+    left: 6%;
+    width: clamp(200px, 23vw, 330px);
+    aspect-ratio: 1.5;
+  }
+
+  .matrix-home-hero .matrix-home-hero-product-2 {
+    top: 10%;
+    right: 6%;
+    left: auto;
+    width: clamp(205px, 22vw, 320px);
+    aspect-ratio: 1.32;
+  }
+
+  .matrix-home-hero .matrix-home-hero-product-3 {
+    bottom: 5%;
+    left: 11%;
+    width: clamp(170px, 18vw, 280px);
+  }
+
+  .matrix-home-hero .matrix-home-hero-product-4 {
+    right: 11%;
+    bottom: 5%;
+    width: clamp(145px, 15vw, 235px);
+  }
+}
+
+@media (max-width: 719px) {
+  .matrix-home-hero .matrix-home-hero-product-1,
+  .matrix-home-hero .matrix-home-hero-product-2 {
+    top: 4%;
+  }
+}
+
+/* The two ritual worlds are visibly one system, rather than separate cards. */
+.matrix-home-duality-panels {
+  position: relative;
+}
+
+.matrix-home-duality-connection {
+  position: absolute;
+  z-index: 8;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  color: var(--matrix-ink);
+  pointer-events: none;
+}
+
+.matrix-home-duality-line {
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  left: 0;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgb(255 255 255 / 85%) 20%, var(--color-peach) 51%, rgb(17 17 17 / 62%) 80%, transparent);
+}
+
+.matrix-home-duality-connection b {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 66%);
+  border-radius: 50%;
+  background: var(--color-peach-light);
+  box-shadow: 0 8px 18px rgb(40 27 30 / 15%);
+  font-size: 1.1rem;
+  font-weight: 400;
+  transform: translate(-50%, -50%);
+}
+
+.matrix-home-duality-connection i {
+  position: absolute;
+  left: 50%;
+  color: rgb(255 255 255 / 80%);
+  font-size: 0.46rem;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+}
+
+.matrix-home-duality-connection i:nth-of-type(1) { top: 15%; }
+.matrix-home-duality-connection i:nth-of-type(2) { bottom: 15%; color: rgb(17 17 17 / 65%); }
+
+.matrix-home-edit-words {
+  display: none;
+}
+
+.matrix-home-edit-marquee {
+  position: relative;
+  width: min(1060px, 100%);
+  margin: 8vh auto 5vh;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 2.5%, #000 97.5%, transparent);
+}
+
+.matrix-home-edit-track {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: 14px;
+}
+
+.matrix-home-edit-track span {
+  display: grid;
+  width: 162px;
+  height: 76px;
+  place-items: center;
+  border: 1px solid rgb(17 17 17 / 8%);
+  border-radius: 13px;
+  color: var(--matrix-green);
+  background: rgb(255 255 255 / 60%);
+  box-shadow: 0 9px 22px rgb(39 28 30 / 5%);
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  letter-spacing: -0.05em;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home-edit-track {
+    animation: matrixEditMarquee 22s linear infinite;
+  }
+
+  .matrix-home-edit-marquee:hover .matrix-home-edit-track {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes matrixEditMarquee {
+  to { transform: translateX(-704px); }
+}
+
+.matrix-home-partners {
+  padding: 86px 20px;
+  overflow: hidden;
+  color: var(--matrix-ink);
+  text-align: center;
+  background:
+    radial-gradient(circle at 10% 90%, rgb(85 107 69 / 12%), transparent 29%),
+    radial-gradient(circle at 90% 13%, rgb(243 169 157 / 16%), transparent 28%),
+    var(--matrix-cream);
+}
+
+.matrix-home-partners .matrix-home-eyebrow {
+  color: var(--matrix-green);
+}
+
+.matrix-home-partners-marquee {
+  position: relative;
+  width: min(1060px, 100%);
+  margin: 34px auto 22px;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 2.5%, #000 97.5%, transparent);
+}
+
+.matrix-home-partners-track {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: 12px;
+}
+
+.matrix-home-partner {
+  display: grid;
+  width: 174px;
+  height: 78px;
+  align-content: center;
+  gap: 4px;
+  border: 1px solid rgb(17 17 17 / 8%);
+  border-radius: 13px;
+  background: rgb(255 255 255 / 68%);
+  box-shadow: 0 9px 22px rgb(39 28 30 / 5%);
+}
+
+.matrix-home-partner b {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+}
+
+.matrix-home-partner small {
+  color: var(--color-muted);
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.matrix-home-partner-paystack b { color: #0ba05a; }
+.matrix-home-partner-momo b { color: #f4a300; }
+.matrix-home-partner-cards b { color: #3949a0; }
+.matrix-home-partner-accra b { color: var(--matrix-green); }
+.matrix-home-partner-stormglide b { color: var(--matrix-ink); }
+
+.matrix-home-partners > p {
+  max-width: 39ch;
+  margin: 0 auto;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home-partners-track {
+    animation: matrixPartnerMarquee 27s linear infinite;
+  }
+
+  .matrix-home-partners-marquee:hover .matrix-home-partners-track {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes matrixPartnerMarquee {
+  to { transform: translateX(-744px); }
+}
+
+@media (max-width: 719px) {
+  .matrix-home-duality-connection {
+    position: relative;
+    top: auto;
+    bottom: auto;
+    left: auto;
+    width: 100%;
+    height: 58px;
+    grid-row: 2;
+  }
+
+  .matrix-home-duality-line {
+    top: 50%;
+    right: 9%;
+    bottom: auto;
+    left: 9%;
+    width: auto;
+    height: 1px;
+    background: linear-gradient(90deg, rgb(255 255 255 / 72%), var(--color-peach), rgb(17 17 17 / 62%));
+  }
+
+  .matrix-home-duality-connection i {
+    top: 50% !important;
+    bottom: auto !important;
+    transform: translateY(-50%);
+  }
+
+  .matrix-home-duality-connection i:nth-of-type(1) { left: 13%; color: var(--matrix-ink); }
+  .matrix-home-duality-connection i:nth-of-type(2) { right: 13%; left: auto; }
+
+  .matrix-home-rhythm-art { order: 2; }
+  .matrix-home-rhythm-copy { order: 1; }
+
+  .matrix-home-edit-marquee {
+    width: calc(100% + 16px);
+    margin: 46px -8px 32px;
+  }
+
+  .matrix-home-edit-track { gap: 9px; }
+  .matrix-home-edit-track span { width: 124px; height: 60px; border-radius: 11px; font-size: 1.12rem; }
+
+  .matrix-home-partners { padding: 72px 20px; }
+  .matrix-home-partners-marquee { width: calc(100% + 16px); margin-right: -8px; margin-left: -8px; }
+  .matrix-home-partners-track { gap: 9px; }
+  .matrix-home-partner { width: 142px; height: 64px; border-radius: 11px; }
+  .matrix-home-partner b { font-size: 0.94rem; }
+}
+
+/* Colour direction: Petal & Plum. The public home keeps the required warm
+   white / peach-pink / near-black / botanical-green system, but lets the
+   pink carry more of the feminine warmth than the previous brown-black mix. */
+.matrix-home {
+  --matrix-ink: #291722;
+  --matrix-cream: #fff9f7;
+  --matrix-peach: #e7a5ad;
+  --matrix-peach-wash: #f9e6e6;
+  --matrix-green: #62745b;
+  --matrix-rose: #b85f78;
+  --matrix-rose-light: #f4c5c8;
+}
+
+.matrix-home-hero-sticky {
+  background:
+    radial-gradient(ellipse 50% 62% at 50% 46%, rgb(223 135 157 / 43%), transparent 73%),
+    radial-gradient(ellipse 38% 56% at 4% 82%, rgb(98 116 91 / 24%), transparent 74%),
+    radial-gradient(ellipse 37% 54% at 96% 14%, rgb(246 184 193 / 31%), transparent 76%),
+    linear-gradient(135deg, #20131c 0%, #38202d 50%, #21141d 100%);
+}
+
+.matrix-home-hero h1 em,
+.matrix-home-hero-copy .matrix-home-eyebrow {
+  color: var(--matrix-rose-light);
+}
+
+.matrix-home-trust i::before {
+  color: var(--matrix-rose-light);
+}
+
+.matrix-home-hero-needs button.is-active {
+  color: #4a2633;
+  background: #fff6f7;
+}
+
+.matrix-home-hero-thread {
+  background: linear-gradient(90deg, rgb(255 255 255 / 90%), rgb(231 165 173 / 72%), transparent);
+  filter: drop-shadow(0 0 8px rgb(231 165 173 / 65%));
+}
+
+.matrix-home-paths {
+  background:
+    radial-gradient(circle at 84% 10%, rgb(231 165 173 / 32%), transparent 27%),
+    radial-gradient(circle at 15% 95%, rgb(98 116 91 / 23%), transparent 31%),
+    linear-gradient(135deg, #24141e 0%, #462535 52%, #24141e 100%);
+}
+
+.matrix-home-path-tabs button.is-active {
+  border-color: var(--matrix-rose-light);
+  background: rgb(255 236 240 / 16%);
+}
+
+.matrix-home-path-tabs button span,
+.matrix-home-paths .matrix-home-section-intro .matrix-home-eyebrow,
+.matrix-home-paths .matrix-home-path-result .matrix-home-eyebrow {
+  color: var(--matrix-rose-light);
+}
+
+.matrix-home-path-orbit {
+  border-color: rgb(244 197 200 / 48%);
+}
+
+.matrix-home-duality-panel-dark,
+.matrix-home-rhythm-art,
+.matrix-home-closing {
+  background: linear-gradient(140deg, #21131c, #3b2030 74%, #22141d);
+}
+
+.matrix-home-duality-panel-peach,
+.matrix-home-rhythm-copy {
+  background: var(--matrix-peach);
+}
+
+.matrix-home-find {
+  background:
+    radial-gradient(circle at 87% 12%, rgb(231 165 173 / 36%), transparent 29%),
+    var(--matrix-cream);
+}
+
+.matrix-home-find-result {
+  background:
+    radial-gradient(circle at 82% 23%, rgb(255 255 255 / 65%), transparent 20%),
+    radial-gradient(circle at 78% 74%, rgb(231 165 173 / 61%), transparent 38%),
+    linear-gradient(132deg, #fce9e8, var(--matrix-peach-wash));
+}
+
+.matrix-home-product-card > a,
+.matrix-home-product-card:nth-child(3n + 2) > a,
+.matrix-home-product-card:nth-child(3n) > a {
+  background:
+    radial-gradient(circle at 50% 68%, rgb(231 165 173 / 45%), transparent 43%),
+    linear-gradient(135deg, #fffafb, var(--matrix-peach-wash));
+}
+
+.matrix-home-product-card:nth-child(3n + 2) > a {
+  background:
+    radial-gradient(circle at 50% 68%, rgb(98 116 91 / 17%), transparent 45%),
+    linear-gradient(135deg, #fffaf9, #eef1ea);
+}
+
+.matrix-home-product-card:nth-child(3n) > a {
+  background:
+    radial-gradient(circle at 50% 68%, rgb(255 255 255 / 52%), transparent 42%),
+    linear-gradient(135deg, #f8d9dc, var(--matrix-peach));
+}
+
+.matrix-home-edit {
+  background:
+    linear-gradient(90deg, rgb(75 37 49 / 6%) 1px, transparent 1px),
+    linear-gradient(rgb(75 37 49 / 6%) 1px, transparent 1px),
+    #fff9f8;
+  background-size: 46px 46px;
+}
+
+.matrix-home-edit::before {
+  border-color: rgb(184 95 120 / 31%);
+}
+
+.matrix-home-partners {
+  background:
+    radial-gradient(circle at 10% 90%, rgb(98 116 91 / 12%), transparent 29%),
+    radial-gradient(circle at 90% 13%, rgb(231 165 173 / 22%), transparent 28%),
+    #fff8f7;
+}
+
+.storefront-footer-matrix {
+  background:
+    radial-gradient(circle at 86% 17%, rgb(231 165 173 / 31%), transparent 23%),
+    radial-gradient(circle at 8% 95%, rgb(98 116 91 / 22%), transparent 28%),
+    #21131c;
+}
+
+/* The supplied transparent packshots have different export canvases. These
+   scene-specific optical corrections align the products by their visible
+   package, not their invisible pixels, while keeping every original asset. */
+.matrix-home-hero-product {
+  isolation: isolate;
+}
+
+.matrix-home-hero-product::before {
+  position: absolute;
+  z-index: -1;
+  inset: 8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 247 249 / 38%), rgb(231 165 173 / 18%) 38%, transparent 72%);
+  content: "";
+  filter: blur(8px);
+  transform: scale(0.88);
+}
+
+.matrix-home-hero-product-2::before {
+  background: radial-gradient(circle, rgb(255 245 239 / 34%), rgb(231 165 173 / 15%) 42%, transparent 72%);
+}
+
+.matrix-home-hero-product-3::before {
+  background: radial-gradient(circle, rgb(255 255 255 / 38%), rgb(244 197 200 / 21%) 42%, transparent 72%);
+}
+
+.matrix-home-hero-product-4::before {
+  background: radial-gradient(circle, rgb(255 248 248 / 42%), rgb(231 165 173 / 24%) 40%, transparent 72%);
+}
+
+.matrix-home-hero-product .matrix-home-cutout-chronic {
+  transform: scale(1.34) translateY(-13%);
+}
+
+.matrix-home-hero-product .matrix-home-cutout-flusher {
+  transform: scale(1.06);
+}
+
+.matrix-home-hero-product .matrix-home-cutout-boric {
+  transform: scale(1.22) translateY(-3%);
+}
+
+.matrix-home-hero-product .matrix-home-cutout-mist {
+  transform: scale(1.37) translateY(-2%);
+}
+
+.matrix-home-product-card > a .matrix-home-cutout-chronic {
+  transform: scale(1.13) translateY(-8%);
+}
+
+.matrix-home-product-card > a .matrix-home-cutout-boric,
+.matrix-home-product-card > a .matrix-home-cutout-mist {
+  transform: scale(1.12);
+}
+
+.matrix-home-path-products .matrix-home-cutout-chronic {
+  transform: scale(1.16) translateY(-8%);
+}
+
+.matrix-home-world-product .matrix-home-cutout-boric,
+.matrix-home-find-cutout .matrix-home-cutout-boric,
+.matrix-home-rhythm-product .matrix-home-cutout-boric {
+  transform: scale(1.13);
+}
+
+.matrix-home-world-product .matrix-home-cutout-mist,
+.matrix-home-find-cutout .matrix-home-cutout-mist,
+.matrix-home-rhythm-product .matrix-home-cutout-mist {
+  transform: scale(1.16);
+}
+
+/* Light-shelf correction ----------------------------------------------------
+   The SkinMatrix reference leads with ivory and a restrained baby-pink aura.
+   Oh My Kitty keeps its own warm-pink and botanical-green brand notes, but
+   the product cutouts now sit directly on that open surface—never inside a
+   dark scene or a coloured product tile. */
+.matrix-home {
+  --matrix-ink: #402c39;
+  --matrix-cream: #fffaf9;
+  --matrix-peach: #f3c5d2;
+  --matrix-peach-wash: #fbedf1;
+  --matrix-green: #74816c;
+  --matrix-rose: #c97895;
+  --matrix-rose-light: #eeb8c8;
+  color: var(--matrix-ink);
+  background: var(--matrix-cream);
+}
+
+.matrix-home-header {
+  color: var(--matrix-ink);
+}
+
+.matrix-home-header::before {
+  background: linear-gradient(180deg, rgb(255 250 249 / 96%) 0%, rgb(255 250 249 / 70%) 58%, transparent 100%);
+}
+
+.matrix-home-brand-mark,
+.matrix-home-shop-link,
+.matrix-home-cart {
+  border-color: rgb(64 44 57 / 18%);
+  background: rgb(255 255 255 / 58%);
+}
+
+.matrix-home-hero-sticky {
+  color: var(--matrix-ink);
+  background:
+    radial-gradient(ellipse 54% 62% at 50% 48%, rgb(244 194 211 / 61%), transparent 69%),
+    radial-gradient(ellipse 40% 51% at 97% 15%, rgb(255 255 255 / 86%), transparent 72%),
+    radial-gradient(ellipse 42% 48% at 3% 87%, rgb(116 129 108 / 13%), transparent 72%),
+    #fffaf9;
+}
+
+.matrix-home-hero-sticky .matrix-home-grid {
+  opacity: 0.38;
+  background-image:
+    linear-gradient(rgb(64 44 57 / 8%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(64 44 57 / 8%) 1px, transparent 1px);
+}
+
+.matrix-home-hero-sticky .matrix-home-orbit {
+  border-color: rgb(156 104 128 / 25%);
+}
+
+.matrix-home-hero-copy .matrix-home-eyebrow,
+.matrix-home-hero h1 em {
+  color: var(--matrix-rose);
+}
+
+.matrix-home-hero h1,
+.matrix-home-hero-copy > p {
+  color: var(--matrix-ink);
+}
+
+.matrix-home-hero-copy > p {
+  color: rgb(64 44 57 / 72%);
+}
+
+.matrix-home-button-light {
+  color: var(--color-white-pure);
+  background: var(--matrix-ink);
+}
+
+.matrix-home-button-outline {
+  border-color: rgb(64 44 57 / 22%);
+  color: var(--matrix-ink);
+  background: rgb(255 255 255 / 60%);
+}
+
+.matrix-home-trust,
+.matrix-home-hero-note {
+  color: rgb(64 44 57 / 57%);
+}
+
+.matrix-home-trust i::before {
+  color: var(--matrix-rose);
+}
+
+.matrix-home-hero-needs button {
+  border-color: rgb(64 44 57 / 16%);
+  color: rgb(64 44 57 / 72%);
+  background: rgb(255 255 255 / 52%);
+}
+
+.matrix-home-hero-needs button.is-active {
+  border-color: var(--matrix-rose);
+  color: var(--matrix-ink);
+  background: #f4c7d4;
+}
+
+/* The PNGs are already transparent. Remove every added halo/tile so their
+   true edges are visible against the page, as in the reference shelf. */
+.matrix-home-hero-product::before {
+  display: none;
+}
+
+.matrix-home-hero-product,
+.matrix-home-path-products a,
+.matrix-home-world-product,
+.matrix-home-find-cutout,
+.matrix-home-rhythm-product {
+  filter: drop-shadow(0 15px 18px rgb(80 46 61 / 14%));
+}
+
+.matrix-home-hero-thread {
+  background: linear-gradient(90deg, rgb(201 120 149 / 55%), transparent);
+  filter: none;
+}
+
+.matrix-home-paths {
+  color: var(--matrix-ink);
+  background:
+    radial-gradient(circle at 84% 10%, rgb(243 197 210 / 43%), transparent 28%),
+    radial-gradient(circle at 15% 95%, rgb(116 129 108 / 12%), transparent 31%),
+    var(--matrix-cream);
+  box-shadow: 0 -12px 32px rgb(93 54 71 / 7%);
+}
+
+.matrix-home-paths::before {
+  background: var(--matrix-rose-light);
+}
+
+.matrix-home-paths::after {
+  opacity: 0.28;
+  background-image: linear-gradient(rgb(64 44 57 / 7%) 1px, transparent 1px), linear-gradient(90deg, rgb(64 44 57 / 7%) 1px, transparent 1px);
+}
+
+.matrix-home-paths .matrix-home-section-intro .matrix-home-eyebrow,
+.matrix-home-paths .matrix-home-path-result .matrix-home-eyebrow,
+.matrix-home-path-tabs button span {
+  color: var(--matrix-rose);
+}
+
+.matrix-home-paths .matrix-home-section-intro > p,
+.matrix-home-path-result > p {
+  color: rgb(64 44 57 / 68%);
+}
+
+.matrix-home-path-tabs button {
+  border-color: rgb(64 44 57 / 13%);
+  color: rgb(64 44 57 / 72%);
+  background: rgb(255 255 255 / 64%);
+}
+
+.matrix-home-path-tabs button.is-active {
+  border-color: var(--matrix-rose);
+  color: var(--matrix-ink);
+  background: #f9e1e8;
+}
+
+.matrix-home-path-result {
+  border: 1px solid rgb(64 44 57 / 9%);
+  color: var(--matrix-ink);
+  background: rgb(255 255 255 / 48%);
+  box-shadow: none;
+}
+
+.matrix-home-path-tags span {
+  border-color: rgb(64 44 57 / 14%);
+  color: rgb(64 44 57 / 76%);
+  background: rgb(255 255 255 / 72%);
+}
+
+.matrix-home-duality,
+.matrix-home-favourites,
+.matrix-home-find,
+.matrix-home-edit,
+.matrix-home-partners {
+  background-color: var(--matrix-cream);
+}
+
+.matrix-home-duality-panel-dark,
+.matrix-home-rhythm-art {
+  color: var(--matrix-ink);
+  background:
+    radial-gradient(circle at 72% 31%, rgb(244 196 211 / 52%), transparent 34%),
+    #fffaf9;
+}
+
+.matrix-home-duality-panel-dark .matrix-home-eyebrow,
+.matrix-home-duality-panel-dark p {
+  color: rgb(64 44 57 / 66%);
+}
+
+.matrix-home-duality-panel-peach,
+.matrix-home-rhythm-copy {
+  background: #f8dbe4;
+}
+
+.matrix-home-find-result {
+  border: 1px solid rgb(64 44 57 / 8%);
+  background: rgb(255 255 255 / 52%);
+  box-shadow: none;
+}
+
+.matrix-home-product-card > a,
+.matrix-home-product-card:nth-child(3n + 2) > a,
+.matrix-home-product-card:nth-child(3n) > a {
+  background: transparent;
+}
+
+.matrix-home-product-card > a img {
+  background: transparent;
+}
+
+.matrix-home-closing {
+  color: var(--matrix-ink);
+  background:
+    radial-gradient(circle at 50% 46%, rgb(255 255 255 / 63%), transparent 34%),
+    #f4cbd7;
+}
+
+.matrix-home-closing .matrix-home-eyebrow,
+.matrix-home-closing p {
+  color: rgb(64 44 57 / 68%);
+}
+
+.matrix-home-closing-halo::before,
+.matrix-home-closing-halo::after {
+  border-color: rgb(156 104 128 / 25%);
+}
+
+/* Clean retail palette: white is the canvas; baby pink is the warmth. */
+.matrix-home {
+  --matrix-cream: #fffdfd;
+  --matrix-peach: #f8d9e3;
+  --matrix-peach-wash: #fff1f5;
+  --matrix-rose: #df87a5;
+  --matrix-ink: #3b2632;
+  background: #fffdfd;
+}
+
+.matrix-home-header {
+  background: rgb(255 253 253 / 76%);
+  backdrop-filter: blur(10px);
+}
+
+.matrix-home-header::before {
+  display: none;
+}
+
+.matrix-home-hero-sticky {
+  background:
+    radial-gradient(ellipse 41% 55% at 50% 50%, rgb(248 217 227 / 70%), transparent 72%),
+    #fffdfd;
+}
+
+.matrix-home-hero-sticky .matrix-home-grid,
+.matrix-home-hero-sticky .matrix-home-orbit,
+.matrix-home-hero-threads {
+  display: none;
+}
+
+.matrix-home-hero-product,
+.matrix-home-path-products a,
+.matrix-home-world-product,
+.matrix-home-find-cutout,
+.matrix-home-rhythm-product {
+  filter: drop-shadow(0 12px 16px rgb(73 42 56 / 12%));
+}
+
+.matrix-home-paths,
+.matrix-home-duality,
+.matrix-home-find,
+.matrix-home-favourites,
+.matrix-home-edit,
+.matrix-home-partners {
+  background: #fffdfd;
+  box-shadow: none;
+}
+
+.matrix-home-paths::before,
+.matrix-home-paths::after,
+.matrix-home-duality-connection,
+.matrix-home-path-orbit,
+.matrix-home-rhythm-orbit {
+  display: none;
+}
+
+.matrix-home-path-layout {
+  border-top: 1px solid rgb(59 38 50 / 10%);
+  padding-top: 20px;
+}
+
+.matrix-home-path-result,
+.matrix-home-find-result {
+  border-color: rgb(59 38 50 / 9%);
+  background: transparent;
+}
+
+.matrix-home-path-result .matrix-home-text-link {
+  color: var(--matrix-ink);
+}
+
+.matrix-home-path-tabs button {
+  background: #fffdfd;
+}
+
+.matrix-home-path-tabs button.is-active {
+  background: #fde8ee;
+}
+
+.matrix-home-duality-panel-dark,
+.matrix-home-rhythm-art {
+  background: #fffdfd;
+}
+
+.matrix-home-duality-panel-peach,
+.matrix-home-rhythm-copy {
+  background: #f8d9e3;
+}
+
+.matrix-home-product-card > a,
+.matrix-home-product-card:nth-child(3n + 2) > a,
+.matrix-home-product-card:nth-child(3n) > a {
+  background: transparent;
+}
+
+.matrix-home-edit {
+  background-image: none;
+}
+
+.matrix-home-partners {
+  background: #fffdfd;
+}
+
+.matrix-home-closing {
+  background: #f8d9e3;
+}
+
+.matrix-home-closing-halo {
+  display: none;
+}
+
+/* Oh My Kitty colour relationship: the SkinMatrix discipline, adapted to a
+   visibly feminine pink / white / lilac / berry retail system. */
+.matrix-home {
+  --matrix-cream: #fffafc;
+  --matrix-peach: #f6cfdd;
+  --matrix-peach-wash: #fbe8ef;
+  --matrix-rose: #cf7898;
+  --matrix-rose-light: #f3bfd0;
+  --matrix-ink: #492e51;
+  --matrix-lilac: #e8e0f0;
+}
+
+.matrix-home-hero-sticky {
+  background:
+    radial-gradient(ellipse 42% 54% at 51% 48%, rgb(255 251 253 / 76%), transparent 67%),
+    linear-gradient(118deg, #f5cad9 0%, #f8dce6 54%, #ede2ef 100%);
+}
+
+.matrix-home-header {
+  background: rgb(255 250 252 / 64%);
+}
+
+.matrix-home-hero h1 em,
+.matrix-home-hero-copy .matrix-home-eyebrow {
+  color: #bd6286;
+}
+
+.matrix-home-button-light,
+.matrix-home-rhythm-switcher button.is-active {
+  background: var(--matrix-ink);
+}
+
+.matrix-home-button-outline {
+  border-color: rgb(73 46 81 / 24%);
+  background: rgb(255 255 255 / 64%);
+}
+
+.matrix-home-hero-needs button.is-active,
+.matrix-home-path-tabs button.is-active {
+  border-color: #cf7898;
+  background: #f5bfd1;
+}
+
+.matrix-home-paths,
+.matrix-home-favourites,
+.matrix-home-partners {
+  background: #fffafc;
+}
+
+.matrix-home-find {
+  background:
+    radial-gradient(circle at 84% 16%, rgb(255 255 255 / 64%), transparent 27%),
+    #fbe3ec;
+}
+
+.matrix-home-find-result {
+  background: rgb(255 250 252 / 64%);
+}
+
+.matrix-home-duality {
+  background: #f0eaf4;
+}
+
+.matrix-home-duality-panel-dark {
+  color: #fff;
+  background: #492e51;
+}
+
+.matrix-home-duality-panel-dark .matrix-home-eyebrow {
+  color: #f3bfd0;
+}
+
+.matrix-home-duality-panel-dark p {
+  color: rgb(255 255 255 / 76%);
+}
+
+.matrix-home-duality-panel-peach,
+.matrix-home-rhythm-copy {
+  background: #f6cfdd;
+}
+
+.matrix-home-rhythm-art,
+.matrix-home-edit {
+  background: #e8e0f0;
+}
+
+.matrix-home-product-card > a,
+.matrix-home-product-card:nth-child(3n + 2) > a,
+.matrix-home-product-card:nth-child(3n) > a {
+  background: #fffafc;
+}
+
+.matrix-home-closing {
+  color: #fff;
+  background:
+    radial-gradient(circle at 50% 40%, rgb(222 155 183 / 45%), transparent 42%),
+    #492e51;
+}
+
+.matrix-home-closing .matrix-home-eyebrow {
+  color: #f3bfd0;
+}
+
+.matrix-home-closing p {
+  color: rgb(255 255 255 / 76%);
+}
+
+/* Care finder — compact the desktop decision step and let the selected
+   product pair answer the question visually instead of leaving blank space. */
+@media (min-width: 720px) {
+  .matrix-home-paths {
+    padding: 96px 5.5vw 108px;
+  }
+
+  .matrix-home-section-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(250px, 0.5fr);
+    column-gap: clamp(44px, 8vw, 140px);
+    align-items: end;
+  }
+
+  .matrix-home-section-intro .matrix-home-eyebrow,
+  .matrix-home-section-intro h2 {
+    grid-column: 1;
+  }
+
+  .matrix-home-section-intro h2 {
+    max-width: 10.5ch;
+    margin-top: 18px;
+    font-size: clamp(4rem, 6vw, 6.25rem);
+  }
+
+  .matrix-home-section-intro > p {
+    grid-column: 2;
+    grid-row: 2;
+    max-width: 30ch;
+    margin: 0 0 12px;
+    font-size: 1rem;
+  }
+
+  .matrix-home-path-layout {
+    gap: 12px;
+    margin-top: 52px;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .matrix-home-path-tabs button {
+    min-height: 74px;
+    padding: 14px 16px;
+    grid-template-columns: 28px 1fr auto;
+    align-content: center;
+    gap: 8px;
+    border-color: rgb(73 46 81 / 13%);
+    border-radius: 15px;
+    color: rgb(73 46 81 / 72%);
+    background: rgb(255 255 255 / 60%);
+    font-size: 0.98rem;
+  }
+
+  .matrix-home-path-tabs button.is-active {
+    color: var(--matrix-ink);
+    background: #f5bfd1;
+  }
+
+  .matrix-home-path-result {
+    min-height: 440px;
+    margin-top: 12px;
+    padding: 48px 48% 44px 48px;
+    border: 1px solid rgb(73 46 81 / 10%);
+    color: var(--matrix-ink);
+    background: linear-gradient(90deg, #fffdfd 0%, #fffdfd 56%, #f8d9e3 56%, #f2d1df 100%);
+  }
+
+.matrix-home-path-result h3 {
+    max-width: 9.5ch;
+    margin-top: 16px;
+    font-size: clamp(3.5rem, 5.2vw, 5.6rem);
+  }
+
+  .matrix-home-path-result > p {
+    max-width: 31ch;
+    font-size: 0.92rem;
+  }
+
+  .matrix-home-path-tags {
+    max-width: 390px;
+    margin-top: 24px;
+  }
+
+  .matrix-home-path-result .matrix-home-text-link {
+    bottom: 43px;
+    left: 48px;
+    color: var(--matrix-ink);
+  }
+
+  .matrix-home-path-products {
+    right: 4%;
+    bottom: 0;
+    width: 42%;
+    height: 100%;
+  }
+
+  .matrix-home-path-products a {
+    width: min(48%, 230px);
+    height: min(82%, 350px);
+  }
+
+  .matrix-home-path-products a:nth-child(4) {
+    width: min(44%, 210px);
+    transform: translate(-32%, 7%) rotate(5deg);
+  }
+}
+
+/* Final product-stage overrides: keep lower homepage scenes intentional at
+   every breakpoint, irrespective of each source PNG's export canvas. */
+.matrix-home {
+  --matrix-cream: #fffafc;
+  --matrix-peach: #f6cfdd;
+  --matrix-peach-wash: #fbe8ef;
+  --matrix-ink: #3d2535;
+  --matrix-rose: #cf7898;
+  --matrix-green: #74816c;
+}
+
+.matrix-home-duality { background: #fffafc; }
+.matrix-home-duality-panel-dark { background: #3d2535; }
+.matrix-home-duality-panel-peach,
+.matrix-home-rhythm-copy { background: #f6cfdd; }
+.matrix-home-duality-panel::after { opacity: 0.12; }
+
+.matrix-home-world-products {
+  right: 0;
+  bottom: 0;
+  width: 52%;
+  height: 92%;
+}
+
+.matrix-home-world-product,
+.matrix-home-find-cutout,
+.matrix-home-rhythm-product {
+  filter: drop-shadow(0 20px 22px rgb(61 37 53 / 15%));
+}
+
+.matrix-home-world-product-mist { right: 7%; bottom: 4%; width: 49%; height: 82%; transform: rotate(-3deg); }
+.matrix-home-world-product-wash { right: 52%; bottom: 7%; width: 37%; height: 59%; transform: rotate(7deg); }
+.matrix-home-world-product-flusher { right: 1%; bottom: 10%; width: 61%; height: 57%; transform: rotate(-5deg); }
+.matrix-home-world-product-boric { right: 59%; bottom: 7%; width: 30%; height: 62%; transform: rotate(7deg); }
+
+.matrix-home-world-product-mist .matrix-home-cutout-mist,
+.matrix-home-rhythm-product-mist .matrix-home-cutout-mist { transform: scale(1.34) translateY(-1%); }
+.matrix-home-world-product-wash .matrix-home-cutout-wash,
+.matrix-home-rhythm-product-wash .matrix-home-cutout-wash { transform: scale(1.2); }
+.matrix-home-world-product-boric .matrix-home-cutout-boric { transform: scale(1.24); }
+
+.matrix-home-find {
+  background: #fbe8ef;
+}
+
+.matrix-home-find-result {
+  min-height: 460px;
+  border-color: rgb(61 37 53 / 8%);
+  background:
+    radial-gradient(circle at 84% 58%, rgb(246 207 221 / 82%), transparent 34%),
+    #fffafc;
+}
+
+.matrix-home-find-result h3 { max-width: 9ch; }
+.matrix-home-find-cutouts { right: 1%; bottom: 0; width: 45%; height: 90%; }
+.matrix-home-find-cutout-1 { right: 2%; bottom: 5%; width: 56%; height: 75%; transform: rotate(-4deg); }
+.matrix-home-find-cutout-2 { top: auto; right: 53%; bottom: 11%; width: 42%; height: 55%; transform: rotate(7deg); }
+.matrix-home-find-cutout-mist .matrix-home-cutout-mist { transform: scale(1.32); }
+.matrix-home-find-cutout-wash .matrix-home-cutout-wash { transform: scale(1.16); }
+
+.matrix-home-rhythm { min-height: 640px; background: #fffafc; }
+.matrix-home-rhythm-art {
+  min-height: 510px;
+  background:
+    radial-gradient(circle at 52% 54%, rgb(246 207 221 / 62%), transparent 38%),
+    #fffafc;
+}
+.matrix-home-rhythm-product-mist { top: 7%; left: 27%; width: 43%; height: 79%; transform: rotate(-4deg); }
+.matrix-home-rhythm-product-wash { right: 7%; bottom: 8%; width: 32%; height: 56%; transform: rotate(8deg); }
+.matrix-home-rhythm-copy h2 { max-width: 7.7ch; font-size: clamp(3.5rem, 7vw, 6.3rem); }
+
+@media (min-width: 720px) {
+  .matrix-home-duality-panel { min-height: 520px; padding: 46px; }
+  .matrix-home-duality-panel h3 { max-width: 6.5ch; }
+  .matrix-home-duality-panel p { max-width: 22ch; }
+  .matrix-home-find-layout { grid-template-columns: minmax(250px, 0.74fr) minmax(0, 1.26fr); gap: 42px; }
+  .matrix-home-find-result { min-height: 540px; padding: 48px 46% 48px 48px; }
+  .matrix-home-find-cutouts { width: 46%; }
+  .matrix-home-rhythm { grid-template-columns: 1.06fr 0.94fr; min-height: 660px; }
+  .matrix-home-rhythm-art { min-height: 660px; }
+  .matrix-home-rhythm-copy { padding: 86px 7vw; }
+  .matrix-home-rhythm-copy h2 { max-width: 7.8ch; font-size: clamp(4rem, 5.3vw, 6.25rem); }
+}
+
+/* The daily scene needs the packshots to feel like the product answer, not
+   decorative stickers. Scale by visible package rather than image canvas. */
+.matrix-home-world-product-mist .matrix-home-cutout-mist { transform: scale(1.88) translateY(-1%); }
+.matrix-home-world-product-wash .matrix-home-cutout-wash { transform: scale(1.52); }
+.matrix-home-world-product-flusher .matrix-home-cutout-flusher { transform: scale(1.34); }
+.matrix-home-world-product-boric .matrix-home-cutout-boric { transform: scale(1.6); }
+
+@media (max-width: 719px) {
+  .matrix-home-world-products { width: 53%; height: 84%; }
+  .matrix-home-find-result { min-height: 470px; padding-right: 46%; }
+  .matrix-home-find-cutouts { width: 51%; }
+  .matrix-home-rhythm-art { min-height: 450px; }
+  .matrix-home-rhythm-copy h2 { max-width: 8ch; font-size: clamp(3.6rem, 15vw, 5.2rem); }
+}
+
+/* Motion and editorial-art pass ------------------------------------------------
+   SkinMatrix feels alive because each product lives inside a changing visual
+   world. Oh My Kitty uses its own studio still-life, petals and botanical
+   details rather than copying any of SkinMatrix's illustrations. */
+.matrix-home-hero-art {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.matrix-home-hero-art-arch {
+  position: absolute;
+  top: -16%;
+  right: 18%;
+  width: min(37vw, 540px);
+  height: min(48vw, 680px);
+  border: 1px solid rgb(207 120 152 / 34%);
+  border-radius: 999px 999px 0 0;
+  box-shadow: inset 0 0 70px rgb(255 255 255 / 30%);
+  transform: rotate(15deg);
+}
+
+.matrix-home-hero-art-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, rgb(255 255 255 / 92%) 0 4%, rgb(255 226 235 / 85%) 24%, rgb(227 155 184 / 58%) 66%, rgb(137 79 105 / 28%));
+  box-shadow: inset -20px -20px 32px rgb(115 51 76 / 17%), 15px 20px 44px rgb(89 44 65 / 10%);
+}
+
+.matrix-home-hero-art-orb-a {
+  top: 19%;
+  left: 28%;
+  width: clamp(74px, 9vw, 138px);
+  aspect-ratio: 1;
+}
+
+.matrix-home-hero-art-orb-b {
+  right: 29%;
+  bottom: 14%;
+  width: clamp(46px, 5.6vw, 88px);
+  aspect-ratio: 1;
+  opacity: 0.82;
+}
+
+.matrix-home-hero-art-leaf {
+  position: absolute;
+  right: -5%;
+  bottom: -17%;
+  width: min(31vw, 430px);
+  height: min(45vw, 610px);
+  background: url("/hero/botanicals/leaf-foreground-01.svg") center / contain no-repeat;
+  opacity: 0.18;
+  transform: rotate(-22deg);
+}
+
+.matrix-home-hero-art-spark {
+  position: absolute;
+  color: #cf7898;
+  font-size: clamp(1.2rem, 2vw, 2.3rem);
+  font-style: normal;
+  line-height: 1;
+}
+
+.matrix-home-hero-art-spark-a { top: 18%; right: 38%; }
+.matrix-home-hero-art-spark-b { bottom: 21%; left: 36%; font-size: clamp(0.85rem, 1.3vw, 1.5rem); }
+
+.matrix-home-duality-panel::before,
+.matrix-home-find-result::before,
+.matrix-home-rhythm-art::before {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  content: "";
+}
+
+.matrix-home-duality-panel-dark::before {
+  top: -16%;
+  right: -8%;
+  width: 46%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 34% 28%, rgb(255 255 255 / 38%), rgb(223 147 176 / 34%) 33%, transparent 69%);
+}
+
+.matrix-home-duality-panel-peach::before {
+  bottom: -21%;
+  left: -10%;
+  width: 54%;
+  aspect-ratio: 1;
+  border: 1px solid rgb(61 37 53 / 15%);
+  background: radial-gradient(circle at 42% 37%, rgb(255 255 255 / 56%), rgb(255 236 242 / 20%) 42%, transparent 70%);
+}
+
+.matrix-home-find-result::before {
+  top: 7%;
+  right: -9%;
+  width: 41%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 35% 31%, rgb(255 255 255 / 72%), rgb(246 207 221 / 53%) 35%, transparent 70%);
+}
+
+.matrix-home-find-result > :not(.matrix-home-find-cutouts) {
+  z-index: 2;
+}
+
+.matrix-home-rhythm-art::before {
+  top: 16%;
+  left: 13%;
+  width: 68%;
+  aspect-ratio: 1;
+  border: 1px solid rgb(207 120 152 / 23%);
+  background: radial-gradient(circle at 50% 50%, rgb(255 255 255 / 52%), transparent 66%);
+}
+
+.matrix-home-still-life {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+  min-height: 720px;
+  overflow: hidden;
+  color: var(--matrix-ink);
+  background: #fffafc;
+}
+
+.matrix-home-still-life-copy {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  padding: clamp(54px, 8vw, 134px);
+}
+
+.matrix-home-still-life-copy .matrix-home-eyebrow { color: var(--matrix-green); }
+
+.matrix-home-still-life-copy h2 {
+  max-width: 6.5ch;
+  margin: 17px 0 0;
+  font-family: var(--font-serif);
+  font-size: clamp(3.8rem, 6.5vw, 7.2rem);
+  font-weight: 500;
+  letter-spacing: -0.075em;
+  line-height: 0.86;
+}
+
+.matrix-home-still-life-copy p {
+  max-width: 29ch;
+  margin: 23px 0 0;
+  color: rgb(61 37 53 / 70%);
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+.matrix-home-still-life-copy .matrix-home-text-link { color: var(--matrix-ink); }
+
+.matrix-home-still-life-image {
+  position: relative;
+  min-height: 720px;
+  overflow: hidden;
+  background: #f4d7df;
+}
+
+.matrix-home-still-life-image::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgb(255 250 252 / 18%), transparent 43%, rgb(62 35 49 / 8%));
+  content: "";
+  pointer-events: none;
+}
+
+.matrix-home-still-life-image img {
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.04);
+}
+
+.matrix-home-still-life-stamp {
+  position: absolute;
+  z-index: 2;
+  right: 28px;
+  bottom: 26px;
+  border: 1px solid rgb(255 255 255 / 58%);
+  border-radius: 999px;
+  padding: 10px 14px;
+  color: #fff;
+  background: rgb(61 37 53 / 44%);
+  backdrop-filter: blur(10px);
+  font-size: 0.56rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.matrix-home-still-life-glint {
+  position: absolute;
+  z-index: 2;
+  top: 12%;
+  right: 9%;
+  color: #fff;
+  font-size: 2.4rem;
+  font-style: normal;
+  text-shadow: 0 4px 20px rgb(82 42 58 / 23%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home.is-motion-ready .matrix-home-motion-reveal {
+    opacity: 0;
+    translate: 0 48px;
+    transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1), translate 800ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .matrix-home.is-motion-ready .matrix-home-motion-reveal.is-visible {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  .matrix-home-hero-art-arch { animation: matrixSoftTurn 24s linear infinite; }
+  .matrix-home-hero-art-orb-a { animation: matrixOrbFloat 9s ease-in-out infinite alternate; }
+  .matrix-home-hero-art-orb-b { animation: matrixOrbFloat 12s ease-in-out -4s infinite alternate-reverse; }
+  .matrix-home-hero-art-leaf { animation: matrixLeafBreathe 15s ease-in-out infinite alternate; }
+  .matrix-home-hero-art-spark-a { animation: matrixSparkle 3.8s ease-in-out infinite; }
+  .matrix-home-hero-art-spark-b { animation: matrixSparkle 4.7s ease-in-out -1.2s infinite; }
+
+  .matrix-home-hero-product-1 { animation: matrixProductFloat 9s ease-in-out infinite; }
+  .matrix-home-hero-product-2 { animation: matrixProductFloat 11s ease-in-out -3s infinite reverse; }
+  .matrix-home-hero-product-3 { animation: matrixProductFloat 8s ease-in-out -4s infinite; }
+  .matrix-home-hero-product-4 { animation: matrixProductFloat 10s ease-in-out -2s infinite reverse; }
+  .matrix-home-world-product-1,
+  .matrix-home-rhythm-product-1 { animation: matrixProductFloat 8s ease-in-out infinite; }
+  .matrix-home-world-product-2,
+  .matrix-home-rhythm-product-2 { animation: matrixProductFloat 10s ease-in-out -3s infinite reverse; }
+  .matrix-home-find-cutout-1 { animation: matrixProductFloat 9s ease-in-out infinite; }
+  .matrix-home-find-cutout-2 { animation: matrixProductFloat 11s ease-in-out -2s infinite reverse; }
+  .matrix-home-still-life-image img { animation: matrixStillLifeMove 16s ease-in-out infinite alternate; }
+}
+
+@keyframes matrixSoftTurn { to { rotate: 1turn; } }
+@keyframes matrixOrbFloat { from { translate: -7px 10px; scale: 0.96; } to { translate: 11px -13px; scale: 1.05; } }
+@keyframes matrixLeafBreathe { from { translate: -8px 8px; rotate: -22deg; } to { translate: 11px -12px; rotate: -15deg; } }
+@keyframes matrixSparkle { 0%, 100% { opacity: 0.3; scale: 0.78; } 50% { opacity: 1; scale: 1.18; } }
+@keyframes matrixProductFloat { 0%, 100% { translate: 0 0; } 50% { translate: 0 -15px; } }
+@keyframes matrixStillLifeMove { from { scale: 1.04; object-position: 48% 50%; } to { scale: 1.1; object-position: 54% 46%; } }
+
+@media (max-width: 719px) {
+  .matrix-home-hero-art-arch { top: -5%; right: -19%; width: 74vw; height: 86vw; }
+  .matrix-home-hero-art-orb-a { top: 17%; left: 19%; }
+  .matrix-home-hero-art-orb-b { right: 18%; bottom: 16%; }
+  .matrix-home-hero-art-leaf { right: -23%; bottom: -5%; width: 70vw; height: 86vw; opacity: 0.12; }
+  .matrix-home-hero-art-spark-a { top: 13%; right: 27%; }
+  .matrix-home-hero-art-spark-b { bottom: 19%; left: 25%; }
+
+  .matrix-home-still-life { grid-template-columns: 1fr; min-height: 0; }
+  .matrix-home-still-life-copy { min-height: 440px; padding: 72px 22px 56px; }
+  .matrix-home-still-life-copy h2 { font-size: clamp(3.8rem, 17vw, 5.2rem); }
+  .matrix-home-still-life-image { min-height: 420px; }
+  .matrix-home-still-life-image img { object-position: 55% center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .matrix-home-hero-art-arch,
+  .matrix-home-hero-art-orb,
+  .matrix-home-hero-art-leaf,
+  .matrix-home-hero-art-spark,
+  .matrix-home-hero-product,
+  .matrix-home-world-product,
+  .matrix-home-find-cutout,
+  .matrix-home-rhythm-product,
+  .matrix-home-still-life-image img {
+    animation: none !important;
+  }
+}
+
+/* Final campaign hero composition. This block stays last so it deliberately
+   replaces the earlier exploratory hero treatments. */
+.matrix-home-hero-sticky { color: var(--matrix-ink); background: #fff5ef; }
+.matrix-home-hero-backdrop { position: absolute; z-index: 0; inset: 0; overflow: hidden; }
+.matrix-home-hero-backdrop::after { position: absolute; inset: 0; background: linear-gradient(90deg, rgb(255 249 245 / 82%) 0%, rgb(255 249 245 / 57%) 35%, rgb(255 249 245 / 8%) 68%, rgb(255 249 245 / 12%) 100%); content: ""; }
+.matrix-home-hero-backdrop img { object-fit: cover; object-position: center; }
+.matrix-home-hero-sticky .matrix-home-grid,
+.matrix-home-hero-sticky .matrix-home-orbit,
+.matrix-home-hero-threads { display: none; }
+
+.matrix-home-hero .matrix-home-hero-copy {
+  top: 48%;
+  left: 6.5vw;
+  width: min(430px, 37vw);
+  color: var(--matrix-ink);
+  text-align: left;
+  transform: translateY(-50%);
+}
+
+.matrix-home-hero-copy h1 { max-width: 5.4ch; color: var(--matrix-ink); }
+.matrix-home-hero h1 em,
+.matrix-home-hero-copy .matrix-home-eyebrow { color: #c46f91; }
+.matrix-home-hero-copy > p,
+.matrix-home-hero-intro > p { margin-right: 0; margin-left: 0; color: rgb(61 37 53 / 72%); }
+.matrix-home-hero-actions,
+.matrix-home-trust,
+.matrix-home-hero-needs { justify-content: flex-start; }
+.matrix-home-hero-products { z-index: 2; inset: 0; }
+.matrix-home-hero-product { filter: drop-shadow(0 26px 22px rgb(72 42 51 / 20%)); }
+
+.matrix-home-hero .matrix-home-hero-product-1 {
+  top: auto;
+  right: 10.5%;
+  bottom: 8%;
+  left: auto;
+  width: clamp(220px, 20vw, 340px);
+  height: clamp(360px, 56vh, 600px);
+}
+
+.matrix-home-hero .matrix-home-hero-product-2 {
+  top: auto;
+  right: 34%;
+  bottom: 12%;
+  left: auto;
+  width: clamp(150px, 13vw, 220px);
+  height: clamp(250px, 42vh, 450px);
+}
+
+.matrix-home-hero-product-1 .matrix-home-cutout-wash { transform: scale(1.24) translateY(-2%); }
+.matrix-home-hero-product-2 .matrix-home-cutout-mist { transform: scale(1.38) translateY(-2%); }
+.matrix-home-hero-note { right: auto; bottom: 5.5%; left: 6.5vw; color: rgb(61 37 53 / 58%); }
+.matrix-home-hero-payoff h2 { color: var(--matrix-ink); }
+.matrix-home-hero-payoff p { color: rgb(61 37 53 / 72%); }
+
+@media (max-width: 719px) {
+  .matrix-home-hero-sticky { min-height: 730px; }
+  .matrix-home-hero-backdrop img { object-position: 59% center; }
+  .matrix-home-hero-backdrop::after { background: linear-gradient(180deg, rgb(255 249 245 / 76%) 0%, rgb(255 249 245 / 45%) 50%, rgb(255 249 245 / 6%) 100%); }
+  .matrix-home-hero .matrix-home-hero-copy { top: 17%; right: 20px; left: 20px; width: auto; text-align: left; transform: none; }
+  .matrix-home-hero-copy h1 { max-width: 6.1ch; font-size: clamp(3.5rem, 15vw, 4.35rem); }
+  .matrix-home-hero-actions,
+  .matrix-home-trust,
+  .matrix-home-hero-needs { justify-content: flex-start; }
+  .matrix-home-hero-intro > .matrix-home-eyebrow { display: inline-block; }
+  .matrix-home-hero .matrix-home-hero-product-1 { right: 3%; bottom: 4%; width: min(45vw, 196px); height: 47vh; }
+  .matrix-home-hero .matrix-home-hero-product-2 { right: 40%; bottom: 6%; width: min(30vw, 132px); height: 35vh; }
+  .matrix-home-hero-note { right: 20px; bottom: 1.6%; left: 20px; }
+}
+
+/* Final daily ritual composition. Kept after all prior treatments so the
+   physical campaign set wins over the old colour-block panel. */
+.matrix-home-duality-panel-dark { color: var(--matrix-ink); background: #fffafc; }
+.matrix-home-world-backdrop { position: absolute; z-index: 0; inset: 0; overflow: hidden; }
+.matrix-home-world-backdrop::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgb(255 251 247 / 92%) 0%, rgb(255 251 247 / 68%) 43%, rgb(255 251 247 / 8%) 84%);
+  content: "";
+}
+.matrix-home-world-backdrop img { object-fit: cover; object-position: center; }
+.matrix-home-duality-panel-dark .matrix-home-eyebrow,
+.matrix-home-duality-panel-dark p { color: rgb(61 37 53 / 70%); }
+.matrix-home-duality-panel > :not(.matrix-home-world-products):not(.matrix-home-world-backdrop) { position: relative; z-index: 2; }
+.matrix-home-duality-panel-dark .matrix-home-world-products { z-index: 1; }
+.matrix-home-duality-panel-dark::before,
+.matrix-home-duality-panel-dark::after { display: none; }
+
+/* Final product photography composition. This remains last to supersede the
+   legacy transparent-packshot stages on the homepage. */
+.matrix-home-hero-campaign-shot {
+  position: absolute;
+  z-index: 1;
+  top: 82px;
+  right: 0;
+  bottom: 0;
+  width: min(52vw, 760px);
+  overflow: hidden;
+}
+.matrix-home-hero-campaign-shot::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #fff5ef 0%, rgb(255 245 239 / 45%) 18%, transparent 46%);
+  content: "";
+  pointer-events: none;
+}
+.matrix-home-hero-campaign-shot { background: #f3d2c3; }
+.matrix-home-hero-campaign-shot img { object-fit: contain; object-position: center; will-change: transform; }
+.matrix-home-hero .matrix-home-hero-copy,
+.matrix-home-hero-note { z-index: 3; }
+
+.matrix-home-duality-panel { overflow: hidden; }
+.matrix-home-duality-panel .matrix-home-world-backdrop { z-index: 0; }
+.matrix-home-duality-panel .matrix-home-world-backdrop::after {
+  background: linear-gradient(90deg, rgb(255 251 247 / 94%) 0%, rgb(255 251 247 / 74%) 43%, rgb(255 251 247 / 12%) 79%);
+}
+.matrix-home-duality-panel .matrix-home-world-backdrop img { object-fit: contain; object-position: center; }
+.matrix-home-duality-panel-peach { color: var(--matrix-ink); background: #f8d9e3; }
+.matrix-home-duality-panel-peach .matrix-home-world-backdrop::after {
+  background: linear-gradient(90deg, rgb(255 240 245 / 95%) 0%, rgb(255 240 245 / 68%) 45%, rgb(255 240 245 / 8%) 84%);
+}
+.matrix-home-duality-panel-peach > :not(.matrix-home-world-backdrop) { position: relative; z-index: 2; }
+
+.matrix-home-find-result { position: relative; overflow: hidden; }
+.matrix-home-find-result > .matrix-home-find-campaign-shot { position: absolute; z-index: 0; top: 0; right: 0; bottom: 0; width: 47%; overflow: hidden; }
+.matrix-home-find-campaign-shot::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgb(255 250 252 / 89%) 0%, rgb(255 250 252 / 34%) 34%, transparent 68%);
+  content: "";
+}
+.matrix-home-find-campaign-shot img { object-fit: contain; object-position: center; background: #f8dedb; }
+.matrix-home-find-result > :not(.matrix-home-find-campaign-shot) { position: relative; z-index: 2; }
+
+.matrix-home-product-card > a:has(.matrix-home-campaign-product-photo) { background: #f8d9e3; }
+.matrix-home-product-card > a .matrix-home-campaign-product-photo { padding: 0; object-fit: contain; object-position: center; }
+.matrix-home-product-card:has(.matrix-home-campaign-product-photo) .matrix-home-product-copy { background: #fffafc; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home-hero-campaign-shot img { animation: matrixCampaignKenBurns 18s ease-in-out infinite alternate; }
+  .matrix-home-hero-campaign-shot { animation: matrixCampaignFloat 9s ease-in-out infinite alternate; }
+}
+@keyframes matrixCampaignKenBurns {
+  from { transform: scale(1) translate3d(-0.35%, 0.35%, 0); }
+  to { transform: scale(1.012) translate3d(0.55%, -0.55%, 0); }
+}
+@keyframes matrixCampaignFloat { from { translate: 0 0; } to { translate: 0 -7px; } }
+
+@media (max-width: 719px) {
+  .matrix-home-hero-campaign-shot { top: 40%; right: 0; bottom: 0; left: 0; width: auto; }
+  .matrix-home-hero-campaign-shot::after { background: linear-gradient(180deg, rgb(255 245 239 / 72%) 0%, rgb(255 245 239 / 13%) 56%, transparent 100%); }
+  .matrix-home-hero-campaign-shot img { object-position: 58% 52%; }
+  .matrix-home-find-campaign-shot { width: 52%; }
+}
+
+/* Win over the legacy :not() selectors that give these visual layers
+   document-flow positioning. */
+.matrix-home-duality-panel > .matrix-home-world-backdrop { position: absolute; z-index: 0; inset: 0; }
+.matrix-home-find-result > .matrix-home-find-campaign-shot { position: absolute; z-index: 0; top: 0; right: 0; bottom: 0; }
+
+/* Keep the product presence strong on the right while the left remains a
+   quiet reading surface. */
+.matrix-home-duality-panel .matrix-home-world-backdrop::after {
+  background: linear-gradient(90deg, rgb(255 251 247 / 96%) 0%, rgb(255 251 247 / 66%) 39%, rgb(255 251 247 / 8%) 64%, transparent 80%);
+}
+.matrix-home-duality-panel-peach .matrix-home-world-backdrop::after {
+  background: linear-gradient(90deg, rgb(255 240 245 / 96%) 0%, rgb(255 240 245 / 63%) 39%, rgb(255 240 245 / 7%) 64%, transparent 80%);
+}
+.matrix-home-duality-panel-dark .matrix-home-world-backdrop img { transform: scale(1.08) translateX(3%); }
+.matrix-home-duality-panel-peach .matrix-home-world-backdrop img { transform: scale(1.16) translateX(5%); }
+
+.matrix-home-product-card > a { background: #fbedf1; }
+.matrix-home-product-card:nth-child(3n + 2) > a { background: #f8e7ed; }
+.matrix-home-product-card:nth-child(3n) > a { background: #f7e0e8; }
+.matrix-home-product-card > a .matrix-home-cutout-chronic { padding: 0; transform: scale(1.48) translateY(-4%); }
+
+/* Hero product loop --------------------------------------------------------- */
+.matrix-home-hero-campaign {
+  position: absolute;
+  z-index: 1;
+  top: 82px;
+  right: 0;
+  bottom: 0;
+  width: min(52vw, 760px);
+  overflow: hidden;
+  background: #f3d2c3;
+}
+.matrix-home-hero-campaign-shot {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(7%, 0, 0) scale(0.99);
+  transition: opacity 720ms ease, transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.matrix-home-hero-campaign-shot.is-active { opacity: 1; pointer-events: auto; transform: translate3d(0, 0, 0) scale(1); }
+.matrix-home-hero-campaign-shot::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #fff5ef 0%, rgb(255 245 239 / 44%) 18%, transparent 46%);
+  content: "";
+  pointer-events: none;
+}
+.matrix-home-hero-campaign-shot img { object-fit: contain; object-position: center; will-change: transform; }
+.matrix-home-hero-campaign-shot > span {
+  position: absolute;
+  z-index: 2;
+  right: 20px;
+  bottom: 22px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 14px;
+  min-width: 150px;
+  padding: 11px 13px;
+  color: var(--matrix-ink);
+  background: rgb(255 250 249 / 78%);
+  backdrop-filter: blur(10px);
+  font-size: 0.75rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+.matrix-home-hero-campaign-shot > span small { grid-column: 1 / -1; color: rgb(61 37 53 / 58%); font-size: 0.51rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; }
+.matrix-home-hero-campaign-shot > span b { align-self: end; font-size: 0.9rem; }
+.matrix-home-hero-pagination {
+  position: absolute;
+  z-index: 4;
+  right: 24px;
+  bottom: 101px;
+  display: flex;
+  gap: 6px;
+}
+.matrix-home-hero-pagination button { width: 18px; height: 3px; padding: 0; border: 0; border-radius: 999px; background: rgb(61 37 53 / 28%); transition: width 300ms ease, background 300ms ease; }
+.matrix-home-hero-pagination button.is-active { width: 34px; background: var(--matrix-ink); }
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home-hero-campaign { animation: matrixCampaignFloat 9s ease-in-out infinite alternate; }
+  .matrix-home-hero-campaign-shot.is-active img { animation: matrixCampaignKenBurns 8s ease-in-out both; }
+}
+
+/* Care concierge ------------------------------------------------------------ */
+.matrix-home-find { background: #fbe8ef; }
+.matrix-home-find-intro { max-width: 720px; }
+.matrix-home-find-intro h2 { max-width: 7.2ch; }
+.matrix-home-find-layout { align-items: stretch; gap: clamp(22px, 4vw, 64px); }
+.matrix-home-find-list { display: grid; align-content: stretch; gap: 9px; }
+.matrix-home-find-list button {
+  display: grid;
+  min-height: 102px;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid rgb(61 37 53 / 13%);
+  border-radius: 0;
+  color: rgb(61 37 53 / 72%);
+  background: rgb(255 250 252 / 42%);
+  text-align: left;
+  transition: color 260ms ease, background 260ms ease, translate 260ms ease;
+}
+.matrix-home-find-list button small { color: var(--matrix-rose); font-size: 0.61rem; font-weight: 900; letter-spacing: 0.08em; }
+.matrix-home-find-list button span { display: grid; gap: 3px; }
+.matrix-home-find-list button b { color: currentColor; font-family: var(--font-serif); font-size: clamp(1.45rem, 2.3vw, 2.25rem); font-weight: 500; letter-spacing: -0.06em; line-height: 0.9; }
+.matrix-home-find-list button em { color: rgb(61 37 53 / 54%); font-size: 0.64rem; font-style: normal; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+.matrix-home-find-list button i { font-style: normal; font-size: 1.05rem; }
+.matrix-home-find-list button.is-active { color: #fffafc; background: var(--matrix-ink); translate: 12px 0; }
+.matrix-home-find-list button.is-active small,
+.matrix-home-find-list button.is-active em { color: #f6cfdd; }
+
+.matrix-home-find-result { min-height: 620px; border: 0; background: #fffafc; }
+.matrix-home-find-content { position: relative; z-index: 3; display: grid; align-content: center; min-height: 620px; width: 55%; padding: 52px 0 50px 52px; }
+.matrix-home-find-count { position: absolute; z-index: -1; top: 22px; left: 38px; color: rgb(246 207 221 / 58%); font-size: clamp(7rem, 15vw, 13rem); font-weight: 900; letter-spacing: -0.12em; line-height: 0.7; }
+.matrix-home-find-content > .matrix-home-eyebrow { color: var(--matrix-green); }
+.matrix-home-find-content h3 { max-width: 7.6ch; margin: 14px 0 10px; font-size: clamp(3.4rem, 5.3vw, 5.9rem); }
+.matrix-home-find-content > p { max-width: 29ch; margin: 0; color: rgb(61 37 53 / 71%); font-size: 0.94rem; }
+.matrix-home-find-notes { display: grid; gap: 8px; margin-top: 24px; }
+.matrix-home-find-notes span { display: grid; grid-template-columns: 26px 1fr; gap: 8px; color: var(--matrix-ink); font-size: 0.72rem; font-weight: 900; }
+.matrix-home-find-notes b { color: var(--matrix-green); font-size: 0.58rem; letter-spacing: 0.08em; }
+.matrix-home-find-products { display: grid; gap: 1px; width: min(100%, 310px); margin-top: 25px; background: rgb(61 37 53 / 12%); }
+.matrix-home-find-products a { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; padding: 11px 12px; color: var(--matrix-ink); background: rgb(255 250 252 / 88%); font-size: 0.69rem; font-weight: 900; }
+.matrix-home-find-products a span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.matrix-home-find-products a b { color: var(--matrix-rose); font-size: 0.66rem; }
+.matrix-home-find-products a i { font-style: normal; }
+.matrix-home-find-content .matrix-home-button { width: fit-content; margin-top: 24px; }
+.matrix-home-find-result > .matrix-home-find-campaign-shot { z-index: 1; width: 52%; }
+.matrix-home-find-campaign-shot::after { background: linear-gradient(90deg, rgb(255 250 252 / 94%) 0%, rgb(255 250 252 / 35%) 38%, transparent 74%); }
+.matrix-home-find-campaign-shot img { object-fit: cover; object-position: 65% center; background: #f8dedb; }
+
+@media (max-width: 719px) {
+  .matrix-home-hero-campaign { top: 42%; right: 0; bottom: 0; left: 0; width: auto; }
+  .matrix-home-hero-campaign-shot { transform: translate3d(0, 5%, 0) scale(0.99); }
+  .matrix-home-hero-campaign-shot.is-active { transform: translate3d(0, 0, 0) scale(1); }
+  .matrix-home-hero-campaign-shot::after { background: linear-gradient(180deg, rgb(255 245 239 / 72%) 0%, rgb(255 245 239 / 11%) 54%, transparent 100%); }
+  .matrix-home-hero-campaign-shot > span { right: 15px; bottom: 16px; }
+  .matrix-home-hero-pagination { right: 17px; bottom: 92px; }
+  .matrix-home-hero-note { z-index: 5; }
+
+  .matrix-home-find { padding-right: 0; padding-left: 0; }
+  .matrix-home-find-intro { padding: 0 20px; }
+  .matrix-home-find-layout { display: grid; gap: 18px; }
+  .matrix-home-find-list { display: flex; gap: 9px; padding: 0 20px 4px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .matrix-home-find-list::-webkit-scrollbar { display: none; }
+  .matrix-home-find-list button { flex: 0 0 174px; min-height: 92px; scroll-snap-align: start; }
+  .matrix-home-find-list button.is-active { translate: 0 -4px; }
+  .matrix-home-find-result { min-height: 650px; margin: 0; }
+  .matrix-home-find-content { min-height: 650px; width: 100%; padding: 38px 22px 284px; }
+  .matrix-home-find-count { top: 28px; left: 18px; font-size: 8rem; }
+  .matrix-home-find-content h3 { margin-top: 12px; font-size: clamp(3.3rem, 15vw, 4.7rem); }
+  .matrix-home-find-result > .matrix-home-find-campaign-shot { top: auto; width: 100%; height: 282px; }
+  .matrix-home-find-campaign-shot::after { background: linear-gradient(180deg, rgb(255 250 252 / 34%) 0%, transparent 42%); }
+  .matrix-home-find-campaign-shot img { object-fit: cover; object-position: 65% 52%; }
+}
+
+/* Keep the carousel controls above the following spatial section so the
+   visible dots remain touchable on both compact and wide layouts. */
+.matrix-home-hero { z-index: auto; isolation: auto; }
+.matrix-home-hero-campaign { z-index: 1; }
+.matrix-home-hero-pagination { z-index: 4; top: 24px; bottom: auto; }
+.matrix-home-hero-campaign-shot > span { top: 18px; bottom: auto; }
+.matrix-home-hero .matrix-home-hero-copy { z-index: 3; }
+.matrix-home-hero-note { z-index: 3; }
+
+@media (max-width: 719px) {
+  .matrix-home-hero-pagination { top: 16px; bottom: auto; }
+  .matrix-home-hero-campaign-shot > span { top: 14px; bottom: auto; }
+}
+
+/* Homepage sequence: the concierge is the only care-selection scene.
+   The later chapters now use photography and editorial contrast instead of
+   another set of competing category tabs. */
+.matrix-home-rhythm {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  min-height: 680px;
+  overflow: hidden;
+  background: #fff9f6;
+}
+.matrix-home-rhythm-art {
+  position: relative;
+  min-height: 680px;
+  overflow: hidden;
+  background: #f7dfe6;
+}
+.matrix-home-rhythm-art > img {
+  object-fit: cover;
+  object-position: center;
+  transition: opacity 520ms ease, transform 900ms cubic-bezier(.2,.75,.25,1);
+}
+.matrix-home-rhythm-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 52%, rgb(255 249 246 / 18%));
+  pointer-events: none;
+}
+.matrix-home-rhythm-photo-label {
+  position: absolute;
+  z-index: 2;
+  top: 28px;
+  left: 30px;
+  display: grid;
+  gap: 5px;
+  color: var(--matrix-ink);
+  font-family: var(--font-serif);
+  font-size: clamp(1.55rem, 2.6vw, 2.55rem);
+  letter-spacing: -0.06em;
+  line-height: .86;
+}
+.matrix-home-rhythm-photo-label small {
+  color: var(--matrix-green);
+  font-family: var(--font-sans);
+  font-size: .61rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.matrix-home-rhythm-copy {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  padding: clamp(54px, 7vw, 110px);
+  background: #f6cfdd;
+}
+.matrix-home-rhythm-copy h2 { max-width: 7ch; }
+.matrix-home-rhythm-copy > p { max-width: 31ch; }
+
+.matrix-home-edit {
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+  min-height: 630px;
+  padding: 0;
+  overflow: hidden;
+  background: var(--matrix-ink);
+}
+.matrix-home-edit::before { display: none; }
+.matrix-home-edit-copy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  padding: clamp(48px, 6vw, 100px);
+  color: #fff9f6;
+}
+.matrix-home-edit-copy .matrix-home-eyebrow { color: #f6cfdd; }
+.matrix-home-edit-copy h2 { max-width: 7.6ch; margin: 14px 0; color: #fff9f6; }
+.matrix-home-edit-copy > p { max-width: 31ch; color: rgb(255 249 246 / 72%); }
+.matrix-home-edit-copy .matrix-home-text-link { margin-top: 28px; color: #fff9f6; }
+.matrix-home-edit-photo {
+  position: relative;
+  min-height: 630px;
+  overflow: hidden;
+  background: #f6cfdd;
+}
+.matrix-home-edit-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgb(61 37 53 / 18%), transparent 44%);
+  pointer-events: none;
+}
+.matrix-home-edit-photo img { object-fit: cover; object-position: 82% center; }
+.matrix-home-edit-copy .matrix-home-edit-marquee { width: calc(100% + clamp(48px, 6vw, 100px)); margin-top: 28px; margin-left: 0; }
+.matrix-home-edit-copy .matrix-home-edit-track span { color: var(--matrix-ink); background: #f6cfdd; }
+
+/* Verifiable trust marks: linked marks lead to their own official service or
+   verification destination. They do not make unverified approval claims. */
+.matrix-home-partner {
+  color: inherit;
+  text-decoration: none;
+}
+.matrix-home-partner-fda {
+  position: relative;
+  width: 216px;
+  border-color: rgb(85 107 69 / 28%);
+  background: linear-gradient(135deg, #f5faef, #fffdf9);
+}
+.matrix-home-partner-logo { width: min(152px, calc(100% - 24px)); height: 32px; margin: 0 auto; object-fit: contain; }
+.matrix-home-partner-logo-paystack,
+.matrix-home-partner-logo-stormglide { object-fit: cover; object-position: center; }
+.matrix-home-partner-logo-dfg { width: min(158px, calc(100% - 22px)); }
+.matrix-home-partner[href] { transition: transform 180ms ease, border-color 180ms ease; }
+.matrix-home-partner[href]:hover { border-color: rgb(61 37 53 / 35%); transform: translateY(-3px); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home-rhythm-art > img { animation: matrixCampaignFloat 10s ease-in-out infinite alternate; }
+}
+
+@media (max-width: 719px) {
+  .matrix-home-rhythm { display: flex; flex-direction: column; min-height: 0; }
+  .matrix-home-rhythm-art { order: 2; min-height: 430px; }
+  .matrix-home-rhythm-art > img { object-position: center; }
+  .matrix-home-rhythm-photo-label { top: 22px; left: 22px; }
+  .matrix-home-rhythm-copy { order: 1; padding: 60px 22px; }
+  .matrix-home-edit { display: flex; flex-direction: column; min-height: 0; }
+  .matrix-home-edit-copy { padding: 66px 22px 44px; }
+  .matrix-home-edit-photo { min-height: 360px; }
+  .matrix-home-edit-photo img { object-position: 78% center; }
+  .matrix-home-edit-copy .matrix-home-edit-marquee { width: calc(100% + 22px); margin-top: 24px; }
+  .matrix-home-partner-fda { width: 190px; }
+}
+
+/* One visual world ----------------------------------------------------------
+   Product packs stay transparent and move through one OMK canvas. This avoids
+   a different synthetic photo studio for every product and section. */
+.matrix-home-hero,
+.matrix-home-hero-sticky {
+  background:
+    radial-gradient(ellipse 42% 66% at 81% 51%, rgb(255 214 227 / 84%), transparent 72%),
+    radial-gradient(ellipse 38% 60% at 8% 92%, rgb(255 255 255 / 78%), transparent 74%),
+    linear-gradient(125deg, #fff7f5 0%, #f8dde4 53%, #f5c8d6 100%);
+}
+.matrix-home-hero-backdrop { display: block; background: transparent; }
+.matrix-home-hero-backdrop::after { display: none; }
+.matrix-home-hero-campaign { background: transparent; }
+.matrix-home-hero-campaign-shot { background: transparent !important; }
+.matrix-home-hero-campaign-shot::after { display: none; }
+.matrix-home-hero-pack {
+  object-fit: contain !important;
+  object-position: center bottom !important;
+  padding: clamp(20px, 3.4vw, 54px) clamp(22px, 4vw, 78px) clamp(18px, 2.2vw, 36px);
+  filter: drop-shadow(0 28px 23px rgb(74 34 50 / 20%));
+}
+.matrix-home-hero-pack-wash { transform: scale(1.12) translateY(2%); }
+.matrix-home-hero-pack-mist { transform: scale(1.08) translateY(1%); }
+.matrix-home-hero-pack-boric { transform: scale(1.23) translateY(2%); }
+.matrix-home-hero-pack-flusher { transform: scale(1.04) translateY(3%); }
+.matrix-home-hero-campaign-shot > span { background: rgb(255 250 252 / 78%); backdrop-filter: blur(12px); }
+
+.matrix-home-duality-panel .matrix-home-world-backdrop,
+.matrix-home-duality-panel .matrix-home-world-backdrop-targeted {
+  background: transparent;
+}
+.matrix-home-world-backdrop .matrix-home-cutout {
+  object-fit: contain;
+  object-position: 83% bottom;
+  padding: 13% 8% 4% 28%;
+  filter: drop-shadow(0 24px 18px rgb(34 15 31 / 24%));
+}
+.matrix-home-duality-panel-dark { background: #43263f; }
+.matrix-home-duality-panel-peach { background: #f5c9d7; }
+
+.matrix-home-find-result,
+.matrix-home-find-result > .matrix-home-find-campaign-shot { background: #fff8f6; }
+.matrix-home-find-campaign-shot::after { display: none; }
+.matrix-home-find-campaign-shot .matrix-home-cutout {
+  object-fit: contain;
+  object-position: center bottom;
+  padding: 8% 9% 5%;
+  filter: drop-shadow(0 25px 20px rgb(74 34 50 / 18%));
+}
+
+.matrix-home-product-rail {
+  padding: clamp(18px, 2vw, 28px);
+  background:
+    radial-gradient(circle at 9% 8%, rgb(255 255 255 / 82%), transparent 31%),
+    linear-gradient(115deg, #f8dfe7, #f4ccd8 48%, #f8dfe7);
+}
+.matrix-home-product-card,
+.matrix-home-product-card:has(.matrix-home-cutout),
+.matrix-home-product-card:has(.matrix-home-campaign-product-photo) { background: transparent; }
+.matrix-home-product-card > a,
+.matrix-home-product-card:nth-child(3n + 2) > a,
+.matrix-home-product-card:nth-child(3n) > a,
+.matrix-home-product-card > a:has(.matrix-home-campaign-product-photo) { background: transparent !important; }
+.matrix-home-product-card > a .matrix-home-cutout {
+  object-fit: contain;
+  padding: 10% 12% 4%;
+  filter: drop-shadow(0 22px 17px rgb(74 34 50 / 18%));
+}
+.matrix-home-product-card .matrix-home-product-copy,
+.matrix-home-product-card:has(.matrix-home-campaign-product-photo) .matrix-home-product-copy { background: transparent; }
+
+.matrix-home-rhythm-art { background: #f3cbd8; }
+.matrix-home-rhythm-art > img.matrix-home-cutout,
+.matrix-home-rhythm-art .matrix-home-cutout {
+  object-fit: contain;
+  object-position: center bottom;
+  padding: 8% 12% 4%;
+  filter: drop-shadow(0 30px 23px rgb(74 34 50 / 20%));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home-hero-pack,
+  .matrix-home-world-backdrop .matrix-home-cutout,
+  .matrix-home-find-campaign-shot .matrix-home-cutout,
+  .matrix-home-rhythm-art .matrix-home-cutout { animation: matrixProductFloat 8s ease-in-out infinite alternate; }
+}
+
+@media (max-width: 719px) {
+  .matrix-home-hero-pack { padding: 8px 8% 0; filter: drop-shadow(0 18px 16px rgb(74 34 50 / 17%)); }
+  .matrix-home-hero-pack-wash { transform: scale(1.13) translateY(2%); }
+  .matrix-home-hero-pack-boric { transform: scale(1.16) translateY(2%); }
+  .matrix-home-world-backdrop .matrix-home-cutout { padding: 12% 8% 2% 26%; }
+  .matrix-home-product-rail { padding: 14px 0 14px 14px; }
+  .matrix-home-product-card > a .matrix-home-cutout { padding: 8% 9% 2%; }
+  .matrix-home-find-campaign-shot .matrix-home-cutout { padding: 8% 13% 2%; }
+  .matrix-home-rhythm-art .matrix-home-cutout { padding: 9% 14% 2%; }
+}
+
+/* Product-specific framing -------------------------------------------------
+   The Boric Acid source is a compact packshot with a baked-in mirrored floor.
+   It needs a different treatment from the tall mist and the flat pouches:
+   leave the real label intact, remove only the reflection, and place the
+   bottle on the same visual baseline as the rest of the product world. */
+.matrix-home-hero-pack-boric,
+.matrix-home-cutout-boric {
+  clip-path: none;
+}
+
+.matrix-home-hero-pack-boric {
+  transform: scale(0.88) translateY(5%);
+  transform-origin: center bottom;
+}
+
+.matrix-home-product-card > a .matrix-home-cutout-boric {
+  transform: scale(1.18) translateY(5%);
+  transform-origin: center bottom;
+}
+
+.matrix-home-world-product-boric .matrix-home-cutout-boric {
+  transform: scale(1.42) translateY(5%);
+  transform-origin: center bottom;
+}
+
+.matrix-home-find-campaign-shot .matrix-home-cutout-boric,
+.matrix-home-rhythm-art .matrix-home-cutout-boric {
+  transform: scale(1.14) translateY(5%);
+  transform-origin: center bottom;
+}
+
+@media (max-width: 719px) {
+  .matrix-home-hero-pack-boric { transform: scale(0.94) translateY(5%); }
+  .matrix-home-product-card > a .matrix-home-cutout-boric { transform: scale(1.1) translateY(5%); }
+}
+
+/* The old campaign zoom animated `transform`, which silently cancelled the
+   pack-specific framing above. Use the individual translate property instead
+   so every hero product keeps its intentional crop while still moving. */
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home-hero-campaign-shot.is-active .matrix-home-hero-pack {
+    animation: matrixHeroPackLift 8s ease-in-out both;
+  }
+}
+
+@keyframes matrixHeroPackLift {
+  from { translate: -0.35% 0.35%; }
+  to { translate: 0.55% -0.55%; }
+}
+
+@media (max-width: 719px) {
+  /* On a phone, the pack and the headline already say enough. Keeping the
+     floating desktop product label here makes the composition feel crowded. */
+  .matrix-home-hero-campaign-shot > span { display: none; }
+  .matrix-home-hero-pagination { top: auto; right: 18px; bottom: 18px; }
+}
+
+/* Packshot art direction ----------------------------------------------------
+   Each source has a different silhouette and amount of transparent space.
+   These scales are deliberately per product: large enough to read the label,
+   never so aggressive that a pouch, cap, or set is cropped out. */
+.matrix-home-hero-pack-wash { transform: scale(1.1) translateY(3%); }
+.matrix-home-hero-pack-mist { transform: scale(1.22) translateY(4%); }
+.matrix-home-hero-pack-flusher { transform: scale(1.1) translateY(4%); }
+
+.matrix-home-product-card > a .matrix-home-cutout-wash { transform: scale(1.14) translateY(3%); }
+.matrix-home-product-card > a .matrix-home-cutout-mist { transform: scale(1.28) translateY(4%); }
+.matrix-home-product-card > a .matrix-home-cutout-flusher { transform: scale(1.12) translateY(2%); }
+.matrix-home-product-card > a .matrix-home-cutout-chronic { transform: scale(1.18) translateY(3%); }
+
+.matrix-home-world-backdrop .matrix-home-cutout-mist { transform: scale(1.42) translateY(3%); }
+.matrix-home-world-backdrop .matrix-home-cutout-wash { transform: scale(1.16) translateY(3%); }
+.matrix-home-world-backdrop .matrix-home-cutout-flusher { transform: scale(1.16) translateY(2%); }
+
+.matrix-home-find-campaign-shot .matrix-home-cutout-mist,
+.matrix-home-rhythm-art .matrix-home-cutout-mist { transform: scale(1.3) translateY(3%); }
+.matrix-home-find-campaign-shot .matrix-home-cutout-wash,
+.matrix-home-rhythm-art .matrix-home-cutout-wash { transform: scale(1.12) translateY(3%); }
+.matrix-home-find-campaign-shot .matrix-home-cutout-flusher,
+.matrix-home-rhythm-art .matrix-home-cutout-flusher { transform: scale(1.12) translateY(2%); }
+
+@media (max-width: 719px) {
+  .matrix-home-hero-pack-wash { transform: scale(1.06) translateY(4%); }
+  .matrix-home-hero-pack-mist { transform: scale(1.14) translateY(5%); }
+  .matrix-home-hero-pack-flusher { transform: scale(1.04) translateY(4%); }
+  .matrix-home-product-card > a .matrix-home-cutout-wash { transform: scale(1.1) translateY(3%); }
+  .matrix-home-product-card > a .matrix-home-cutout-mist { transform: scale(1.18) translateY(3%); }
+  .matrix-home-product-card > a .matrix-home-cutout-flusher { transform: scale(1.05) translateY(2%); }
+  .matrix-home-product-card > a .matrix-home-cutout-chronic { transform: scale(1.08) translateY(2%); }
+}
+
+/* One memorable hero world -------------------------------------------------
+   The depth-gallery is deliberately a single quiet set, shared by every
+   carousel product. It gives the hero texture and place without turning each
+   product slide into a separate generated advert. */
+.matrix-home-hero,
+.matrix-home-hero-sticky {
+  background: #f5d7dc;
+}
+
+.matrix-home-hero-backdrop {
+  display: block;
+  background: #f5d7dc;
+}
+
+.matrix-home-hero-backdrop > img {
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.96;
+}
+
+.matrix-home-hero-backdrop::after {
+  display: block;
+  background:
+    linear-gradient(90deg, rgb(255 249 247 / 92%) 0%, rgb(255 247 246 / 76%) 29%, rgb(255 242 244 / 25%) 58%, rgb(255 238 241 / 9%) 100%),
+    linear-gradient(180deg, rgb(255 250 249 / 11%), rgb(255 225 235 / 8%));
+}
+
+@media (max-width: 719px) {
+  .matrix-home-hero-backdrop > img { object-position: 62% center; opacity: 0.88; }
+  .matrix-home-hero-backdrop::after {
+    background:
+      linear-gradient(180deg, rgb(255 250 249 / 89%) 0%, rgb(255 247 247 / 67%) 42%, rgb(255 232 239 / 13%) 71%, rgb(255 231 239 / 4%) 100%),
+      linear-gradient(90deg, rgb(255 247 247 / 32%), transparent 76%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home-hero-backdrop > img {
+    animation: matrixHeroGalleryDrift 22s ease-in-out infinite alternate;
+  }
+
+  .matrix-home-hero-backdrop::after {
+    animation: matrixHeroLightBreath 11s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes matrixHeroGalleryDrift {
+  from { scale: 1.015; object-position: 48% 50%; }
+  to { scale: 1.065; object-position: 54% 47%; }
+}
+
+@keyframes matrixHeroLightBreath {
+  from { opacity: 0.78; }
+  to { opacity: 1; }
+}
+
+/* One ritual, two moments -----------------------------------------------
+   This is the emotional centre of the page: one calm daily room and one
+   warmer support room, connected by a quiet change in mood rather than a
+   pair of generic product cards. */
+.matrix-home-duality {
+  background:
+    radial-gradient(circle at 85% 8%, rgb(247 208 221 / 38%), transparent 28%),
+    #fffafc;
+}
+
+.matrix-home-duality-heading h2 { max-width: 12ch; }
+
+.matrix-home-duality-panel {
+  isolation: isolate;
+  min-height: clamp(480px, 42vw, 590px);
+}
+
+.matrix-home-duality-panel-dark {
+  color: #fff9f6;
+  background:
+    radial-gradient(ellipse 70% 100% at 100% 100%, rgb(184 102 137 / 34%), transparent 68%),
+    radial-gradient(circle at 18% 7%, rgb(255 211 223 / 18%), transparent 36%),
+    #43263f;
+}
+
+.matrix-home-duality-panel-dark .matrix-home-world-backdrop {
+  background:
+    radial-gradient(ellipse 47% 68% at 86% 77%, rgb(244 185 205 / 24%), transparent 74%);
+}
+
+.matrix-home-duality-panel-dark .matrix-home-world-backdrop::after {
+  background: linear-gradient(90deg, rgb(67 38 63 / 96%) 0%, rgb(67 38 63 / 78%) 38%, rgb(67 38 63 / 14%) 75%, transparent 100%);
+}
+
+.matrix-home-duality-panel-dark .matrix-home-eyebrow,
+.matrix-home-duality-panel-dark p { color: rgb(255 243 239 / 76%); }
+
+.matrix-home-duality-panel-dark a { color: #fff9f6; }
+
+.matrix-home-duality-panel-peach {
+  background:
+    linear-gradient(90deg, rgb(252 222 232 / 92%), rgb(249 205 219 / 58%)),
+    url("/hero/editorial/omk-hero-depth-gallery-v1.png") center / cover;
+}
+
+.matrix-home-duality-panel-peach .matrix-home-world-backdrop::after {
+  background: linear-gradient(90deg, rgb(255 238 243 / 96%) 0%, rgb(255 235 241 / 72%) 41%, rgb(255 226 235 / 12%) 78%, transparent 100%);
+}
+
+.matrix-home-world-backdrop .matrix-home-cutout-mist {
+  transform: scale(1.6) translate(5%, 3%);
+}
+
+.matrix-home-world-backdrop-targeted .matrix-home-cutout-flusher {
+  object-position: right bottom;
+  padding: 14% 1% 4% 25%;
+  transform: scale(1.14) translate(4%, 3%);
+}
+
+.matrix-home-duality-connection { opacity: 0.72; }
+.matrix-home-duality-connection i { font-style: normal; letter-spacing: 0.08em; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home-duality-panel-dark::before,
+  .matrix-home-duality-panel-peach::before { animation: matrixRitualGlow 10s ease-in-out infinite alternate; }
+  .matrix-home-duality-panel-peach { animation: matrixRitualLight 16s ease-in-out infinite alternate; }
+}
+
+@keyframes matrixRitualGlow {
+  from { scale: 0.94; opacity: 0.5; }
+  to { scale: 1.08; opacity: 0.9; }
+}
+
+@keyframes matrixRitualLight {
+  from { background-position: center; }
+  to { background-position: 56% 48%; }
+}
+
+@media (max-width: 719px) {
+  .matrix-home-duality-panel { min-height: 500px; }
+  .matrix-home-duality-heading h2 { max-width: 9.5ch; }
+  .matrix-home-world-backdrop .matrix-home-cutout-mist { transform: scale(1.42) translate(4%, 4%); }
+  .matrix-home-world-backdrop-targeted .matrix-home-cutout-flusher {
+    padding: 18% 1% 4% 20%;
+    transform: scale(1.06) translate(3%, 3%);
+  }
+}
+
+/* Full-bleed campaign hero -------------------------------------------------
+   Every slide is a complete photographed world. Copy is deliberately reduced
+   to a quiet veil so the product—not a detached second background—leads. */
+.matrix-home-hero,
+.matrix-home-hero-sticky {
+  min-height: 100svh;
+}
+
+.matrix-home-hero-sticky {
+  position: relative;
+  overflow: hidden;
+  color: #fffafc;
+  background: #4a263d;
+}
+
+.matrix-home-hero-campaign {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+}
+
+.matrix-home-hero-campaign-shot {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: auto;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transform: scale(1.055);
+  transition: opacity 1100ms ease, transform 7200ms cubic-bezier(.2,.75,.2,1);
+}
+
+.matrix-home-hero-campaign-shot.is-active {
+  z-index: 1;
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+.matrix-home-hero-campaign-shot::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(45 20 36 / 87%) 0%, rgb(48 22 40 / 63%) 28%, rgb(57 26 42 / 19%) 57%, rgb(57 26 42 / 11%) 100%),
+    linear-gradient(0deg, rgb(38 17 31 / 44%) 0%, transparent 34%);
+  content: "";
+  pointer-events: none;
+}
+
+.matrix-home-hero-campaign-shot img,
+.matrix-home-hero-campaign-shot.is-active img {
+  object-fit: cover;
+  object-position: center;
+  transform: none;
+  animation: none;
+}
+
+.matrix-home-hero-copy {
+  position: absolute;
+  z-index: 3;
+  top: auto;
+  right: auto;
+  bottom: clamp(78px, 12vh, 138px);
+  left: clamp(24px, 6.5vw, 104px);
+  width: min(390px, calc(100% - 48px));
+  text-align: left;
+  transform: none;
+}
+
+.matrix-home-hero-intro {
+  max-width: 100%;
+}
+
+.matrix-home-hero-copy .matrix-home-eyebrow {
+  color: #ffd3e1;
+}
+
+.matrix-home-hero h1,
+.matrix-home-hero-copy h1 {
+  max-width: 7.2ch;
+  margin: 12px 0 0;
+  color: #fffafc;
+  font-size: clamp(3.35rem, 6.2vw, 6.6rem);
+  line-height: 0.88;
+}
+
+.matrix-home-hero h1 em { color: inherit; }
+
+.matrix-home-hero-copy > p,
+.matrix-home-hero-intro > p {
+  max-width: 29ch;
+  margin: 17px 0 0;
+  color: rgb(255 250 252 / 82%);
+  font-size: 0.98rem;
+}
+
+.matrix-home-hero-actions {
+  justify-content: flex-start;
+  margin-top: 22px;
+}
+
+.matrix-home-hero-actions .matrix-home-button-light {
+  border-color: #fffafc;
+  background: #fffafc;
+  color: #3d2535;
+}
+
+.matrix-home-hero-campaign-shot > span {
+  position: absolute;
+  z-index: 2;
+  top: clamp(90px, 11vh, 150px);
+  right: clamp(22px, 4.5vw, 72px);
+  display: grid;
+  gap: 4px;
+  color: #fffafc;
+  font-size: clamp(1rem, 1.4vw, 1.35rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-shadow: 0 2px 18px rgb(44 19 35 / 44%);
+}
+
+.matrix-home-hero-campaign-shot > span small {
+  color: rgb(255 250 252 / 72%);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.matrix-home-hero-campaign-shot > span b { display: none; }
+
+.matrix-home-hero-pagination {
+  position: absolute;
+  z-index: 4;
+  right: clamp(24px, 4.5vw, 72px);
+  bottom: clamp(30px, 5vh, 58px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home-hero-campaign-shot.is-active img { animation: matrixHeroCampaignDrift 7.8s cubic-bezier(.2,.65,.25,1) both; }
+  .matrix-home-hero-campaign-shot.is-active::after { animation: matrixHeroCampaignLight 6.2s ease-in-out both; }
+}
+
+@keyframes matrixHeroCampaignDrift {
+  from { transform: scale(1.075) translate3d(-1.4%, 0.4%, 0); }
+  to { transform: scale(1.005) translate3d(1%, -0.3%, 0); }
+}
+
+@keyframes matrixHeroCampaignLight {
+  from { opacity: 0.44; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 719px) {
+  .matrix-home-hero,
+  .matrix-home-hero-sticky { min-height: 100svh; }
+
+  .matrix-home-hero-campaign-shot::after {
+    background:
+      linear-gradient(180deg, rgb(42 19 34 / 44%) 0%, rgb(42 19 34 / 9%) 36%, rgb(42 19 34 / 77%) 78%, rgb(42 19 34 / 94%) 100%);
+  }
+
+  .matrix-home-hero-campaign-shot img,
+  .matrix-home-hero-campaign-shot.is-active img { object-position: center; }
+
+  .matrix-home-hero-copy {
+    right: 24px;
+    bottom: 84px;
+    left: 24px;
+    width: auto;
+  }
+
+  .matrix-home-hero h1,
+  .matrix-home-hero-copy h1 { max-width: 7.6ch; font-size: clamp(3.3rem, 13vw, 4.75rem); }
+  .matrix-home-hero-copy > p,
+  .matrix-home-hero-intro > p { font-size: 0.9rem; }
+
+  .matrix-home-hero-campaign-shot > span {
+    top: 93px;
+    right: 24px;
+    font-size: 0.98rem;
+  }
+
+  .matrix-home-hero-pagination { right: 24px; bottom: 28px; }
+}
+
+.matrix-home-hero-product-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  color: rgb(255 250 252 / 88%);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.matrix-home-hero-product-meta i {
+  color: #f2a9c3;
+  font-style: normal;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home-hero-intro { animation: matrixHeroProductCopyIn 560ms cubic-bezier(.2,.75,.25,1) both; }
+}
+
+@keyframes matrixHeroProductCopyIn {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+/* Kitty monument stage -----------------------------------------------------
+   The shelf and kitty are one continuous visual stage. Authentic transparent
+   packshots then travel across that one shelf, rather than bringing a second
+   photograph/background into the hero. */
+.matrix-home-hero-sticky {
+  background: linear-gradient(135deg, #fffafc 0%, #f9d8e4 58%, #f2b6cb 100%);
+}
+
+.matrix-home-hero-kitty-stage {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.matrix-home-hero-kitty-stage img {
+  object-fit: cover;
+  object-position: center;
+  will-change: transform;
+}
+
+.matrix-home-hero-campaign {
+  z-index: 2;
+  pointer-events: none;
+}
+
+.matrix-home-hero-campaign-shot {
+  z-index: 0;
+  top: 6%;
+  right: auto;
+  bottom: auto;
+  left: 49%;
+  width: 38%;
+  height: 60%;
+  overflow: visible;
+  pointer-events: none;
+  transform: translate3d(4%, 0, 0) scale(0.96);
+}
+
+.matrix-home-hero-campaign-shot.is-active {
+  z-index: 2;
+  pointer-events: auto;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.matrix-home-hero-campaign-shot::before {
+  position: absolute;
+  z-index: 0;
+  right: 12%;
+  bottom: 0;
+  left: 12%;
+  height: 5%;
+  border-radius: 50%;
+  background: rgb(86 34 58 / 24%);
+  content: "";
+  filter: blur(12px);
+  transform: scaleX(0.9);
+}
+
+.matrix-home-hero-campaign-shot::after { display: none; }
+
+.matrix-home-hero-campaign-shot img,
+.matrix-home-hero-campaign-shot.is-active img {
+  z-index: 1;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 22px 18px rgb(92 37 61 / 20%));
+}
+
+.matrix-home-hero-copy {
+  z-index: 4;
+  bottom: clamp(78px, 11vh, 138px);
+  color: var(--matrix-ink);
+}
+
+.matrix-home-hero-copy .matrix-home-eyebrow { color: #b65179; }
+.matrix-home-hero h1,
+.matrix-home-hero-copy h1 { color: var(--matrix-ink); }
+.matrix-home-hero-copy > p,
+.matrix-home-hero-intro > p { color: rgb(61 37 53 / 74%); }
+.matrix-home-hero-product-meta { color: rgb(61 37 53 / 78%); }
+.matrix-home-hero-product-meta i { color: #c8668a; }
+
+.matrix-home-hero-actions .matrix-home-button-light {
+  border-color: var(--matrix-ink);
+  background: var(--matrix-ink);
+  color: #fffafc;
+}
+
+.matrix-home-header { color: var(--matrix-ink); }
+.matrix-home-header::before { background: linear-gradient(180deg, rgb(255 250 252 / 88%) 0%, rgb(255 250 252 / 25%) 70%, transparent 100%); }
+.matrix-home-brand-mark,
+.matrix-home-shop-link,
+.matrix-home-cart { border-color: rgb(61 37 53 / 28%); }
+
+.matrix-home-hero-pagination { z-index: 5; }
+.matrix-home-hero-pagination button { background: rgb(61 37 53 / 28%); }
+.matrix-home-hero-pagination button.is-active { background: var(--matrix-ink); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home-hero-kitty-stage img { animation: matrixKittyBackdropDrift 11s ease-in-out infinite alternate; }
+  .matrix-home-hero-campaign-shot.is-active img { animation: matrixShelfProductArrival 6.2s cubic-bezier(.2,.7,.2,1) both; }
+}
+
+@keyframes matrixKittyBackdropDrift {
+  0% { transform: scale(1.008) translate3d(-0.2%, 0.25%, 0) rotate(-0.12deg); }
+  48% { transform: scale(1.026) translate3d(0.45%, -0.2%, 0) rotate(0.14deg); }
+  100% { transform: scale(1.016) translate3d(-0.1%, 0.15%, 0) rotate(-0.08deg); }
+}
+
+@keyframes matrixShelfProductArrival {
+  0% { opacity: 0; transform: translate3d(8%, 3%, 0) scale(0.9); }
+  17% { opacity: 1; transform: translate3d(-1.3%, -0.8%, 0) scale(1.025); }
+  35%, 100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@media (max-width: 719px) {
+  .matrix-home-hero-kitty-stage img { object-position: 66% center; }
+  .matrix-home-hero-campaign-shot {
+    top: 18%;
+    left: 20%;
+    width: 66%;
+    height: 51%;
+  }
+
+  .matrix-home-hero-campaign-shot::before { bottom: 1%; }
+  .matrix-home-hero-copy {
+    right: 24px;
+    bottom: 78px;
+    left: 24px;
+  }
+
+  .matrix-home-hero-copy > p,
+  .matrix-home-hero-intro > p { max-width: 25ch; }
+  .matrix-home-hero-pagination { right: 24px; bottom: 26px; }
+}
+
+/* Match the product stage to the shelf's real geometry. The background must
+   not be horizontally cropped on desktop, otherwise the podium moves while
+   the product remains fixed. */
+.matrix-home-hero-kitty-stage img {
+  object-fit: contain;
+  object-position: center;
+}
+
+.matrix-home-hero-campaign-shot {
+  top: 1%;
+  left: 50%;
+  width: 36%;
+  height: 59%;
+}
+
+.matrix-home-hero-campaign-shot .matrix-home-hero-pack {
+  padding: 0;
+  transform-origin: center bottom;
+}
+
+.matrix-home-hero-campaign-shot .matrix-home-hero-pack-wash { transform: scale(1.2) translateY(0); }
+.matrix-home-hero-campaign-shot .matrix-home-hero-pack-mist { transform: scale(1.2) translateY(0); }
+.matrix-home-hero-campaign-shot .matrix-home-hero-pack-flusher { transform: scale(1.48) translateY(0); }
+.matrix-home-hero-campaign-shot .matrix-home-hero-pack-body { transform: scale(1.42) translateY(0); }
+
+@media (max-width: 719px) {
+  .matrix-home-hero-kitty-stage img {
+    object-fit: cover;
+    object-position: 68% center;
+  }
+
+  .matrix-home-hero-campaign-shot {
+    top: 8%;
+    left: 37%;
+    width: 62%;
+    height: 56%;
+  }
+
+  .matrix-home-hero-campaign-shot .matrix-home-hero-pack-wash,
+  .matrix-home-hero-campaign-shot .matrix-home-hero-pack-mist { transform: scale(1.14) translateY(0); }
+  .matrix-home-hero-campaign-shot .matrix-home-hero-pack-flusher { transform: scale(1.26) translateY(0); }
+  .matrix-home-hero-campaign-shot .matrix-home-hero-pack-body { transform: scale(1.22) translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .matrix-home-hero-campaign-shot.is-active img { animation: none; }
+  .matrix-home-hero-campaign-shot.is-active { animation: matrixShelfStageArrival 6.2s cubic-bezier(.2,.7,.2,1) both; }
+}
+
+@keyframes matrixShelfStageArrival {
+  0% { transform: translate3d(9%, 2%, 0) scale(0.92); }
+  16% { transform: translate3d(-1%, -0.8%, 0) scale(1.018); }
+  32%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+/* Isolated homepage monument: deliberately separate from legacy hero rules. */
+.omk-monument-hero {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+  background: linear-gradient(135deg, #fffafc 0%, #f8dce7 58%, #f0b5ca 100%);
+}
+
+.omk-monument-stage {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+}
+
+.omk-monument-backdrop {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: linear-gradient(135deg, #fffafc 0%, #f8dce7 58%, #f0b5ca 100%);
+}
+
+.omk-monument-backdrop img {
+  object-fit: contain;
+  object-position: center;
+  will-change: transform;
+}
+
+.omk-monument-products {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+}
+
+.omk-monument-product {
+  position: absolute;
+  /* The source packshots have generous transparent canvases. This larger,
+     lower frame lands the visible product on the kitty podium instead of
+     leaving it suspended in front of it. */
+  top: 2%;
+  left: 50%;
+  width: 42%;
+  height: 74%;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(9%, 2%, 0) scale(0.92);
+  transform-origin: center bottom;
+  transition: opacity 600ms ease;
+}
+
+.omk-monument-product::before {
+  position: absolute;
+  z-index: 0;
+  right: 10%;
+  bottom: 0;
+  left: 10%;
+  height: 5%;
+  border-radius: 50%;
+  background: rgb(82 31 56 / 25%);
+  content: "";
+  filter: blur(12px);
+}
+
+.omk-monument-product.is-active {
+  z-index: 2;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.omk-monument-pack {
+  z-index: 1;
+  object-fit: contain;
+  object-position: center bottom;
+  padding: 0;
+  filter: drop-shadow(0 24px 19px rgb(78 28 53 / 24%));
+  transform-origin: center bottom;
+  transition: filter 260ms ease, translate 260ms cubic-bezier(.2,.75,.25,1);
+}
+
+.omk-monument-pack-wash,
+.omk-monument-pack-mist { transform: scale(.92); }
+.omk-monument-pack-body { transform: scale(1.42); }
+
+.omk-monument-product.is-active:is(:hover, :focus-visible) .omk-monument-pack {
+  filter: drop-shadow(0 31px 25px rgb(78 28 53 / 32%));
+  translate: 0 -7px;
+}
+
+.omk-monument-copy {
+  position: absolute;
+  z-index: 4;
+  bottom: clamp(78px, 11vh, 138px);
+  left: clamp(24px, 6.5vw, 104px);
+  width: min(390px, calc(100% - 48px));
+  color: var(--matrix-ink);
+}
+
+.omk-monument-copy .matrix-home-eyebrow { color: #b65179; }
+
+.omk-monument-brandline {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--matrix-ink);
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  line-height: 1;
+}
+
+.omk-monument-brandline i {
+  color: #c8668a;
+  font-style: normal;
+}
+
+.omk-monument-copy .matrix-home-eyebrow {
+  display: block;
+  margin-top: 11px;
+}
+
+.omk-monument-copy h1 {
+  max-width: 7.4ch;
+  margin: 12px 0 0;
+  color: var(--matrix-ink);
+  font-size: clamp(3.4rem, 6.2vw, 6.6rem);
+  letter-spacing: -0.09em;
+  line-height: 0.86;
+}
+
+.omk-monument-copy p {
+  max-width: 29ch;
+  margin: 17px 0 0;
+  color: rgb(61 37 53 / 76%);
+  font-size: 0.98rem;
+  line-height: 1.48;
+}
+
+.omk-monument-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  color: rgb(61 37 53 / 80%);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.omk-monument-meta i { color: #c8668a; font-style: normal; }
+.omk-monument-actions { margin-top: 22px; }
+.omk-monument-cta { border-color: var(--matrix-ink); background: var(--matrix-ink); color: #fffafc; }
+
+.omk-monument-controls {
+  position: absolute;
+  z-index: 5;
+  right: clamp(24px, 4.5vw, 72px);
+  bottom: clamp(30px, 5vh, 58px);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  pointer-events: auto;
+}
+
+.omk-monument-pagination {
+  display: flex;
+  gap: 7px;
+}
+
+.omk-monument-pagination button {
+  width: 18px;
+  height: 3px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0;
+  background: rgb(61 37 53 / 28%);
+  transition: width 280ms ease, background 280ms ease;
+}
+
+.omk-monument-pagination button.is-active { width: 34px; background: var(--matrix-ink); }
+
+.omk-monument-step {
+  display: none;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid rgb(61 37 53 / 18%);
+  border-radius: 50%;
+  color: var(--matrix-ink);
+  background: rgb(255 250 252 / 65%);
+  font-size: 1rem;
+  line-height: 1;
+  backdrop-filter: blur(8px);
+}
+
+.omk-monument-step:active { transform: scale(0.94); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .omk-monument-backdrop img { animation: omkMonumentKittySway 11s ease-in-out infinite alternate; }
+  .omk-monument-product.is-active { animation: omkMonumentProductArrive 6.2s cubic-bezier(.2,.7,.2,1) both; }
+  .omk-monument-copy-inner { animation: omkMonumentCopyIn 560ms cubic-bezier(.2,.75,.25,1) both; }
+}
+
+@keyframes omkMonumentKittySway {
+  from { transform: scale(1.008) translate3d(-0.2%, 0.2%, 0) rotate(-0.1deg); }
+  to { transform: scale(1.025) translate3d(0.45%, -0.16%, 0) rotate(0.12deg); }
+}
+
+@keyframes omkMonumentProductArrive {
+  0% { transform: translate3d(9%, 2%, 0) scale(0.92); }
+  16% { transform: translate3d(-1%, -0.8%, 0) scale(1.018); }
+  32%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes omkMonumentCopyIn {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@media (max-width: 719px) {
+  .omk-monument-hero,
+  .omk-monument-stage { min-height: 100svh; }
+  .omk-monument-backdrop img { object-fit: cover; object-position: 68% center; }
+  .omk-monument-product { top: 8%; left: 32%; width: 68%; height: 63%; }
+  .omk-monument-pack-wash,
+  .omk-monument-pack-mist { transform: scale(1.26); }
+  .omk-monument-pack-body { transform: scale(1.22); }
+  .omk-monument-copy { right: 24px; bottom: 78px; left: 24px; width: auto; }
+  .omk-monument-copy h1 { font-size: clamp(3.3rem, 13vw, 4.75rem); }
+  .omk-monument-copy p { max-width: 25ch; font-size: 0.9rem; }
+  .omk-monument-brandline { font-size: 0.59rem; letter-spacing: 0.13em; }
+  .omk-monument-controls { right: 20px; bottom: 22px; gap: 9px; }
+  .omk-monument-step { display: grid; }
+}
+
+.route-loading-storefront {
+  align-content: center;
+  justify-items: center;
+  min-height: 100svh;
+  color: var(--matrix-ink);
+  background:
+    radial-gradient(circle at 72% 32%, rgb(246 190 210 / 72%), transparent 24%),
+    linear-gradient(135deg, #fffafc 0%, #f9dce7 58%, #f1b8cd 100%);
+}
+
+.route-loading-kitty {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 1px solid rgb(61 37 53 / 28%);
+  border-radius: 50%;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.route-loading-storefront > div { display: grid; gap: 8px; }
+.route-loading-eyebrow { color: #b65179; font-size: 0.64rem; font-weight: 900; letter-spacing: 0.14em; }
+.route-loading-storefront p { color: rgb(61 37 53 / 76%); font-size: 0.94rem; }
+
+/* One ritual, two moments: this is a pair of product worlds, not text printed
+   over pack labels. The copy owns the quiet left field; the campaign art owns
+   the right field. */
+.matrix-home-duality {
+  padding: clamp(82px, 9vw, 142px) clamp(20px, 5vw, 88px);
+}
+
+.matrix-home-duality-heading {
+  width: min(100%, 1180px);
+  margin: 0 auto clamp(38px, 5vw, 70px);
+}
+
+.matrix-home-duality-heading h2 {
+  max-width: 8ch;
+  margin-top: 14px;
+  font-size: clamp(3.5rem, 6.2vw, 6.25rem);
+  letter-spacing: -0.09em;
+  line-height: 0.86;
+}
+
+.matrix-home-duality-panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(100%, 1500px);
+  margin: 0 auto;
+  gap: 2px;
+}
+
+.matrix-home-duality-panel {
+  display: grid;
+  align-content: center;
+  min-height: clamp(460px, 37vw, 590px);
+  padding: clamp(30px, 4.1vw, 66px);
+  overflow: hidden;
+}
+
+.matrix-home-duality-panel > :not(.matrix-home-world-backdrop) {
+  position: relative;
+  z-index: 2;
+  width: min(45%, 318px);
+}
+
+.matrix-home-duality-panel .matrix-home-world-backdrop {
+  z-index: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 46%;
+  overflow: hidden;
+}
+
+.matrix-home-duality-panel .matrix-home-world-backdrop::after {
+  display: none;
+}
+
+.matrix-home-duality-panel .matrix-home-world-backdrop img {
+  object-fit: cover;
+  object-position: center;
+}
+
+.matrix-home-duality-panel h3 {
+  max-width: 6ch;
+  margin: 18px 0 0;
+  font-size: clamp(2.75rem, 4.5vw, 5.3rem);
+  letter-spacing: -0.085em;
+  line-height: 0.87;
+}
+
+.matrix-home-duality-panel p {
+  max-width: 27ch;
+  margin: 18px 0 0;
+  font-size: 0.92rem;
+  line-height: 1.48;
+}
+
+.matrix-home-duality-panel a {
+  width: fit-content;
+  margin-top: 26px;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.matrix-home-duality-panel-peach .matrix-home-world-backdrop {
+  background: #f7d1dd;
+}
+
+@media (max-width: 719px) {
+  .matrix-home-duality { padding: 74px 0 0; }
+  .matrix-home-duality-heading { margin: 0 22px 32px; }
+  .matrix-home-duality-heading h2 { font-size: clamp(3.45rem, 14.5vw, 4.7rem); }
+  .matrix-home-duality-panels { display: grid; grid-template-columns: 1fr; gap: 2px; }
+  .matrix-home-duality-panel { min-height: 540px; padding: 38px 22px 294px; }
+  .matrix-home-duality-panel > :not(.matrix-home-world-backdrop) { width: min(76%, 300px); }
+  .matrix-home-duality-panel .matrix-home-world-backdrop { top: auto; left: 0; height: 294px; }
+  .matrix-home-duality-panel h3 { font-size: clamp(2.95rem, 13vw, 4.2rem); }
+  .matrix-home-duality-panel p { font-size: 0.88rem; }
+}
+
+/* Keep the public-page header anchored to the viewport at every breakpoint.
+   These rules intentionally sit after the older floating-header finish pass. */
+.depth-shop .storefront-nav.glass,
+.product-detail-page .storefront-nav.glass {
+  top: 0;
+  right: 0;
+  left: 0;
+  width: 100%;
+  transform: none;
+}
+
+@media (max-width: 860px) {
+  .depth-shop .storefront-nav.glass,
+  .product-detail-page .storefront-nav.glass {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .storefront-nav {
+    padding-inline: 16px;
+  }
+
+  .storefront-nav-shop,
+  .storefront-nav-cart-copy {
+    display: none;
+  }
+
+  .storefront-nav-actions {
+    gap: 0;
+  }
+
+  .depth-shop .storefront-nav .bag-pill,
+  .product-detail-page .storefront-nav .bag-pill {
+    width: 44px;
+    padding: 0;
+  }
+}
+
+/* Storefront continuation --------------------------------------------------
+   The public shop uses the same Outfit face and warm blush family as the
+   campaign homepage. This is deliberately scoped: staff/admin tables and
+   transactional checkout keep their established, practical type system. */
+.depth-shop,
+.product-detail-page,
+.learn-experience-page {
+  --font-sans: var(--font-outfit), Outfit, ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-outfit), Outfit, ui-sans-serif, system-ui, sans-serif;
+  --color-white-pure: #fffafc;
+  --color-white: #fff6f8;
+  --color-cream: #fbe8ef;
+  --color-peach-mist: #f6cfdd;
+  --color-near-black: #3d2535;
+  --color-muted: #75646d;
+  --color-line: #ecd6df;
+  --color-green: #74816c;
+  --color-rose: #cf7898;
+  --color-rose-deep: #a94d74;
+  color: var(--color-near-black);
+  font-family: var(--font-sans);
+}
+
+.depth-shop {
+  background:
+    radial-gradient(circle at 85% 8%, rgb(246 207 221 / 76%), transparent 29%),
+    radial-gradient(circle at 10% 68%, rgb(116 129 108 / 9%), transparent 25%),
+    linear-gradient(180deg, #fffafc 0%, #fff1f5 54%, #fbe8ef 100%);
+}
+
+.product-detail-page {
+  background:
+    radial-gradient(circle at 84% 5%, rgb(246 207 221 / 74%), transparent 27%),
+    linear-gradient(180deg, #fffafc 0%, #fff1f5 62%, #fbe8ef 100%);
+}
+
+.depth-shop-copy h1,
+.depth-shop .front-product-intro h2,
+.depth-shop .sheet-copy h2,
+.product-detail-page .product-detail-copy h1,
+.product-detail-page .front-product-intro h2 {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  letter-spacing: -0.085em;
+}
+
+.depth-shop-copy h1 {
+  max-width: 6.7ch;
+  line-height: 0.84;
+}
+
+.depth-shop-copy h1 .word-mask:not(:last-child) {
+  margin-right: 0.14em;
+}
+
+.depth-shop .scene-kicker,
+.product-detail-page .scene-kicker {
+  color: var(--color-green);
+}
+
+.depth-shop .depth-product-card,
+.product-detail-page .product-detail-copy,
+.product-detail-page .product-detail-info article {
+  border-color: rgb(61 37 53 / 10%);
+}
+
+/* Mobile finish ------------------------------------------------------------
+   The campaign is spatial on a wide screen, but a phone must never suggest
+   that content has been accidentally clipped. These overrides turn the two
+   discovery rails into complete touch targets, retain the imagery at a useful
+   scale, and stop the decorative marquee from cutting labels in half. */
+@media (max-width: 719px) {
+  .matrix-home-find-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 0 20px;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+
+  .matrix-home-find-list button {
+    min-width: 0;
+    min-height: 96px;
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+    gap: 7px;
+    padding: 13px 11px;
+  }
+
+  .matrix-home-find-list button b {
+    font-size: clamp(1.08rem, 5.2vw, 1.32rem);
+    letter-spacing: -0.07em;
+    overflow-wrap: anywhere;
+  }
+
+  .matrix-home-find-list button em {
+    font-size: 0.49rem;
+    letter-spacing: 0.025em;
+    line-height: 1.15;
+  }
+
+  .matrix-home-find-list button small { font-size: 0.53rem; }
+  .matrix-home-find-list button i { font-size: 0.88rem; }
+  .matrix-home-find-list button.is-active { translate: 0 -2px; }
+
+  .matrix-home-product-rail {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-right: 0;
+    margin-left: 0;
+    padding: 14px 20px 24px;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+
+  .matrix-home-product-card {
+    width: 100%;
+    min-height: 0;
+    grid-template-rows: minmax(330px, 88vw) auto;
+  }
+
+  .matrix-home-product-card > a { transform: none; }
+
+  .matrix-home-product-card > a .matrix-home-cutout {
+    padding: 5% 7% 1%;
+    transform-origin: center bottom;
+  }
+
+  .matrix-home-edit-copy .matrix-home-edit-marquee {
+    width: 100%;
+    margin: 28px 0 26px;
+    overflow: visible;
+    mask-image: none;
+  }
+
+  .matrix-home-edit-copy .matrix-home-edit-track {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 8px;
+    animation: none;
+    transform: none;
+  }
+
+  .matrix-home-edit-copy .matrix-home-edit-track span {
+    width: auto;
+    min-width: 0;
+    height: 52px;
+    padding: 0 8px;
+    font-size: 0.96rem;
+    text-align: center;
+  }
+
+  .matrix-home-edit-copy .matrix-home-edit-track span:nth-child(n + 5) {
+    display: none;
+  }
+
+  .matrix-home-duality-heading h2 {
+    letter-spacing: -0.082em;
+  }
+}
+
+/* Scroll story -------------------------------------------------------------
+   The opening product monument holds its place while the first ritual scene
+   travels over it. Each later scene owns a higher plane, so the journey reads
+   as a continuous gallery instead of a stack of unrelated sections. */
+.matrix-home {
+  position: relative;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.matrix-home > main { position: relative; }
+
+.omk-monument-hero {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+}
+
+.matrix-home-duality,
+.matrix-home-find,
+.matrix-home-favourites,
+.matrix-home-edit,
+.matrix-home-partners,
+.matrix-home-closing {
+  position: relative;
+  isolation: isolate;
+}
+
+.matrix-home-duality {
+  z-index: 2;
+  box-shadow: 0 -24px 54px rgb(61 37 53 / 10%);
+}
+
+.matrix-home-find {
+  z-index: 3;
+  box-shadow: 0 -22px 48px rgb(61 37 53 / 8%);
+}
+
+.matrix-home-favourites { z-index: 4; }
+.matrix-home-edit { z-index: 5; }
+.matrix-home-partners { z-index: 6; }
+.matrix-home-closing { z-index: 7; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Reveal the first chapter vertically: it is the physical sheet that covers
+     the held hero, rather than a fade to a second page. */
+  .matrix-home.is-motion-ready .matrix-home-duality {
+    opacity: 1;
+    clip-path: inset(100% 0 0 0);
+    translate: 0 0;
+    transition: clip-path 900ms cubic-bezier(.16, 1, .3, 1);
+  }
+
+  .matrix-home.is-motion-ready .matrix-home-duality.is-visible {
+    clip-path: inset(0 0 0 0);
+  }
+
+  /* The concierge is the next directional shift: it glides in from the
+     right, then settles before the shopper starts choosing a need. */
+  .matrix-home.is-motion-ready .matrix-home-find {
+    clip-path: inset(0 0 0 18%);
+    opacity: 0;
+    translate: 12vw 0;
+    transition:
+      clip-path 880ms cubic-bezier(.16, 1, .3, 1),
+      opacity 540ms ease-out,
+      translate 880ms cubic-bezier(.16, 1, .3, 1);
+  }
+
+  .matrix-home.is-motion-ready .matrix-home-find.is-visible {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  /* The later chapters do not compete with the two signature moves; they
+     simply soften into the gallery, with a short overlap-like lift. */
+  .matrix-home.is-motion-ready .matrix-home-favourites,
+  .matrix-home.is-motion-ready .matrix-home-edit {
+    opacity: 0;
+    translate: 0 7vh;
+    transition: opacity 680ms ease-out, translate 900ms cubic-bezier(.16, 1, .3, 1);
+  }
+
+  .matrix-home.is-motion-ready .matrix-home-favourites.is-visible,
+  .matrix-home.is-motion-ready .matrix-home-edit.is-visible {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .omk-monument-hero { position: relative; }
+}
+
+/* Shop product worlds ------------------------------------------------------
+   A catalogue tile is one continuous surface. Its sampled photo-edge colour
+   lives on the card itself, so the product has no separate generic backdrop
+   or visible image-stage seam. The only movement is a slow, low-contrast
+   light pass that makes browsing feel tactile without competing with labels,
+   prices, or the add-to-bag action. */
+.depth-shop .depth-product-card {
+  --product-card-bg: #f7d8df;
+  --shop-light-x: 74%;
+  --shop-light-y: 18%;
+  overflow: hidden;
+  border-color: rgb(255 255 255 / 66%);
+  background: var(--product-card-bg);
+  box-shadow: 0 16px 36px rgb(61 37 53 / 9%);
+  transition: transform 380ms cubic-bezier(.2, .8, .2, 1), box-shadow 380ms ease;
+}
+
+.depth-shop .depth-product-card:nth-child(4n + 2) {
+  --shop-light-x: 16%;
+  --shop-light-y: 10%;
+}
+
+.depth-shop .depth-product-card:nth-child(4n + 3) {
+  --shop-light-x: 84%;
+  --shop-light-y: 84%;
+}
+
+.depth-shop .depth-product-card:nth-child(4n) {
+  --shop-light-x: 24%;
+  --shop-light-y: 76%;
+}
+
+.depth-shop .depth-product-card::before {
+  inset: 0;
+  opacity: 1;
+  background:
+    radial-gradient(circle at var(--shop-light-x) var(--shop-light-y), rgb(255 255 255 / 44%), transparent 34%),
+    linear-gradient(135deg, rgb(255 255 255 / 13%), transparent 48%);
+  mix-blend-mode: soft-light;
+}
+
+.depth-shop .depth-product-card-hit {
+  gap: 8px;
+  background: transparent;
+}
+
+.depth-shop .depth-product-stage {
+  isolation: isolate;
+  border-color: rgb(255 255 255 / 44%);
+  background: var(--product-card-bg);
+  box-shadow: none;
+}
+
+.depth-shop .depth-product-stage::before {
+  top: -24%;
+  right: -30%;
+  width: 88%;
+  height: 82%;
+  background: radial-gradient(circle, rgb(255 255 255 / 38%) 0%, transparent 68%);
+  opacity: 1;
+  mix-blend-mode: soft-light;
+  transform: none;
+}
+
+.depth-shop .depth-product-stage::after {
+  bottom: 5%;
+  background: rgb(61 37 53 / 11%);
+  filter: blur(17px);
+}
+
+.depth-shop .depth-product-stage .photo-packshot > img {
+  padding: 5px;
+  transform: scale(1.025);
+  transition: transform 600ms cubic-bezier(.2, .8, .2, 1), filter 600ms ease;
+}
+
+.depth-shop .depth-product-info {
+  min-height: 112px;
+  padding: 4px 6px 8px;
+  background: transparent;
+}
+
+.depth-shop .depth-product-card:hover {
+  border-color: rgb(255 255 255 / 90%);
+  box-shadow: 0 24px 46px rgb(61 37 53 / 16%);
+  transform: translateY(-5px);
+}
+
+.depth-shop .depth-product-card:hover .depth-product-stage .photo-packshot > img {
+  transform: scale(1.075);
+  filter: saturate(1.04);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .depth-shop .depth-product-stage::before {
+    animation: shopCardLightDrift 9s ease-in-out infinite alternate;
+  }
+
+  .depth-shop .depth-product-card:nth-child(3n + 2) .depth-product-stage::before {
+    animation-delay: -3s;
+  }
+
+  .depth-shop .depth-product-card:nth-child(3n) .depth-product-stage::before {
+    animation-delay: -6s;
+  }
+}
+
+@keyframes shopCardLightDrift {
+  from { translate: -5% -3%; scale: .94; }
+  to { translate: 6% 4%; scale: 1.12; }
+}
+
+@media (max-width: 719px) {
+  .depth-shop .depth-product-card {
+    border-radius: 20px;
+  }
+
+  .depth-shop .depth-product-stage .photo-packshot > img {
+    padding: 3px;
+    transform: scale(1.04);
+  }
 }

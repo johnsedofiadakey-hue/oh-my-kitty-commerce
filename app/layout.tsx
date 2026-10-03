@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Outfit } from "next/font/google";
 import { publicEnv } from "@/lib/env/public";
 import "./globals.css";
 
@@ -21,6 +21,15 @@ const SEO_KEYWORDS = [
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap"
+});
+
+// SkinMatrix's public experience is set in Outfit. Keep it scoped to the
+// Matrix-inspired homepage so admin, POS, checkout, and existing documents
+// retain their established type system.
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
   display: "swap"
 });
 
@@ -77,7 +86,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html className={inter.variable} lang="en">
+    <html className={`${inter.variable} ${outfit.variable}`} lang="en">
       <head>
         <link href="https://api.fontshare.com" rel="preconnect" />
         <link

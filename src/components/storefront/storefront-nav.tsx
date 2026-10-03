@@ -24,10 +24,16 @@ export function StorefrontNav() {
         </span>
       </Link>
 
-      <CartTrigger ariaLabel="View cart" className="bag-pill icon">
-        <BagIcon />
-        <CartCount variant="badge" />
-      </CartTrigger>
+      <div className="storefront-nav-actions">
+        <Link className="storefront-nav-shop" href="/shop">
+          Shop
+        </Link>
+        <CartTrigger ariaLabel="View cart" className="bag-pill icon">
+          <BagIcon />
+          <span className="storefront-nav-cart-copy">Cart</span>
+          <CartCount variant="badge" />
+        </CartTrigger>
+      </div>
     </nav>
   );
 }

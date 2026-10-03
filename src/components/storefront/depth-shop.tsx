@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type SyntheticEvent } from "react";
 import {
   AddToBagButton,
   addLineToCart,
@@ -129,15 +129,15 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
       gsap.registerPlugin(ScrollTrigger);
       context = gsap.context(() => {
         gsap.from(".depth-product-card", {
-          y: 42,
-          opacity: 0,
-          rotateX: 10,
+          y: 16,
+          opacity: 0.92,
+          rotateX: 3,
           stagger: 0.08,
-          duration: 0.9,
+          duration: 0.65,
           ease: "power3.out",
           scrollTrigger: {
             trigger: ".depth-shop-grid",
-            start: "top 78%"
+            start: "top 96%"
           }
         });
 
@@ -148,8 +148,11 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
             ".depth-shop-copy h1 .word",
             { yPercent: 115, duration: 0.8, stagger: 0.07 },
             "-=0.25"
-          )
-          .from(".depth-shop-copy p", { y: 12, opacity: 0, duration: 0.5 }, "-=0.35");
+          );
+
+        if (document.querySelector(".depth-shop-copy p")) {
+          heroTimeline.from(".depth-shop-copy p", { y: 12, opacity: 0, duration: 0.5 }, "-=0.35");
+        }
       }, rootRef);
     }
 
@@ -306,7 +309,7 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
             <div
               className={`sheet-stage podium-surface ${selectedProduct.tone}`}
               aria-hidden="true"
-              style={sheetBackdrop ? { backgroundColor: sheetBackdrop } : undefined}
+              style={sheetBackdrop ? { background: sheetBackdrop } : undefined}
             >
               <ProductPackshot product={selectedProduct} onImageLoad={handleSheetLoad} />
             </div>
@@ -391,12 +394,14 @@ function ProductTile({
   const { backgroundColor: tileBackdrop, handleLoad: handleTileLoad } = usePhotoBackdrop();
 
   return (
-    <article className={`depth-product-card ${featured ? "featured" : ""}`}>
+    <article
+      className={`depth-product-card ${featured ? "featured" : ""}`}
+      style={tileBackdrop ? ({ "--product-card-bg": tileBackdrop } as CSSProperties) : undefined}
+    >
       <button className="depth-product-card-hit" onClick={onSelect} type="button">
         <div
           className="depth-product-stage"
           aria-hidden="true"
-          style={tileBackdrop ? { backgroundColor: tileBackdrop } : undefined}
         >
           <ProductPackshot product={product} onImageLoad={handleTileLoad} />
         </div>

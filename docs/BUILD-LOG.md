@@ -180,7 +180,17 @@ Added a subtle "Built and powered by stormglide.io" credit link at the bottom of
 
 ---
 
-## 6. Known gaps / deliberately not built
+## 6. Local, uncommitted homepage redesign (2026-09-29)
+
+The public `/` route now has a local-only Matrix-style storefront treatment. It recreates the complete public-page journey in Oh My Kitty's own visual language: product-led hero, audience paths, "One ritual, two moments," an interactive care finder, transparent-cutout product exhibition, rhythm/edit scenes, closing CTA, and a matching support/payment footer. It is a presentation layer over the existing storefront catalogue and cart: product scenes select active, in-stock best sellers in the established `homepagePriority` order, then retain existing product URLs, prices, availability, cart storage, and checkout behavior. Where a verified local transparent product PNG exists, the composition uses that cutout rather than the framed catalogue photo. It uses Oh My Kitty's warm-white, peach, near-black, and restrained-green palette rather than SkinMatrix's purple identity.
+
+Only the homepage route, a dedicated `matrix-home.tsx` component, and homepage-scoped CSS changed. Admin, POS, Firestore data, inventory, payments, cart/checkout implementation, and non-home storefront routes are intentionally untouched. Local checks completed: typecheck, lint (three existing warnings), 95 unit tests, production build, and mobile/desktop browser review. This work has not been deployed or verified against live production.
+
+The homepage and its matching footer now use the same Outfit font family as the SkinMatrix public experience, scoped so operational surfaces retain their existing type system. Its lower-page marquee is limited to supported shopping and service marks (Oh My Kitty, Paystack, payment options, Accra pickup, and Stormglide.io). No FDA mark is shown because this repository contains no registration evidence authorizing that claim.
+
+The homepage colour direction is `Petal & Plum`: warm ivory, powder blush, muted rose, plum-black, and restrained botanical sage. This remains scoped to the public homepage and uses transparent product packshots over light cosmetic fields; no catalogue image, price, stock, or commerce behavior changed.
+
+## 7. Known gaps / deliberately not built
 
 - **Mobile Money OTP flow**: Paystack's mobile money charge can require an OTP-entry step instead of a pure USSD prompt for some networks — the current POS flow only handles the USSD case. Deliberately deferred until it's confirmed to actually happen for a real transaction, rather than building blind.
 - **Editable brand logo**: still a static file (`public/brand/oh-my-kitty-logo.jpeg`), not admin-uploadable — swapping it touches multiple places (favicon, PWA icons, admin sidebar) and wasn't judged worth the risk for how rarely a logo changes.

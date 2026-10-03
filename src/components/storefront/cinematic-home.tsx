@@ -342,9 +342,9 @@ export function CinematicHome({ products, whatsappNumber, sourceMessage }: Cinem
                 const distance = Math.abs(panelCenter - viewportCenter);
                 const proximity = 1 - Math.min(distance / (window.innerWidth * 0.75), 1);
                 gsap.set(panel, {
-                  scale: 0.84 + proximity * 0.16,
-                  opacity: 0.45 + proximity * 0.55,
-                  filter: `blur(${(1 - proximity) * 2.6}px)`
+                  scale: 0.92 + proximity * 0.08,
+                  opacity: 0.76 + proximity * 0.24,
+                  filter: `blur(${(1 - proximity) * 0.8}px)`
                 });
               }
             },
@@ -360,17 +360,19 @@ export function CinematicHome({ products, whatsappNumber, sourceMessage }: Cinem
           });
         }
 
-        pinHorizontalTrack(".world-track", ".product-world");
+        mm.add("(min-width: 768px)", () => {
+          pinHorizontalTrack(".world-track", ".product-world", ".world-panel");
 
-        gsap.to(".world-panel-forward .world-panel-figure", {
-          scale: 1.15,
-          ease: "none",
-          scrollTrigger: {
-            trigger: ".product-world",
-            start: "top top",
-            end: "bottom top",
-            scrub: 0.8
-          }
+          gsap.to(".world-panel-forward .world-panel-figure", {
+            scale: 1.15,
+            ease: "none",
+            scrollTrigger: {
+              trigger: ".product-world",
+              start: "top top",
+              end: "bottom top",
+              scrub: 0.8
+            }
+          });
         });
 
         if (document.querySelector(".ingredient-story")) {
@@ -677,7 +679,7 @@ function ProductPhotoFigure({
   const { backgroundColor, handleLoad } = usePhotoBackdrop();
 
   return (
-    <div aria-hidden="true" className={className} style={backgroundColor ? { backgroundColor } : undefined}>
+    <div aria-hidden="true" className={className} style={backgroundColor ? { background: backgroundColor } : undefined}>
       {imageUrl ? <Image alt="" fill onLoad={handleLoad} sizes={sizes} src={imageUrl} /> : null}
     </div>
   );
