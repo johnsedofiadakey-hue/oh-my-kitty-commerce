@@ -18109,3 +18109,10 @@ a.pos-secondary-button {
 .matrix-home-partners .matrix-home-eyebrow {
   color: #566350;
 }
+
+/* Homepage header carries the real logo (same crop as the rest of the site). */
+.matrix-home-brand-mark {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-white-pure);
+}

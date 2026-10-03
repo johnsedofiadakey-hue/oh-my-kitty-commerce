@@ -140,7 +140,16 @@ export function MatrixHome({ products, sourceMessage }: MatrixHomeProps) {
     <div className="matrix-home" ref={homeRef}>
       <header className="matrix-home-header">
         <Link className="matrix-home-brand" href="/">
-          <span className="matrix-home-brand-mark">OMK</span>
+          <span aria-hidden="true" className="matrix-home-brand-mark">
+            <Image
+              alt=""
+              fill
+              priority
+              sizes="40px"
+              src="/brand/oh-my-kitty-logo.jpeg"
+              style={{ objectFit: "cover", transform: "scale(2) translate(-2%, -10%)" }}
+            />
+          </span>
           <span>
             <strong>Oh My Kitty</strong>
             <small>intimate care</small>
