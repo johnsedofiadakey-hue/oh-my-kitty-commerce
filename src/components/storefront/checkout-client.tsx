@@ -100,6 +100,17 @@ export function CheckoutClient({
   const total = preFeeTotal + paymentFee;
   const isPickup = selectedDelivery?.type === "PICKUP";
 
+  // The progress rail reflects what's actually filled in, so it tells the
+  // customer where they are instead of looking the same at every stage.
+  const detailsDone = customer.name.trim().length > 1 && customer.phone.replace(/\D/g, "").length >= 9;
+  const deliveryDone = detailsDone && Boolean(deliveryId) && (isPickup || customer.address.trim().length > 2);
+  const currentStep = !detailsDone ? "details" : !deliveryDone ? "delivery" : "payment";
+  const steps = [
+    { key: "details", label: "Details", done: detailsDone },
+    { key: "delivery", label: "Delivery", done: deliveryDone },
+    { key: "payment", label: "Payment", done: false }
+  ] as const;
+
   async function applyPromoCode() {
     if (!promoInput.trim()) {
       return;
@@ -224,11 +235,18 @@ export function CheckoutClient({
         </div>
       </div>
 
-      <div className="checkout-flow-rail" aria-label="Checkout progress">
-        <span data-active="true">Details</span>
-        <span data-active={deliveryId ? "true" : "false"}>Delivery</span>
-        <span data-active={paystackEnabled ? "true" : "false"}>Payment</span>
-      </div>
+      <ol className="checkout-flow-rail" aria-label="Checkout progress">
+        {steps.map((step) => (
+          <li
+            aria-current={currentStep === step.key ? "step" : undefined}
+            data-state={step.done ? "done" : currentStep === step.key ? "current" : "todo"}
+            key={step.key}
+          >
+            {step.done ? <span aria-hidden="true">✓</span> : null}
+            {step.label}
+          </li>
+        ))}
+      </ol>
 
       <div className="checkout-order-summary">
         {lines.map((line) => (
@@ -243,7 +261,7 @@ export function CheckoutClient({
             <div className="cart-item-copy">
               <strong>{line.productTitle}</strong>
               <span>
-                {displayVariant(line)} × {line.quantity}
+                {displayVariant(line) ? `${displayVariant(line)} × ${line.quantity}` : `Qty ${line.quantity}`}
               </span>
             </div>
             <div className="cart-item-total">
@@ -402,12 +420,12 @@ export function CheckoutClient({
             <span>Delivery</span>
             <strong>{deliveryFee === 0 ? "Free" : formatMoney(deliveryFee)}</strong>
           </div>
-          {/*
-            Card/mobile money processing fee is still charged — folded
-            silently into the Total below — just not itemized. Customers
-            already expect some fee on card/momo payments in Ghana; calling
-            it out as its own line reads as a surprise surcharge instead.
-          */}
+          {paymentFee > 0 ? (
+            <div>
+              <span>Payment fee</span>
+              <strong>{formatMoney(paymentFee)}</strong>
+            </div>
+          ) : null}
           <div className="checkout-grand-total">
             <span>Total</span>
             <strong>{formatMoney(total)}</strong>
@@ -422,12 +440,6 @@ export function CheckoutClient({
           <p className="checkout-payment-note">Pay safely with Mobile Money or Card.</p>
         )}
 
-        <div className="checkout-assurance-row" aria-label="Checkout assurance">
-          <span>Private checkout</span>
-          <span>Mobile Money or card</span>
-          <span>Delivery confirmed</span>
-        </div>
-
         {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
         <button className="checkout-cta" disabled={submitting || !paystackEnabled} type="submit">
           <span>{submitting ? "Taking you to payment..." : "Pay now"}</span>
@@ -439,7 +451,7 @@ export function CheckoutClient({
 }
 
 function displayVariant(line: CartLine) {
-  return line.variantTitle.toLowerCase() === "default" ? "Standard" : line.variantTitle;
+  return line.variantTitle.toLowerCase() === "default" ? "" : line.variantTitle;
 }
 
 function subscribeToCart(listener: () => void) {

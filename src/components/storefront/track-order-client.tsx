@@ -126,7 +126,7 @@ export function TrackOrderClient() {
                 <div>
                   <strong>{item.productTitle}</strong>
                   <span>
-                    {item.variantTitle} × {item.quantity}
+                    {item.variantTitle && item.variantTitle.toLowerCase() !== "default" ? `${item.variantTitle} × ${item.quantity}` : `Qty ${item.quantity}`}
                   </span>
                 </div>
               </div>

@@ -56,6 +56,14 @@ export default async function ProductDetailPage({ params }: ProductPageParams) {
     .sort((first, second) => Number(second.bestSeller) - Number(first.bestSeller))
     .slice(0, 4);
 
+  // Only show what has really been written for this product — generic
+  // stand-in sentences in every card read as unfinished.
+  const careDetails = [
+    { label: "How to use", text: product.care?.usage },
+    { label: "Ingredients", text: product.care?.ingredients },
+    { label: "Safety", text: product.care?.warnings }
+  ].filter((detail): detail is { label: string; text: string } => Boolean(detail.text?.trim()));
+
   return (
     <main className="product-detail-page">
       <script
@@ -67,26 +75,20 @@ export default async function ProductDetailPage({ params }: ProductPageParams) {
       <ProductDetailHero variants={variants} />
 
       <section className="product-detail-info" aria-label="Product details">
-        <article>
-          <span>Format</span>
-          <strong>{product.variantTitle.toLowerCase() === "default" ? "Standard" : product.variantTitle}</strong>
-          <p>Product code {product.sku.toUpperCase()}</p>
-        </article>
-        <article>
-          <span>How to use</span>
-          <strong>{product.care?.usage ?? "Use only as directed on the product packaging."}</strong>
-        </article>
-        <article>
-          <span>Ingredients</span>
-          <strong>{product.care?.ingredients ?? "Please check the product package for the latest ingredient details."}</strong>
-        </article>
-        <article>
-          <span>Safety</span>
-          <strong>
-            {product.care?.warnings ??
-              "Follow the package label and seek professional advice where needed."}
-          </strong>
-        </article>
+        {careDetails.length > 0 ? (
+          careDetails.map((detail) => (
+            <article key={detail.label}>
+              <span>{detail.label}</span>
+              <strong>{detail.text}</strong>
+            </article>
+          ))
+        ) : (
+          <article>
+            <span>Before you use it</span>
+            <strong>Usage, ingredients and safety information are printed on the pack.</strong>
+          </article>
+        )}
+        <p className="product-detail-code">Product code {product.sku.toUpperCase()}</p>
       </section>
 
       <section className="product-support-band">

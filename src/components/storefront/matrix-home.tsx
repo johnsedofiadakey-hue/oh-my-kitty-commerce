@@ -16,12 +16,8 @@ type MatrixHomeProps = {
   sourceMessage?: string;
 };
 
-const careNeeds = [
-  { title: "Freshness", subtitle: "Everyday ritual", eyebrow: "FOR EVERYDAY CONFIDENCE", match: /mist|wash|oil|fresh/i, notes: ["pH balance", "Daily wash", "On-the-go mist"] },
-  { title: "Targeted care", subtitle: "Focused support", eyebrow: "FOR WHEN YOU NEED MORE", match: /infection|boric|set|herb/i, notes: ["Care sets", "Boric support", "Herbal care"] },
-  { title: "Wellness", subtitle: "From within", eyebrow: "FOR YOUR EVERYDAY RHYTHM", match: /supplement|elm|sobolo|libido|wellness/i, notes: ["Supplements", "Botanical care", "Feel-good rituals"] },
-  { title: "Body care", subtitle: "Comfort & tone", eyebrow: "FOR FEELING COMFORTABLE", match: /thigh|razor|bump|body/i, notes: ["Tone care", "Shaving care", "Soft skin"] }
-] as const;
+// The ritual names scrolling through the "Care, chosen with intention" banner.
+const careNeeds = [{ title: "Freshness" }, { title: "Targeted care" }, { title: "Wellness" }, { title: "Body care" }] as const;
 
 const trustedMarks = [
   { label: "FDA Ghana", detail: "registration check", tone: "fda", href: "https://verifypermit.fdaghana.gov.gh/publicsearch", logo: "/brand/fda-ghana-logo.png" },
@@ -36,7 +32,6 @@ const trustedMarks = [
  * behavior remain owned by the established commerce system.
  */
 export function MatrixHome({ products, sourceMessage }: MatrixHomeProps) {
-  const [activeNeed, setActiveNeed] = useState(0);
   const [activeHeroSlide, setActiveHeroSlide] = useState(0);
   const homeRef = useRef<HTMLDivElement>(null);
   const heroPointerStart = useRef<number | null>(null);
@@ -83,10 +78,6 @@ export function MatrixHome({ products, sourceMessage }: MatrixHomeProps) {
     () => products.filter((product) => product.stockAvailable > 0 && product.imageUrl),
     [products]
   );
-  const bestSellers = useMemo(
-    () => sellableProducts.filter((product) => product.bestSeller),
-    [sellableProducts]
-  );
   const transparentProducts = sellableProducts.filter((product) => Boolean(heroCutoutSource(product)));
   // The Boric Acid source—and the routine image that prominently includes
   // that bottle—remain available in the catalogue, but are not strong enough
@@ -102,21 +93,18 @@ export function MatrixHome({ products, sourceMessage }: MatrixHomeProps) {
   // These scenes deliberately use the clean, single-product cutouts. Bundles
   // remain in the shop rail, where their contents can be read properly.
   const mistProduct = selectStageProducts("mist")[0];
-  const flusherProduct = selectStageProducts("flusher")[0];
   const heroCampaignSlides = [
     { key: "wash", product: selectStageProducts("wash")[0], label: "Feminine Wash" },
     { key: "mist", product: mistProduct, label: "Kitty Mist" },
     { key: "body", product: selectStageProducts("body")[0], label: "Body Care" }
   ].filter((slide): slide is { key: string; product: StorefrontProductView; label: string } => Boolean(slide.product));
   const activeHeroCampaign = heroCampaignSlides[activeHeroSlide] ?? heroCampaignSlides[0];
-  const featuredProducts = (bestSellers.filter((product) => homepageVisualProducts.includes(product)).length
-    ? bestSellers.filter((product) => homepageVisualProducts.includes(product))
-    : homepageVisualProducts
-  ).slice(0, 6);
-  const activeNeedData = careNeeds[activeNeed] ?? careNeeds[0];
-  const needProducts = sellableProducts.filter((product) => activeNeedData.match.test(`${product.title} ${product.tags.join(" ")}`)).slice(0, 4);
-  const recommendedProducts = needProducts.length ? needProducts : featuredProducts.slice(0, 4);
-  const activeNeedProduct = recommendedProducts.find((product) => homepageVisualProducts.includes(product)) ?? featuredProducts[0];
+  // Best sellers first, topped up with the other photographed products so the
+  // rail always shows a proper row rather than a lone pair.
+  const featuredProducts = [
+    ...homepageVisualProducts.filter((product) => product.bestSeller),
+    ...homepageVisualProducts.filter((product) => !product.bestSeller)
+  ].slice(0, 4);
 
   useEffect(() => {
     if (heroCampaignSlides.length < 2) return;
@@ -164,7 +152,7 @@ export function MatrixHome({ products, sourceMessage }: MatrixHomeProps) {
           </Link>
           <CartTrigger ariaLabel="View cart" className="matrix-home-cart">
             <BagIcon />
-            <span className="matrix-home-cart-label">Bag</span>
+            <span className="matrix-home-cart-label">Cart</span>
             <b>
               <CartCount variant="text" />
             </b>
@@ -239,7 +227,7 @@ export function MatrixHome({ products, sourceMessage }: MatrixHomeProps) {
               <span className="matrix-home-eyebrow">{activeHeroCampaign ? heroCampaignCue(activeHeroCampaign.product) : "OH MY KITTY / INTIMATE CARE"}</span>
               <h1 id="matrix-home-title">{activeHeroCampaign?.label ?? "Care, made personal."}</h1>
               <p>{activeHeroCampaign?.product.shortCopy ?? "Thoughtful intimate care and wellness essentials."}</p>
-              {activeHeroCampaign ? <span className="omk-monument-meta">{activeHeroCampaign.product.variantTitle} <i aria-hidden="true">•</i> {activeHeroCampaign.product.formattedPrice}</span> : null}
+              {activeHeroCampaign ? <span className="omk-monument-meta">{isDefaultVariant(activeHeroCampaign.product.variantTitle) ? null : <>{activeHeroCampaign.product.variantTitle} <i aria-hidden="true">•</i> </>}{activeHeroCampaign.product.formattedPrice}</span> : null}
               <div className="omk-monument-actions">
                 <Link className="matrix-home-button omk-monument-cta" href="/shop">
                   Shop now <span aria-hidden="true">↗</span>
@@ -251,86 +239,6 @@ export function MatrixHome({ products, sourceMessage }: MatrixHomeProps) {
         </section>
 
         {sourceMessage ? <p className="matrix-home-source-note">{sourceMessage}</p> : null}
-
-        <section className="matrix-home-duality matrix-home-motion-reveal" aria-labelledby="matrix-home-duality-title">
-          <div className="matrix-home-duality-heading">
-            <span className="matrix-home-eyebrow">ONE RITUAL, TWO MOMENTS</span>
-            <h2 id="matrix-home-duality-title">One ritual.<br />Two moments.</h2>
-          </div>
-          <div className="matrix-home-duality-panels">
-            <article className="matrix-home-duality-panel matrix-home-duality-panel-dark">
-              <div aria-hidden="true" className="matrix-home-world-backdrop">
-                {mistProduct ? <ProductImage campaign cutout product={mistProduct} sizes="(max-width: 719px) 76vw, 360px" /> : null}
-              </div>
-              <span className="matrix-home-eyebrow">01 / DAILY</span>
-              <h3>Everyday ease.</h3>
-              <p>Gentle daily care for the rituals that keep you feeling like yourself.</p>
-              <Link href="/shop">Explore daily care <span aria-hidden="true">↗</span></Link>
-            </article>
-            <div className="matrix-home-duality-connection" aria-hidden="true">
-              <span className="matrix-home-duality-line" />
-              <i>everyday</i><b>↔</b><i>when you need more</i>
-            </div>
-            <article className="matrix-home-duality-panel matrix-home-duality-panel-peach">
-              <div aria-hidden="true" className="matrix-home-world-backdrop matrix-home-world-backdrop-targeted">
-                {flusherProduct ? <ProductImage campaign cutout product={flusherProduct} sizes="(max-width: 719px) 76vw, 440px" /> : null}
-              </div>
-              <span className="matrix-home-eyebrow">02 / TARGETED</span>
-              <h3>When you need more.</h3>
-              <p>Thoughtful support for the moments that call for a little more care.</p>
-              <Link href="/shop">Explore supportive care <span aria-hidden="true">↗</span></Link>
-            </article>
-          </div>
-        </section>
-
-        <section className="matrix-home-find matrix-home-motion-reveal" id="find-your-care" aria-labelledby="matrix-home-find-title">
-          <div className="matrix-home-find-intro">
-            <span className="matrix-home-eyebrow">FIND YOUR CARE</span>
-            <h2 id="matrix-home-find-title">Care, made clearer.</h2>
-            <p>Choose the moment you are shopping for. We will lead you to a thoughtful starting point.</p>
-          </div>
-          <div className="matrix-home-find-layout">
-            <div className="matrix-home-find-list" role="tablist" aria-label="Choose a care need">
-              {careNeeds.map((need, index) => (
-                <button
-                  aria-controls="matrix-home-find-result"
-                  aria-selected={activeNeed === index}
-                  className={activeNeed === index ? "is-active" : undefined}
-                  key={need.title}
-                  onClick={() => setActiveNeed(index)}
-                  role="tab"
-                  type="button"
-                >
-                  <small>0{index + 1}</small>
-                  <span><b>{need.title}</b><em>{need.subtitle}</em></span>
-                  <i aria-hidden="true">↗</i>
-                </button>
-              ))}
-            </div>
-            <aside className="matrix-home-find-result" id="matrix-home-find-result" role="tabpanel">
-              <div className="matrix-home-find-content">
-                <span aria-hidden="true" className="matrix-home-find-count">0{activeNeed + 1}</span>
-                <span className="matrix-home-eyebrow">{activeNeedData.eyebrow}</span>
-                <h3>{activeNeedData.title}</h3>
-                <p>Thoughtful options selected for this part of your routine.</p>
-                <div className="matrix-home-find-notes">
-                  {activeNeedData.notes.map((note, index) => <span key={note}><b>0{index + 1}</b>{note}</span>)}
-                </div>
-                <div className="matrix-home-find-products" aria-label={`Recommended ${activeNeedData.title} products`}>
-                  {recommendedProducts.slice(0, 2).map((product) => (
-                    <Link href={`/products/${product.slug}` as Route} key={product.variantId}>
-                      <span>{product.title}</span><b>{product.formattedPrice}</b><i aria-hidden="true">↗</i>
-                    </Link>
-                  ))}
-                </div>
-                <Link className="matrix-home-button matrix-home-button-dark" href="/shop">See products <span aria-hidden="true">↗</span></Link>
-              </div>
-              <div aria-hidden="true" className="matrix-home-find-campaign-shot">
-                {activeNeedProduct ? <ProductImage campaign cutout product={activeNeedProduct} sizes="(max-width: 719px) 78vw, 440px" /> : null}
-              </div>
-            </aside>
-          </div>
-        </section>
 
         <section className="matrix-home-favourites matrix-home-motion-reveal" aria-labelledby="matrix-home-favourites-title">
           <div className="matrix-home-section-intro matrix-home-section-intro-row">
@@ -349,7 +257,7 @@ export function MatrixHome({ products, sourceMessage }: MatrixHomeProps) {
                     <ProductImage campaign cutout product={product} sizes="(max-width: 700px) 76vw, 410px" />
                   </Link>
                   <div className="matrix-home-product-copy">
-                    <span>{product.variantTitle}</span>
+                    {isDefaultVariant(product.variantTitle) ? null : <span>{product.variantTitle}</span>}
                     <h3>{product.title}</h3>
                     <p>{product.shortCopy}</p>
                     <div>
@@ -541,4 +449,8 @@ function addToBag(product: StorefrontProductView) {
   };
   addLineToCart(line);
   openCart();
+}
+
+function isDefaultVariant(variantTitle: string) {
+  return variantTitle.trim().toLowerCase() === "default";
 }

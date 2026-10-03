@@ -124,7 +124,7 @@ export function CartContents({ onNavigate }: CartContentsProps) {
             </div>
             <div className="cart-item-copy">
               <strong>{line.productTitle}</strong>
-              <span>{displayVariant(line)}</span>
+              {displayVariant(line) ? <span>{displayVariant(line)}</span> : null}
               <small>{formatMoney(line.unitPrice)} each</small>
             </div>
             <div className="qty-stepper">
@@ -179,7 +179,7 @@ export function CartContents({ onNavigate }: CartContentsProps) {
 }
 
 function displayVariant(line: CartLine) {
-  return line.variantTitle.toLowerCase() === "default" ? "Standard" : line.variantTitle;
+  return line.variantTitle.toLowerCase() === "default" ? "" : line.variantTitle;
 }
 
 function subscribeToCart(listener: () => void) {

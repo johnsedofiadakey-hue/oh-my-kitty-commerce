@@ -9839,7 +9839,7 @@ a.pos-secondary-button {
 
 /* Storefront finish pass: customer path only, homepage structure left alone. */
 :root {
-  --font-display: Georgia, "Times New Roman", ui-serif, serif;
+  --font-display: var(--font-outfit), "Satoshi", var(--font-sans);
   --color-rose: #d94f78;
   --color-rose-deep: #b9345f;
   --color-blush: #f9ccd4;
@@ -11916,24 +11916,35 @@ a.pos-secondary-button {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
+  margin: 0;
   border: 1px solid rgb(217 79 120 / 10%);
   border-radius: 999px;
   padding: 6px;
+  list-style: none;
   background: rgb(255 255 255 / 64%);
 }
 
-.checkout-flow-rail span {
+.checkout-flow-rail li {
   display: inline-flex;
   min-height: 38px;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   border-radius: 999px;
   color: var(--color-muted);
-  font-size: 0.76rem;
-  font-weight: 900;
+  font-size: 0.8rem;
+  font-weight: 800;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
-.checkout-flow-rail span[data-active="true"] {
+.checkout-flow-rail li[data-state="done"] {
+  color: var(--color-rose-deep);
+  background: rgb(217 79 120 / 10%);
+}
+
+.checkout-flow-rail li[data-state="current"] {
   color: var(--color-white-pure);
   background:
     linear-gradient(135deg, rgb(255 255 255 / 16%), transparent 42%),
@@ -12311,9 +12322,9 @@ a.pos-secondary-button {
     border-radius: 22px;
   }
 
-  .checkout-flow-rail span {
+  .checkout-flow-rail li {
     min-height: 34px;
-    font-size: 0.7rem;
+    font-size: 0.78rem;
   }
 
   .checkout-form {
@@ -18017,4 +18028,84 @@ a.pos-secondary-button {
   .shop-pill {
     transition: none;
   }
+}
+
+/* Audit fixes ---------------------------------------------------------------
+   Product info cards only render what exists; the support band no longer
+   spills past the phone edge; small print gets a readable floor; the phone
+   header shows a Shop link; the footer staff link is quiet text. */
+.product-detail-info {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+}
+
+.product-detail-info .product-detail-code {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 719px) {
+  .product-support-band {
+    width: min(calc(100% - 24px), var(--shell-max));
+  }
+
+  .matrix-home-shop-link {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+.footer-credit .footer-staff-link {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.matrix-home-brand small,
+.matrix-home-brand-mark,
+.matrix-home-eyebrow,
+.matrix-home-product-index,
+.matrix-home-product-copy > span,
+.matrix-home-partner small,
+.matrix-home-cart,
+.matrix-home-product-copy button,
+.footer-matrix-trust p,
+.footer-credit,
+.footer-support-row a,
+.footer-matrix-trust span,
+.shop-card-tags span {
+  font-size: max(0.75rem, 11.5px);
+}
+
+.matrix-home-shop-link {
+  font-size: 0.82rem;
+}
+
+.product-support-band .scene-kicker {
+  color: rgb(255 255 255 / 72%);
+}
+
+.product-support-band h2 {
+  font-size: clamp(1.7rem, 5.5vw, 3rem);
+  line-height: 1.1;
+}
+
+@media (min-width: 720px) {
+  .matrix-home-product-rail {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+
+  .matrix-home-product-card {
+    flex-basis: auto;
+    width: auto;
+  }
+}
+
+/* Eyebrows on the light sections: darker sage so they pass AA contrast. */
+.matrix-home-favourites .matrix-home-eyebrow,
+.matrix-home-partners .matrix-home-eyebrow {
+  color: #566350;
 }

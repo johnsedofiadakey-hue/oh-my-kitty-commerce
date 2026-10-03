@@ -73,6 +73,9 @@ ENV NODE_ENV=production \
 RUN groupadd --system nodejs && useradd --system --gid nodejs nextjs
 
 COPY --from=builder /app/public ./public
+# Files saved owner-only (mode 600) on a developer machine arrive root-owned
+# and unreadable by the unprivileged runtime user, and then 500 in production.
+RUN chmod -R a+rX ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 

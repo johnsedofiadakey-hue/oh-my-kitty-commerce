@@ -85,11 +85,6 @@ export function StorefrontFooter({ variant = "full", whatsappNumber }: Storefron
               <a href="/privacy">Privacy</a>
               <a href="/terms">Terms</a>
             </nav>
-
-            <Link aria-label="Admin login" className="footer-admin-peek" href="/admin/login">
-              <span aria-hidden="true" className="footer-admin-lock" />
-              <strong>Admin</strong>
-            </Link>
           </div>
         </div>
 
@@ -116,6 +111,10 @@ export function StorefrontFooter({ variant = "full", whatsappNumber }: Storefron
           <a href="https://stormglide.io" rel="noreferrer" target="_blank">
             stormglide.io
           </a>
+          <span aria-hidden="true"> · </span>
+          <Link className="footer-staff-link" href="/admin/login">
+            Staff login
+          </Link>
         </p>
       </div>
     </footer>

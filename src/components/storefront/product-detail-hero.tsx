@@ -53,7 +53,7 @@ export function ProductDetailHero({ variants }: ProductDetailHeroProps) {
 
       <div className="product-detail-copy">
         <Link className="scene-kicker" href={"/shop" as Route}>
-          Shop
+          ← Back to shop
         </Link>
         <h1>{selected.title}</h1>
         <p>{selected.description ?? selected.shortCopy}</p>
@@ -109,24 +109,11 @@ export function ProductDetailHero({ variants }: ProductDetailHeroProps) {
             label={
               <>
                 <BagIcon className="cta-icon" />
-                <span>Add to cart</span>
+                <span>Add to cart · {linePrice}</span>
               </>
             }
             line={toCartLine(selected, quantity)}
           />
-        </div>
-
-        <div className="mini-cart-line">
-          <div className="mini-cart-line-thumb">
-            {selected.imageUrl ? <Image alt="" fill sizes="52px" src={selected.imageUrl} /> : null}
-          </div>
-          <div className="mini-cart-line-copy">
-            <strong>{selected.title}</strong>
-            <span>
-              {variantLabel(selected)} × {quantity}
-            </span>
-          </div>
-          <strong className="mini-cart-line-price">{linePrice}</strong>
         </div>
 
         <CartTrigger className="checkout-cta">
