@@ -364,6 +364,11 @@ export class FirestoreCommerceRepository implements CommerceRepository {
     }
   }
 
+  async getInventoryMovement(id: string) {
+    const ref = this.db.collection("inventoryMovements").doc(id);
+    return readDoc<InventoryMovement>(this.tx ? await this.tx.get(ref) : await ref.get());
+  }
+
   async listInventoryMovements(variantId: string) {
     this.rejectIfTransactional("listInventoryMovements");
     const snapshot = await this.db
@@ -382,10 +387,9 @@ export class FirestoreCommerceRepository implements CommerceRepository {
    */
   async listAllInventoryMovements() {
     this.rejectIfTransactional("listAllInventoryMovements");
-    // The admin inventory page only ever shows the 8 most recent per
-    // variant — stock levels themselves come from the variant document, not
-    // this ledger, so nothing needs the full history. Capped generously so
-    // it costs nothing today and just stops this from growing unbounded.
+    // The newest 500 across *all* variants, shared by every admin page. It is
+    // not a per-variant history — the Inventory page reads each variant's own
+    // movements with listInventoryMovements instead.
     const snapshot = await this.db.collection("inventoryMovements").orderBy("createdAt", "desc").limit(500).get();
     return snapshot.docs.map((doc) => readDoc<InventoryMovement>(doc)).filter(isDefined);
   }

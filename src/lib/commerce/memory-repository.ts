@@ -274,6 +274,10 @@ export class MemoryCommerceRepository implements CommerceRepository {
     this.inventoryMovements.set(movement.id, movement);
   }
 
+  async getInventoryMovement(id: string) {
+    return this.inventoryMovements.get(id) ?? null;
+  }
+
   async listInventoryMovements(variantId: string) {
     return [...this.inventoryMovements.values()].filter(
       (movement) => movement.variantId === variantId

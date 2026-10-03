@@ -86,6 +86,7 @@ export type CommerceRepository = {
   listPayments(): Promise<Payment[]>;
   deletePayment(id: string): Promise<void>;
   saveInventoryMovement(movement: InventoryMovement): Promise<void>;
+  getInventoryMovement(id: string): Promise<InventoryMovement | null>;
   listInventoryMovements(variantId: string): Promise<InventoryMovement[]>;
   listAllInventoryMovements(): Promise<InventoryMovement[]>;
   savePromotion(promotion: Promotion): Promise<void>;

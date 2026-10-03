@@ -271,6 +271,31 @@ export async function deleteProducts(
   return result;
 }
 
+function normaliseSku(sku: string) {
+  return sku.trim().toLowerCase();
+}
+
+// A SKU identifies exactly one variant. Two sharing one SKU makes anything
+// that looks a variant up by SKU (parcel returns, scanning) pick the wrong one.
+async function assertSkuAvailable(
+  context: CommerceContext,
+  sku: string,
+  self: { productId: string; variantId: string }
+) {
+  const wanted = normaliseSku(sku);
+  const variants = await context.repo.listAllVariants();
+  // The variant being saved may already exist under this very SKU (saving it
+  // again just updates it) — only a *different* variant holding it is a clash.
+  const clash = variants.find(
+    (variant) =>
+      normaliseSku(variant.sku) === wanted &&
+      !(variant.productId === self.productId && variant.id === self.variantId)
+  );
+  if (clash) {
+    throw new CommerceError("VALIDATION_ERROR", `The SKU "${sku.trim()}" is already used by another product.`);
+  }
+}
+
 export async function createVariant(
   context: CommerceContext,
   actor: CommerceActor,
@@ -279,6 +304,10 @@ export async function createVariant(
   await assertCan(context, actor, "products.update");
   const parsed = createVariantInputSchema.parse(input);
   await requiredProduct(context, parsed.productId);
+  await assertSkuAvailable(context, parsed.sku, {
+    productId: parsed.productId,
+    variantId: createSlugId("variant", parsed.sku.toLowerCase())
+  });
 
   const variant: ProductVariant = {
     ...parsed,
@@ -309,6 +338,10 @@ export async function updateVariant(
 ) {
   const parsed = updateVariantInputSchema.parse(input);
   const existing = await requiredVariant(context, parsed.productId, parsed.id);
+
+  if (parsed.sku !== undefined && normaliseSku(parsed.sku) !== normaliseSku(existing.sku)) {
+    await assertSkuAvailable(context, parsed.sku, { productId: existing.productId, variantId: existing.id });
+  }
 
   if (parsed.price !== undefined && parsed.price !== existing.price) {
     await assertCan(context, actor, "products.price.update");
@@ -365,6 +398,17 @@ export async function adjustInventory(
 
   return withTransaction(context, async (repo) => {
     const variant = await requiredVariant(context, parsed.productId, parsed.variantId, repo);
+
+    // The movement's id is derived from the request id, so a repeat of the
+    // same save finds the movement it already made and changes nothing.
+    const movementId = parsed.requestId ? `movement-adj-${parsed.requestId}` : createId(context, "movement");
+    if (parsed.requestId) {
+      const alreadyApplied = await repo.getInventoryMovement(movementId);
+      if (alreadyApplied) {
+        return { variant, movement: alreadyApplied };
+      }
+    }
+
     const stockOnHand = variant.stockOnHand + parsed.quantityDelta;
     const stockAvailable = variant.stockAvailable + parsed.quantityDelta;
 
@@ -379,7 +423,7 @@ export async function adjustInventory(
     };
 
     const movement: InventoryMovement = {
-      id: createId(context, "movement"),
+      id: movementId,
       productId: parsed.productId,
       variantId: parsed.variantId,
       type: parsed.type,
@@ -2324,42 +2368,94 @@ async function reversePosSale(
     for (const item of order.items) {
       variants.push(await repo.getVariant(item.productId, item.variantId));
     }
+    // Sets are only needed to find their components, which may belong to
+    // other products, so read every variant up front (reads before writes).
+    const variantsById = new Map((await repo.listAllVariants()).map((variant) => [variant.id, variant]));
     const payments = await repo.listPayments();
 
-    const movements: InventoryMovement[] = [];
-    for (const [index, item] of order.items.entries()) {
-      const variant = variants[index];
-      if (!variant) {
-        continue;
-      }
+    // What goes back on the shelf. A set has no stock of its own — selling
+    // it drew down its components — so returning it puts those components
+    // back, mirroring decrementInventoryForOrder. Quantities are summed per
+    // variant so a component shared by two lines is restored once, correctly.
+    const restocks: { variant: ProductVariant; quantity: number; viaSet: ProductVariant | null }[] = [];
+    if (parsed.restock) {
+      for (const [index, item] of order.items.entries()) {
+        const variant = variants[index];
+        if (!variant) {
+          continue;
+        }
 
-      const updatedVariant: ProductVariant = parsed.restock
-        ? {
-            ...variant,
-            stockOnHand: variant.stockOnHand + item.quantity,
-            stockAvailable: variant.stockAvailable + item.quantity
+        if (isSetVariant(variant)) {
+          for (const component of variant.bundleComponents ?? []) {
+            const componentVariant = variantsById.get(component.variantId);
+            if (!componentVariant || isSetVariant(componentVariant) || !componentVariant.trackInventory) {
+              continue;
+            }
+            restocks.push({
+              variant: componentVariant,
+              quantity: component.quantity * item.quantity,
+              viaSet: variant
+            });
           }
-        : variant;
-
-      const movement: InventoryMovement = {
-        id: createId(context, "movement"),
-        productId: item.productId,
-        variantId: item.variantId,
-        type: parsed.restock ? "RETURN_TO_STOCK" : "REFUND_NO_STOCK_RETURN",
-        quantityDelta: parsed.restock ? item.quantity : 0,
-        stockAfter: updatedVariant.stockAvailable,
-        orderId: order.id,
-        reason: parsed.reason,
-        actorId: actor.uid,
-        channel: order.channel,
-        createdAt: getNow(context)
-      };
-
-      if (parsed.restock) {
-        await repo.saveVariant(updatedVariant);
+        } else {
+          restocks.push({ variant, quantity: item.quantity, viaSet: null });
+        }
       }
-      await repo.saveInventoryMovement(movement);
-      movements.push(movement);
+    }
+
+    const movements: InventoryMovement[] = [];
+    if (parsed.restock) {
+      for (const restock of restocks) {
+        const current = variantsById.get(restock.variant.id) ?? restock.variant;
+        const restocked: ProductVariant = {
+          ...current,
+          stockOnHand: current.stockOnHand + restock.quantity,
+          stockAvailable: current.stockAvailable + restock.quantity
+        };
+        variantsById.set(restocked.id, restocked);
+
+        const movement: InventoryMovement = {
+          id: createId(context, "movement"),
+          productId: restocked.productId,
+          variantId: restocked.id,
+          type: "RETURN_TO_STOCK",
+          quantityDelta: restock.quantity,
+          stockAfter: restocked.stockAvailable,
+          orderId: order.id,
+          reason: restock.viaSet ? `${parsed.reason} (set ${restock.viaSet.sku})` : parsed.reason,
+          actorId: actor.uid,
+          channel: order.channel,
+          createdAt: getNow(context)
+        };
+
+        await repo.saveVariant(restocked);
+        await repo.saveInventoryMovement(movement);
+        movements.push(movement);
+      }
+    } else {
+      for (const [index, item] of order.items.entries()) {
+        const variant = variants[index];
+        if (!variant) {
+          continue;
+        }
+
+        const movement: InventoryMovement = {
+          id: createId(context, "movement"),
+          productId: item.productId,
+          variantId: item.variantId,
+          type: "REFUND_NO_STOCK_RETURN",
+          quantityDelta: 0,
+          stockAfter: variant.stockAvailable,
+          orderId: order.id,
+          reason: parsed.reason,
+          actorId: actor.uid,
+          channel: order.channel,
+          createdAt: getNow(context)
+        };
+
+        await repo.saveInventoryMovement(movement);
+        movements.push(movement);
+      }
     }
 
     const updatedOrder: Order = {
@@ -2713,10 +2809,20 @@ export async function returnParcel(context: CommerceContext, actor: CommerceActo
     if (parsed.restock) {
       // Put back what physically came back — the parcel's own exploded lines,
       // not the order lines, so a set restores its components.
-      const allVariants = await context.repo.listAllVariants();
-      const variantsBySku = new Map(allVariants.map((variant) => [variant.sku, variant]));
+      const [allVariants, allProducts] = await Promise.all([
+        context.repo.listAllVariants(),
+        context.repo.listProducts()
+      ]);
+      const productTitleById = new Map(allProducts.map((product) => [product.id, product.title]));
       for (const item of parcel.items) {
-        const variant = variantsBySku.get(item.sku);
+        // SKUs are meant to be unique, but older data can have two variants
+        // sharing one — the product title on the parcel line settles which.
+        const sameSku = allVariants.filter((candidate) => candidate.sku === item.sku);
+        const variant =
+          sameSku.length > 1
+            ? (sameSku.find((candidate) => productTitleById.get(candidate.productId) === item.productTitle) ??
+              sameSku[0])
+            : sameSku[0];
         if (!variant) {
           continue;
         }

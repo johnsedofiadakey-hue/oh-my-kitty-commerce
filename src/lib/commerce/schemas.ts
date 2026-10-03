@@ -242,7 +242,10 @@ export const adjustInventoryInputSchema = z.object({
   variantId: z.string().min(1),
   type: z.enum(["STOCK_RECEIVED", "PRODUCTION", "DAMAGE", "LOSS", "MANUAL_ADJUSTMENT"]),
   quantityDelta: nonZeroQuantitySchema,
-  reason: z.string().min(3)
+  reason: z.string().min(3),
+  // Identifies one press of "Save". The same id arriving twice (a double
+  // click, an impatient second tap) is applied once.
+  requestId: z.string().min(8).max(100).optional()
 });
 
 export const createMediaAssetInputSchema = z.object({

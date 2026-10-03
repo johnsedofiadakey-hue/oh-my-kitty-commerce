@@ -6,7 +6,10 @@ import {
   toSortableMillis
 } from "@/lib/admin/operations-data";
 import { requireAdminPermission } from "@/lib/auth/server";
+import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
+import { PendingSubmitButton } from "@/components/admin/pending-submit-button";
+import { RequestIdField } from "@/components/admin/request-id-field";
 import type { AdminInventoryRow } from "@/lib/admin/operations-data";
 import type { Product, ProductVariant } from "@/lib/commerce/types";
 import { adjustInventoryAction } from "./actions";
@@ -18,8 +21,20 @@ type VariantLookupEntry = { variant: ProductVariant; product: Product | null };
 export default async function AdminInventoryPage() {
   await requireAdminPermission("inventory.view");
   const data = await getAdminOperationsData();
-  const rows = data.inventoryRows;
   const disabled = data.source !== "live";
+
+  // The shared movement list behind the admin pages is capped at the newest
+  // 500 across *all* products, so older products would show a short or empty
+  // history. This page reads each product's own history instead.
+  const context = data.source === "live" ? getCommerceServerContext() : null;
+  const rows = context
+    ? await Promise.all(
+        data.inventoryRows.map(async (row) => ({
+          ...row,
+          movements: await context.repo.listInventoryMovements(row.variant.id).catch(() => row.movements)
+        }))
+      )
+    : data.inventoryRows;
 
   const productsById = new Map(data.products.map((product) => [product.id, product]));
   const variantLookup = new Map<string, VariantLookupEntry>(
@@ -35,8 +50,8 @@ export default async function AdminInventoryPage() {
         <div>
           <h1 className="app-title">Inventory</h1>
           <p className="app-subtitle">
-            Stock on hand for every product. Sets have no stock of their own — they show how many can be sold
-            right now based on their components.
+            Stock on hand for every product. A set made from other products has no stock of its own — it shows how
+            many can be sold right now based on its components.
           </p>
         </div>
       </div>
@@ -71,6 +86,8 @@ function InventoryRow({
   variantLookup: Map<string, VariantLookupEntry>;
 }) {
   const { product, variant, isSet, availableStock, lowStock } = row;
+  const negative = !isSet && variant.trackInventory && variant.stockAvailable < 0;
+  const notForSale = product !== null && product.status !== "ACTIVE";
 
   return (
     <AdminDrawer
@@ -82,13 +99,14 @@ function InventoryRow({
             <span>
               {getVariantLabel(variant)}
               {isSet ? " · Set" : ""}
+              {notForSale ? ` · ${product.status.toLowerCase()}` : ""}
             </span>
           </div>
           <span className="order-status-pill inventory-row-sku" title={variant.sku}>
             SKU {variant.sku}
           </span>
           <span className={lowStock ? "order-status-pill urgent" : "order-status-pill good"}>
-            {lowStock ? "Low stock" : "Healthy"}
+            {negative ? "Negative stock" : lowStock ? "Low stock" : "Healthy"}
           </span>
           <strong className="inventory-row-stock">{availableStock} in stock</strong>
         </div>
@@ -183,6 +201,7 @@ function InventoryDetail({
           <form action={adjustInventoryAction} className="admin-form">
             <input name="productId" type="hidden" value={variant.productId} />
             <input name="variantId" type="hidden" value={variant.id} />
+            <RequestIdField />
             <fieldset disabled={disabled}>
               <label className="admin-field">
                 <span>What happened</span>
@@ -201,9 +220,7 @@ function InventoryDetail({
                 <span>Reason</span>
                 <input minLength={3} name="reason" placeholder="Restock delivery" required />
               </label>
-              <button className="admin-action" type="submit">
-                Save adjustment
-              </button>
+              <PendingSubmitButton>Save adjustment</PendingSubmitButton>
             </fieldset>
           </form>
         </section>

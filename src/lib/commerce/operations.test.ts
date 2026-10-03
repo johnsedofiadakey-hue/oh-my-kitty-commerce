@@ -143,6 +143,74 @@ describe("commerce operations", () => {
     expect(adjustment.movement.type).toBe("STOCK_RECEIVED");
   });
 
+  it("applies a stock adjustment once when the same save arrives twice", async () => {
+    const context = createTestContext();
+    const { variant } = await seedProductAndVariant(context);
+    const adjustment = {
+      productId: variant.productId,
+      variantId: variant.id,
+      type: "STOCK_RECEIVED" as const,
+      quantityDelta: 10,
+      reason: "Restock",
+      requestId: "press-of-save-0001"
+    };
+
+    const first = await adjustInventory(context, owner, adjustment);
+    const second = await adjustInventory(context, owner, adjustment);
+
+    expect(first.variant.stockAvailable).toBe(22);
+    expect(second.movement.id).toBe(first.movement.id);
+    await expect(context.repo.getVariant(variant.productId, variant.id)).resolves.toMatchObject({
+      stockAvailable: 22,
+      stockOnHand: 22
+    });
+    await expect(context.repo.listInventoryMovements(variant.id)).resolves.toHaveLength(1);
+
+    // A different press of Save is a different request and does apply.
+    await adjustInventory(context, owner, { ...adjustment, requestId: "press-of-save-0002" });
+    await expect(context.repo.getVariant(variant.productId, variant.id)).resolves.toMatchObject({
+      stockAvailable: 32
+    });
+  });
+
+  it("refuses a second variant that reuses an existing SKU, in any letter case", async () => {
+    const context = createTestContext();
+    const { product, variant } = await seedProductAndVariant(context);
+    const otherProduct = await createProduct(context, owner, {
+      title: "Kitty Oil",
+      slug: "kitty-oil",
+      status: "ACTIVE",
+      collectionIds: [],
+      tags: [],
+      mediaIds: [],
+      featured: false
+    });
+    const newVariant = (productId: string, sku: string) => ({
+      productId,
+      title: "Standard",
+      sku,
+      optionValues: {},
+      price: 20000,
+      currency: "GHS" as const,
+      stockOnHand: 0,
+      lowStockThreshold: 5
+    });
+
+    await expect(createVariant(context, owner, newVariant(otherProduct.id, variant.sku.toLowerCase()))).rejects.toThrow(
+      /already used/
+    );
+
+    const other = await createVariant(context, owner, newVariant(otherProduct.id, "OMK-OIL"));
+    await expect(updateVariant(context, owner, { productId: otherProduct.id, id: other.id, sku: variant.sku })).rejects.toThrow(
+      /already used/
+    );
+    // Saving a variant again under its own SKU is not a clash.
+    await expect(
+      updateVariant(context, owner, { productId: otherProduct.id, id: other.id, sku: other.sku })
+    ).resolves.toMatchObject({ sku: "OMK-OIL" });
+    expect(product.id).not.toBe(otherProduct.id);
+  });
+
   it("completes POS sales against shared inventory with idempotency", async () => {
     const context = createTestContext();
     const { variant } = await seedProductAndVariant(context);
@@ -363,6 +431,42 @@ describe("commerce operations", () => {
       reason: "Customer changed their mind"
     });
     expect(repeat.idempotent).toBe(true);
+  });
+
+  it("refunding a set puts its components back, not the set's own stock", async () => {
+    const context = createTestContext();
+    const { component, kit } = await seedSetAndComponent(context);
+
+    const sale = await completePosSale(context, owner, {
+      channel: "POS",
+      idempotencyKey: "pos-sale-set-refund-0001",
+      items: [{ productId: kit.productId, variantId: kit.id, quantity: 3 }],
+      paymentMethod: "cash",
+      paymentProvider: "CASH",
+      amountReceived: kit.price * 3
+    });
+    await expect(context.repo.getVariant(component.productId, component.id)).resolves.toMatchObject({
+      stockAvailable: 4
+    });
+
+    const refund = await refundPosSale(context, owner, { orderId: sale.order.id, reason: "Changed their mind" });
+
+    const refundMovements = refund.inventoryMovements ?? [];
+    expect(refundMovements).toHaveLength(1);
+    expect(refundMovements[0]).toMatchObject({
+      variantId: component.id,
+      type: "RETURN_TO_STOCK",
+      quantityDelta: 6
+    });
+    await expect(context.repo.getVariant(component.productId, component.id)).resolves.toMatchObject({
+      stockAvailable: 10,
+      stockOnHand: 10
+    });
+    // The set never owned stock, so it must not gain any.
+    await expect(context.repo.getVariant(kit.productId, kit.id)).resolves.toMatchObject({
+      stockAvailable: kit.stockAvailable,
+      stockOnHand: kit.stockOnHand
+    });
   });
 
   it("requires manager approval when a refund exceeds the actor's limit", async () => {

@@ -25,7 +25,8 @@ export async function adjustInventoryAction(formData: FormData): Promise<void> {
     variantId: formString(formData, "variantId"),
     type: formMovementType(formData),
     quantityDelta: formInteger(formData, "quantityDelta", 0),
-    reason: formString(formData, "reason")
+    reason: formString(formData, "reason"),
+    requestId: formString(formData, "requestId") || undefined
   });
 
   revalidatePath("/admin/inventory");

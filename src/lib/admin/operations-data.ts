@@ -198,9 +198,14 @@ function buildOperationsData(input: {
     // A set's own lowStockThreshold is meaningless (it has no stock of its
     // own to threshold) — low-stock there just means the computed
     // availability has hit the same bar as any other product.
-    const lowStock = isSet
+    const belowThreshold = isSet
       ? availableStock <= variant.lowStockThreshold
       : variant.trackInventory && variant.stockAvailable <= variant.lowStockThreshold;
+    // A draft or archived product isn't being sold, so running low on it
+    // isn't worth an alert — but negative stock is always a counting mistake
+    // someone should look at, whatever the product's status.
+    const isSellable = !product || product.status === "ACTIVE";
+    const lowStock = (isSellable && belowThreshold) || (!isSet && variant.trackInventory && variant.stockAvailable < 0);
 
     return {
       product,
