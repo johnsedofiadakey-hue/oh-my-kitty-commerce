@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type SyntheticEvent } from "react";
+import { useEffect, useMemo, useState, type SyntheticEvent } from "react";
 import {
   AddToBagButton,
   addLineToCart,
@@ -12,7 +12,6 @@ import { StorefrontNav } from "@/components/storefront/storefront-nav";
 import type { StorefrontProductView } from "@/lib/storefront/catalogue";
 import { celebrateBurst } from "@/lib/storefront/celebrate";
 import { openCart } from "@/lib/storefront/cart-store";
-import { ShowcaseCard } from "@/components/storefront/showcase-card";
 import { usePhotoBackdrop } from "@/lib/storefront/use-photo-backdrop";
 
 type DepthShopProps = {
@@ -21,20 +20,9 @@ type DepthShopProps = {
 };
 
 export function DepthShop({ products, sourceMessage }: DepthShopProps) {
-  const rootRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
   const { backgroundColor: sheetBackdrop, handleLoad: handleSheetLoad } = usePhotoBackdrop();
-
-  const bestSellerProducts = useMemo(
-    () =>
-      products
-        .filter((product) => product.bestSeller)
-        .filter((product, index, all) => all.findIndex((entry) => entry.id === product.id) === index)
-        .slice(0, 6),
-    [products]
-  );
 
   const filteredProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -99,71 +87,6 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
     }
     return counts;
   }, [products]);
-  const heroProducts = useMemo(
-    () =>
-      products
-        .filter((product) => product.imageUrl)
-        .filter((product, index, all) => all.findIndex((entry) => entry.id === product.id) === index)
-        .slice(0, 3),
-    [products]
-  );
-
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return;
-    }
-
-    let active = true;
-    let context: { revert: () => void } | null = null;
-
-    async function loadMotion() {
-      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
-        import("gsap"),
-        import("gsap/ScrollTrigger")
-      ]);
-
-      if (!active || !rootRef.current) {
-        return;
-      }
-
-      gsap.registerPlugin(ScrollTrigger);
-      context = gsap.context(() => {
-        gsap.from(".depth-product-card", {
-          y: 16,
-          opacity: 0.92,
-          rotateX: 3,
-          stagger: 0.08,
-          duration: 0.65,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: ".depth-shop-grid",
-            start: "top 96%"
-          }
-        });
-
-        const heroTimeline = gsap.timeline({ defaults: { ease: "power3.out" } });
-        heroTimeline
-          .from(".depth-shop-copy .scene-kicker", { y: 16, opacity: 0, duration: 0.5 })
-          .from(
-            ".depth-shop-copy h1 .word",
-            { yPercent: 115, duration: 0.8, stagger: 0.07 },
-            "-=0.25"
-          );
-
-        if (document.querySelector(".depth-shop-copy p")) {
-          heroTimeline.from(".depth-shop-copy p", { y: 12, opacity: 0, duration: 0.5 }, "-=0.35");
-        }
-      }, rootRef);
-    }
-
-    void loadMotion();
-
-    return () => {
-      active = false;
-      context?.revert();
-    };
-  }, []);
-
   useEffect(() => {
     document.body.style.overflow = selectedProduct ? "hidden" : "";
     return () => {
@@ -183,107 +106,70 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
   }, []);
 
   return (
-    <div className="depth-shop" ref={rootRef}>
+    <div className="shop-simple">
       <StorefrontNav />
 
-      <section className="depth-shop-hero">
-        <div className="depth-shop-copy">
-          <span className="scene-kicker">Shop</span>
-          <h1>
-            {"Shop your care.".split(" ").map((word, index) => (
-              <span className="word-mask" key={word + index}>
-                <span className="word">{word}&nbsp;</span>
-              </span>
-            ))}
-          </h1>
-          {sourceMessage ? <p>{sourceMessage}</p> : null}
-        </div>
-        {heroProducts.length > 0 ? <ShopBotanicalDrift products={heroProducts} /> : null}
-      </section>
+      <main className="shop-simple-main">
+        <header className="shop-simple-head">
+          <h1>Shop</h1>
+          {products.length > 0 ? (
+            <span>
+              {filteredProducts.length} {filteredProducts.length === 1 ? "product" : "products"}
+            </span>
+          ) : null}
+        </header>
+        {sourceMessage ? <p className="shop-simple-note">{sourceMessage}</p> : null}
 
-      {bestSellerProducts.length > 0 ? (
-        <section className="related-products best-sellers-rail" aria-label="Best sellers">
-          <div className="front-product-intro">
-            <span className="scene-kicker">Best sellers</span>
-            <h2>What everyone&apos;s reaching for.</h2>
-          </div>
-          <BestSellersRail products={bestSellerProducts} />
-        </section>
-      ) : null}
-
-      {products.length > 0 ? (
-        <section className="shop-filter-bar" aria-label="Search products">
-          <label className={`shop-search ${searchOpen ? "open" : ""}`}>
-            <span aria-hidden="true">⌕</span>
+        {products.length > 0 ? (
+          <label className="shop-simple-search">
             <input
-              onBlur={() => setSearchOpen(false)}
+              aria-label="Search products"
               onChange={(event) => setQuery(event.target.value)}
-              onFocus={() => setSearchOpen(true)}
-              placeholder="What are you looking for?"
+              placeholder="Search products"
+              type="search"
               value={query}
             />
           </label>
-        </section>
-      ) : null}
+        ) : null}
 
-      {products.length === 0 ? (
-        <section className="shop-empty">
-          <Image
-            alt=""
-            aria-hidden="true"
-            className="shop-empty-mascot"
-            height={72}
-            src="/brand/oh-my-kitty-logo.jpeg"
-            width={72}
-          />
-          <h2>We&apos;re restocking.</h2>
-          <p>New products are on their way — check back soon.</p>
-        </section>
-      ) : filteredProducts.length > 0 ? (
-        <section className="depth-shop-grid" aria-label="Products">
-          {filteredProducts.map((product, index) => {
-            const hasMultipleVariants = (variantCountByProductId.get(product.id) ?? 1) > 1;
+        {products.length === 0 ? (
+          <section className="shop-simple-empty">
+            <h2>We&apos;re restocking.</h2>
+            <p>New products are on their way — check back soon.</p>
+          </section>
+        ) : filteredProducts.length > 0 ? (
+          <section className="shop-simple-grid" aria-label="Products">
+            {filteredProducts.map((product) => {
+              const hasMultipleVariants = (variantCountByProductId.get(product.id) ?? 1) > 1;
 
-            return (
-              <ProductTile
-                // Every 5th tile runs wide — a deliberate rest stop so the
-                // grid reads as a considered layout rather than a uniform
-                // wall of identical tiles.
-                featured={index > 0 && (index + 1) % 5 === 0}
-                hasMultipleVariants={hasMultipleVariants}
-                key={product.variantId}
-                onQuickAdd={() => {
-                  if (hasMultipleVariants) {
-                    setSelectedId(product.variantId);
-                    return;
-                  }
-                  addLineToCart(toCartLine(product));
-                  openCart();
-                }}
-                onSelect={() => setSelectedId(product.variantId)}
-                product={product}
-              />
-            );
-          })}
-        </section>
-      ) : (
-        <section className="shop-empty">
-          <Image
-            alt=""
-            aria-hidden="true"
-            className="shop-empty-mascot"
-            height={72}
-            src="/brand/oh-my-kitty-logo.jpeg"
-            width={72}
-          />
-          <h2>Nothing matched that yet.</h2>
-          <p>Try clearing your search, or look for something else.</p>
-          <button className="portal-cta" onClick={() => setQuery("")} type="button">
-            <span>Show everything</span>
-            <i aria-hidden="true" />
-          </button>
-        </section>
-      )}
+              return (
+                <ProductTile
+                  hasMultipleVariants={hasMultipleVariants}
+                  key={product.variantId}
+                  onQuickAdd={() => {
+                    if (hasMultipleVariants) {
+                      setSelectedId(product.variantId);
+                      return;
+                    }
+                    addLineToCart(toCartLine(product));
+                    openCart();
+                  }}
+                  onSelect={() => setSelectedId(product.variantId)}
+                  product={product}
+                />
+              );
+            })}
+          </section>
+        ) : (
+          <section className="shop-simple-empty">
+            <h2>Nothing matched that.</h2>
+            <p>Try a different word, or clear your search.</p>
+            <button className="shop-simple-clear" onClick={() => setQuery("")} type="button">
+              Show everything
+            </button>
+          </section>
+        )}
+      </main>
 
       {selectedProduct ? (
         <div
@@ -378,47 +264,42 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
 }
 
 function ProductTile({
-  featured,
   hasMultipleVariants,
   onQuickAdd,
   onSelect,
   product
 }: {
-  featured: boolean;
   hasMultipleVariants: boolean;
   onQuickAdd: () => void;
   onSelect: () => void;
   product: StorefrontProductView;
 }) {
   const [added, setAdded] = useState(false);
-  const { backgroundColor: tileBackdrop, handleLoad: handleTileLoad } = usePhotoBackdrop();
+  const { backgroundColor: photoBackdrop, handleLoad } = usePhotoBackdrop();
 
   return (
-    <article
-      className={`depth-product-card ${featured ? "featured" : ""}`}
-      style={tileBackdrop ? ({ "--product-card-bg": tileBackdrop } as CSSProperties) : undefined}
-    >
-      <button className="depth-product-card-hit" onClick={onSelect} type="button">
-        <div
-          className="depth-product-stage"
+    <article className="shop-card">
+      <button className="shop-card-open" onClick={onSelect} type="button">
+        <span
+          className="shop-card-photo"
           aria-hidden="true"
+          style={photoBackdrop ? { backgroundColor: photoBackdrop } : undefined}
         >
-          <ProductPackshot product={product} onImageLoad={handleTileLoad} />
-        </div>
-        <div className="depth-product-info">
-          {product.bestSeller ? <span className="category-pill bestseller-pill">Best seller</span> : null}
-          {product.freeDelivery ? <span className="category-pill free-delivery-pill">Free delivery</span> : null}
-          <h2>{product.title}</h2>
-          <div className="price-with-compare">
+          <ProductPackshot product={product} onImageLoad={handleLoad} />
+        </span>
+        <span className="shop-card-body">
+          <span className="shop-card-title">{product.title}</span>
+          <span className="shop-card-price">
             <strong>{product.formattedPrice}</strong>
-            {product.formattedCompareAtPrice ? (
-              <>
-                <s>{product.formattedCompareAtPrice}</s>
-                <span className="sale-pill">Sale</span>
-              </>
-            ) : null}
-          </div>
-        </div>
+            {product.formattedCompareAtPrice ? <s>{product.formattedCompareAtPrice}</s> : null}
+          </span>
+          {product.bestSeller || product.freeDelivery ? (
+            <span className="shop-card-tags">
+              {product.bestSeller ? <span className="tag-best">Best seller</span> : null}
+              {product.freeDelivery ? <span className="tag-free">Free delivery</span> : null}
+            </span>
+          ) : null}
+        </span>
       </button>
       <button
         aria-label={
@@ -426,7 +307,7 @@ function ProductTile({
             ? `Choose a size for ${product.title}`
             : `Quick add ${product.title} to bag`
         }
-        className={`quick-add-button ${added ? "added" : ""}`}
+        className={`shop-card-add ${added ? "added" : ""}`}
         onClick={(event) => {
           event.stopPropagation();
           onQuickAdd();
@@ -450,97 +331,6 @@ function variantLabel(product: StorefrontProductView) {
 
 function isDefaultVariant(product: StorefrontProductView) {
   return product.variantTitle.toLowerCase() === "default";
-}
-
-function ShopBotanicalDrift({ products }: { products: StorefrontProductView[] }) {
-  return (
-    <div className="depth-shop-botanical-drift" aria-hidden="true">
-      <span className="shop-drift-aura" />
-      <div className="shop-drift-leaf leaf-back">
-        <Image alt="" fill sizes="220px" src="/hero/botanicals/leaf-midground-01.svg" />
-      </div>
-      <div className="shop-drift-leaf leaf-front">
-        <Image alt="" fill sizes="240px" src="/hero/botanicals/leaf-foreground-01.svg" />
-      </div>
-      {products[1]?.imageUrl ? (
-        <div className="shop-drift-product product-side">
-          <Image alt="" fill sizes="220px" src={products[1].imageUrl} />
-        </div>
-      ) : null}
-      {products[0]?.imageUrl ? (
-        <div className="shop-drift-product product-main">
-          <Image alt="" fill priority sizes="380px" src={products[0].imageUrl} />
-        </div>
-      ) : null}
-      {products[2]?.imageUrl ? (
-        <div className="shop-drift-product product-soft">
-          <Image alt="" fill sizes="210px" src={products[2].imageUrl} />
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-/**
- * A swipeable, snap-scrolling rail instead of another static grid — the
- * bestsellers already reappear in the main grid below, so this section's
- * only job is to feel like a distinct, curated pick rather than "more of
- * the same." The thin progress track and a one-time scroll nudge both
- * signal "swipe me" without relying on a visible scrollbar.
- */
-function BestSellersRail({ products }: { products: StorefrontProductView[] }) {
-  const railRef = useRef<HTMLDivElement>(null);
-  const [thumb, setThumb] = useState({ width: 100, left: 0 });
-
-  const updateThumb = () => {
-    const rail = railRef.current;
-    if (!rail || rail.scrollWidth <= 0) {
-      return;
-    }
-    setThumb({
-      width: (rail.clientWidth / rail.scrollWidth) * 100,
-      left: (rail.scrollLeft / rail.scrollWidth) * 100
-    });
-  };
-
-  useEffect(() => {
-    updateThumb();
-
-    const rail = railRef.current;
-    if (!rail || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return;
-    }
-    if (rail.scrollWidth <= rail.clientWidth + 4) {
-      return;
-    }
-
-    // A brief right-then-back nudge, once, to hint the rail scrolls —
-    // there's no visible scrollbar telling anyone that on its own.
-    const nudge = window.setTimeout(() => {
-      rail.scrollTo({ left: 44, behavior: "smooth" });
-      window.setTimeout(() => rail.scrollTo({ left: 0, behavior: "smooth" }), 480);
-    }, 700);
-
-    return () => window.clearTimeout(nudge);
-  }, [products]);
-
-  return (
-    <div className="showcase-rail-track">
-      <div className="showcase-rail" onScroll={updateThumb} ref={railRef}>
-        {products.map((product) => (
-          <ShowcaseCard key={product.variantId} product={product} />
-        ))}
-      </div>
-      {thumb.width < 100 ? (
-        <div className="showcase-rail-progress">
-          <span
-            className="showcase-rail-progress-fill"
-            style={{ width: `${thumb.width}%`, left: `${thumb.left}%` }}
-          />
-        </div>
-      ) : null}
-    </div>
-  );
 }
 
 function SheetRelatedCard({
