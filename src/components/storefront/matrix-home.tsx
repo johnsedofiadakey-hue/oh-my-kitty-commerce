@@ -241,7 +241,7 @@ export function MatrixHome({ products, sourceMessage }: MatrixHomeProps) {
               <p>{activeHeroCampaign?.product.shortCopy ?? "Thoughtful intimate care and wellness essentials."}</p>
               {activeHeroCampaign ? <span className="omk-monument-meta">{activeHeroCampaign.product.variantTitle} <i aria-hidden="true">•</i> {activeHeroCampaign.product.formattedPrice}</span> : null}
               <div className="omk-monument-actions">
-                <Link className="matrix-home-button omk-monument-cta" href={activeHeroCampaign ? `/products/${activeHeroCampaign.product.slug}` as Route : "/shop"}>
+                <Link className="matrix-home-button omk-monument-cta" href="/shop">
                   Shop now <span aria-hidden="true">↗</span>
                 </Link>
               </div>
