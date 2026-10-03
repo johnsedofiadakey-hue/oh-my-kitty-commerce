@@ -110,27 +110,21 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
       <StorefrontNav />
 
       <main className="shop-simple-main">
-        <header className="shop-simple-head">
+        <div className="shop-simple-bar">
           <h1>Shop</h1>
           {products.length > 0 ? (
-            <span>
-              {filteredProducts.length} {filteredProducts.length === 1 ? "product" : "products"}
-            </span>
+            <label className="shop-simple-search">
+              <input
+                aria-label="Search products"
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search products"
+                type="search"
+                value={query}
+              />
+            </label>
           ) : null}
-        </header>
+        </div>
         {sourceMessage ? <p className="shop-simple-note">{sourceMessage}</p> : null}
-
-        {products.length > 0 ? (
-          <label className="shop-simple-search">
-            <input
-              aria-label="Search products"
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search products"
-              type="search"
-              value={query}
-            />
-          </label>
-        ) : null}
 
         {products.length === 0 ? (
           <section className="shop-simple-empty">

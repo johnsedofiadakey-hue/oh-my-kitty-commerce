@@ -17675,35 +17675,34 @@ a.pos-secondary-button {
   padding: 0 16px 72px;
 }
 
-.shop-simple-head {
+.shop-simple-bar {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
-.shop-simple-head h1 {
+.shop-simple-bar h1 {
   margin: 0;
-  font-size: 1.85rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1;
 }
 
-.shop-simple-head span,
 .shop-simple-note {
+  margin: 0 0 14px;
   color: var(--color-muted);
   font-size: 0.875rem;
 }
 
 .shop-simple-search {
   display: block;
-  margin-bottom: 18px;
+  flex: 1;
 }
 
 .shop-simple-search input {
   width: 100%;
-  height: 46px;
+  height: 44px;
   border: 1px solid var(--color-line);
   border-radius: 12px;
   padding: 0 14px;
@@ -17890,8 +17889,12 @@ a.pos-secondary-button {
     padding: 0 24px 80px;
   }
 
-  .shop-simple-head h1 {
-    font-size: 2.25rem;
+  .shop-simple-bar h1 {
+    font-size: 1.85rem;
+  }
+
+  .shop-simple-search {
+    flex: 0 1 420px;
   }
 
   .shop-simple-grid {
