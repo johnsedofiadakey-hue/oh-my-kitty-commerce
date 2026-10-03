@@ -212,6 +212,37 @@ function createCards(
     });
 }
 
+export type ShopFilterOption = { slug: string; label: string };
+
+export type ShopFilterOptions = {
+  needs: ShopFilterOption[];
+  categories: ShopFilterOption[];
+};
+
+// The shop's filter choices: only needs/categories that at least one
+// published product actually carries (so a customer never picks a filter
+// that returns nothing), in the order the owner set under Admin → Taxonomy.
+export function getShopFilterOptions(catalogue: StorefrontCatalogue): ShopFilterOptions {
+  function collect(pick: (card: StorefrontProductCard) => Array<Concern | ProductType>) {
+    const bySlug = new Map<string, Concern | ProductType>();
+    for (const card of catalogue.cards) {
+      for (const entry of pick(card)) {
+        if (entry.active && !bySlug.has(entry.slug)) {
+          bySlug.set(entry.slug, entry);
+        }
+      }
+    }
+    return [...bySlug.values()]
+      .sort((first, second) => first.sortOrder - second.sortOrder || first.title.localeCompare(second.title))
+      .map((entry) => ({ slug: entry.slug, label: entry.title }));
+  }
+
+  return {
+    needs: collect((card) => card.concerns),
+    categories: collect((card) => card.productTypes)
+  };
+}
+
 export function formatStorefrontMoney(amount: number) {
   return formatMoney(amount);
 }

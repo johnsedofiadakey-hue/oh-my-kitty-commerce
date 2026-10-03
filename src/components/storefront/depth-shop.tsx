@@ -8,30 +8,73 @@ import {
   type CartLine
 } from "@/components/storefront/add-to-bag-button";
 import { CartTrigger } from "@/components/storefront/cart-trigger";
+import { ShopFilters } from "@/components/storefront/shop-filters";
 import { StorefrontNav } from "@/components/storefront/storefront-nav";
-import type { StorefrontProductView } from "@/lib/storefront/catalogue";
+import type { ShopFilterOptions, StorefrontProductView } from "@/lib/storefront/catalogue";
 import { celebrateBurst } from "@/lib/storefront/celebrate";
 import { openCart } from "@/lib/storefront/cart-store";
 import { usePhotoBackdrop } from "@/lib/storefront/use-photo-backdrop";
 
 type DepthShopProps = {
+  filterOptions: ShopFilterOptions;
+  initialCategory?: string;
+  initialNeed?: string;
   products: StorefrontProductView[];
   sourceMessage?: string;
 };
 
-export function DepthShop({ products, sourceMessage }: DepthShopProps) {
+export function DepthShop({
+  filterOptions,
+  initialCategory = "",
+  initialNeed = "",
+  products,
+  sourceMessage
+}: DepthShopProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  // A shared link can carry a stale or mistyped filter — only honour ones
+  // that are real choices, so the page never opens on an empty grid.
+  const [need, setNeed] = useState(() =>
+    filterOptions.needs.some((option) => option.slug === initialNeed) ? initialNeed : ""
+  );
+  const [category, setCategory] = useState(() =>
+    filterOptions.categories.some((option) => option.slug === initialCategory) ? initialCategory : ""
+  );
   const { backgroundColor: sheetBackdrop, handleLoad: handleSheetLoad } = usePhotoBackdrop();
+
+  // Keep the address in step with the filters so a filtered view can be
+  // shared or bookmarked. replaceState (not router.replace) because the page
+  // is server-rendered and a navigation would refetch the whole catalogue.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (need) {
+      url.searchParams.set("need", need);
+    } else {
+      url.searchParams.delete("need");
+    }
+    if (category) {
+      url.searchParams.set("category", category);
+    } else {
+      url.searchParams.delete("category");
+    }
+    window.history.replaceState(window.history.state, "", url);
+  }, [need, category]);
 
   const filteredProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) {
-      return products;
-    }
 
-    return products.filter((product) =>
-      [
+    return products.filter((product) => {
+      if (need && !product.concernSlugs.includes(need)) {
+        return false;
+      }
+      if (category && !product.productTypeSlugs.includes(category)) {
+        return false;
+      }
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      return [
         product.title,
         product.shortCopy,
         product.sku,
@@ -43,9 +86,17 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
       ]
         .join(" ")
         .toLowerCase()
-        .includes(normalizedQuery)
-    );
-  }, [products, query]);
+        .includes(normalizedQuery);
+    });
+  }, [products, query, need, category]);
+
+  const isNarrowed = Boolean(need || category || query.trim());
+
+  function clearAllFilters() {
+    setQuery("");
+    setNeed("");
+    setCategory("");
+  }
 
   const selectedProduct = useMemo(
     () => products.find((product) => product.variantId === selectedId) ?? null,
@@ -126,6 +177,25 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
         </div>
         {sourceMessage ? <p className="shop-simple-note">{sourceMessage}</p> : null}
 
+        {products.length > 0 ? (
+          <ShopFilters
+            categories={filterOptions.categories}
+            category={category}
+            need={need}
+            needs={filterOptions.needs}
+            onCategoryChange={setCategory}
+            onNeedChange={setNeed}
+          />
+        ) : null}
+        {isNarrowed && filteredProducts.length > 0 ? (
+          <p className="shop-filter-status" aria-live="polite">
+            Showing {filteredProducts.length} of {products.length}
+            <button onClick={clearAllFilters} type="button">
+              Clear
+            </button>
+          </p>
+        ) : null}
+
         {products.length === 0 ? (
           <section className="shop-simple-empty">
             <h2>We&apos;re restocking.</h2>
@@ -157,8 +227,8 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
         ) : (
           <section className="shop-simple-empty">
             <h2>Nothing matched that.</h2>
-            <p>Try a different word, or clear your search.</p>
-            <button className="shop-simple-clear" onClick={() => setQuery("")} type="button">
+            <p>Try a different word, or clear your filters.</p>
+            <button className="shop-simple-clear" onClick={clearAllFilters} type="button">
               Show everything
             </button>
           </section>
@@ -228,7 +298,7 @@ export function DepthShop({ products, sourceMessage }: DepthShopProps) {
               ) : null}
               <AddToBagButton
                 className="pdp-add-button"
-                label="Add to bag"
+                label="Add to cart"
                 line={toCartLine(selectedProduct)}
               />
               <CartTrigger className="sheet-cart-link" onBeforeOpen={() => setSelectedId(null)}>
@@ -299,7 +369,7 @@ function ProductTile({
         aria-label={
           hasMultipleVariants
             ? `Choose a size for ${product.title}`
-            : `Quick add ${product.title} to bag`
+            : `Quick add ${product.title} to cart`
         }
         className={`shop-card-add ${added ? "added" : ""}`}
         onClick={(event) => {

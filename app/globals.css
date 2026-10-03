@@ -17908,3 +17908,113 @@ a.pos-secondary-button {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+/* Shop filters: one labelled row of pills per filter (need, category).
+   Quiet when idle, solid black when chosen so the active filter is
+   obvious at a glance. Rows scroll sideways on phones, wrap on desktop. */
+.shop-filters {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.shop-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.shop-filter-label {
+  flex: 0 0 64px;
+  color: var(--color-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shop-filter-pills {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  padding: 2px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.shop-filter-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.shop-pill {
+  flex: none;
+  height: 34px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  padding: 0 14px;
+  background: var(--color-white-pure);
+  color: var(--color-near-black);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.shop-pill:hover {
+  border-color: var(--color-near-black);
+}
+
+.shop-pill[aria-pressed="true"] {
+  border-color: var(--color-near-black);
+  background: var(--color-near-black);
+  color: var(--color-white-pure);
+}
+
+.shop-pill:focus-visible {
+  outline: 2px solid var(--color-rose-deep);
+  outline-offset: 2px;
+}
+
+.shop-filter-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.shop-filter-status button {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--color-rose-deep);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .shop-filter-pills {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .shop-filter-label {
+    flex-basis: 78px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shop-pill {
+    transition: none;
+  }
+}

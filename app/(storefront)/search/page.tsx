@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { DepthShop } from "@/components/storefront/depth-shop";
-import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefront/catalogue";
+import {
+  getShopFilterOptions,
+  getStorefrontCatalogue,
+  toStorefrontProductViews
+} from "@/lib/storefront/catalogue";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +18,7 @@ export default async function SearchPage() {
 
   return (
     <DepthShop
+      filterOptions={getShopFilterOptions(catalogue)}
       products={toStorefrontProductViews(catalogue)}
       sourceMessage="Search by product name or size."
     />

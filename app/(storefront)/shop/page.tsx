@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { DepthShop } from "@/components/storefront/depth-shop";
-import { getStorefrontCatalogue, toStorefrontProductViews } from "@/lib/storefront/catalogue";
+import {
+  getShopFilterOptions,
+  getStorefrontCatalogue,
+  toStorefrontProductViews
+} from "@/lib/storefront/catalogue";
 
 export const dynamic = "force-dynamic";
 
@@ -11,10 +15,24 @@ export const metadata: Metadata = {
   alternates: { canonical: "/shop" }
 };
 
-export default async function ShopPage() {
-  const catalogue = await getStorefrontCatalogue();
+type ShopPageProps = {
+  searchParams: Promise<{ need?: string | string[]; category?: string | string[] }>;
+};
+
+function firstValue(value: string | string[] | undefined) {
+  return (Array.isArray(value) ? value[0] : value) ?? "";
+}
+
+export default async function ShopPage({ searchParams }: ShopPageProps) {
+  const [catalogue, params] = await Promise.all([getStorefrontCatalogue(), searchParams]);
 
   return (
-    <DepthShop products={toStorefrontProductViews(catalogue)} sourceMessage={catalogue.sourceMessage} />
+    <DepthShop
+      filterOptions={getShopFilterOptions(catalogue)}
+      initialCategory={firstValue(params.category)}
+      initialNeed={firstValue(params.need)}
+      products={toStorefrontProductViews(catalogue)}
+      sourceMessage={catalogue.sourceMessage}
+    />
   );
 }
