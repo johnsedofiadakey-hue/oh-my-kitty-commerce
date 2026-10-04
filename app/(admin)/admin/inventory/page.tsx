@@ -8,8 +8,7 @@ import {
 import { requireAdminPermission } from "@/lib/auth/server";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
-import { PendingSubmitButton } from "@/components/admin/pending-submit-button";
-import { RequestIdField } from "@/components/admin/request-id-field";
+import { StockAdjustForm } from "@/components/admin/stock-adjust-form";
 import type { AdminInventoryRow } from "@/lib/admin/operations-data";
 import type { Product, ProductVariant } from "@/lib/commerce/types";
 import { adjustInventoryAction } from "./actions";
@@ -198,31 +197,13 @@ function InventoryDetail({
       ) : (
         <section className="order-detail-section">
           <h3>Adjust stock</h3>
-          <form action={adjustInventoryAction} className="admin-form">
-            <input name="productId" type="hidden" value={variant.productId} />
-            <input name="variantId" type="hidden" value={variant.id} />
-            <RequestIdField />
-            <fieldset disabled={disabled}>
-              <label className="admin-field">
-                <span>What happened</span>
-                <select defaultValue="MANUAL_ADJUSTMENT" name="type">
-                  <option value="STOCK_RECEIVED">Stock received (restock)</option>
-                  <option value="MANUAL_ADJUSTMENT">Manual adjustment</option>
-                  <option value="DAMAGE">Damaged</option>
-                  <option value="LOSS">Lost</option>
-                </select>
-              </label>
-              <label className="admin-field">
-                <span>Quantity change</span>
-                <input name="quantityDelta" placeholder="e.g. 10 to add, -2 to remove" required type="number" />
-              </label>
-              <label className="admin-field">
-                <span>Reason</span>
-                <input minLength={3} name="reason" placeholder="Restock delivery" required />
-              </label>
-              <PendingSubmitButton>Save adjustment</PendingSubmitButton>
-            </fieldset>
-          </form>
+          <StockAdjustForm
+            action={adjustInventoryAction}
+            currentStock={variant.stockAvailable}
+            disabled={disabled}
+            productId={variant.productId}
+            variantId={variant.id}
+          />
         </section>
       )}
 

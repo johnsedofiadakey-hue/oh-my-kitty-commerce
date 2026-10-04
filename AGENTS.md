@@ -87,6 +87,17 @@ Admin and POS:
 - Refunds, voids, large discounts, and price overrides must support permission checks and manager approval.
 - Avoid destructive data migrations. If required, document the migration and rollback plan before implementation.
 
+## Deploying
+
+The live site is deployed with `gcloud run deploy oh-my-kitty --source .`, which uploads whatever is in the folder it is run from — not what is on `main`. Several agents work from separate copies of this repo, so a deploy from a stale copy silently replaces newer fixes on the live site (this has already happened once, and it brought back a stock-adjustment bug).
+
+Before every deploy:
+
+1. Deploy only from the main project folder, on `main`, after `git pull`, with the latest commits present.
+2. Run `git log --oneline -5` and confirm the newest commits are the ones you expect to be live. If another agent has uncommitted work in the folder, leave it and do not revert it.
+3. Never deploy from a Codex worktree under `~/.codex/worktrees/`.
+4. After deploying, say which revision is live and what it contains.
+
 ## Completion Standard
 
 A task is not complete until:
