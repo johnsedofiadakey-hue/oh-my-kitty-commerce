@@ -105,7 +105,7 @@ function InventoryRow({
             SKU {variant.sku}
           </span>
           <span className={lowStock ? "order-status-pill urgent" : "order-status-pill good"}>
-            {negative ? "Negative stock" : lowStock ? "Low stock" : "Healthy"}
+            {negative ? "Needs a count" : lowStock ? "Low stock" : "Healthy"}
           </span>
           <strong className="inventory-row-stock">{availableStock} in stock</strong>
         </div>

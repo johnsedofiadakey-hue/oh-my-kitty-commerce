@@ -18116,3 +18116,63 @@ a.pos-secondary-button {
   overflow: hidden;
   background: var(--color-white-pure);
 }
+
+/* Inventory "Adjust stock": three plain choices and a before/after line. */
+.stock-mode {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.stock-mode label {
+  position: relative;
+  display: block;
+}
+
+.stock-mode input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.stock-mode span {
+  display: grid;
+  min-height: 44px;
+  place-items: center;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  padding: 6px 8px;
+  background: var(--color-white-pure);
+  color: var(--color-near-black);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.stock-mode input:checked + span {
+  border-color: var(--color-near-black);
+  background: var(--color-near-black);
+  color: var(--color-white-pure);
+}
+
+.stock-mode input:focus-visible + span {
+  outline: 2px solid var(--color-rose-deep);
+  outline-offset: 2px;
+}
+
+.stock-preview {
+  margin: 4px 0 12px;
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.stock-preview.warn {
+  color: var(--color-status-urgent);
+}

@@ -14,6 +14,7 @@ import type { CommerceRepository, CommerceTransaction } from "@/lib/commerce/rep
 import { createNoopTransaction } from "@/lib/commerce/repository";
 import {
   adjustInventoryInputSchema,
+  setInventoryCountInputSchema,
   completeSaleInputSchema,
   createExpenseCategoryInputSchema,
   updateExpenseCategoryInputSchema,
@@ -61,6 +62,7 @@ import {
   updateRoutineInputSchema,
   updateVariantInputSchema,
   type AdjustInventoryInput,
+  type SetInventoryCountInput,
   type CompleteSaleInput,
   type CreateCustomerInput,
   type CreateOrderDraftInput,
@@ -454,6 +456,73 @@ export async function adjustInventory(
     );
 
     return { variant: updatedVariant, movement };
+  });
+}
+
+/**
+ * Sets a product's stock to a counted number. The difference is worked out
+ * here, against the stock as it is right now, so a sale that lands while
+ * someone is typing can't make the result wrong. Recorded as a movement like
+ * any other adjustment, so the history still explains every change.
+ */
+export async function setInventoryCount(
+  context: CommerceContext,
+  actor: CommerceActor,
+  input: SetInventoryCountInput
+) {
+  await assertCan(context, actor, "inventory.adjust");
+  const parsed = setInventoryCountInputSchema.parse(input);
+
+  return withTransaction(context, async (repo) => {
+    const variant = await requiredVariant(context, parsed.productId, parsed.variantId, repo);
+
+    const movementId = parsed.requestId ? `movement-count-${parsed.requestId}` : createId(context, "movement");
+    if (parsed.requestId) {
+      const alreadyApplied = await repo.getInventoryMovement(movementId);
+      if (alreadyApplied) {
+        return { variant, movement: alreadyApplied as InventoryMovement | null };
+      }
+    }
+
+    const delta = parsed.count - variant.stockAvailable;
+    if (delta === 0) {
+      return { variant, movement: null as InventoryMovement | null };
+    }
+
+    const updatedVariant: ProductVariant = {
+      ...variant,
+      stockOnHand: variant.stockOnHand + delta,
+      stockAvailable: parsed.count
+    };
+
+    const movement: InventoryMovement = {
+      id: movementId,
+      productId: parsed.productId,
+      variantId: parsed.variantId,
+      type: "MANUAL_ADJUSTMENT",
+      quantityDelta: delta,
+      stockAfter: parsed.count,
+      reason: `Counted ${parsed.count} (was ${variant.stockAvailable}): ${parsed.reason}`,
+      actorId: actor.uid,
+      createdAt: getNow(context)
+    };
+
+    await repo.saveVariant(updatedVariant);
+    await repo.saveInventoryMovement(movement);
+    await writeAuditLog(
+      context,
+      actor,
+      {
+        action: "inventory.count",
+        entityType: "inventoryMovement",
+        entityId: movement.id,
+        summary: `Set stock for ${variant.sku} to ${parsed.count}`,
+        reason: parsed.reason
+      },
+      repo
+    );
+
+    return { variant: updatedVariant, movement: movement as InventoryMovement | null };
   });
 }
 

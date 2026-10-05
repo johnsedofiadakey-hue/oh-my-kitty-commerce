@@ -3,23 +3,22 @@
 import { revalidatePath } from "next/cache";
 import { ZodError } from "zod";
 import { CommerceError } from "@/lib/commerce/errors";
-import { adjustInventory } from "@/lib/commerce/operations";
+import { adjustInventory, setInventoryCount } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getRequiredAdminActor } from "@/lib/auth/server";
-import { formInteger, formString, type AdminActionState } from "@/lib/admin/product-form";
+import { formString, type AdminActionState } from "@/lib/admin/product-form";
 
-type AdjustableMovementType = "STOCK_RECEIVED" | "DAMAGE" | "LOSS" | "MANUAL_ADJUSTMENT";
+type RemoveType = "DAMAGE" | "LOSS" | "MANUAL_ADJUSTMENT";
 
-const adjustableMovementTypes: AdjustableMovementType[] = [
-  "STOCK_RECEIVED",
-  "DAMAGE",
-  "LOSS",
-  "MANUAL_ADJUSTMENT"
-];
+const removeReasons: Record<RemoveType, string> = {
+  DAMAGE: "Damaged",
+  LOSS: "Lost",
+  MANUAL_ADJUSTMENT: "Stock removed"
+};
 
-// Returns a message for the form to show instead of throwing: a thrown error
-// replaces the whole page with a generic "Something went wrong" screen, which
-// is a harsh response to an ordinary mistake like removing more than is there.
+// One form, three plain choices: add stock, remove stock, or "I counted N on
+// the shelf". Returns a message for the form to show instead of throwing — a
+// thrown error replaces the whole page with a generic "Something went wrong".
 export async function adjustInventoryAction(
   _previousState: AdminActionState,
   formData: FormData
@@ -28,47 +27,73 @@ export async function adjustInventoryAction(
   const variantId = formString(formData, "variantId");
 
   try {
+    const mode = formString(formData, "mode");
+    const amountText = formString(formData, "amount");
+    if (!/^\d+$/.test(amountText)) {
+      return { status: "error", message: "Enter a whole number, 0 or more." };
+    }
+    const amount = Number(amountText);
+    const note = formString(formData, "note");
+    const requestId = formString(formData, "requestId") || undefined;
+
     const context = requireCommerceContext();
     const actor = await getRequiredAdminActor();
+    const where = { productId, variantId };
 
-    const result = await adjustInventory(context, actor, {
-      productId,
-      variantId,
-      type: formMovementType(formData),
-      quantityDelta: formInteger(formData, "quantityDelta", 0),
-      reason: formString(formData, "reason"),
-      requestId: formString(formData, "requestId") || undefined
-    });
+    let message: string;
+    if (mode === "set") {
+      const result = await setInventoryCount(context, actor, {
+        ...where,
+        count: amount,
+        reason: note || "Stock count",
+        requestId
+      });
+      message = result.movement
+        ? `Saved. ${result.variant.sku} now has ${result.variant.stockAvailable} in stock.`
+        : `Nothing to change. ${result.variant.sku} already has ${result.variant.stockAvailable} in stock.`;
+    } else if (mode === "add" || mode === "remove") {
+      if (amount === 0) {
+        return { status: "error", message: "Enter how many, more than 0." };
+      }
+      const adding = mode === "add";
+      const removeType = removeTypeFrom(formString(formData, "removeType"));
+      const result = await adjustInventory(context, actor, {
+        ...where,
+        type: adding ? "STOCK_RECEIVED" : removeType,
+        quantityDelta: adding ? amount : -amount,
+        reason: note || (adding ? "Restock" : removeReasons[removeType]),
+        requestId
+      });
+      message = `Saved. ${result.variant.sku} now has ${result.variant.stockAvailable} in stock.`;
+    } else {
+      return { status: "error", message: "Choose whether you are adding, removing or counting stock." };
+    }
 
     revalidatePath("/admin/inventory");
     revalidatePath("/admin/products");
     revalidatePath("/shop");
 
-    return {
-      status: "success",
-      message: `Saved. ${result.variant.sku} now has ${result.variant.stockAvailable} in stock.`,
-      productId,
-      variantId
-    };
+    return { status: "success", message, productId, variantId };
   } catch (error) {
     return { status: "error", message: await friendlyMessage(error, productId, variantId) };
   }
+}
+
+function removeTypeFrom(value: string): RemoveType {
+  return value === "DAMAGE" || value === "LOSS" ? value : "MANUAL_ADJUSTMENT";
 }
 
 async function friendlyMessage(error: unknown, productId: string, variantId: string) {
   if (error instanceof CommerceError && error.code === "OUT_OF_STOCK") {
     const current = await currentStock(productId, variantId);
     if (current === null) {
-      return "That would take the stock below zero. Enter a smaller number.";
+      return "Not saved. That is more than you have in stock.";
     }
-    if (current <= 0) {
-      return `Not saved. The count is already ${current}, so it can't go lower. To correct it, add stock with a positive number.`;
-    }
-    return `Not saved. Only ${current} in stock, so you can't remove more than ${current}.`;
+    return `Not saved. You only have ${current} in stock, so you can't remove more than that.`;
   }
 
   if (error instanceof ZodError) {
-    return "Not saved. Enter a whole number that isn't 0, and a reason of at least 3 characters.";
+    return "Not saved. Check the number and try again.";
   }
 
   if (error instanceof Error && error.message) {
@@ -85,16 +110,6 @@ async function currentStock(productId: string, variantId: string) {
   } catch {
     return null;
   }
-}
-
-function formMovementType(formData: FormData): AdjustableMovementType {
-  const value = formString(formData, "type");
-  const match = adjustableMovementTypes.find((type) => type === value);
-  if (!match) {
-    throw new CommerceError("VALIDATION_ERROR", "Choose a valid movement type.");
-  }
-
-  return match;
 }
 
 function requireCommerceContext() {

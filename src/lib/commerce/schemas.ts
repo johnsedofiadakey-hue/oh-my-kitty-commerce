@@ -248,6 +248,15 @@ export const adjustInventoryInputSchema = z.object({
   requestId: z.string().min(8).max(100).optional()
 });
 
+// "I counted the shelf and there are N" — the system works out the difference.
+export const setInventoryCountInputSchema = z.object({
+  productId: z.string().min(1),
+  variantId: z.string().min(1),
+  count: z.number().int().min(0),
+  reason: z.string().min(3),
+  requestId: z.string().min(8).max(100).optional()
+});
+
 export const createMediaAssetInputSchema = z.object({
   storagePath: z.string().min(1),
   url: z.string().min(1),
@@ -463,6 +472,7 @@ export type DispatchParcelsInput = z.input<typeof dispatchParcelsInputSchema>;
 export type ReturnParcelInput = z.input<typeof returnParcelInputSchema>;
 export type UpdateStoreSettingsInput = z.input<typeof updateStoreSettingsInputSchema>;
 export type AdjustInventoryInput = z.input<typeof adjustInventoryInputSchema>;
+export type SetInventoryCountInput = z.input<typeof setInventoryCountInputSchema>;
 export type CreateCustomerInput = z.input<typeof createCustomerInputSchema>;
 export type UpdateCustomerInput = z.input<typeof updateCustomerInputSchema>;
 export type CreatePromotionInput = z.input<typeof createPromotionInputSchema>;

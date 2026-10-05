@@ -15,6 +15,7 @@ import {
   createProduct,
   createVariant,
   refundPosSale,
+  setInventoryCount,
   searchOrders,
   updateContentBlock,
   updateDeliveryRule,
@@ -194,6 +195,41 @@ describe("commerce operations", () => {
     await expect(adjust(-1)).rejects.toThrow(/negative stock/);
     await expect(adjust(100)).resolves.toMatchObject({ variant: { stockAvailable: -60, stockOnHand: -60 } });
     await expect(adjust(70)).resolves.toMatchObject({ variant: { stockAvailable: 10 } });
+  });
+
+  it("sets the stock to a counted number and records the difference", async () => {
+    const context = createTestContext();
+    const { variant } = await seedProductAndVariant(context);
+    const count = (value: number, requestId?: string) =>
+      setInventoryCount(context, owner, {
+        productId: variant.productId,
+        variantId: variant.id,
+        count: value,
+        reason: "Stock count",
+        requestId
+      });
+
+    // 12 in stock; the shelf really has 9.
+    const down = await count(9, "count-press-0001");
+    expect(down.variant.stockAvailable).toBe(9);
+    expect(down.variant.stockOnHand).toBe(9);
+    expect(down.movement).toMatchObject({ quantityDelta: -3, stockAfter: 9, type: "MANUAL_ADJUSTMENT" });
+
+    // The same press again changes nothing.
+    await count(9, "count-press-0001");
+    await expect(context.repo.listInventoryMovements(variant.id)).resolves.toHaveLength(1);
+
+    // Counting what is already there makes no movement.
+    const same = await count(9);
+    expect(same.movement).toBeNull();
+
+    // A negative count is repaired by saying what is really there, however far off it was.
+    await context.repo.saveVariant({ ...down.variant, stockOnHand: -135, stockAvailable: -135 });
+    const repaired = await count(0);
+    expect(repaired.variant.stockAvailable).toBe(0);
+    expect(repaired.movement).toMatchObject({ quantityDelta: 135 });
+
+    await expect(count(-1)).rejects.toThrow();
   });
 
   it("refuses a second variant that reuses an existing SKU, in any letter case", async () => {
