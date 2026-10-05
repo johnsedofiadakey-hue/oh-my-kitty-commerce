@@ -412,7 +412,11 @@ export async function adjustInventory(
     const stockOnHand = variant.stockOnHand + parsed.quantityDelta;
     const stockAvailable = variant.stockAvailable + parsed.quantityDelta;
 
-    if (stockOnHand < 0 || stockAvailable < 0) {
+    // Removing stock may never take it below zero. Adding stock always goes
+    // through, even while the count is still negative — otherwise a count
+    // that went wrong (e.g. -160) could only be repaired by guessing the exact
+    // amount needed to reach zero or above in one go.
+    if (parsed.quantityDelta < 0 && (stockOnHand < 0 || stockAvailable < 0)) {
       throw new CommerceError("OUT_OF_STOCK", "Inventory adjustment would create negative stock.");
     }
 

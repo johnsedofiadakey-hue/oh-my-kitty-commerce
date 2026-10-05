@@ -58,9 +58,13 @@ export async function adjustInventoryAction(
 async function friendlyMessage(error: unknown, productId: string, variantId: string) {
   if (error instanceof CommerceError && error.code === "OUT_OF_STOCK") {
     const current = await currentStock(productId, variantId);
-    return current === null
-      ? "That would take the stock below zero. Enter a smaller number."
-      : `Not saved. Only ${current} in stock, so you can't remove more than ${current}.`;
+    if (current === null) {
+      return "That would take the stock below zero. Enter a smaller number.";
+    }
+    if (current <= 0) {
+      return `Not saved. The count is already ${current}, so it can't go lower. To correct it, add stock with a positive number.`;
+    }
+    return `Not saved. Only ${current} in stock, so you can't remove more than ${current}.`;
   }
 
   if (error instanceof ZodError) {

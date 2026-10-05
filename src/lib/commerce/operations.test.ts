@@ -173,6 +173,29 @@ describe("commerce operations", () => {
     });
   });
 
+  it("lets stock be added to a negative count, but never removed below zero", async () => {
+    const context = createTestContext();
+    const { variant } = await seedProductAndVariant(context);
+    const adjust = (quantityDelta: number) =>
+      adjustInventory(context, owner, {
+        productId: variant.productId,
+        variantId: variant.id,
+        type: "MANUAL_ADJUSTMENT",
+        quantityDelta,
+        reason: "Correction"
+      });
+
+    // Removing more than there is is refused and changes nothing.
+    await expect(adjust(-13)).rejects.toThrow(/negative stock/);
+    await expect(context.repo.getVariant(variant.productId, variant.id)).resolves.toMatchObject({ stockAvailable: 12 });
+
+    // Put a variant into the negative the way past sales did, then repair it.
+    await context.repo.saveVariant({ ...variant, stockOnHand: -160, stockAvailable: -160 });
+    await expect(adjust(-1)).rejects.toThrow(/negative stock/);
+    await expect(adjust(100)).resolves.toMatchObject({ variant: { stockAvailable: -60, stockOnHand: -60 } });
+    await expect(adjust(70)).resolves.toMatchObject({ variant: { stockAvailable: 10 } });
+  });
+
   it("refuses a second variant that reuses an existing SKU, in any letter case", async () => {
     const context = createTestContext();
     const { product, variant } = await seedProductAndVariant(context);
