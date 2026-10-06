@@ -38,6 +38,7 @@ export async function createProductWithDefaultVariantAction(
     const typedSlug = formOptionalString(formData, "slug");
     // Normalised, never rejected — see slugFromTitle.
     const slug = typedSlug ? slugFromTitle(typedSlug) : slugFromTitle(title);
+    const openingStock = formInteger(formData, "stockOnHand", 0);
 
     const product = await createProduct(context, actor, {
       title,
@@ -62,10 +63,23 @@ export async function createProductWithDefaultVariantAction(
       cost: formOptionalMoneyMinorUnit(formData, "cost"),
       mediaIds: [],
       trackInventory: true,
-      stockOnHand: formInteger(formData, "stockOnHand", 0),
+      // Stock is received below through the inventory ledger. Creating the
+      // variant with the opening count would make the number appear with no
+      // corresponding movement in the audit trail.
+      stockOnHand: 0,
       lowStockThreshold: formInteger(formData, "lowStockThreshold", 5),
       active: true
     });
+
+    if (openingStock > 0) {
+      await adjustInventory(context, actor, {
+        productId: product.id,
+        variantId: variant.id,
+        type: "STOCK_RECEIVED",
+        quantityDelta: openingStock,
+        reason: "Opening stock when product was created"
+      });
+    }
 
     revalidatePath("/admin/products");
     return {
@@ -86,6 +100,7 @@ export async function createVariantAction(
   return runAdminProductAction(async () => {
     const context = requireCommerceContext();
     const actor = await getRequiredAdminActor();
+    const openingStock = formInteger(formData, "stockOnHand", 0);
 
     const variant = await createVariant(context, actor, {
       productId: formString(formData, "productId"),
@@ -97,10 +112,20 @@ export async function createVariantAction(
       cost: formOptionalMoneyMinorUnit(formData, "cost"),
       mediaIds: [],
       trackInventory: true,
-      stockOnHand: formInteger(formData, "stockOnHand", 0),
+      stockOnHand: 0,
       lowStockThreshold: formInteger(formData, "lowStockThreshold", 5),
       active: true
     });
+
+    if (openingStock > 0) {
+      await adjustInventory(context, actor, {
+        productId: variant.productId,
+        variantId: variant.id,
+        type: "STOCK_RECEIVED",
+        quantityDelta: openingStock,
+        reason: "Opening stock when variant was created"
+      });
+    }
 
     return `Added variant ${variant.sku}.`;
   });
