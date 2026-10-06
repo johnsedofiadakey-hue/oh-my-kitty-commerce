@@ -21,6 +21,7 @@ import {
   formMoneyMinorUnit,
   formOptionalString,
   formString,
+  humanizeActionError,
   slugFromTitle,
   type AdminActionState
 } from "@/lib/admin/product-form";
@@ -36,7 +37,7 @@ export async function createExpenseCategoryAction(
 
     const category = await createExpenseCategory(context, actor, {
       title,
-      slug: formOptionalString(formData, "slug") ?? slugFromTitle(title),
+      slug: slugFromTitle(formOptionalString(formData, "slug") || title),
       sortOrder: formInteger(formData, "sortOrder", 0)
     });
 
@@ -209,13 +210,5 @@ function requireCommerceContext() {
 }
 
 function getActionErrorMessage(error: unknown) {
-  if (error instanceof CommerceError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Save failed.";
+  return humanizeActionError(error);
 }

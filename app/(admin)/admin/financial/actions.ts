@@ -5,7 +5,14 @@ import { CommerceError } from "@/lib/commerce/errors";
 import { createManualRevenueEntry, deleteManualRevenueEntry } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getRequiredAdminActor } from "@/lib/auth/server";
-import { formDate, formMoneyMinorUnit, formOptionalString, formString, type AdminActionState } from "@/lib/admin/product-form";
+import {
+  formDate,
+  formMoneyMinorUnit,
+  formOptionalString,
+  formString,
+  humanizeActionError,
+  type AdminActionState
+} from "@/lib/admin/product-form";
 
 export async function createManualRevenueEntryAction(
   _previousState: AdminActionState,
@@ -53,13 +60,5 @@ function requireCommerceContext() {
 }
 
 function getActionErrorMessage(error: unknown) {
-  if (error instanceof CommerceError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Save failed.";
+  return humanizeActionError(error);
 }

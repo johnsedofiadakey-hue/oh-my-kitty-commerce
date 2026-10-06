@@ -8,6 +8,7 @@ import { getRequiredAdminActor } from "@/lib/auth/server";
 import {
   formOptionalString,
   formString,
+  humanizeActionError,
   type AdminActionState
 } from "@/lib/admin/product-form";
 
@@ -65,13 +66,5 @@ function requireCommerceContext() {
 }
 
 function getActionErrorMessage(error: unknown) {
-  if (error instanceof CommerceError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Save failed.";
+  return humanizeActionError(error);
 }

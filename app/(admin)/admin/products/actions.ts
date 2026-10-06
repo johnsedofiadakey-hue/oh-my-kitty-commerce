@@ -22,6 +22,7 @@ import {
   formOptionalString,
   formProductStatus,
   formString,
+  humanizeActionError,
   slugFromTitle,
   type AdminActionState
 } from "@/lib/admin/product-form";
@@ -34,7 +35,9 @@ export async function createProductWithDefaultVariantAction(
     const context = requireCommerceContext();
     const actor = await getRequiredAdminActor();
     const title = formString(formData, "title");
-    const slug = formOptionalString(formData, "slug") ?? slugFromTitle(title);
+    const typedSlug = formOptionalString(formData, "slug");
+    // Normalised, never rejected — see slugFromTitle.
+    const slug = typedSlug ? slugFromTitle(typedSlug) : slugFromTitle(title);
 
     const product = await createProduct(context, actor, {
       title,
@@ -305,13 +308,5 @@ function requireCommerceContext() {
 }
 
 function getActionErrorMessage(error: unknown) {
-  if (error instanceof CommerceError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Save failed.";
+  return humanizeActionError(error);
 }

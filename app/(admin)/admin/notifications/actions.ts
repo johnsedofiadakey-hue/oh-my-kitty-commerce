@@ -9,7 +9,11 @@ import {
 } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getRequiredAdminActor } from "@/lib/auth/server";
-import { formString, type AdminActionState } from "@/lib/admin/product-form";
+import {
+  formString,
+  humanizeActionError,
+  type AdminActionState
+} from "@/lib/admin/product-form";
 
 /**
  * Called directly from register-push-notifications.tsx after getToken()
@@ -56,13 +60,5 @@ function requireCommerceContext() {
 }
 
 function getActionErrorMessage(error: unknown) {
-  if (error instanceof CommerceError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Save failed.";
+  return humanizeActionError(error);
 }

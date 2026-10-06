@@ -11,6 +11,7 @@ import {
   formOptionalInteger,
   formOptionalString,
   formString,
+  humanizeActionError,
   type AdminActionState
 } from "@/lib/admin/product-form";
 import type { CapitalAssetCategory } from "@/lib/commerce/types";
@@ -107,13 +108,5 @@ function requireCommerceContext() {
 }
 
 function getActionErrorMessage(error: unknown) {
-  if (error instanceof CommerceError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Save failed.";
+  return humanizeActionError(error);
 }

@@ -5,7 +5,11 @@ import { CommerceError } from "@/lib/commerce/errors";
 import { createPromotion, updatePromotion } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { getRequiredAdminActor } from "@/lib/auth/server";
-import { formString, type AdminActionState } from "@/lib/admin/product-form";
+import {
+  formString,
+  humanizeActionError,
+  type AdminActionState
+} from "@/lib/admin/product-form";
 
 export async function createPromotionAction(
   _previousState: AdminActionState,
@@ -75,13 +79,5 @@ function requireCommerceContext() {
 }
 
 function getActionErrorMessage(error: unknown) {
-  if (error instanceof CommerceError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Save failed.";
+  return humanizeActionError(error);
 }

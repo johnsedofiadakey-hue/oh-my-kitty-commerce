@@ -18,6 +18,7 @@ import {
   formNumber,
   formOptionalString,
   formString,
+  humanizeActionError,
   type AdminActionState
 } from "@/lib/admin/product-form";
 import { formatMoney } from "@/lib/commerce/format";
@@ -218,13 +219,5 @@ function requireCommerceContext() {
 }
 
 function getActionErrorMessage(error: unknown) {
-  if (error instanceof CommerceError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Save failed.";
+  return humanizeActionError(error);
 }

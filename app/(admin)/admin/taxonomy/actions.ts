@@ -16,6 +16,7 @@ import {
   formInteger,
   formOptionalString,
   formString,
+  humanizeActionError,
   slugFromTitle,
   type AdminActionState
 } from "@/lib/admin/product-form";
@@ -31,7 +32,7 @@ export async function createConcernAction(
 
     const concern = await createConcern(context, actor, {
       title,
-      slug: formOptionalString(formData, "slug") ?? slugFromTitle(title),
+      slug: slugFromTitle(formOptionalString(formData, "slug") || title),
       description: formOptionalString(formData, "description"),
       sortOrder: formInteger(formData, "sortOrder", 0)
     });
@@ -51,7 +52,7 @@ export async function createProductTypeAction(
 
     const productType = await createProductType(context, actor, {
       title,
-      slug: formOptionalString(formData, "slug") ?? slugFromTitle(title),
+      slug: slugFromTitle(formOptionalString(formData, "slug") || title),
       description: formOptionalString(formData, "description"),
       sortOrder: formInteger(formData, "sortOrder", 0)
     });
@@ -71,7 +72,7 @@ export async function createRoutineAction(
 
     const routine = await createRoutine(context, actor, {
       title,
-      slug: formOptionalString(formData, "slug") ?? slugFromTitle(title),
+      slug: slugFromTitle(formOptionalString(formData, "slug") || title),
       description: formOptionalString(formData, "description"),
       sortOrder: formInteger(formData, "sortOrder", 0)
     });
@@ -157,13 +158,5 @@ function requireCommerceContext() {
 }
 
 function getActionErrorMessage(error: unknown) {
-  if (error instanceof CommerceError) {
-    return error.message;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Save failed.";
+  return humanizeActionError(error);
 }

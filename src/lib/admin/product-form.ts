@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z, ZodError } from "zod";
 import type { ProductStatus } from "@/lib/commerce/types";
 
 export const adminActionStateSchema = z.object({
@@ -132,4 +132,38 @@ export function slugFromTitle(title: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
+}
+
+/**
+ * Turns a thrown validation error into something a shop owner can act on.
+ *
+ * A ZodError's own `.message` is the raw issue array serialised as JSON — the
+ * admin forms were rendering that straight to screen, so mistyping a field
+ * produced a wall of `{"origin":"string","code":"invalid_format", ...}` on
+ * her phone. Zod's per-issue messages are already written in plain English;
+ * this surfaces those instead, labelled with the field they belong to.
+ */
+export function humanizeActionError(error: unknown, fallback = "Save failed.") {
+  if (error instanceof ZodError) {
+    const messages = error.issues.map((issue) => {
+      const field = issue.path.filter((part) => typeof part === "string").join(" ");
+      return field ? `${fieldLabel(field)}: ${issue.message}` : issue.message;
+    });
+
+    // Repeated issues on one field (several rules failing at once) only need
+    // saying once.
+    return [...new Set(messages)].join(" ");
+  }
+
+  if (error instanceof Error) {
+    return error.message || fallback;
+  }
+
+  return fallback;
+}
+
+/** "lowStockThreshold" -> "Low stock threshold", so the label reads like the form. */
+function fieldLabel(field: string) {
+  const spaced = field.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[._]/g, " ");
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase();
 }

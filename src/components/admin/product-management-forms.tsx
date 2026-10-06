@@ -186,8 +186,12 @@ export function CreateProductForm({
             <input name="title" placeholder="OMK Daily Care" required />
           </label>
           <label className="admin-field">
-            <span>URL slug</span>
-            <input name="slug" placeholder="omk-daily-care" />
+            <span>Web address (optional)</span>
+            <input name="slug" placeholder="Leave blank to use the product name" />
+            <small className="admin-help">
+              The bit after /products/ in the link. Leave it empty and it is made from the name —
+              whatever you type gets tidied into lowercase with dashes.
+            </small>
           </label>
           <label className="admin-field">
             <span>Short copy</span>
