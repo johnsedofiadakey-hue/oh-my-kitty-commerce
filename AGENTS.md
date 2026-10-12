@@ -89,7 +89,15 @@ Admin and POS:
 
 ## Deploying
 
-The live site is deployed with `gcloud run deploy oh-my-kitty --source .`, which uploads whatever is in the folder it is run from — not what is on `main`. Several agents work from separate copies of this repo, so a deploy from a stale copy silently replaces newer fixes on the live site (this has already happened once, and it brought back a stock-adjustment bug).
+Deploy with `npm run deploy`. Never type the `gcloud run deploy` line by hand.
+
+The script pins the destination:
+
+```
+gcloud run deploy oh-my-kitty --source . --project ohmyk1tty --region us-central1
+```
+
+**Oh My Kitty lives in project `ohmyk1tty`, region `us-central1`, and nowhere else.** The same machine also has an unrelated project, `sasuloslogistics`, and `gcloud config` points at one of them at any given moment — often that one. A bare `gcloud run deploy oh-my-kitty --source .` therefore ships this shop into whichever project happens to be active, which has already happened once: it uploaded the whole codebase into `sasuloslogistics` and created an Artifact Registry repo there before failing. Pass `--project` and `--region` every time, or use the script that does it for you. Do not "fix" a failed deploy by running `gcloud config set project` — that moves the problem rather than solving it.
 
 Before every deploy:
 
@@ -97,6 +105,8 @@ Before every deploy:
 2. Run `git log --oneline -5` and confirm the newest commits are the ones you expect to be live. If another agent has uncommitted work in the folder, leave it and do not revert it.
 3. Never deploy from a Codex worktree under `~/.codex/worktrees/`.
 4. After deploying, say which revision is live and what it contains.
+
+`--source .` uploads whatever is in the folder it is run from — not what is on `main`. Several agents work from separate copies of this repo, so a deploy from a stale copy silently replaces newer fixes on the live site (this has also already happened, and it brought back a stock-adjustment bug).
 
 ## Completion Standard
 

@@ -16,7 +16,8 @@
     "seed:emulator": "tsx scripts/seed-emulator.ts",
     "seed:catalog": "tsx scripts/seed-catalog.ts",
     "bootstrap:owner": "tsx scripts/bootstrap-owner.ts",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "deploy": "gcloud run deploy oh-my-kitty --source . --project ohmyk1tty --region us-central1"
   },
   "dependencies": {
     "firebase": "^12.17.1",
