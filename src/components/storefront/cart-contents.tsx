@@ -13,6 +13,7 @@ import {
 } from "@/components/storefront/add-to-bag-button";
 import { BagIcon } from "@/components/storefront/icons";
 import { formatMoney } from "@/lib/commerce/format";
+import { freeDeliveryThreshold as freeDeliveryThresholdFor } from "@/lib/commerce/delivery-pricing";
 
 const serverCartSnapshot: CartLine[] = [];
 
@@ -28,6 +29,7 @@ type DeliveryOption = {
   fee: number;
   formattedFee: string;
   freeAbove?: number | null;
+  feePaidOnDelivery?: boolean;
   estimate?: string;
 };
 
@@ -60,10 +62,13 @@ export function CartContents({ onNavigate }: CartContentsProps) {
 
   // The lowest free-delivery threshold across active delivery options — the
   // one worth showing progress toward, since it's the easiest to unlock.
+  // freeDeliveryThreshold() does the filtering: a threshold on an option that
+  // is already free, or whose fee the courier collects, isn't something the
+  // customer can unlock, so it must not drive the bar.
   const freeDeliveryThreshold = useMemo(() => {
     const thresholds = deliveryOptions
-      .map((option) => option.freeAbove)
-      .filter((value): value is number => typeof value === "number" && value > 0);
+      .map((option) => freeDeliveryThresholdFor(option))
+      .filter((value): value is number => value !== null);
     return thresholds.length > 0 ? Math.min(...thresholds) : null;
   }, [deliveryOptions]);
 

@@ -713,6 +713,93 @@ describe("commerce operations", () => {
     expect(confirmed.order.paymentStatus).toBe("PAID");
     expect(confirmed.order.fulfilmentStatus).toBe("PROCESSING");
   });
+
+  it("waives the delivery fee on its own prices once the order clears the threshold", async () => {
+    const context = createTestContext();
+    const { variant } = await seedProductAndVariant(context);
+
+    // Two at GHS 120 is GHS 240, past a GHS 200 threshold.
+    const pending = await createPendingOnlineOrder(context, {
+      customerSnapshot: { name: "Ama", phone: "0241234567" },
+      deliveryTotal: 3000,
+      deliveryFreeAbove: 20000,
+      taxTotal: 0,
+      chargePaystackFee: false,
+      idempotencyKey: "online-order-free-delivery",
+      items: [{ productId: variant.productId, variantId: variant.id, quantity: 2 }],
+      paymentMethod: "card"
+    });
+
+    expect(pending.order.subtotal).toBe(24000);
+    expect(pending.order.deliveryTotal).toBe(0);
+    expect(pending.order.total).toBe(24000);
+  });
+
+  it("still charges the delivery fee below the threshold", async () => {
+    const context = createTestContext();
+    const { variant } = await seedProductAndVariant(context);
+
+    const pending = await createPendingOnlineOrder(context, {
+      customerSnapshot: { name: "Ama", phone: "0241234567" },
+      deliveryTotal: 3000,
+      deliveryFreeAbove: 20000,
+      taxTotal: 0,
+      chargePaystackFee: false,
+      idempotencyKey: "online-order-paid-delivery",
+      items: [{ productId: variant.productId, variantId: variant.id, quantity: 1 }],
+      paymentMethod: "card"
+    });
+
+    expect(pending.order.deliveryTotal).toBe(3000);
+    expect(pending.order.total).toBe(15000);
+  });
+
+  it("never bills a delivery fee the courier collects at the door", async () => {
+    const context = createTestContext();
+    const { variant } = await seedProductAndVariant(context);
+
+    const pending = await createPendingOnlineOrder(context, {
+      customerSnapshot: { name: "Ama", phone: "0241234567" },
+      deliveryTotal: 3000,
+      deliveryFeePaidOnDelivery: true,
+      taxTotal: 0,
+      chargePaystackFee: false,
+      idempotencyKey: "online-order-courier-paid",
+      items: [{ productId: variant.productId, variantId: variant.id, quantity: 1 }],
+      deliveryMethod: {
+        ruleId: "delivery-urgent",
+        name: "Urgent Delivery",
+        type: "NATIONWIDE_DELIVERY",
+        feePaidOnDelivery: true
+      },
+      paymentMethod: "card"
+    });
+
+    expect(pending.order.deliveryTotal).toBe(0);
+    expect(pending.order.total).toBe(12000);
+    // Snapshotted so whoever packs the parcel knows it isn't prepaid.
+    expect(pending.order.deliveryMethod?.feePaidOnDelivery).toBe(true);
+  });
+
+  it("leaves a hand-entered POS delivery fee exactly as the staff typed it", async () => {
+    // POS passes no delivery terms at all, so the new pricing step has to be
+    // a no-op there — a counter sale's fee is whatever staff agreed.
+    const context = createTestContext();
+    const { variant } = await seedProductAndVariant(context);
+
+    const sale = await completePosSale(context, salesStaff, {
+      channel: "POS",
+      deliveryTotal: 3000,
+      idempotencyKey: "pos-order-manual-delivery",
+      items: [{ productId: variant.productId, variantId: variant.id, quantity: 1 }],
+      paymentMethod: "cash",
+      paymentProvider: "CASH",
+      amountReceived: 15000
+    });
+
+    expect(sale.order.deliveryTotal).toBe(3000);
+    expect(sale.order.total).toBe(15000);
+  });
 });
 
 describe("expenses", () => {

@@ -49,6 +49,8 @@ export default async function AdminDeliveryPage() {
               disabled={disabled}
               estimate={rule.estimate}
               fee={rule.fee}
+              feePaidOnDelivery={rule.feePaidOnDelivery ?? false}
+              freeAbove={rule.freeAbove ?? null}
               id={rule.id}
               key={rule.id}
               name={rule.name}

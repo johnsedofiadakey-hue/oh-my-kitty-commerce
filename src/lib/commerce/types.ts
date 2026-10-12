@@ -413,8 +413,15 @@ export type DeliveryRule = {
   active: boolean;
   regions: string[];
   fee: MoneyMinorUnit;
+  /** Spend this much (after discounts) and the fee is waived. null = no threshold. */
   freeAbove?: MoneyMinorUnit | null;
   requiresFreeDeliveryItem?: boolean;
+  /**
+   * The courier collects the fee on arrival, so the shop never bills it.
+   * Distinct from a `fee` of 0: that one really is free, this one costs the
+   * customer money the shop does not see.
+   */
+  feePaidOnDelivery?: boolean;
   estimate?: string;
   sortOrder: number;
 };
@@ -424,6 +431,12 @@ export type DeliveryMethodSnapshot = {
   name: string;
   type: DeliveryRule["type"];
   estimate?: string;
+  /**
+   * Snapshotted so an order shows why its delivery line is zero. Whoever
+   * packs the parcel needs to know the courier still has to be paid — the
+   * order itself looks prepaid otherwise.
+   */
+  feePaidOnDelivery?: boolean;
 };
 
 export type ParcelStatus = "PACKED" | "DISPATCHED" | "DELIVERED" | "RETURNED";

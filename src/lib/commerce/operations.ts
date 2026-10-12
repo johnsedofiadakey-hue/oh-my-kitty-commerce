@@ -9,6 +9,7 @@ import {
 import { CommerceError } from "@/lib/commerce/errors";
 import { formatMoney } from "@/lib/commerce/format";
 import { calculatePaystackFee } from "@/lib/payments/fee";
+import { eligibleSpendFor, resolveDeliveryFee } from "@/lib/commerce/delivery-pricing";
 import { isSetVariant } from "@/lib/commerce/inventory";
 import type { CommerceRepository, CommerceTransaction } from "@/lib/commerce/repository";
 import { createNoopTransaction } from "@/lib/commerce/repository";
@@ -3519,7 +3520,19 @@ async function buildOrder(
   const items = await buildOrderItems(context, input.items, repo);
   const subtotal = items.reduce((total, item) => total + item.unitPrice * item.quantity, 0);
   const discountTotal = items.reduce((total, item) => total + item.discountTotal, 0);
-  const preFeeTotal = subtotal - discountTotal + input.deliveryTotal + input.taxTotal;
+  // Delivery is priced here rather than by the caller because this is the
+  // only place that knows the real subtotal — prices come from the variants,
+  // not from the browser, so a free-delivery threshold has to be settled
+  // against figures the client cannot influence.
+  const deliveryTotal = resolveDeliveryFee(
+    {
+      fee: input.deliveryTotal,
+      freeAbove: input.deliveryFreeAbove,
+      feePaidOnDelivery: input.deliveryFeePaidOnDelivery
+    },
+    eligibleSpendFor(subtotal, discountTotal)
+  );
+  const preFeeTotal = subtotal - discountTotal + deliveryTotal + input.taxTotal;
   const paymentFeeTotal = input.chargePaystackFee ? calculatePaystackFee(preFeeTotal) : 0;
   const total = preFeeTotal + paymentFeeTotal;
 
@@ -3544,7 +3557,7 @@ async function buildOrder(
     items,
     subtotal,
     discountTotal,
-    deliveryTotal: input.deliveryTotal,
+    deliveryTotal,
     deliveryMethod: input.deliveryMethod ?? null,
     taxTotal: input.taxTotal,
     paymentFeeTotal,

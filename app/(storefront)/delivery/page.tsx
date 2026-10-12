@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getStorefrontDeliveryOptions } from "@/lib/storefront/delivery";
+import { describeDeliveryTerms } from "@/lib/commerce/delivery-pricing";
 import { getContentBlocks } from "@/lib/storefront/content";
 
 export const dynamic = "force-dynamic";
@@ -72,7 +73,7 @@ export default async function DeliveryPage() {
                     <strong>{option.name}</strong>
                     {option.estimate ? <span> — {option.estimate}</span> : null}
                   </div>
-                  {option.fee > 0 ? <strong>{option.formattedFee}</strong> : null}
+                  <strong>{describeDeliveryTerms(option)}</strong>
                 </div>
               ))}
             </div>

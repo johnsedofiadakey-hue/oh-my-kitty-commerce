@@ -870,7 +870,10 @@ export const sampleDeliveryRules: DeliveryRule[] = [
     regions: [],
     fee: 0,
     freeAbove: null,
-    estimate: "2 days · delivery fee paid to the courier on arrival",
+    // The courier is paid at the door, so checkout must not bill it — and
+    // must not call it "Free" either.
+    feePaidOnDelivery: true,
+    estimate: "2 days · courier fee paid on arrival",
     sortOrder: 2
   },
   {

@@ -10,6 +10,7 @@ export type StorefrontDeliveryOption = {
   fee: number;
   formattedFee: string;
   freeAbove?: number | null;
+  feePaidOnDelivery?: boolean;
   estimate?: string;
 };
 
@@ -75,7 +76,8 @@ function toOptions(rules: DeliveryRule[], cartHasFreeDeliveryItem: boolean): Sto
       type: rule.type,
       fee: rule.fee,
       formattedFee: formatMoney(rule.fee),
-      freeAbove: rule.freeAbove,
+      freeAbove: rule.freeAbove ?? null,
+      feePaidOnDelivery: rule.feePaidOnDelivery ?? false,
       estimate: rule.estimate
     }));
 }

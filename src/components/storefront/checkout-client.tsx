@@ -6,6 +6,12 @@ import { useEffect, useMemo, useState, useSyncExternalStore, type FormEvent } fr
 import { onCartChanged, readCartLines, type CartLine } from "@/components/storefront/add-to-bag-button";
 import { BagIcon } from "@/components/storefront/icons";
 import { formatMoney } from "@/lib/commerce/format";
+import {
+  describeDeliveryFee,
+  eligibleSpendFor,
+  resolveDeliveryFee,
+  spendToFreeDelivery
+} from "@/lib/commerce/delivery-pricing";
 import { calculatePaystackFee } from "@/lib/payments/fee";
 import { FREE_DELIVERY_RULE_ID, formatFreeDeliveryEstimate } from "@/lib/storefront/free-delivery-estimate";
 import type { StorefrontDeliveryOption } from "@/lib/storefront/delivery";
@@ -93,8 +99,12 @@ export function CheckoutClient({
     [lines]
   );
   const selectedDelivery = deliveryOptions.find((option) => option.id === deliveryId);
-  const deliveryFee = selectedDelivery?.fee ?? 0;
   const discountTotal = appliedPromo?.discountTotal ?? 0;
+  // What a free-delivery threshold is measured against. The server settles
+  // the same sum from its own prices in buildOrder, so the figure shown here
+  // is the figure charged.
+  const eligibleSpend = eligibleSpendFor(subtotal, discountTotal);
+  const deliveryFee = selectedDelivery ? resolveDeliveryFee(selectedDelivery, eligibleSpend) : 0;
   const preFeeTotal = Math.max(0, subtotal + deliveryFee - discountTotal);
   const paymentFee = calculatePaystackFee(preFeeTotal);
   const total = preFeeTotal + paymentFee;
@@ -332,11 +342,18 @@ export function CheckoutClient({
                 <span className="delivery-option-name">{option.name}</span>
                 <span className="delivery-option-meta">
                   {option.id === FREE_DELIVERY_RULE_ID ? formatFreeDeliveryEstimate(new Date()) : option.estimate ?? ""}
+                  {describeUnlock(option, eligibleSpend)}
                 </span>
-                {option.fee > 0 ? <strong>{option.formattedFee}</strong> : null}
+                <strong>{describeDeliveryFee(option, eligibleSpend)}</strong>
               </label>
             ))}
           </div>
+          {selectedDelivery?.feePaidOnDelivery ? (
+            <p className="checkout-payment-note">
+              You pay the courier directly when your parcel arrives — that charge isn&apos;t part of the
+              total below.
+            </p>
+          ) : null}
         </div>
 
         {!isPickup ? (
@@ -418,7 +435,7 @@ export function CheckoutClient({
           ) : null}
           <div>
             <span>Delivery</span>
-            <strong>{deliveryFee === 0 ? "Free" : formatMoney(deliveryFee)}</strong>
+            <strong>{selectedDelivery ? describeDeliveryFee(selectedDelivery, eligibleSpend) : "Free"}</strong>
           </div>
           {paymentFee > 0 ? (
             <div>
@@ -448,6 +465,16 @@ export function CheckoutClient({
       </form>
     </section>
   );
+}
+
+/**
+ * The nudge on an option that charges now but wouldn't above a threshold.
+ * Only ever says "add X more" — once the threshold is met the price column
+ * already reads "Free", so repeating it here would just be noise.
+ */
+function describeUnlock(option: StorefrontDeliveryOption, eligibleSpend: number) {
+  const remaining = spendToFreeDelivery(option, eligibleSpend);
+  return remaining === null ? null : ` · free over ${formatMoney(option.freeAbove ?? 0)} (add ${formatMoney(remaining)})`;
 }
 
 function displayVariant(line: CartLine) {

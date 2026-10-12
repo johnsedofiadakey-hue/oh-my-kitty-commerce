@@ -8,6 +8,7 @@ import { getRequiredAdminActor } from "@/lib/auth/server";
 import {
   formInteger,
   formMoneyMinorUnit,
+  formOptionalMoneyMinorUnit,
   formOptionalString,
   formString,
   humanizeActionError,
@@ -27,9 +28,11 @@ export async function createDeliveryRuleAction(
       type: formDeliveryType(formData),
       regions: parseRegions(formData),
       fee: formMoneyMinorUnit(formData, "fee"),
+      freeAbove: formOptionalMoneyMinorUnit(formData, "freeAbove"),
       estimate: formOptionalString(formData, "estimate"),
       sortOrder: formInteger(formData, "sortOrder", 0),
-      requiresFreeDeliveryItem: formData.get("requiresFreeDeliveryItem") === "on"
+      requiresFreeDeliveryItem: formData.get("requiresFreeDeliveryItem") === "on",
+      feePaidOnDelivery: formData.get("feePaidOnDelivery") === "on"
     });
 
     revalidatePath("/admin/delivery");
@@ -51,10 +54,12 @@ export async function quickEditDeliveryRuleAction(
       id: formString(formData, "id"),
       name: formString(formData, "name"),
       fee: formMoneyMinorUnit(formData, "fee"),
+      freeAbove: formOptionalMoneyMinorUnit(formData, "freeAbove"),
       estimate: formOptionalString(formData, "estimate"),
       sortOrder: formInteger(formData, "sortOrder", 0),
       active: formData.get("active") === "on",
-      requiresFreeDeliveryItem: formData.get("requiresFreeDeliveryItem") === "on"
+      requiresFreeDeliveryItem: formData.get("requiresFreeDeliveryItem") === "on",
+      feePaidOnDelivery: formData.get("feePaidOnDelivery") === "on"
     });
 
     revalidatePath("/admin/delivery");

@@ -207,7 +207,8 @@ const deliveryMethodSnapshotSchema = z.object({
   ruleId: z.string().min(1),
   name: z.string().min(1),
   type: z.enum(["PICKUP", "LOCAL_DELIVERY", "NATIONWIDE_DELIVERY"]),
-  estimate: z.string().optional()
+  estimate: z.string().optional(),
+  feePaidOnDelivery: z.boolean().optional()
 });
 
 export const createOrderDraftInputSchema = z.object({
@@ -216,6 +217,12 @@ export const createOrderDraftInputSchema = z.object({
   customerSnapshot: customerSnapshotSchema.nullable().optional(),
   items: z.array(orderItemInputSchema).min(1),
   deliveryTotal: moneySchema.default(0),
+  // The chosen rule's free-delivery terms, carried through so buildOrder can
+  // waive the fee against the real subtotal it alone computes. Omitted by
+  // every caller that sets a delivery fee by hand (POS), which leaves
+  // deliveryTotal exactly as given.
+  deliveryFreeAbove: moneySchema.nullable().optional(),
+  deliveryFeePaidOnDelivery: z.boolean().optional(),
   deliveryMethod: deliveryMethodSnapshotSchema.nullable().optional(),
   taxTotal: moneySchema.default(0),
   // When true, buildOrder adds a Paystack processing-fee surcharge into the
@@ -375,6 +382,7 @@ const deliveryRuleFieldsSchema = z.object({
   fee: moneySchema,
   freeAbove: moneySchema.nullable().optional(),
   requiresFreeDeliveryItem: z.boolean().optional(),
+  feePaidOnDelivery: z.boolean().optional(),
   estimate: z.string().optional(),
   sortOrder: z.number().int().min(0)
 });

@@ -82,12 +82,19 @@ export async function POST(request: Request) {
         address: normalizeOptionalString(body.customer?.address) ?? null,
         notes: normalizeOptionalString(body.customer?.notes) ?? null
       },
+      // The rule's terms rather than a settled figure: createPendingOnlineOrder
+      // resolves the fee against the subtotal it computes from the variants,
+      // so a free-delivery threshold is decided on server-side prices and the
+      // browser cannot talk its way out of the fee.
       deliveryTotal: deliveryRule.fee,
+      deliveryFreeAbove: deliveryRule.freeAbove,
+      deliveryFeePaidOnDelivery: deliveryRule.feePaidOnDelivery,
       deliveryMethod: {
         ruleId: deliveryRule.id,
         name: deliveryRule.name,
         type: deliveryRule.type,
-        estimate: deliveryRule.estimate
+        estimate: deliveryRule.estimate,
+        feePaidOnDelivery: deliveryRule.feePaidOnDelivery
       },
       taxTotal: 0,
       chargePaystackFee: true,

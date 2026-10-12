@@ -43,6 +43,13 @@ export function CreateDeliveryRuleForm({
             </label>
           </div>
           <label className="admin-field">
+            <span>Free when the order reaches GHS (optional)</span>
+            <input inputMode="decimal" min="0" name="freeAbove" placeholder="300.00" />
+            <small className="admin-help">
+              Leave blank to always charge the fee. Measured on the items after any discount.
+            </small>
+          </label>
+          <label className="admin-field">
             <span>Regions (comma separated)</span>
             <input name="regions" placeholder="East Legon, Airport Residential" />
           </label>
@@ -59,6 +66,10 @@ export function CreateDeliveryRuleForm({
           <label className="admin-field checkbox">
             <input name="requiresFreeDeliveryItem" type="checkbox" />
             <span>Only offer this when the cart has a free-delivery-eligible product</span>
+          </label>
+          <label className="admin-field checkbox">
+            <input name="feePaidOnDelivery" type="checkbox" />
+            <span>The customer pays the courier on arrival — don&apos;t charge it at checkout</span>
           </label>
           <button className="admin-action" type="submit">
             {pending ? "Creating" : "Create rule"}

@@ -10,10 +10,12 @@ export function DeliveryRuleRow({
   type,
   regions,
   fee,
+  freeAbove,
   estimate,
   sortOrder,
   active,
   requiresFreeDeliveryItem,
+  feePaidOnDelivery,
   disabled,
   quickEditDeliveryRuleAction
 }: {
@@ -22,10 +24,12 @@ export function DeliveryRuleRow({
   type: DeliveryRule["type"];
   regions: string[];
   fee: number;
+  freeAbove: number | null;
   estimate?: string;
   sortOrder: number;
   active: boolean;
   requiresFreeDeliveryItem: boolean;
+  feePaidOnDelivery: boolean;
   disabled: boolean;
   quickEditDeliveryRuleAction: AdminFormAction;
 }) {
@@ -58,6 +62,17 @@ export function DeliveryRuleRow({
         />
       </label>
       <label className="admin-field">
+        <span>Free over GHS</span>
+        <input
+          defaultValue={freeAbove === null ? "" : (freeAbove / 100).toFixed(2)}
+          disabled={disabled || pending}
+          inputMode="decimal"
+          min="0"
+          name="freeAbove"
+          placeholder="No threshold"
+        />
+      </label>
+      <label className="admin-field">
         <span>Estimate</span>
         <input defaultValue={estimate ?? ""} disabled={disabled || pending} name="estimate" />
       </label>
@@ -77,6 +92,15 @@ export function DeliveryRuleRow({
           type="checkbox"
         />
         <span>Only offer this when the cart has a free-delivery-eligible product</span>
+      </label>
+      <label className="admin-field checkbox">
+        <input
+          defaultChecked={feePaidOnDelivery}
+          disabled={disabled || pending}
+          name="feePaidOnDelivery"
+          type="checkbox"
+        />
+        <span>The customer pays the courier on arrival — don&apos;t charge it at checkout</span>
       </label>
       {state.message ? <p className={`admin-form-status ${state.status}`}>{state.message}</p> : null}
       <button className="admin-action" disabled={disabled || pending} type="submit">
