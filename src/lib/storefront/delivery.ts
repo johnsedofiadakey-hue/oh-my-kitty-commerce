@@ -79,3 +79,22 @@ function toOptions(rules: DeliveryRule[], cartHasFreeDeliveryItem: boolean): Sto
       estimate: rule.estimate
     }));
 }
+
+/**
+ * True when an ordinary cart — one with no free-delivery-tagged product — has
+ * no way to get anything delivered, because every active shipping rule is
+ * gated behind that tag. Pickup doesn't count: it is not delivery.
+ *
+ * This state is silent and expensive. It happened in production: the paid
+ * courier option was gated by mistake alongside the promotional one, so most
+ * carts were quietly offered collection only, and the checkout hid the
+ * address field because pickup needs no address. Nothing anywhere said so.
+ */
+export function deliveryUnavailableWithoutTaggedItem(rules: DeliveryRule[]): boolean {
+  const shipping = rules.filter((rule) => rule.active && rule.type !== "PICKUP");
+  if (shipping.length === 0) {
+    return false; // Genuinely pickup-only; nothing has been gated away.
+  }
+
+  return shipping.every((rule) => rule.requiresFreeDeliveryItem === true);
+}

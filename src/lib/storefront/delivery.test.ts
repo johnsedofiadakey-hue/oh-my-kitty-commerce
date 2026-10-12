@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isDeliveryRuleEligible } from "@/lib/storefront/delivery";
+import { deliveryUnavailableWithoutTaggedItem, isDeliveryRuleEligible } from "@/lib/storefront/delivery";
 import type { DeliveryRule } from "@/lib/commerce/types";
 
 function buildRule(overrides: Partial<DeliveryRule> = {}): DeliveryRule {
@@ -36,5 +36,43 @@ describe("isDeliveryRuleEligible", () => {
   it("treats an unset requiresFreeDeliveryItem the same as false", () => {
     const rule = buildRule();
     expect(isDeliveryRuleEligible(rule, false)).toBe(true);
+  });
+});
+
+describe("deliveryUnavailableWithoutTaggedItem", () => {
+  const rule = (over: Partial<DeliveryRule>): DeliveryRule => ({
+    id: "r", name: "r", type: "NATIONWIDE_DELIVERY", active: true, regions: [],
+    fee: 0, freeAbove: null, sortOrder: 0, ...over
+  });
+
+  it("flags the production fault: every shipping option gated behind the tag", () => {
+    // Exactly what was live — the paid courier gated alongside the promo one,
+    // leaving ordinary carts with collection only and no address field.
+    expect(deliveryUnavailableWithoutTaggedItem([
+      rule({ name: "Pickup", type: "PICKUP", requiresFreeDeliveryItem: undefined }),
+      rule({ name: "Urgent Delivery", requiresFreeDeliveryItem: true }),
+      rule({ name: "Free Delivery", requiresFreeDeliveryItem: true })
+    ])).toBe(true);
+  });
+
+  it("stays quiet once one shipping option is open to everyone", () => {
+    expect(deliveryUnavailableWithoutTaggedItem([
+      rule({ name: "Pickup", type: "PICKUP" }),
+      rule({ name: "Urgent Delivery", requiresFreeDeliveryItem: false }),
+      rule({ name: "Free Delivery", requiresFreeDeliveryItem: true })
+    ])).toBe(false);
+  });
+
+  it("does not nag a genuinely pickup-only shop", () => {
+    expect(deliveryUnavailableWithoutTaggedItem([
+      rule({ name: "Pickup", type: "PICKUP" })
+    ])).toBe(false);
+  });
+
+  it("ignores inactive rules when deciding", () => {
+    expect(deliveryUnavailableWithoutTaggedItem([
+      rule({ name: "Urgent Delivery", requiresFreeDeliveryItem: true }),
+      rule({ name: "Standard", requiresFreeDeliveryItem: false, active: false })
+    ])).toBe(true);
   });
 });

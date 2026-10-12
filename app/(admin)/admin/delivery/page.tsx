@@ -2,6 +2,7 @@ import { getAdminOperationsData } from "@/lib/admin/operations-data";
 import { AdminDrawer } from "@/components/admin/admin-drawer";
 import { CreateDeliveryRuleForm } from "@/components/admin/delivery-rule-form";
 import { DeliveryRuleRow } from "@/components/admin/delivery-rule-row";
+import { deliveryUnavailableWithoutTaggedItem } from "@/lib/storefront/delivery";
 import { requireAdminPermission } from "@/lib/auth/server";
 import { createDeliveryRuleAction, quickEditDeliveryRuleAction } from "./actions";
 
@@ -26,6 +27,14 @@ export default async function AdminDeliveryPage() {
       {data.sourceMessage ? (
         <div className="admin-alert" role="status">
           {data.sourceMessage}
+        </div>
+      ) : null}
+      {deliveryUnavailableWithoutTaggedItem(data.deliveryRules) ? (
+        <div className="admin-alert" role="alert">
+          <strong>Customers can only pick up right now.</strong> Every delivery option below is set to
+          &ldquo;only offer this when the cart has a free-delivery-eligible product&rdquo;, so anyone whose
+          basket has none of those tagged products is shown collection only — and checkout won&apos;t ask for
+          their address. Untick that box on whichever option should always be available.
         </div>
       ) : null}
       <section className="admin-panel">
