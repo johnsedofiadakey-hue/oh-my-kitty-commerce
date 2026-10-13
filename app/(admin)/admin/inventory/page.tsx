@@ -85,7 +85,10 @@ function InventoryRow({
   variantLookup: Map<string, VariantLookupEntry>;
 }) {
   const { product, variant, isSet, availableStock, lowStock } = row;
-  const negative = !isSet && variant.trackInventory && variant.stockAvailable < 0;
+  // Sold out = none left to sell. A count that has gone below zero is shown
+  // the same way — the minus number only appears inside the item, with an
+  // explanation, so nobody has to interpret it in the list.
+  const soldOut = (isSet || variant.trackInventory) && availableStock <= 0;
   const notForSale = product !== null && product.status !== "ACTIVE";
 
   return (
@@ -104,10 +107,10 @@ function InventoryRow({
           <span className="order-status-pill inventory-row-sku" title={variant.sku}>
             SKU {variant.sku}
           </span>
-          <span className={lowStock ? "order-status-pill urgent" : "order-status-pill good"}>
-            {negative ? "Needs a count" : lowStock ? "Low stock" : "Healthy"}
+          <span className={soldOut || lowStock ? "order-status-pill urgent" : "order-status-pill good"}>
+            {soldOut ? "Sold out" : lowStock ? "Low stock" : "Healthy"}
           </span>
-          <strong className="inventory-row-stock">{availableStock} in stock</strong>
+          <strong className="inventory-row-stock">{Math.max(0, availableStock)} in stock</strong>
         </div>
       }
     >
@@ -145,7 +148,13 @@ function InventoryDetail({
       <section className="order-detail-section">
         <div className="order-detail-meta">
           <span>SKU {variant.sku}</span>
-          <span>{availableStock} currently in stock</span>
+          <span>
+            {availableStock > 0
+              ? `${availableStock} currently in stock`
+              : availableStock === 0
+                ? "Sold out"
+                : `Sold out (the system's count is ${availableStock})`}
+          </span>
         </div>
       </section>
 

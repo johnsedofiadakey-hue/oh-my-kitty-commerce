@@ -296,11 +296,17 @@ export function DepthShop({
                   ))}
                 </div>
               ) : null}
-              <AddToBagButton
-                className="pdp-add-button"
-                label="Add to cart"
-                line={toCartLine(selectedProduct)}
-              />
+              {selectedProduct.soldOut ? (
+                <button className="pdp-add-button sold-out" disabled type="button">
+                  Sold out
+                </button>
+              ) : (
+                <AddToBagButton
+                  className="pdp-add-button"
+                  label="Add to cart"
+                  line={toCartLine(selectedProduct)}
+                />
+              )}
               <CartTrigger className="sheet-cart-link" onBeforeOpen={() => setSelectedId(null)}>
                 View cart
               </CartTrigger>
@@ -342,7 +348,7 @@ function ProductTile({
   const { backgroundColor: photoBackdrop, handleLoad } = usePhotoBackdrop();
 
   return (
-    <article className="shop-card">
+    <article className={`shop-card ${product.soldOut ? "is-sold-out" : ""}`}>
       <button className="shop-card-open" onClick={onSelect} type="button">
         <span
           className="shop-card-photo"
@@ -350,6 +356,7 @@ function ProductTile({
           style={photoBackdrop ? { backgroundColor: photoBackdrop } : undefined}
         >
           <ProductPackshot product={product} onImageLoad={handleLoad} />
+          {product.soldOut ? <span className="shop-card-soldout">Sold out</span> : null}
         </span>
         <span className="shop-card-body">
           <span className="shop-card-title">{product.title}</span>
@@ -365,26 +372,28 @@ function ProductTile({
           ) : null}
         </span>
       </button>
-      <button
-        aria-label={
-          hasMultipleVariants
-            ? `Choose a size for ${product.title}`
-            : `Quick add ${product.title} to cart`
-        }
-        className={`shop-card-add ${added ? "added" : ""}`}
-        onClick={(event) => {
-          event.stopPropagation();
-          onQuickAdd();
-          void celebrateBurst(event.currentTarget);
-          if (!hasMultipleVariants) {
-            setAdded(true);
-            window.setTimeout(() => setAdded(false), 1300);
+      {product.soldOut ? null : (
+        <button
+          aria-label={
+            hasMultipleVariants
+              ? `Choose a size for ${product.title}`
+              : `Quick add ${product.title} to cart`
           }
-        }}
-        type="button"
-      >
-        {added ? "✓" : hasMultipleVariants ? "···" : "+"}
-      </button>
+          className={`shop-card-add ${added ? "added" : ""}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onQuickAdd();
+            void celebrateBurst(event.currentTarget);
+            if (!hasMultipleVariants) {
+              setAdded(true);
+              window.setTimeout(() => setAdded(false), 1300);
+            }
+          }}
+          type="button"
+        >
+          {added ? "✓" : hasMultipleVariants ? "···" : "+"}
+        </button>
+      )}
     </article>
   );
 }

@@ -82,38 +82,49 @@ export function ProductDetailHero({ variants }: ProductDetailHeroProps) {
             </>
           ) : null}
 
-          <span className="qty-stepper" aria-label="Quantity">
-            <button
-              disabled={quantity <= 1}
-              onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-              type="button"
-              aria-label="Decrease quantity"
-            >
-              −
-            </button>
-            <span>{quantity}</span>
-            <button
-              disabled={quantity >= maxQuantity}
-              onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
-              type="button"
-              aria-label="Increase quantity"
-            >
-              +
-            </button>
-          </span>
+          {selected.soldOut ? null : (
+            <span className="qty-stepper" aria-label="Quantity">
+              <button
+                disabled={quantity <= 1}
+                onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                type="button"
+                aria-label="Decrease quantity"
+              >
+                −
+              </button>
+              <span>{quantity}</span>
+              <button
+                disabled={quantity >= maxQuantity}
+                onClick={() => setQuantity((value) => Math.min(maxQuantity, value + 1))}
+                type="button"
+                aria-label="Increase quantity"
+              >
+                +
+              </button>
+            </span>
+          )}
         </div>
 
         <div className="product-detail-actions">
-          <AddToBagButton
-            className="pdp-add-button"
-            label={
-              <>
-                <BagIcon className="cta-icon" />
-                <span>Add to cart · {linePrice}</span>
-              </>
-            }
-            line={toCartLine(selected, quantity)}
-          />
+          {selected.soldOut ? (
+            <>
+              <button className="pdp-add-button sold-out" disabled type="button">
+                Sold out
+              </button>
+              <p className="sold-out-note">This one has sold out. Please check back soon.</p>
+            </>
+          ) : (
+            <AddToBagButton
+              className="pdp-add-button"
+              label={
+                <>
+                  <BagIcon className="cta-icon" />
+                  <span>Add to cart · {linePrice}</span>
+                </>
+              }
+              line={toCartLine(selected, quantity)}
+            />
+          )}
         </div>
 
         <CartTrigger className="checkout-cta">

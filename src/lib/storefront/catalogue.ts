@@ -55,6 +55,8 @@ export type StorefrontProductView = {
   compareAtPrice?: number;
   formattedCompareAtPrice?: string;
   stockAvailable: number;
+  /** True when a tracked product has none left to sell (zero, or a miscounted negative). */
+  soldOut: boolean;
   imageUrl?: string;
   imageAlt?: string;
   concernLabels: string[];
@@ -243,6 +245,19 @@ export function getShopFilterOptions(catalogue: StorefrontCatalogue): ShopFilter
   };
 }
 
+// Sold out means there is none left to sell — zero, or a count that has gone
+// negative. A product that doesn't track stock is never "sold out": nothing
+// counts it down, so a 0 there only means nobody typed a number in.
+export function isSoldOut(variant: ProductVariant, variantsById: Map<string, ProductVariant>) {
+  const components = variant.bundleComponents ?? [];
+  if (components.length > 0) {
+    const hasTrackedComponent = components.some((component) => variantsById.get(component.variantId)?.trackInventory);
+    return hasTrackedComponent && computeAvailableStock(variant, variantsById) <= 0;
+  }
+
+  return variant.trackInventory && variant.stockAvailable <= 0;
+}
+
 export function formatStorefrontMoney(amount: number) {
   return formatMoney(amount);
 }
@@ -272,6 +287,7 @@ export function toStorefrontProductViews(catalogue: StorefrontCatalogue): Storef
           ? formatStorefrontMoney(variant.compareAtPrice)
           : undefined,
       stockAvailable: computeAvailableStock(variant, catalogue.variantsById),
+      soldOut: isSoldOut(variant, catalogue.variantsById),
       imageUrl: media?.url,
       imageAlt: media?.alt,
       concernLabels: concerns.map((concern) => concern.title),

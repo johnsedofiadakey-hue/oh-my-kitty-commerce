@@ -57,8 +57,13 @@ export function StockAdjustForm({ action, currentStock, disabled, productId, var
       <fieldset disabled={disabled}>
         {currentStock < 0 ? (
           <p className="admin-form-status error">
-            The count is {currentStock}, which means something was recorded wrongly. Count what is really on the
-            shelf and enter it under &ldquo;Set exact count&rdquo;.
+            The system shows {currentStock}, which means it thinks {Math.abs(currentStock)} more were sold than you
+            had. If you have none on the shelf, choose &ldquo;Set exact count&rdquo; and enter 0. The item will
+            then show as Sold out in the shop.
+          </p>
+        ) : currentStock === 0 ? (
+          <p className="stock-preview">
+            Sold out. Add stock to put it back on sale.
           </p>
         ) : null}
 

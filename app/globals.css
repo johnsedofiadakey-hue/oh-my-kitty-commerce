@@ -18176,3 +18176,44 @@ a.pos-secondary-button {
 .stock-preview.warn {
   color: var(--color-status-urgent);
 }
+
+/* Sold out: a clear tag on the card, a muted photo, and no way to add it. */
+.shop-card-soldout {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: var(--color-near-black);
+  color: var(--color-white-pure);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.shop-card.is-sold-out .shop-card-photo .product-packshot {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+}
+
+.shop-card.is-sold-out .shop-card-title,
+.shop-card.is-sold-out .shop-card-price {
+  color: var(--color-muted);
+}
+
+.pdp-add-button.sold-out,
+.pdp-add-button.sold-out:disabled {
+  border: 1px solid var(--color-line);
+  background: var(--color-white-pure);
+  background-image: none;
+  box-shadow: none;
+  color: var(--color-muted);
+  cursor: not-allowed;
+}
+
+.sold-out-note {
+  margin: 8px 0 0;
+  color: var(--color-muted);
+  font-size: 0.95rem;
+}
