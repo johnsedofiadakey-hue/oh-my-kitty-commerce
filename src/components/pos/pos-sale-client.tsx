@@ -528,7 +528,8 @@ export function PosSaleClient({
               <strong>{product.title}</strong>
               <span>{product.sku}</span>
               <b>{product.formattedPrice}</b>
-              <em>{product.stockAvailable} in stock</em>
+              {/* Staff are not shown how many are in stock — only whether it can be sold. */}
+              {product.stockAvailable <= 0 ? <em>Sold out</em> : null}
             </button>
           ))}
         </section>
