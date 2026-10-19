@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import { formatMoney } from "@/lib/commerce/format";
 import { calculatePaystackFee } from "@/lib/payments/fee";
@@ -525,6 +526,15 @@ export function PosSaleClient({
               onClick={() => addProduct(product)}
               type="button"
             >
+              {/* Decorative: the title sits right below it, so announcing the
+                  photo too would just repeat the product name. */}
+              <span className="pos-product-thumb" data-empty={product.imageUrl ? undefined : "true"}>
+                {product.imageUrl ? (
+                  <Image alt="" fill sizes="(max-width: 600px) 50vw, (max-width: 1100px) 33vw, 240px" src={product.imageUrl} />
+                ) : (
+                  <b aria-hidden="true">{initialsFor(product.title)}</b>
+                )}
+              </span>
               <strong>{product.title}</strong>
               <span>{product.sku}</span>
               <b>{product.formattedPrice}</b>
@@ -796,6 +806,21 @@ export function PosSaleClient({
       />
     </>
   );
+}
+
+/**
+ * Stand-in for a product with no photo yet. Staff recognise tiles by shape
+ * and position as much as by reading them, so a blank frame costs more than
+ * it saves — two letters keep the tile distinguishable at a glance.
+ */
+function initialsFor(title: string) {
+  const words = title.split(/\s+/).filter(Boolean);
+  if (words.length === 0) {
+    return "?";
+  }
+
+  const letters = words.length === 1 ? words[0].slice(0, 2) : `${words[0][0]}${words[1][0]}`;
+  return letters.toUpperCase();
 }
 
 function parseMoneyInput(value: string) {

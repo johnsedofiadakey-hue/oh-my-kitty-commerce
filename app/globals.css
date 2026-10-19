@@ -7727,6 +7727,41 @@ button {
   font-size: 1rem;
 }
 
+/* Product photo on the till tile. Selectors are scoped through .pos-product
+   so they outrank the generic `.pos-product span` / `.pos-product b` rules
+   above, which would otherwise make the frame a muted text block and push
+   the fallback initials to the bottom of the tile. */
+.pos-product .pos-product-thumb {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: calc(var(--radius-small) - 6px);
+  background: #f7efe9;
+}
+
+/* `contain`, not `cover`: these photos are shot at mixed aspect ratios, and
+   cropping a till tile to a square lops the top off a bottle — exactly what
+   makes a product hard to recognise at a glance. Letterboxing against the
+   tile's own background costs nothing here. */
+.pos-product .pos-product-thumb img {
+  object-fit: contain;
+}
+
+/* No photo on file: centred initials instead of an empty frame. */
+.pos-product .pos-product-thumb[data-empty="true"] {
+  display: grid;
+  place-items: center;
+}
+
+.pos-product .pos-product-thumb b {
+  margin-top: 0;
+  color: rgb(55 38 31 / 38%);
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
+}
+
 .pos-cart-lines {
   display: grid;
   margin-top: 16px;
