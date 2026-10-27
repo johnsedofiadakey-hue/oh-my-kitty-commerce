@@ -19,12 +19,17 @@ type TrackResult = {
   items: { productTitle: string; variantTitle: string; quantity: number; mediaUrl: string | null }[];
 };
 
+// Every FulfilmentStatus needs an entry: a missing one renders the raw enum
+// name at the customer, and PACKED is the status a WhatsApp/MoMo order sits
+// in for most of its life, between being recorded and going out.
 const FULFILMENT_LABEL: Record<string, string> = {
   UNFULFILLED: "Order received",
   PROCESSING: "Being prepared",
+  PACKED: "Packed, waiting to go out",
   READY_FOR_PICKUP: "Ready for pickup",
   OUT_FOR_DELIVERY: "Out for delivery",
   FULFILLED: "Delivered / collected",
+  RETURNED: "Returned to us",
   CANCELLED: "Cancelled"
 };
 

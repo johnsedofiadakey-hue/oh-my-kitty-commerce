@@ -19,11 +19,25 @@ type PosSaleClientProps = {
   canRefund: boolean;
   canViewOrders: boolean;
   canVoid: boolean;
+  /** The shop's own MoMo wallets, for recording where an outside payment landed. */
+  momoAccounts: { label: string; number: string }[];
   products: StorefrontProductView[];
   source: "live" | "sample";
   sourceMessage?: string;
   staffName: string;
 };
+
+/**
+ * Two different sales share this till.
+ *
+ * "counter" is someone standing in front of you: they pay and walk away with
+ * the goods, so the order is finished the moment it is paid.
+ *
+ * "outside" is a WhatsApp or Instagram order already paid by MoMo. Nothing has
+ * been handed over, so it has to be packed and delivered — it goes to a
+ * different endpoint, lands UNFULFILLED, and turns up in the dispatch queue.
+ */
+type SaleMode = "counter" | "outside";
 
 type PosLine = StorefrontProductView & {
   quantity: number;
@@ -74,6 +88,7 @@ export function PosSaleClient({
   canRefund,
   canViewOrders,
   canVoid,
+  momoAccounts,
   products,
   source,
   sourceMessage,
@@ -87,6 +102,20 @@ export function PosSaleClient({
   const [promoCode, setPromoCode] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [cashReceived, setCashReceived] = useState("");
+  const [saleMode, setSaleMode] = useState<SaleMode>("counter");
+  const [paidInto, setPaidInto] = useState(momoAccounts[0]?.number ?? "");
+  const [payerNumber, setPayerNumber] = useState("");
+  const [paymentReference, setPaymentReference] = useState("");
+  const [deliveryFee, setDeliveryFee] = useState("");
+  // Set when the server refuses a transaction id it has seen before. Holds the
+  // message naming the order it already paid for, so staff can look before
+  // deciding to record a second sale against the same reference.
+  const [duplicateWarning, setDuplicateWarning] = useState("");
+  // Held across retries rather than minted per attempt. If the network drops
+  // after the server has written the order but before the reply arrives,
+  // retrying with the same key makes the server hand back the order it
+  // already created instead of recording the sale a second time.
+  const outsideSaleKeyRef = useRef<string | null>(null);
   const [momoStage, setMomoStage] = useState<MomoStage>("idle");
   const [momoMessage, setMomoMessage] = useState("");
   const [momoElapsedMs, setMomoElapsedMs] = useState(0);
@@ -153,15 +182,25 @@ export function PosSaleClient({
       ),
     [normalizedQuery, products]
   );
+  const isOutsideOrder = saleMode === "outside";
   const subtotal = cart.reduce((total, line) => total + line.price * line.quantity, 0);
+  const deliveryFeeMinor = isOutsideOrder ? (parseMoneyInput(deliveryFee) ?? 0) : 0;
   // Only mobile money actually goes through Paystack right now — POS "card"
   // is a manual record of an external card machine, no fee incurred there.
-  const paymentFee = paymentMethod === "mobile_money" ? calculatePaystackFee(subtotal) : 0;
-  const displayTotal = subtotal + paymentFee;
-  const amountReceived = paymentMethod === "cash" ? parseMoneyInput(cashReceived) : undefined;
+  // An outside order incurs none either: the money is already in her wallet,
+  // so there is no Paystack charge to pass on.
+  const paymentFee = !isOutsideOrder && paymentMethod === "mobile_money" ? calculatePaystackFee(subtotal) : 0;
+  const displayTotal = subtotal + paymentFee + deliveryFeeMinor;
+  const amountReceived = !isOutsideOrder && paymentMethod === "cash" ? parseMoneyInput(cashReceived) : undefined;
   const cashReceivedMinor = amountReceived ?? 0;
   const changeDue =
-    paymentMethod === "cash" && cashReceivedMinor > subtotal ? cashReceivedMinor - subtotal : 0;
+    !isOutsideOrder && paymentMethod === "cash" && cashReceivedMinor > subtotal
+      ? cashReceivedMinor - subtotal
+      : 0;
+  // An outside order is not a till transaction — no drawer, no shift. It only
+  // needs a live backend, because the duplicate-reference check reads existing
+  // payments and cannot be done from a queued offline sale.
+  const canRecordOutside = source === "live" && isOnline;
 
   async function openShift() {
     setShiftBusy(true);
@@ -248,6 +287,11 @@ export function PosSaleClient({
     setCustomerAddress("");
     setPromoCode("");
     setCashReceived("");
+    setPayerNumber("");
+    setPaymentReference("");
+    setDeliveryFee("");
+    setDuplicateWarning("");
+    outsideSaleKeyRef.current = null;
   }
 
   function stopMomoPolling() {
@@ -409,8 +453,79 @@ export function PosSaleClient({
     }
   }
 
+  /**
+   * Records a WhatsApp/MoMo order. No offline queue and no shift: the server
+   * has to check the transaction id against existing payments, which is the
+   * step that catches a screenshot being presented twice.
+   */
+  async function recordOutsideOrder(allowDuplicateReference: boolean) {
+    setSubmitting(true);
+    setErrorMessage("");
+    if (!allowDuplicateReference) {
+      setDuplicateWarning("");
+    }
+
+    try {
+      const response = await fetch("/api/pos/outside-sale", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          allowDuplicateReference,
+          customer: {
+            name: customerName.trim() || undefined,
+            phone: customerPhone.trim(),
+            address: customerAddress.trim() || undefined
+          },
+          deliveryTotal: deliveryFeeMinor,
+          idempotencyKey: (outsideSaleKeyRef.current ??= crypto.randomUUID()),
+          items: cart.map((line) => ({
+            productId: line.id,
+            variantId: line.variantId,
+            quantity: line.quantity
+          })),
+          payerNumber: payerNumber.trim() || undefined,
+          paymentReference: paymentReference.trim() || undefined,
+          promoCode: promoCode.trim() || undefined,
+          receivedInto: paidInto || undefined
+        })
+      });
+
+      const payload = (await response.json()) as {
+        message?: string;
+        orderId?: string;
+        orderNumber?: string;
+        total?: number;
+      };
+
+      if (!response.ok || !payload.orderId || !payload.orderNumber || typeof payload.total !== "number") {
+        const message = payload.message ?? "Recording the sale failed.";
+        // The duplicate refusal names the order the reference already paid
+        // for. Surfacing it separately lets staff go and look at that order
+        // rather than just seeing a red line and trying again.
+        if (/already paid for order/i.test(message)) {
+          setDuplicateWarning(message);
+          setErrorMessage("");
+          return;
+        }
+        throw new Error(message);
+      }
+
+      setReceipt({ changeDue: 0, orderId: payload.orderId, orderNumber: payload.orderNumber, total: payload.total, pending: false });
+      clearCart();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Recording the sale failed.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   async function completeSale(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isOutsideOrder) {
+      void recordOutsideOrder(false);
+      return;
+    }
 
     if (!shift) {
       return;
@@ -689,6 +804,35 @@ export function PosSaleClient({
           )}
         </div>
         <form className="pos-payment-form" onSubmit={completeSale}>
+          <div className="pos-sale-mode" role="radiogroup" aria-label="What kind of sale is this?">
+            <label className={saleMode === "counter" ? "active" : ""}>
+              <input
+                checked={saleMode === "counter"}
+                name="saleMode"
+                onChange={() => setSaleMode("counter")}
+                type="radio"
+                value="counter"
+              />
+              <strong>At the counter</strong>
+              <small>Customer is here, takes it now</small>
+            </label>
+            <label className={saleMode === "outside" ? "active" : ""}>
+              <input
+                checked={saleMode === "outside"}
+                name="saleMode"
+                onChange={() => setSaleMode("outside")}
+                type="radio"
+                value="outside"
+              />
+              <strong>WhatsApp order</strong>
+              <small>Already paid by MoMo, needs delivery</small>
+            </label>
+          </div>
+          {isOutsideOrder ? (
+            <p className="pos-hint">
+              This goes to Dispatch to be packed — it is not marked delivered until someone says so.
+            </p>
+          ) : null}
           <label className="admin-field">
             <span>Customer name</span>
             <input
@@ -701,34 +845,78 @@ export function PosSaleClient({
             <span>Customer phone</span>
             <input
               onChange={(event) => setCustomerPhone(event.target.value)}
-              placeholder={paymentMethod === "mobile_money" ? "024 000 0000" : "Optional"}
-              required={paymentMethod === "mobile_money"}
+              placeholder={isOutsideOrder || paymentMethod === "mobile_money" ? "024 000 0000" : "Optional"}
+              required={isOutsideOrder || paymentMethod === "mobile_money"}
               value={customerPhone}
             />
           </label>
           <label className="admin-field">
-            <span>Customer location</span>
+            <span>{isOutsideOrder ? "Where should we deliver it?" : "Customer location"}</span>
             <input
               onChange={(event) => setCustomerAddress(event.target.value)}
-              placeholder="Optional"
+              placeholder={isOutsideOrder ? "Area and landmark" : "Optional"}
+              required={isOutsideOrder}
               value={customerAddress}
             />
           </label>
-          <label className="admin-field">
-            <span>Payment</span>
-            <select
-              onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}
-              value={paymentMethod}
-            >
-              <option value="cash">Cash</option>
-              <option disabled={!isOnline} value="mobile_money">
-                Mobile money{isOnline ? "" : " (needs a connection)"}
-              </option>
-              <option value="card">Card</option>
-              <option value="manual_transfer">Manual transfer</option>
-            </select>
-          </label>
-          {paymentMethod === "cash" ? (
+          {isOutsideOrder ? (
+            <>
+              <label className="admin-field">
+                <span>Paid into</span>
+                <select onChange={(event) => setPaidInto(event.target.value)} value={paidInto}>
+                  {momoAccounts.length === 0 ? <option value="">No MoMo numbers set up yet</option> : null}
+                  {momoAccounts.map((account) => (
+                    <option key={account.number} value={account.number}>
+                      {account.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="admin-field">
+                <span>Paid from (their MoMo number)</span>
+                <input
+                  inputMode="tel"
+                  onChange={(event) => setPayerNumber(event.target.value)}
+                  placeholder="Optional — often not their delivery number"
+                  value={payerNumber}
+                />
+              </label>
+              <label className="admin-field">
+                <span>MoMo transaction ID</span>
+                <input
+                  onChange={(event) => setPaymentReference(event.target.value)}
+                  placeholder="Optional, but it is what settles a dispute"
+                  value={paymentReference}
+                />
+              </label>
+              <label className="admin-field">
+                <span>Delivery fee GHS</span>
+                <input
+                  inputMode="decimal"
+                  min="0"
+                  onChange={(event) => setDeliveryFee(event.target.value)}
+                  placeholder="0.00"
+                  value={deliveryFee}
+                />
+              </label>
+            </>
+          ) : (
+            <label className="admin-field">
+              <span>Payment</span>
+              <select
+                onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}
+                value={paymentMethod}
+              >
+                <option value="cash">Cash</option>
+                <option disabled={!isOnline} value="mobile_money">
+                  Mobile money{isOnline ? "" : " (needs a connection)"}
+                </option>
+                <option value="card">Card</option>
+                <option value="manual_transfer">Manual transfer</option>
+              </select>
+            </label>
+          )}
+          {!isOutsideOrder && paymentMethod === "cash" ? (
             <label className="admin-field">
               <span>Cash received GHS</span>
               <input
@@ -748,10 +936,16 @@ export function PosSaleClient({
               value={promoCode}
             />
           </label>
-          {paymentMethod === "mobile_money" ? (
+          {!isOutsideOrder && paymentMethod === "mobile_money" ? (
             <div className="pos-total secondary">
               <span>Mobile money fee (1.95%)</span>
               <strong>{formatMoney(paymentFee)}</strong>
+            </div>
+          ) : null}
+          {deliveryFeeMinor > 0 ? (
+            <div className="pos-total secondary">
+              <span>Delivery</span>
+              <strong>{formatMoney(deliveryFeeMinor)}</strong>
             </div>
           ) : null}
           <div className="pos-total">
@@ -779,20 +973,52 @@ export function PosSaleClient({
             </div>
           ) : null}
           {momoStage === "failed" ? <p className="form-error">{momoMessage}</p> : null}
+          {duplicateWarning ? (
+            <div className="pos-duplicate-warning" role="alert">
+              <strong>This payment has been used before</strong>
+              <p>{duplicateWarning}</p>
+              <p>
+                Open that order and check whether it was delivered. Only record this one as well if
+                the customer really did pay twice.
+              </p>
+              <button
+                className="pos-secondary-button"
+                disabled={submitting}
+                onClick={() => void recordOutsideOrder(true)}
+                type="button"
+              >
+                {submitting ? "Recording…" : "I checked — record it anyway"}
+              </button>
+            </div>
+          ) : null}
           {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
-          {source === "live" && !canSell && !errorMessage ? (
+          {isOutsideOrder && !canRecordOutside ? (
+            <p className="pos-hint">
+              {isOnline ? "Setting up…" : "You need a connection to record a WhatsApp order."}
+            </p>
+          ) : null}
+          {!isOutsideOrder && source === "live" && !canSell && !errorMessage ? (
             <p className="pos-hint">Setting up…</p>
           ) : null}
           <button
             className="checkout-button"
-            disabled={!canSell || submitting || cart.length === 0 || momoStage === "waiting"}
+            disabled={
+              (isOutsideOrder ? !canRecordOutside : !canSell) ||
+              submitting ||
+              cart.length === 0 ||
+              momoStage === "waiting"
+            }
             type="submit"
           >
             {momoStage === "waiting"
               ? "Waiting for customer"
               : submitting
-                ? "Completing sale"
-                : "Complete sale"}
+                ? isOutsideOrder
+                  ? "Recording order"
+                  : "Completing sale"
+                : isOutsideOrder
+                  ? "Record order"
+                  : "Complete sale"}
           </button>
         </form>
       </aside>

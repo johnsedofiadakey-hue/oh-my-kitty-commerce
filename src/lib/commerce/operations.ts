@@ -11,6 +11,8 @@ import { formatMoney } from "@/lib/commerce/format";
 import { calculatePaystackFee } from "@/lib/payments/fee";
 import { eligibleSpendFor, resolveDeliveryFee } from "@/lib/commerce/delivery-pricing";
 import { isSetVariant } from "@/lib/commerce/inventory";
+import { isSameGhanaPhone, normalizeGhanaPhone } from "@/lib/commerce/phone";
+import { groupPaymentsByOrderId, orderMatchesQuery } from "@/lib/commerce/order-search";
 import type { CommerceRepository, CommerceTransaction } from "@/lib/commerce/repository";
 import { createNoopTransaction } from "@/lib/commerce/repository";
 import {
@@ -135,6 +137,7 @@ import type {
 } from "@/lib/commerce/types";
 import { FULFILMENT_RANK } from "@/lib/commerce/types";
 import { notifyAdminOfNewOrder, notifyOrderEvent, summarizeItems } from "@/lib/notifications/order-notifications";
+import type { OrderNotificationEvent } from "@/lib/notifications/order-notifications";
 import { buildGuidanceReplyPrefill, toWhatsAppLink } from "@/lib/storefront/whatsapp";
 import { getAdminMessaging } from "@/lib/firebase/server";
 import type { BatchResponse } from "firebase-admin/messaging";
@@ -2349,7 +2352,7 @@ export async function confirmPaystackPayment(
   });
 
   if (!result.alreadyConfirmed) {
-    void notifyOrderEvent(result.order, result.order.channel === "POS" ? "POS_COMPLETED" : "CONFIRMED");
+    void notifyOrderEvent(result.order, saleCompletedEvent(result.order.channel));
     void notifyAdminOfNewOrder(result.order);
     void sendNewOrderPush(context, result.order);
     if (result.order.promotionId) {
@@ -2360,16 +2363,54 @@ export async function confirmPaystackPayment(
   return result;
 }
 
-export async function completeAdminCreatedSale(
+/**
+ * Records a sale agreed off the website — WhatsApp, Instagram, a phone call —
+ * where the customer has already sent money to one of the shop's own MoMo
+ * numbers and the goods still have to be packed and delivered.
+ *
+ * Channel is ADMIN_CREATED rather than POS on purpose. buildOrder marks a PAID
+ * POS sale FULFILLED on the spot, which is right at the counter (the customer
+ * walks away holding it) and quite wrong here: this order has not been packed,
+ * so it must start UNFULFILLED, reach the dispatch queue, and collect a parcel
+ * with a named packer and a delivery date. That trail is the entire point —
+ * it is what answers a customer who comes back weeks later saying nothing
+ * arrived.
+ *
+ * Passing an already-seen `paymentReference` is refused unless
+ * `allowDuplicateReference` is set, so staff have to look at the order that
+ * reference already paid for before recording a second one against it.
+ */
+export async function recordOutsideSale(
   context: CommerceContext,
   actor: CommerceActor,
-  input: CompleteSaleInput
+  input: CompleteSaleInput & { allowDuplicateReference?: boolean }
 ) {
-  await assertCan(context, actor, "orders.update_status");
+  await assertCan(context, actor, "orders.record_offline");
+
+  const { allowDuplicateReference, ...saleInput } = input;
   const parsed = completeSaleInputSchema.parse({
-    ...input,
+    ...saleInput,
     channel: "ADMIN_CREATED"
   });
+
+  if (!parsed.customerSnapshot?.phone) {
+    throw new CommerceError(
+      "VALIDATION_ERROR",
+      "A phone number is required — it is how the customer gets their receipt and order number."
+    );
+  }
+
+  const reference = parsed.paymentReference?.trim();
+  if (reference && !allowDuplicateReference) {
+    const existing = await findOrdersByPaymentReference(context, actor, reference);
+    if (existing.length > 0) {
+      const first = existing[0];
+      throw new CommerceError(
+        "VALIDATION_ERROR",
+        `That payment reference already paid for order ${first.orderNumber}. Check that order before recording another sale against it.`
+      );
+    }
+  }
 
   return completeSale(context, actor, parsed);
 }
@@ -3078,12 +3119,24 @@ export async function updateOrdersFulfilment(
   return result;
 }
 
-/** Order/receipt lookup for POS — find a past sale by order number, customer name, or phone. */
+/**
+ * Order/receipt lookup — by order number, customer name or phone, and also by
+ * anything written on the payment: the MoMo transaction id, the number that
+ * paid, the wallet it landed in.
+ *
+ * The payment side is what settles a dispute. A customer presenting an old
+ * screenshot is answered by pasting its transaction id here: if it already
+ * paid for an order, that order comes back with its packing and delivery
+ * trail attached.
+ *
+ * Phones are matched on their normalised form as well as literally, so the
+ * number found is the same number however the customer wrote it down.
+ */
 export async function searchOrders(
   context: CommerceContext,
   actor: CommerceActor,
   query: string,
-  options: { posShiftId?: string } = {}
+  options: { posShiftId?: string; limit?: number } = {}
 ) {
   await assertCan(context, actor, "pos.receipts.view");
   const normalized = query.trim().toLowerCase();
@@ -3092,25 +3145,72 @@ export async function searchOrders(
   }
 
   const orders = await context.repo.listOrders();
+  // One pass over payments rather than a lookup per order — a dispute search
+  // scans the whole book, and payments are a separate collection.
+  const paymentsByOrderId = normalized
+    ? groupPaymentsByOrderId(await context.repo.listPayments())
+    : new Map<string, Payment[]>();
+
   return orders
     .filter((order) => {
       if (options.posShiftId && order.posShiftId !== options.posShiftId) {
         return false;
       }
 
-      if (!normalized) {
-        return true;
-      }
-
-      const haystack = [order.orderNumber, order.customerSnapshot?.name, order.customerSnapshot?.phone]
-        .filter((value): value is string => Boolean(value))
-        .join(" ")
-        .toLowerCase();
-
-      return haystack.includes(normalized);
+      return orderMatchesQuery(order, paymentsByOrderId.get(order.id) ?? [], normalized);
     })
     .sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt))
-    .slice(0, 15);
+    .slice(0, options.limit ?? 15);
+}
+
+/**
+ * Has this MoMo transaction id already been used to pay for something?
+ *
+ * The honest-mistake case and the chancing-it case look identical at the till:
+ * a screenshot is presented, staff type its reference. If that reference is
+ * already attached to an order, this hands back that order so staff can see
+ * what it bought and whether it was delivered — before completing a second sale.
+ */
+export async function findOrdersByPaymentReference(
+  context: CommerceContext,
+  actor: CommerceActor,
+  reference: string
+): Promise<Order[]> {
+  await assertCan(context, actor, "pos.receipts.view");
+  const needle = reference.trim().toLowerCase();
+  if (!needle) {
+    return [];
+  }
+
+  const payments = await context.repo.listPayments();
+  const orderIds = new Set(
+    payments
+      .filter((payment) => (payment.providerReference ?? "").trim().toLowerCase() === needle)
+      .map((payment) => payment.orderId)
+  );
+
+  if (orderIds.size === 0) {
+    return [];
+  }
+
+  const orders = await context.repo.listOrders();
+  return orders
+    .filter((order) => orderIds.has(order.id))
+    .sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+}
+
+/**
+ * Which "we have your money" text to send. A counter sale is finished when it
+ * is paid; a WhatsApp/MoMo order is only starting, so it gets the template
+ * that promises packing and links to tracking rather than one saying the
+ * order is complete.
+ */
+function saleCompletedEvent(channel: SalesChannel): OrderNotificationEvent {
+  if (channel === "POS") {
+    return "POS_COMPLETED";
+  }
+
+  return channel === "ADMIN_CREATED" ? "OUTSIDE_ORDER_RECORDED" : "CONFIRMED";
 }
 
 function toMillis(value: unknown): number {
@@ -3416,6 +3516,8 @@ async function completeSale(
       amount: order.total,
       currency: order.currency,
       providerReference: parsed.paymentReference ?? null,
+      payerNumber: parsed.payerNumber ? normalizeGhanaPhone(parsed.payerNumber) : null,
+      receivedInto: parsed.receivedInto ?? null,
       idempotencyKey: parsed.idempotencyKey,
       createdAt: getNow(context),
       updatedAt: getNow(context)
@@ -3444,7 +3546,7 @@ async function completeSale(
   });
 
   if (!result.idempotent) {
-    void notifyOrderEvent(result.order, result.order.channel === "POS" ? "POS_COMPLETED" : "CONFIRMED");
+    void notifyOrderEvent(result.order, saleCompletedEvent(result.order.channel));
     void notifyAdminOfNewOrder(result.order);
     void sendNewOrderPush(context, result.order);
     if (result.order.promotionId) {
@@ -3479,9 +3581,13 @@ async function resolveCustomerId(
   }
 
   const customers = await context.repo.listCustomers();
+  // Phones are compared on their normalised form, not the stored string: the
+  // same customer ordering once as 0241448231 and once as +233 24 144 8231
+  // used to end up as two customer records with two separate order histories.
   const existing = customers.find(
     (customer) =>
-      (phone && customer.phone?.trim() === phone) || (email && customer.email?.trim().toLowerCase() === email)
+      (phone && isSameGhanaPhone(customer.phone, phone)) ||
+      (email && customer.email?.trim().toLowerCase() === email)
   );
 
   if (existing) {

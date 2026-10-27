@@ -8040,6 +8040,117 @@ a.pos-secondary-button {
   margin-top: 18px;
 }
 
+/* Which kind of sale this is — a counter sale that is finished when paid, or
+   a WhatsApp order that still has to be packed and delivered. Two big targets
+   rather than a dropdown, because picking the wrong one puts an undelivered
+   order into the books as already fulfilled. */
+/* Dispute lookup on the orders page: a transaction id off a screenshot goes
+   in here. Laid out on one line so the field, the button and Clear stay
+   together above the list they filter. */
+.admin-order-search {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.admin-order-search .admin-field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Packed / dispatched / delivered, in order, for one order's parcels. */
+.order-parcel-trail {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.order-parcel-trail li {
+  display: grid;
+  gap: 2px;
+  border-left: 2px solid rgb(246 184 174 / 70%);
+  padding-left: 10px;
+}
+
+.order-parcel-trail span {
+  color: var(--color-muted);
+  font-size: 0.84rem;
+}
+
+@media (max-width: 760px) {
+  .admin-order-search {
+    flex-wrap: wrap;
+  }
+
+  .admin-order-search .admin-field {
+    flex-basis: 100%;
+  }
+}
+
+.pos-sale-mode {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pos-sale-mode label {
+  display: grid;
+  gap: 2px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-small);
+  padding: 10px 12px;
+  background: var(--color-white-pure);
+  cursor: pointer;
+}
+
+.pos-sale-mode label.active {
+  border-color: rgb(246 184 174 / 90%);
+  background: #fff6f3;
+}
+
+.pos-sale-mode input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.pos-sale-mode strong {
+  font-size: 0.92rem;
+}
+
+.pos-sale-mode small {
+  color: var(--color-muted);
+  font-size: 0.74rem;
+  line-height: 1.3;
+}
+
+/* Shown when a MoMo transaction id has already paid for something. Styled as a
+   stop sign rather than an error line: the point is to make staff go and look
+   at the other order before recording a second sale against the same money. */
+.pos-duplicate-warning {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgb(190 96 72 / 45%);
+  border-radius: var(--radius-small);
+  padding: 12px;
+  background: #fff4f0;
+}
+
+.pos-duplicate-warning strong {
+  color: #8c3b24;
+}
+
+.pos-duplicate-warning p {
+  margin: 0;
+  color: var(--color-near-black);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
 .pos-total,
 .pos-receipt {
   display: flex;

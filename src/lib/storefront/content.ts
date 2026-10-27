@@ -48,6 +48,25 @@ export const CONTENT_REGISTRY = {
     group: "SMS templates",
     defaultValue: "Oh My Kitty: Thank you for shopping with us! Your order {orderNumber} ({total}) is complete — we hope you love it."
   },
+  // Separate from the POS template above because the situation is different:
+  // nothing has been handed over yet. Saying "complete" to someone still
+  // waiting on a delivery is how a dispute starts, so this one confirms the
+  // money, names the order, and links to tracking.
+  "sms-outside-order-template": {
+    label: "SMS: WhatsApp/MoMo order recorded (placeholders: {orderNumber}, {total}, {trackingLink})",
+    group: "SMS templates",
+    defaultValue:
+      "Oh My Kitty: Payment received, thank you! Your order {orderNumber} ({total}) is being packed. Track it here: {trackingLink}"
+  },
+  // The shop's own MoMo numbers, one per line as "Label | number". Staff pick
+  // from this list when recording an outside sale rather than typing it, so
+  // takings can be grouped per wallet and ticked off against that wallet's
+  // own statement.
+  "momo-accounts": {
+    label: "MoMo numbers money is received into (one per line, as: Label | number)",
+    group: "Contact",
+    defaultValue: "Personal MoMo | 0241448231"
+  },
   "shop-closed": {
     label: "Shop status (takes up to 30s to apply)",
     group: "Storefront",
@@ -120,6 +139,36 @@ export const getContentBlocks = cache(async (): Promise<Record<ContentKey, strin
 export async function getContentValue(key: ContentKey): Promise<string> {
   const blocks = await getContentBlocks();
   return blocks[key];
+}
+
+export type MomoAccount = { label: string; number: string };
+
+/**
+ * The shop's own MoMo numbers, parsed from the `momo-accounts` block.
+ *
+ * Each line is "Label | number"; a line with no pipe is taken as a bare
+ * number and labelled with itself, so the owner can type just the digits and
+ * still get a usable list. Blank lines are ignored. Nothing here throws — a
+ * malformed block must not be able to take the till down, it just yields a
+ * shorter list.
+ */
+export async function getMomoAccounts(): Promise<MomoAccount[]> {
+  const raw = await getContentValue("momo-accounts");
+  return parseMomoAccounts(raw);
+}
+
+export function parseMomoAccounts(raw: string): MomoAccount[] {
+  return raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [first, ...rest] = line.split("|");
+      const label = first.trim();
+      const number = rest.join("|").trim();
+      return number ? { label, number } : { label, number: label };
+    })
+    .filter((account) => account.label !== "");
 }
 
 function defaultContentBlocks(): Record<ContentKey, string> {

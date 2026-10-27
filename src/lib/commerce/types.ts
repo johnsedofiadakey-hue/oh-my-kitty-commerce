@@ -371,7 +371,26 @@ export type Payment = {
   status: PaymentStatus;
   amount: MoneyMinorUnit;
   currency: CurrencyCode;
+  /**
+   * The provider's own id for the charge. For a Paystack sale this is written
+   * by confirmPaystackPayment; for money received straight into a MoMo wallet
+   * it is the transaction id off the customer's screenshot, typed by staff.
+   * That makes a reused screenshot findable: search the id and see the order
+   * it already paid for.
+   */
   providerReference?: string | null;
+  /**
+   * The MoMo number the money came FROM. Often not the delivery phone — a
+   * husband, a friend, a shared handset — so it is kept separately rather
+   * than assumed to be the customer's.
+   */
+  payerNumber?: string | null;
+  /**
+   * Which of the shop's own numbers received it (personal wallet vs merchant
+   * till). Chosen from the configured list, not typed, so takings can later
+   * be grouped per wallet and ticked off against that wallet's statement.
+   */
+  receivedInto?: string | null;
   idempotencyKey: string;
   createdAt?: Date;
   updatedAt?: Date;

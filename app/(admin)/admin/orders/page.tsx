@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Route } from "next";
 import {
   formatDate,
   formatMoney,
@@ -18,7 +19,8 @@ import {
   OrdersSelectionProvider
 } from "@/components/admin/orders-selection";
 import type { AdminOrderRow } from "@/lib/admin/operations-data";
-import type { Order } from "@/lib/commerce/types";
+import type { Order, Parcel } from "@/lib/commerce/types";
+import { orderMatchesQuery } from "@/lib/commerce/order-search";
 import { getEffectiveRoles } from "@/lib/commerce/operations";
 import { getCommerceServerContext } from "@/lib/commerce/server-context";
 import { hasPermission } from "@/lib/permissions/permissions";
@@ -48,7 +50,7 @@ const CHANNEL_FILTERS: { label: string; value: Order["channel"] | "all" }[] = [
 ];
 
 type AdminOrdersPageProps = {
-  searchParams: Promise<{ channel?: string }>;
+  searchParams: Promise<{ channel?: string; q?: string }>;
 };
 
 export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
@@ -59,14 +61,27 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   const data = await getAdminOperationsData();
   const disabled = data.source !== "live";
 
-  const { channel: channelParam } = await searchParams;
+  const { channel: channelParam, q: queryParam } = await searchParams;
   const selectedChannel = CHANNEL_FILTERS.some((option) => option.value === channelParam)
     ? (channelParam as Order["channel"] | "all")
     : "all";
-  const channelRows =
-    selectedChannel === "all"
-      ? data.orderRows
-      : data.orderRows.filter((row) => row.order.channel === selectedChannel);
+  const search = (queryParam ?? "").trim();
+  const parcels = context ? await context.repo.listParcels().catch((): Parcel[] => []) : [];
+  const parcelsByOrderId = new Map<string, Parcel[]>();
+  for (const parcel of parcels) {
+    const existing = parcelsByOrderId.get(parcel.orderId);
+    if (existing) {
+      existing.push(parcel);
+    } else {
+      parcelsByOrderId.set(parcel.orderId, [parcel]);
+    }
+  }
+
+  const channelRows = data.orderRows
+    .filter((row) => selectedChannel === "all" || row.order.channel === selectedChannel)
+    // Same matcher the POS receipt lookup uses, so a MoMo transaction id
+    // pasted here finds exactly what it finds at the till.
+    .filter((row) => orderMatchesQuery(row.order, row.payment ? [row.payment] : [], search));
 
   // A checkout that was started but never actually paid for isn't a real
   // sale yet — nothing to pick, pack, or hand over — so it doesn't belong
@@ -108,6 +123,36 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
         </div>
       ) : null}
 
+      {/* A GET form so a search is a plain URL — shareable, bookmarkable, and
+          it survives a refresh while she is on the phone to a customer. */}
+      <form action="/admin/orders" className="admin-order-search" method="get">
+        {selectedChannel === "all" ? null : <input name="channel" type="hidden" value={selectedChannel} />}
+        <label className="admin-field">
+          <span>Find an order</span>
+          <input
+            defaultValue={search}
+            name="q"
+            placeholder="Order number, name, phone, or MoMo transaction ID"
+            type="search"
+          />
+        </label>
+        <button className="admin-action" type="submit">
+          Search
+        </button>
+        {search ? (
+          <Link className="admin-action ghost" href={linkForChannel(selectedChannel)}>
+            Clear
+          </Link>
+        ) : null}
+      </form>
+      {search ? (
+        <p className="admin-help">
+          {channelRows.length === 0
+            ? `Nothing matches “${search}”. If that is a MoMo transaction ID, no order in the book was paid for with it.`
+            : `${channelRows.length} order${channelRows.length === 1 ? "" : "s"} matching “${search}”.`}
+        </p>
+      ) : null}
+
       <div className="admin-chip-group" aria-label="Filter by channel">
         {CHANNEL_FILTERS.map((option) => {
           const count =
@@ -118,7 +163,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
             <Link
               className="admin-chip-link"
               data-active={selectedChannel === option.value}
-              href={option.value === "all" ? "/admin/orders" : `/admin/orders?channel=${option.value}`}
+              href={linkForChannel(option.value, search)}
               key={option.value}
             >
               {option.label} <span>{count}</span>
@@ -144,7 +189,14 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
         </div>
         <div className="order-list">
           {needsAttention.map((row, index) => (
-            <OrderRow canDelete={canDelete} disabled={disabled} key={row.order.id} queuePosition={index + 1} row={row} />
+            <OrderRow
+              canDelete={canDelete}
+              disabled={disabled}
+              key={row.order.id}
+              parcels={parcelsByOrderId.get(row.order.id) ?? []}
+              queuePosition={index + 1}
+              row={row}
+            />
           ))}
           {needsAttention.length === 0 ? <p className="admin-help">Nothing waiting on you right now.</p> : null}
         </div>
@@ -161,7 +213,13 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
         </p>
         <div className="order-list">
           {awaitingPayment.map((row) => (
-            <OrderRow canDelete={canDelete} disabled={disabled} key={row.order.id} row={row} />
+            <OrderRow
+              canDelete={canDelete}
+              disabled={disabled}
+              key={row.order.id}
+              parcels={parcelsByOrderId.get(row.order.id) ?? []}
+              row={row}
+            />
           ))}
           {awaitingPayment.length === 0 ? <p className="admin-help">Nothing awaiting payment.</p> : null}
         </div>
@@ -174,7 +232,13 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
         </summary>
         <div className="order-list">
           {completed.map((row) => (
-            <OrderRow canDelete={canDelete} disabled={disabled} key={row.order.id} row={row} />
+            <OrderRow
+              canDelete={canDelete}
+              disabled={disabled}
+              key={row.order.id}
+              parcels={parcelsByOrderId.get(row.order.id) ?? []}
+              row={row}
+            />
           ))}
           {completed.length === 0 ? <p className="admin-help">Nothing completed yet.</p> : null}
         </div>
@@ -183,15 +247,31 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
   );
 }
 
+/** Keeps the current search attached when the channel chips are used. */
+function linkForChannel(channel: Order["channel"] | "all", search = "") {
+  const params = new URLSearchParams();
+  if (channel !== "all") {
+    params.set("channel", channel);
+  }
+  if (search) {
+    params.set("q", search);
+  }
+
+  const query = params.toString();
+  return (query ? `/admin/orders?${query}` : "/admin/orders") as Route;
+}
+
 function OrderRow({
   row,
   disabled,
   canDelete,
+  parcels,
   queuePosition
 }: {
   row: AdminOrderRow;
   disabled: boolean;
   canDelete: boolean;
+  parcels: Parcel[];
   queuePosition?: number;
 }) {
   const { order, payment } = row;
@@ -226,7 +306,7 @@ function OrderRow({
           </div>
         }
       >
-        <OrderDetail canDelete={canDelete} disabled={disabled} row={row} />
+        <OrderDetail canDelete={canDelete} disabled={disabled} parcels={parcels} row={row} />
       </AdminDrawer>
       <InlineStatusSelect
         action={updateOrderFulfilmentAction}
@@ -239,7 +319,17 @@ function OrderRow({
   );
 }
 
-function OrderDetail({ row, disabled, canDelete }: { row: AdminOrderRow; disabled: boolean; canDelete: boolean }) {
+function OrderDetail({
+  row,
+  disabled,
+  canDelete,
+  parcels
+}: {
+  row: AdminOrderRow;
+  disabled: boolean;
+  canDelete: boolean;
+  parcels: Parcel[];
+}) {
   const { order, payment } = row;
   const address = order.customerSnapshot?.address;
   const phone = order.customerSnapshot?.phone;
@@ -259,18 +349,70 @@ function OrderDetail({ row, disabled, canDelete }: { row: AdminOrderRow; disable
         </a>
       </section>
 
-      {payment?.providerReference ? (
+      {payment?.providerReference || payment?.payerNumber || payment?.receivedInto ? (
         <section className="order-detail-section">
           <h3>Payment</h3>
           <dl className="order-detail-dl">
-            <div>
-              <dt>Reference</dt>
-              <dd>{payment.providerReference}</dd>
-            </div>
+            {payment.providerReference ? (
+              <div>
+                <dt>Reference</dt>
+                <dd>{payment.providerReference}</dd>
+              </div>
+            ) : null}
+            {payment.payerNumber ? (
+              <div>
+                <dt>Paid from</dt>
+                <dd>{payment.payerNumber}</dd>
+              </div>
+            ) : null}
+            {payment.receivedInto ? (
+              <div>
+                <dt>Paid into</dt>
+                <dd>{payment.receivedInto}</dd>
+              </div>
+            ) : null}
           </dl>
           <p className="admin-help">
-            Verified directly with {payment.provider === "PAYSTACK" ? "Paystack" : payment.provider} — look this
-            reference up on their dashboard to see the same transaction independently.
+            {payment.provider === "PAYSTACK"
+              ? "Verified directly with Paystack — look this reference up on their dashboard to see the same transaction independently."
+              : "Typed in by staff from the customer's payment. Check it against the statement for the wallet it was paid into."}
+          </p>
+        </section>
+      ) : null}
+
+      {parcels.length > 0 ? (
+        <section className="order-detail-section">
+          <h3>Delivery record</h3>
+          <ul className="order-parcel-trail">
+            {parcels.map((parcel) => (
+              <li key={parcel.id}>
+                <strong>
+                  {parcel.parcelNumber}
+                  {parcel.reshipOfParcelId ? " · sent again" : ""}
+                </strong>
+                <span>
+                  Packed by {parcel.packedByName ?? "staff"} on {formatDate(parcel.packedAt)}
+                </span>
+                {parcel.dispatchedAt ? (
+                  <span>
+                    {parcel.isPickup ? "Ready for collection" : "Handed to courier"}
+                    {parcel.courier ? ` (${parcel.courier})` : ""} on {formatDate(parcel.dispatchedAt)}
+                  </span>
+                ) : (
+                  <span>Not dispatched yet</span>
+                )}
+                {parcel.deliveredAt ? <span>Delivered {formatDate(parcel.deliveredAt)}</span> : null}
+                {parcel.returnedAt ? (
+                  <span>
+                    Came back {formatDate(parcel.returnedAt)}
+                    {parcel.returnReason ? ` — ${parcel.returnReason}` : ""}
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          <p className="admin-help">
+            This is the answer to &ldquo;it never arrived&rdquo; — who packed it, who took it, and when.
           </p>
         </section>
       ) : null}

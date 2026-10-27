@@ -1,4 +1,5 @@
 import { serverEnv } from "@/lib/env/server";
+import { normalizeGhanaPhone } from "@/lib/commerce/phone";
 
 const ARKESEL_SMS_API_BASE = "https://sms.arkesel.com/sms/api";
 
@@ -13,9 +14,9 @@ export function isArkeselConfigured() {
 }
 
 /** `0241448231` -> `233241448231`, the format Arkesel expects for Ghanaian numbers. */
+/** Arkesel wants 233XXXXXXXXX, which is exactly the shared storage form. */
 function toArkeselRecipient(localNumber: string) {
-  const digits = localNumber.replace(/\D/g, "");
-  return digits.startsWith("0") ? `233${digits.slice(1)}` : digits;
+  return normalizeGhanaPhone(localNumber);
 }
 
 /**

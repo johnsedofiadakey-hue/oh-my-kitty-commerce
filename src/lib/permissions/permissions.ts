@@ -16,6 +16,11 @@ export const permissions = [
   "orders.view",
   "orders.view_all",
   "orders.update_status",
+  // Recording a sale that was agreed and paid for off the website (WhatsApp,
+  // Instagram, a phone call). Deliberately separate from orders.update_status:
+  // staff need to write these down, but that is not a reason to let them
+  // change the status of any order in the book.
+  "orders.record_offline",
   "orders.cancel",
   "orders.refund",
   "orders.void",
@@ -157,6 +162,7 @@ export const defaultRoles: Role[] = [
       "orders.view",
       "orders.view_all",
       "orders.update_status",
+      "orders.record_offline",
       "orders.cancel",
       "orders.refund",
       "orders.void",
@@ -211,6 +217,7 @@ export const defaultRoles: Role[] = [
       "pos.access",
       "pos.sell",
       "orders.view",
+      "orders.record_offline",
       "fulfilment.view",
       // Packing and handing to a courier, but deliberately NOT parcels.return
       // or fulfilment.override: marking a parcel returned is what would let

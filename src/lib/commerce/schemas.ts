@@ -241,7 +241,9 @@ export const completeSaleInputSchema = createOrderDraftInputSchema.extend({
   paymentMethod: paymentMethodSchema,
   paymentProvider: z.enum(["CASH", "MANUAL", "PAYSTACK", "TBD"]).default("TBD"),
   amountReceived: moneySchema.optional(),
-  paymentReference: z.string().nullable().optional()
+  paymentReference: z.string().nullable().optional(),
+  payerNumber: z.string().nullable().optional(),
+  receivedInto: z.string().nullable().optional()
 });
 
 export const adjustInventoryInputSchema = z.object({
