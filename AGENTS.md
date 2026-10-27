@@ -87,6 +87,32 @@ Admin and POS:
 - Refunds, voids, large discounts, and price overrides must support permission checks and manager approval.
 - Avoid destructive data migrations. If required, document the migration and rollback plan before implementation.
 
+## Testing against the emulator, not the live shop
+
+`npm run dev` talks to **live Firestore**. Recording a sale there decrements
+real stock, puts a fake order in the owner's books, and sends a real SMS to
+whatever number is typed. Never exercise a write path against it.
+
+For anything that writes, use the emulator:
+
+```
+npm run emulators      # Firestore + Auth + Storage, seeded project demo-oh-my-kitty
+npm run seed:emulator  # sample catalogue, in a second terminal
+npm run dev:emulator   # the app on :3100, pointed at the emulator
+```
+
+`npm run emulators` prepends a JDK 21 to PATH itself. firebase-tools refuses to
+run on anything older, Homebrew installs `openjdk@21` keg-only so it is not on
+PATH, and macOS's `/usr/libexec/java_home -v 21` cheerfully returns a Java 8
+applet plugin when no other JVM is registered — so neither PATH nor `JAVA_HOME`
+can be relied on without resolving the keg explicitly. If it ever reports
+"no longer supports Java version before 21", run `brew install openjdk@21`.
+
+Admin pages need a signed-in staff account, and staff access comes from the
+**custom claims** on the auth user (`isStaff`, `roleIds`), not from the
+`staffUsers` document alone — creating the document by itself gets a 403 from
+`/api/auth/session`. `scripts/bootstrap-owner.ts` sets both.
+
 ## Deploying
 
 Deploy with `npm run deploy`. Never type the `gcloud run deploy` line by hand.

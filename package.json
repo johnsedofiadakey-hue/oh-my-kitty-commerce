@@ -14,6 +14,8 @@
     "test:watch": "vitest",
     "test:rules": "firebase emulators:exec --only firestore \"vitest run --config vitest.rules.config.ts\"",
     "seed:emulator": "tsx scripts/seed-emulator.ts",
+    "emulators": "PATH=\"$(brew --prefix openjdk@21 2>/dev/null || echo /opt/homebrew/opt/openjdk@21)/bin:$PATH\" firebase emulators:start --only firestore,auth,storage --project demo-oh-my-kitty",
+    "dev:emulator": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 NEXT_PUBLIC_USE_FIREBASE_EMULATORS=true NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-oh-my-kitty GOOGLE_CLOUD_PROJECT=demo-oh-my-kitty next dev -p 3100",
     "seed:catalog": "tsx scripts/seed-catalog.ts",
     "bootstrap:owner": "tsx scripts/bootstrap-owner.ts",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build",

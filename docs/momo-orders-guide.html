@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Oh My Kitty — WhatsApp &amp; MoMo Orders</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 16mm; }
+
+  :root {
+    --ink: #1a1416;
+    --muted: #6b5b60;
+    --rose: #b9345f;
+    --rose-soft: #fdeef2;
+    --line: #e8dcd8;
+    --cream: #fdf8f5;
+    --green: #2f6f4f;
+    --amber: #8c5a10;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    color: var(--ink);
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.55;
+  }
+
+  h1, h2, h3 { line-height: 1.2; margin: 0; }
+
+  /* ---- Cover ---- */
+  .cover {
+    height: 247mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    page-break-after: always;
+    background: var(--cream);
+    padding: 24mm 18mm;
+    border-radius: 4mm;
+  }
+  .cover .kicker {
+    color: var(--rose);
+    font-size: 9pt;
+    font-weight: 800;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+  .cover h1 {
+    margin: 6mm 0 4mm;
+    font-size: 34pt;
+    font-weight: 800;
+    letter-spacing: -.02em;
+  }
+  .cover .sub { font-size: 13pt; color: var(--muted); max-width: 120mm; }
+  .cover .meta {
+    margin-top: 16mm;
+    padding-top: 6mm;
+    border-top: 1px solid var(--line);
+    font-size: 9.5pt;
+    color: var(--muted);
+  }
+  .cover .meta strong { color: var(--ink); }
+
+  /* ---- Sections ---- */
+  .section { page-break-before: always; }
+  .section > h2 {
+    font-size: 19pt;
+    font-weight: 800;
+    letter-spacing: -.01em;
+    padding-bottom: 3mm;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 5mm;
+  }
+  .section-number {
+    display: block;
+    color: var(--rose);
+    font-size: 9pt;
+    font-weight: 800;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    margin-bottom: 1.5mm;
+  }
+
+  h3 {
+    font-size: 12pt;
+    font-weight: 800;
+    margin: 7mm 0 2.5mm;
+  }
+
+  p { margin: 0 0 3.5mm; }
+  ul, ol { margin: 0 0 4mm; padding-left: 5.5mm; }
+  li { margin-bottom: 1.8mm; }
+
+  strong { font-weight: 700; }
+
+  /* ---- Step blocks ---- */
+  .step {
+    display: grid;
+    grid-template-columns: 9mm 1fr;
+    gap: 4mm;
+    margin-bottom: 3.5mm;
+    page-break-inside: avoid;
+  }
+  .step-num {
+    width: 9mm; height: 9mm;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: var(--rose);
+    color: #fff;
+    font-size: 10pt;
+    font-weight: 800;
+  }
+  .step-body h4 {
+    margin: 1mm 0 1.5mm;
+    font-size: 11pt;
+    font-weight: 800;
+  }
+  .step-body p { margin: 0 0 2mm; }
+
+  /* ---- Callouts ---- */
+  .note, .warn, .tip {
+    padding: 3.5mm 5mm;
+    border-radius: 2mm;
+    margin: 0 0 4mm;
+    page-break-inside: avoid;
+    font-size: 10pt;
+  }
+  .note { background: var(--rose-soft); border-left: 3px solid var(--rose); }
+  .warn { background: #fdf3e6; border-left: 3px solid var(--amber); }
+  .tip  { background: #eef6f1; border-left: 3px solid var(--green); }
+  .note p:last-child, .warn p:last-child, .tip p:last-child { margin-bottom: 0; }
+  .note .label, .warn .label, .tip .label {
+    display: block;
+    font-size: 8.5pt;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 1.5mm;
+  }
+  .note .label { color: var(--rose); }
+  .warn .label { color: var(--amber); }
+  .tip .label { color: var(--green); }
+
+  /* ---- Tables ---- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 5mm;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+  }
+  th {
+    text-align: left;
+    padding: 2.5mm 3mm;
+    background: var(--cream);
+    border-bottom: 1.5px solid var(--ink);
+    font-weight: 800;
+    font-size: 9pt;
+  }
+  td {
+    padding: 2.5mm 3mm;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  td.yes { color: var(--green); font-weight: 700; }
+  td.no  { color: var(--rose); font-weight: 700; }
+
+  /* ---- Flow diagram ---- */
+  .flow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 0 0 5mm;
+    page-break-inside: avoid;
+  }
+  .flow-step {
+    flex: 1;
+    padding: 3.5mm 2mm;
+    text-align: center;
+    background: var(--cream);
+    border: 1px solid var(--line);
+  }
+  .flow-step:first-child { border-radius: 2mm 0 0 2mm; }
+  .flow-step:last-child { border-radius: 0 2mm 2mm 0; }
+  .flow-step .s-name { font-weight: 800; font-size: 9.5pt; display: block; }
+  .flow-step .s-who { font-size: 8pt; color: var(--muted); }
+
+  /* ---- Screen mock ---- */
+  .screen {
+    border: 1px solid var(--line);
+    border-radius: 2mm;
+    overflow: hidden;
+    margin: 0 0 4mm;
+    page-break-inside: avoid;
+  }
+  .screen-bar {
+    background: var(--ink);
+    color: #fff;
+    padding: 2.5mm 4mm;
+    font-size: 9pt;
+    font-weight: 700;
+  }
+  .screen-tabs {
+    display: flex;
+    gap: 0;
+    background: var(--cream);
+    border-bottom: 1px solid var(--line);
+  }
+  .screen-tabs span {
+    padding: 2.5mm 4mm;
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .screen-tabs span.on {
+    background: #fff;
+    color: var(--ink);
+    border-bottom: 2px solid var(--rose);
+  }
+  .screen-body { padding: 3mm 4mm; background: #fff; }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 3mm;
+    padding: 2.5mm 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 9.5pt;
+  }
+  .row:last-child { border-bottom: 0; }
+  .row .r-main { font-weight: 800; }
+  .row .r-sub { color: var(--muted); font-size: 8.5pt; }
+  .btn {
+    display: inline-block;
+    padding: 1.2mm 3mm;
+    border-radius: 1.5mm;
+    background: var(--rose);
+    color: #fff;
+    font-size: 8.5pt;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .btn.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+
+  /* ---- Slip mock ---- */
+  .slip {
+    width: 72mm;
+    border: 1px dashed #999;
+    padding: 4mm;
+    font-family: "Courier New", monospace;
+    font-size: 8.5pt;
+    line-height: 1.45;
+    background: #fff;
+    page-break-inside: avoid;
+  }
+  .slip .s-head { text-align: center; font-weight: 700; margin-bottom: 2mm; }
+  .slip hr { border: 0; border-top: 1px dashed #666; margin: 2mm 0; }
+  .slip .s-line { display: flex; justify-content: space-between; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; align-items: start; }
+
+  .faq-q { font-weight: 800; margin-bottom: 1mm; }
+  .faq-a { margin-bottom: 4.5mm; color: var(--ink); }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <span class="kicker">Oh My Kitty &middot; Admin Portal</span>
+  <h1>WhatsApp &amp; MoMo Orders</h1>
+  <p class="sub">How to record an order that was paid straight into your MoMo &mdash; and how to answer a customer who says they paid but never received it.</p>
+  <div class="meta">
+    <p><strong>Who this is for</strong> &mdash; the owner, and anyone who takes orders on WhatsApp or Instagram.</p>
+    <p><strong>Where to find it</strong> &mdash; the till (<strong>POS</strong>), and <strong>Orders</strong> in the admin menu.</p>
+    <p><strong>Version</strong> &mdash; October 2026</p>
+  </div>
+</div>
+
+<!-- ================= 1 ================= -->
+<div class="section">
+  <h2><span class="section-number">Section 1</span>The problem this solves</h2>
+
+  <p>Orders placed on the website look after themselves. The money goes through the payment provider, and every order has a record attached to it.</p>
+
+  <p>Orders that come in by WhatsApp, Instagram or a phone call are different. The customer sends money straight to your MoMo number, you send the goods, and <strong>nothing is written down anywhere</strong>.</p>
+
+  <p>Weeks later a customer sends a screenshot of a payment and says the order never arrived. There is no way to tell whether that payment was for an order you already delivered, or a different order, or whether they are simply trying their luck. With no record, the safest thing feels like sending the goods again &mdash; so you pay twice.</p>
+
+  <div class="note">
+    <span class="label">What changes</span>
+    <p>Every outside order now gets written down at the moment you take it: what was bought, who paid, from which number, into which of your numbers, and &mdash; once it goes out &mdash; who packed it, who carried it, and when it arrived.</p>
+  </div>
+
+  <div class="warn">
+    <span class="label">Be honest about what this is not</span>
+    <p>The system <strong>cannot check with MTN or Telecel whether a payment is real</strong>. No shop can do that for a personal MoMo number. What it does is keep a record good enough that a screenshot can be matched against it in seconds.</p>
+  </div>
+</div>
+
+<!-- ================= 2 ================= -->
+<div class="section">
+  <h2><span class="section-number">Section 2</span>Recording the order</h2>
+
+  <p>Open the till (<strong>POS</strong>) exactly as you would for a customer standing in front of you. At the top of the payment panel there are now two choices.</p>
+
+  <div class="flow">
+    <div class="flow-step"><span class="s-name">At the counter</span><span class="s-who">Customer is here, takes it now</span></div>
+    <div class="flow-step"><span class="s-name">WhatsApp order</span><span class="s-who">Already paid by MoMo, needs delivery</span></div>
+  </div>
+
+  <p>Pick <strong>WhatsApp order</strong>. That one change is what keeps the order in the packing queue instead of treating it as finished.</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h4>Tap the products, same as always</h4>
+      <p>The grid and the cart work exactly as they do for a counter sale.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h4>Fill in the customer</h4>
+      <p>The <strong>phone number is required</strong> for these orders &mdash; it is how the customer gets their order number by text, and that text is what you both refer back to if there is ever an argument. The delivery address is required too.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h4>Record the payment</h4>
+      <p><strong>Paid into</strong> &mdash; which of your numbers the money landed in. <strong>Paid from</strong> &mdash; the number it came from, which is often not the same as the customer's own number. <strong>MoMo transaction ID</strong> &mdash; the reference on their screenshot.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h4>Add the delivery fee, then tap Record order</h4>
+      <p>The customer is texted their order number and a tracking link straight away.</p>
+    </div>
+  </div>
+
+  <div class="tip">
+    <span class="label">The transaction ID is the important one</span>
+    <p>You can record an order without it &mdash; the sale is never blocked because a screenshot is blurry. But it is the single thing that lets you prove later which order a payment belongs to. Type it in whenever you can see it.</p>
+  </div>
+</div>
+
+<!-- ================= 3 ================= -->
+<div class="section">
+  <h2><span class="section-number">Section 3</span>If the payment has been used before</h2>
+
+  <p>When you type a transaction ID that has already paid for another order, the till stops and tells you which one:</p>
+
+  <div class="note">
+    <span class="label">What you will see</span>
+    <p><em>"That payment reference already paid for order OMK-G5CRX9KE. Check that order before recording another sale against it."</em></p>
+  </div>
+
+  <p>This is the moment a reused screenshot gets caught. Go and look at that order first.</p>
+
+  <div class="two-col">
+    <div>
+      <h4>If it was delivered</h4>
+      <p>The customer has already had those goods. The order will show who packed it and when it arrived.</p>
+    </div>
+    <div>
+      <h4>If they genuinely paid twice</h4>
+      <p>Tap <strong>I checked &mdash; record it anyway</strong>. Your cart is kept, so nothing is lost.</p>
+    </div>
+  </div>
+
+  <div class="warn">
+    <span class="label">Do not tap through it out of habit</span>
+    <p>The button exists for the rare case of a real double payment. If it becomes the normal thing to press, the check stops protecting you.</p>
+  </div>
+</div>
+
+<!-- ================= 4 ================= -->
+<div class="section">
+  <h2><span class="section-number">Section 4</span>Packing and sending</h2>
+
+  <p>A WhatsApp order does <strong>not</strong> count as delivered just because it is paid for. It goes to <strong>Dispatch</strong> and waits with everything else that needs packing.</p>
+
+  <div class="flow">
+    <div class="flow-step"><span class="s-name">To pack</span><span class="s-who">Recorded, paid</span></div>
+    <div class="flow-step"><span class="s-name">Packed</span><span class="s-who">In a parcel</span></div>
+    <div class="flow-step"><span class="s-name">Out</span><span class="s-who">With the rider</span></div>
+    <div class="flow-step"><span class="s-name">Delivered</span><span class="s-who">Arrived</span></div>
+  </div>
+
+  <p>Each of those steps records who did it and when. That record is the thing that answers a dispute &mdash; so the habit that matters is <strong>marking parcels delivered as they arrive</strong>, and marking returns as they come back.</p>
+
+  <div class="tip">
+    <span class="label">Why it matters</span>
+    <p>An order stuck at "Out" forever tells you nothing a month later. One marked delivered on a date is an answer.</p>
+  </div>
+</div>
+
+<!-- ================= 5 ================= -->
+<div class="section">
+  <h2><span class="section-number">Section 5</span>Answering "I paid but never got it"</h2>
+
+  <p>Go to <strong>Orders</strong> in the admin menu. There is a search box at the top:</p>
+
+  <div class="screen">
+    <div class="screen-bar">Orders</div>
+    <div class="screen-body">
+      <div class="row"><span class="r-main">Find an order</span><span>Order number, name, phone, or MoMo transaction ID</span></div>
+    </div>
+  </div>
+
+  <p>Paste in whatever the customer has given you. Any of these will find the order:</p>
+
+  <div class="screen">
+    <div class="screen-body">
+      <div class="row"><span class="r-main">The transaction ID</span><span>from their screenshot</span></div>
+      <div class="row"><span class="r-main">The number that paid</span><span>0241448231 or +233241448231 &mdash; either works</span></div>
+      <div class="row"><span class="r-main">Their phone number</span><span>however it was written down</span></div>
+      <div class="row"><span class="r-main">Their name, or the order number</span><span>as before</span></div>
+    </div>
+  </div>
+
+  <p>Open the order and you will see the payment, and under it the <strong>Delivery record</strong>:</p>
+
+  <div class="slip">
+    <p><strong>OMK-G5CRX9KE-P1</strong><br>
+    Packed by Ama on 27 Oct 2026, 11:15 PM<br>
+    Handed to courier (Yaw) on 27 Oct 2026, 11:15 PM<br>
+    Delivered 27 Oct 2026, 11:15 PM</p>
+  </div>
+
+  <p>That is your answer. You can tell the customer the date it arrived and who carried it.</p>
+
+  <div class="note">
+    <span class="label">If nothing comes back</span>
+    <p>The search will say so plainly: no order in the book was paid for with that reference. Either it was never recorded, or the payment was not for you.</p>
+  </div>
+</div>
+
+<!-- ================= 6 ================= -->
+<div class="section">
+  <h2><span class="section-number">Section 6</span>Setting up your MoMo numbers</h2>
+
+  <p>Before anyone records their first order, put your numbers in. Go to <strong>Content &amp; Media</strong> and find <strong>"MoMo numbers money is received into"</strong>.</p>
+
+  <p>One number per line, written as a label, a vertical bar, then the number:</p>
+
+  <div class="slip">
+    <p>Personal MoMo | 0241448231<br>
+    Shop till | 0557778888</p>
+  </div>
+
+  <p>These become the list staff pick from. Keeping it a list rather than free typing is what lets you later total up what came into each number and check it against that number's own statement.</p>
+
+  <div class="tip">
+    <span class="label">Worth doing at the same time</span>
+    <p>The text the customer receives is under the same screen, as <strong>"SMS: WhatsApp/MoMo order recorded"</strong>. Change the wording to sound like you.</p>
+  </div>
+</div>
+
+<!-- ================= 7 ================= -->
+<div class="section">
+  <h2><span class="section-number">Section 7</span>Questions you may have</h2>
+
+  <p class="faq-q">Does this check with MTN whether the payment is real?</p>
+  <p class="faq-a">No, and nothing could, for a personal MoMo number. Only registered merchant accounts get that. What this does is record the payment well enough that you can match a screenshot against it.</p>
+
+  <p class="faq-q">What about orders from before this existed?</p>
+  <p class="faq-a">They cannot be recovered &mdash; there is nothing to recover them from. This starts from the day you begin using it.</p>
+
+  <p class="faq-q">Can a customer edit a screenshot?</p>
+  <p class="faq-a">Yes. That is exactly why the transaction ID matters: a faked reference will not match anything, and a real one that has already been used will be caught.</p>
+
+  <p class="faq-q">Can staff do this, or only me?</p>
+  <p class="faq-a">Staff can record these orders. They still cannot mark parcels returned &mdash; that stays with you, because marking a parcel returned is what would let the same order be packed again.</p>
+
+  <p class="faq-q">Does it still work if the internet drops?</p>
+  <p class="faq-a">Counter sales queue up offline as before. WhatsApp orders need a connection, because checking whether a transaction ID has been used before means reading what is already recorded.</p>
+
+  <p class="faq-q">Is there a way to stop this problem entirely?</p>
+  <p class="faq-a">Over time, yes. If outside customers paid through a payment link instead of sending to your personal number, every payment would record itself and none of this typing would be needed. Worth discussing when you have the time.</p>
+</div>
+
+</body>
+</html>
