@@ -76,9 +76,9 @@ Permissions are role-based and enforced beyond UI. Admin can grant staff specifi
 
 ## ADR-013 - Manager Approval Is Required For Restricted POS Actions
 
-Status: Accepted
+Status: Accepted (refunds and voids removed by ADR-021)
 
-Refunds, voids, price overrides, and large discounts can require manager approval depending on role/limits.
+Price overrides and large discounts can require manager approval depending on role/limits.
 
 ## ADR-014 - Admin Controls Business Content
 
@@ -121,3 +121,10 @@ The site can make the environment premium and cinematic, but it must not materia
 Status: Accepted
 
 The final full catalogue is not required to start. Admin must support product uploads and edits so the client can add the remaining catalogue later.
+
+## ADR-021 - No Refunds Or Voids
+
+Status: Accepted
+
+The client's rule is that every sale is final once it is placed. There is no refund or void for anyone — not customers, staff, managers or the owner — on the website or at the POS. The refund and void endpoints, screens, permissions (`orders.refund`, `orders.void`, `pos.refund`, `pos.void`) and the per-role refund limit have been removed, not just hidden, and a test fails if a refund or void permission is ever added back. The customer-facing Returns and Terms pages say so. No sale had been refunded or voided when this was decided. Supersedes the refund and void parts of ADR-013.
+

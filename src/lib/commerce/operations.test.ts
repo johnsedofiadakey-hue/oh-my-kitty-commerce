@@ -14,14 +14,12 @@ import {
   createPendingOnlineOrder,
   createProduct,
   createVariant,
-  refundPosSale,
   setInventoryCount,
   searchOrders,
   updateContentBlock,
   updateDeliveryRule,
   updateProduct,
   updateVariant,
-  voidPosSale,
   type CommerceActor,
   type CommerceContext
 } from "@/lib/commerce/operations";
@@ -40,13 +38,7 @@ const salesStaff: CommerceActor = {
 const cashierRole: Role = {
   id: "role-cashier",
   name: "Cashier",
-  permissions: ["pos.access", "pos.sell", "pos.refund", "pos.void", "pos.shift.open", "pos.shift.close"],
-  limits: { maxRefundAmount: 5000 }
-};
-
-const cashier: CommerceActor = {
-  uid: "cashier-1",
-  roleIds: ["role-cashier"]
+  permissions: ["pos.access", "pos.sell", "pos.shift.open", "pos.shift.close"]
 };
 
 describe("commerce operations", () => {
@@ -466,178 +458,6 @@ describe("commerce operations", () => {
     expect(draft.status).toBe("DRAFT");
     expect(draft.channel).toBe("ADMIN_CREATED");
     await expect(context.repo.listInventoryMovements(variant.id)).resolves.toHaveLength(0);
-  });
-
-  it("refunds a POS sale within the actor's limit and restocks inventory", async () => {
-    const context = createTestContext();
-    const { variant } = await seedProductAndVariant(context);
-    const sale = await sellTwoUnits(context, owner);
-
-    const refund = await refundPosSale(context, owner, {
-      orderId: sale.order.id,
-      reason: "Customer changed their mind"
-    });
-
-    expect(refund.idempotent).toBe(false);
-    expect(refund.order.status).toBe("REFUNDED");
-    expect(refund.order.paymentStatus).toBe("REFUNDED");
-    await expect(context.repo.getVariant(variant.productId, variant.id)).resolves.toMatchObject({
-      stockAvailable: 12
-    });
-
-    const repeat = await refundPosSale(context, owner, {
-      orderId: sale.order.id,
-      reason: "Customer changed their mind"
-    });
-    expect(repeat.idempotent).toBe(true);
-  });
-
-  it("refunding a set puts its components back, not the set's own stock", async () => {
-    const context = createTestContext();
-    const { component, kit } = await seedSetAndComponent(context);
-
-    const sale = await completePosSale(context, owner, {
-      channel: "POS",
-      idempotencyKey: "pos-sale-set-refund-0001",
-      items: [{ productId: kit.productId, variantId: kit.id, quantity: 3 }],
-      paymentMethod: "cash",
-      paymentProvider: "CASH",
-      amountReceived: kit.price * 3
-    });
-    await expect(context.repo.getVariant(component.productId, component.id)).resolves.toMatchObject({
-      stockAvailable: 4
-    });
-
-    const refund = await refundPosSale(context, owner, { orderId: sale.order.id, reason: "Changed their mind" });
-
-    const refundMovements = refund.inventoryMovements ?? [];
-    expect(refundMovements).toHaveLength(1);
-    expect(refundMovements[0]).toMatchObject({
-      variantId: component.id,
-      type: "RETURN_TO_STOCK",
-      quantityDelta: 6
-    });
-    await expect(context.repo.getVariant(component.productId, component.id)).resolves.toMatchObject({
-      stockAvailable: 10,
-      stockOnHand: 10
-    });
-    // The set never owned stock, so it must not gain any.
-    await expect(context.repo.getVariant(kit.productId, kit.id)).resolves.toMatchObject({
-      stockAvailable: kit.stockAvailable,
-      stockOnHand: kit.stockOnHand
-    });
-  });
-
-  it("requires manager approval when a refund exceeds the actor's limit", async () => {
-    const context = createTestContext();
-    await seedProductAndVariant(context);
-    const sale = await sellTwoUnits(context, cashier);
-
-    await expect(
-      refundPosSale(context, cashier, {
-        orderId: sale.order.id,
-        reason: "Customer changed their mind"
-      })
-    ).rejects.toThrow(/manager/i);
-
-    const approved = await refundPosSale(
-      context,
-      cashier,
-      { orderId: sale.order.id, reason: "Customer changed their mind" },
-      owner
-    );
-
-    expect(approved.order.status).toBe("REFUNDED");
-    await expect(context.repo.listAuditLogs()).resolves.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          action: "pos.refund",
-          reason: expect.stringContaining("approved by owner-1")
-        })
-      ])
-    );
-  });
-
-  it("rejects an approver whose own limit can't cover the refund", async () => {
-    const context = createTestContext();
-    await seedProductAndVariant(context);
-    const sale = await sellTwoUnits(context, cashier);
-    const otherCashier: CommerceActor = { uid: "cashier-2", roleIds: ["role-cashier"] };
-
-    await expect(
-      refundPosSale(
-        context,
-        cashier,
-        { orderId: sale.order.id, reason: "Customer changed their mind" },
-        otherCashier
-      )
-    ).rejects.toThrow(/limit/i);
-  });
-
-  it("voids a POS sale, cancelling the order instead of marking it refunded", async () => {
-    const context = createTestContext();
-    const { variant } = await seedProductAndVariant(context);
-    const sale = await sellTwoUnits(context, owner);
-
-    const voided = await voidPosSale(context, owner, {
-      orderId: sale.order.id,
-      reason: "Rang up the wrong item"
-    });
-
-    expect(voided.order.status).toBe("CANCELLED");
-    expect(voided.order.fulfilmentStatus).toBe("CANCELLED");
-    expect(voided.order.paymentStatus).toBe("REFUNDED");
-    await expect(context.repo.getVariant(variant.productId, variant.id)).resolves.toMatchObject({
-      stockAvailable: 12
-    });
-  });
-
-  it("does not restock inventory when restock is false", async () => {
-    const context = createTestContext();
-    const { variant } = await seedProductAndVariant(context);
-    const sale = await sellTwoUnits(context, owner);
-
-    await refundPosSale(context, owner, {
-      orderId: sale.order.id,
-      reason: "Item was damaged",
-      restock: false
-    });
-
-    await expect(context.repo.getVariant(variant.productId, variant.id)).resolves.toMatchObject({
-      stockAvailable: 10
-    });
-    await expect(context.repo.listInventoryMovements(variant.id)).resolves.toEqual(
-      expect.arrayContaining([expect.objectContaining({ type: "REFUND_NO_STOCK_RETURN", quantityDelta: 0 })])
-    );
-  });
-
-  it("blocks refunds on orders that were not sold through POS", async () => {
-    const context = createTestContext();
-    const { variant } = await seedProductAndVariant(context);
-    const sale = await completeOnlineOrder(context, {
-      channel: "ONLINE",
-      idempotencyKey: "online-refund-target",
-      items: [{ productId: variant.productId, variantId: variant.id, quantity: 1 }],
-      paymentMethod: "manual_transfer",
-      paymentProvider: "TBD"
-    });
-
-    await expect(
-      refundPosSale(context, owner, { orderId: sale.order.id, reason: "n/a" })
-    ).rejects.toThrow(/POS/);
-  });
-
-  it("blocks refund/void for actors without the pos.refund/pos.void permission", async () => {
-    const context = createTestContext();
-    await seedProductAndVariant(context);
-    const sale = await sellTwoUnits(context, owner);
-
-    await expect(
-      refundPosSale(context, salesStaff, { orderId: sale.order.id, reason: "n/a" })
-    ).rejects.toThrow(/pos.refund/);
-    await expect(
-      voidPosSale(context, salesStaff, { orderId: sale.order.id, reason: "n/a" })
-    ).rejects.toThrow(/pos.void/);
   });
 
   it("finds an order by order number or customer phone/name, and requires permission", async () => {

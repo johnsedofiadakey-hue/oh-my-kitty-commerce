@@ -39,8 +39,9 @@ export default function TermsPage() {
           <section data-section-number="03">
             <h2>Returns and support</h2>
             <p>
-              See our <Link href={"/returns" as Route}>Returns &amp; Support</Link> page for how
-              returns, exchanges, and refunds work.
+              All sales are final and we do not offer refunds. See our{" "}
+              <Link href={"/returns" as Route}>Returns &amp; Support</Link> page for what to do if
+              something is wrong with your order.
             </p>
           </section>
           <section data-section-number="04">

@@ -22,8 +22,6 @@ export const permissions = [
   // change the status of any order in the book.
   "orders.record_offline",
   "orders.cancel",
-  "orders.refund",
-  "orders.void",
   "orders.delete",
   "fulfilment.view",
   "fulfilment.update",
@@ -58,8 +56,6 @@ export const permissions = [
   "pos.sell",
   "pos.discount",
   "pos.price_override",
-  "pos.refund",
-  "pos.void",
   "pos.shift.open",
   "pos.shift.close",
   "pos.receipts.view",
@@ -82,7 +78,6 @@ export type Permission = (typeof permissions)[number];
 
 export type RoleLimits = {
   maxDiscountPercent?: number;
-  maxRefundAmount?: number;
   canOverridePrice?: boolean;
 };
 
@@ -144,7 +139,6 @@ export const defaultRoles: Role[] = [
     permissions: [...permissions],
     limits: {
       maxDiscountPercent: 100,
-      maxRefundAmount: Number.MAX_SAFE_INTEGER,
       canOverridePrice: true
     },
     system: true
@@ -164,8 +158,6 @@ export const defaultRoles: Role[] = [
       "orders.update_status",
       "orders.record_offline",
       "orders.cancel",
-      "orders.refund",
-      "orders.void",
       "fulfilment.view",
       "fulfilment.update",
       "fulfilment.override",
@@ -194,8 +186,6 @@ export const defaultRoles: Role[] = [
       "pos.sell",
       "pos.discount",
       "pos.price_override",
-      "pos.refund",
-      "pos.void",
       "pos.shift.open",
       "pos.shift.close",
       "pos.receipts.view",
@@ -205,7 +195,6 @@ export const defaultRoles: Role[] = [
     ],
     limits: {
       maxDiscountPercent: 20,
-      maxRefundAmount: 200000,
       canOverridePrice: true
     },
     system: true
@@ -230,7 +219,6 @@ export const defaultRoles: Role[] = [
     ],
     limits: {
       maxDiscountPercent: 0,
-      maxRefundAmount: 0,
       canOverridePrice: false
     },
     system: true

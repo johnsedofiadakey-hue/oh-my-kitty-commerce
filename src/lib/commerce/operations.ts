@@ -1,6 +1,5 @@
 import {
   defaultRoles,
-  getHighestRoleLimit,
   hasPermission,
   type Permission,
   type Role,
@@ -48,7 +47,6 @@ import {
   updateContentBlockInputSchema,
   createMediaAssetInputSchema,
   attachProductImageInputSchema,
-  posReversalInputSchema,
   createOrderDraftInputSchema,
   createProductInputSchema,
   createProductTypeInputSchema,
@@ -81,7 +79,6 @@ import {
   type UpdatePromotionInput,
   type UpdateProductInput,
   type UpdateVariantInput,
-  type PosReversalInput,
   type CreateMaterialPurchaseInput,
   type PackOrderInput,
   type HoldOrderPackingInput,
@@ -2414,229 +2411,6 @@ export async function recordOutsideSale(
 
   return completeSale(context, actor, parsed);
 }
-
-/**
- * Refunds a completed POS sale: returns items to stock, marks the order/payment
- * refunded, and requires manager approval when the actor's role-based refund
- * limit doesn't cover the order total (ADR-013). `approverActor` must already
- * be verified by the caller (e.g. a freshly checked manager ID token) — this
- * function only checks that the approver's own role grants enough headroom.
- */
-export async function refundPosSale(
-  context: CommerceContext,
-  actor: CommerceActor,
-  input: PosReversalInput,
-  approverActor?: CommerceActor
-) {
-  return reversePosSale(context, actor, input, approverActor, "REFUND");
-}
-
-/**
- * Voids a completed POS sale: same reversal as a refund, but the order is
- * marked CANCELLED rather than REFUNDED (the sale never should have counted).
- * Subject to the same manager-approval rule as refunds.
- */
-export async function voidPosSale(
-  context: CommerceContext,
-  actor: CommerceActor,
-  input: PosReversalInput,
-  approverActor?: CommerceActor
-) {
-  return reversePosSale(context, actor, input, approverActor, "VOID");
-}
-
-async function reversePosSale(
-  context: CommerceContext,
-  actor: CommerceActor,
-  input: PosReversalInput,
-  approverActor: CommerceActor | undefined,
-  mode: "REFUND" | "VOID"
-) {
-  const permission = mode === "REFUND" ? "pos.refund" : "pos.void";
-  await assertCan(context, actor, permission);
-  const parsed = posReversalInputSchema.parse(input);
-
-  return withTransaction(context, async (repo) => {
-    const order = await repo.getOrder(parsed.orderId);
-    if (!order) {
-      throw new CommerceError("NOT_FOUND", `Order not found: ${parsed.orderId}`);
-    }
-
-    if (order.channel !== "POS") {
-      throw new CommerceError("INVALID_STATE", "Only POS sales can be refunded or voided here.");
-    }
-
-    if (order.paymentStatus === "REFUNDED") {
-      return { order, idempotent: true };
-    }
-
-    if (order.paymentStatus !== "PAID") {
-      throw new CommerceError("INVALID_STATE", "Only a paid sale can be refunded or voided.");
-    }
-
-    await requireReversalAuthorization(context, actor, approverActor, permission, order.total, repo);
-
-    // Firestore transactions require every read before any write — read
-    // every item's variant and the payment list up front, then do the
-    // whole write phase below.
-    const variants: (ProductVariant | null)[] = [];
-    for (const item of order.items) {
-      variants.push(await repo.getVariant(item.productId, item.variantId));
-    }
-    // Sets are only needed to find their components, which may belong to
-    // other products, so read every variant up front (reads before writes).
-    const variantsById = new Map((await repo.listAllVariants()).map((variant) => [variant.id, variant]));
-    const payments = await repo.listPayments();
-
-    // What goes back on the shelf. A set has no stock of its own — selling
-    // it drew down its components — so returning it puts those components
-    // back, mirroring decrementInventoryForOrder. Quantities are summed per
-    // variant so a component shared by two lines is restored once, correctly.
-    const restocks: { variant: ProductVariant; quantity: number; viaSet: ProductVariant | null }[] = [];
-    if (parsed.restock) {
-      for (const [index, item] of order.items.entries()) {
-        const variant = variants[index];
-        if (!variant) {
-          continue;
-        }
-
-        if (isSetVariant(variant)) {
-          for (const component of variant.bundleComponents ?? []) {
-            const componentVariant = variantsById.get(component.variantId);
-            if (!componentVariant || isSetVariant(componentVariant) || !componentVariant.trackInventory) {
-              continue;
-            }
-            restocks.push({
-              variant: componentVariant,
-              quantity: component.quantity * item.quantity,
-              viaSet: variant
-            });
-          }
-        } else {
-          restocks.push({ variant, quantity: item.quantity, viaSet: null });
-        }
-      }
-    }
-
-    const movements: InventoryMovement[] = [];
-    if (parsed.restock) {
-      for (const restock of restocks) {
-        const current = variantsById.get(restock.variant.id) ?? restock.variant;
-        const restocked: ProductVariant = {
-          ...current,
-          stockOnHand: current.stockOnHand + restock.quantity,
-          stockAvailable: current.stockAvailable + restock.quantity
-        };
-        variantsById.set(restocked.id, restocked);
-
-        const movement: InventoryMovement = {
-          id: createId(context, "movement"),
-          productId: restocked.productId,
-          variantId: restocked.id,
-          type: "RETURN_TO_STOCK",
-          quantityDelta: restock.quantity,
-          stockAfter: restocked.stockAvailable,
-          orderId: order.id,
-          reason: restock.viaSet ? `${parsed.reason} (set ${restock.viaSet.sku})` : parsed.reason,
-          actorId: actor.uid,
-          channel: order.channel,
-          createdAt: getNow(context)
-        };
-
-        await repo.saveVariant(restocked);
-        await repo.saveInventoryMovement(movement);
-        movements.push(movement);
-      }
-    } else {
-      for (const [index, item] of order.items.entries()) {
-        const variant = variants[index];
-        if (!variant) {
-          continue;
-        }
-
-        const movement: InventoryMovement = {
-          id: createId(context, "movement"),
-          productId: item.productId,
-          variantId: item.variantId,
-          type: "REFUND_NO_STOCK_RETURN",
-          quantityDelta: 0,
-          stockAfter: variant.stockAvailable,
-          orderId: order.id,
-          reason: parsed.reason,
-          actorId: actor.uid,
-          channel: order.channel,
-          createdAt: getNow(context)
-        };
-
-        await repo.saveInventoryMovement(movement);
-        movements.push(movement);
-      }
-    }
-
-    const updatedOrder: Order = {
-      ...order,
-      status: mode === "REFUND" ? "REFUNDED" : "CANCELLED",
-      paymentStatus: "REFUNDED",
-      fulfilmentStatus: mode === "VOID" ? "CANCELLED" : order.fulfilmentStatus
-    };
-    await repo.saveOrder(updatedOrder);
-
-    const payment = payments.find((entry) => entry.orderId === order.id);
-    let updatedPayment: Payment | null = null;
-    if (payment) {
-      updatedPayment = { ...payment, status: "REFUNDED", updatedAt: getNow(context) };
-      await repo.savePayment(updatedPayment);
-    }
-
-    await writeAuditLog(
-      context,
-      actor,
-      {
-        action: mode === "REFUND" ? "pos.refund" : "pos.void",
-        entityType: "order",
-        entityId: order.id,
-        summary: `${mode === "REFUND" ? "Refunded" : "Voided"} ${order.orderNumber}`,
-        reason: approverActor ? `${parsed.reason} — approved by ${approverActor.uid}` : parsed.reason
-      },
-      repo
-    );
-
-    return { order: updatedOrder, payment: updatedPayment, inventoryMovements: movements, idempotent: false };
-  });
-}
-
-async function requireReversalAuthorization(
-  context: CommerceContext,
-  actor: CommerceActor,
-  approverActor: CommerceActor | undefined,
-  permission: Permission,
-  amount: number,
-  repo: CommerceRepository = context.repo
-) {
-  const roles = await getEffectiveRoles(context, actor.roleIds, repo);
-  const actorLimit = getHighestRoleLimit(roles, actor, "maxRefundAmount");
-  if (amount <= actorLimit) {
-    return;
-  }
-
-  if (!approverActor) {
-    throw new CommerceError(
-      "FORBIDDEN",
-      "This amount is over your refund limit. A manager must approve it."
-    );
-  }
-
-  const approverRoles = await getEffectiveRoles(context, approverActor.roleIds, repo);
-  if (!hasPermission(approverRoles, approverActor, permission)) {
-    throw new CommerceError("FORBIDDEN", "The approving account cannot authorize this action.");
-  }
-
-  const approverLimit = getHighestRoleLimit(approverRoles, approverActor, "maxRefundAmount");
-  if (amount > approverLimit) {
-    throw new CommerceError("FORBIDDEN", "The approving account's refund limit is too low for this amount.");
-  }
-}
-
 
 /** A parcel that is still the live one for its order — anything but RETURNED. */
 function isLiveParcel(parcel: Parcel) {

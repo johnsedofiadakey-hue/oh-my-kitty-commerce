@@ -245,14 +245,6 @@ export default async function AdminReportsPage() {
   const posRevenue = posOrders
     .filter((order) => order.paymentStatus === "PAID")
     .reduce((total, order) => total + order.total, 0);
-  const posRefundsOrVoids = posOrders.filter(
-    (order) =>
-      order.status === "CANCELLED" ||
-      order.status === "REFUNDED" ||
-      order.status === "PARTIALLY_REFUNDED" ||
-      order.paymentStatus === "REFUNDED" ||
-      order.paymentStatus === "PARTIALLY_REFUNDED"
-  ).length;
   const inventoryMovements = data.inventoryMovements.filter((movement) => {
     const millis = toSortableMillis(movement.createdAt);
     return millis >= thirtyDaysAgo && millis <= now;
@@ -380,10 +372,6 @@ export default async function AdminReportsPage() {
               <span>Open shifts</span>
               <strong>{data.metrics.activeShifts}</strong>
             </div>
-            <div>
-              <span>Refunds / voids</span>
-              <strong>{posRefundsOrVoids}</strong>
-            </div>
           </div>
         </section>
       </div>
@@ -439,7 +427,7 @@ export default async function AdminReportsPage() {
             </Link>
             <Link className="report-pack-card" href={"#pos-report" as Route}>
               <strong>POS shift pack</strong>
-              <span>Cash sales, open shifts, refunds, voids, and manager-sensitive review points.</span>
+              <span>Cash sales, open shifts, and manager-sensitive review points.</span>
             </Link>
             <Link className="report-pack-card" href={"#inventory-report" as Route}>
               <strong>Inventory movement pack</strong>

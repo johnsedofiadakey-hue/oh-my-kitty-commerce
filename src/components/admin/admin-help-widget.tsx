@@ -72,7 +72,7 @@ export function AdminHelpWidget() {
           <div className="admin-help-messages" ref={listRef}>
             {messages.length === 0 ? (
               <p className="admin-help-empty">
-                Ask anything about using this admin — e.g. &ldquo;how do I refund an order?&rdquo;
+                Ask anything about using this admin — e.g. &ldquo;how do I record a cash sale?&rdquo;
               </p>
             ) : null}
             {messages.map((message, index) => (

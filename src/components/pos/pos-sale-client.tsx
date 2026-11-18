@@ -16,9 +16,7 @@ import { PosOrdersPanel } from "@/components/pos/pos-orders-panel";
 import { AdminSignOutButton } from "@/components/auth/admin-sign-out-button";
 
 type PosSaleClientProps = {
-  canRefund: boolean;
   canViewOrders: boolean;
-  canVoid: boolean;
   /** The shop's own MoMo wallets, for recording where an outside payment landed. */
   momoAccounts: { label: string; number: string }[];
   products: StorefrontProductView[];
@@ -85,9 +83,7 @@ function getServerOnlineSnapshot() {
 }
 
 export function PosSaleClient({
-  canRefund,
   canViewOrders,
-  canVoid,
   momoAccounts,
   products,
   source,
@@ -589,8 +585,8 @@ export function PosSaleClient({
       if (error instanceof TypeError) {
         // fetch() itself threw — a network-level failure, not a server
         // response, which is the signal that we're actually offline.
-        // The order doesn't exist server-side yet, so it can't be
-        // refunded/voided from here until sync assigns it a real orderId.
+        // The order doesn't exist server-side yet; it only gets a real
+        // orderId (and receipt) once sync sends it.
         await enqueueSale(saleId, saleRequest);
         refreshPendingSales();
         settleLocally(null, null, estimatedTotal, true);
@@ -1023,9 +1019,7 @@ export function PosSaleClient({
         </form>
       </aside>
       <PosOrdersPanel
-        canRefund={canRefund}
         canViewOrders={canViewOrders}
-        canVoid={canVoid}
         onClose={() => setOrdersOpen(false)}
         open={ordersOpen}
         shiftId={shift?.id ?? null}

@@ -23,8 +23,8 @@ Every admin page lives under **Settings icon → sidebar** on the left. The side
 There are three built-in roles, plus the ability to create custom ones:
 
 - **Owner** — full access to everything, including Settings, Users & roles, and Delivery. Only Owners can create/edit/delete custom roles and other staff accounts' status.
-- **Manager** — can do almost everything day-to-day (orders, inventory, customers, promotions, reports, POS with refund/void), but cannot access Settings, Delivery, or Users & roles.
-- **Sales Staff** — POS-only. Can sell, view products/orders/customers, open/close their own shift, view receipts. No refund/void ability, no discount ability, cannot access the admin portal pages at all (only POS).
+- **Manager** — can do almost everything day-to-day (orders, inventory, customers, promotions, reports, POS), but cannot access Settings, Delivery, or Users & roles.
+- **Sales Staff** — POS-only. Can sell, view products/orders/customers, open/close their own shift, view receipts. No discount ability, cannot access the admin portal pages at all (only POS).
 
 **How do I create a custom role?** Go to **Users & roles** (Owner only). There's a role editor with a grouped permission checklist — tick exactly the permissions the new role should have, name it, save. Built-in roles (Owner/Manager/Sales Staff) can't be edited or deleted. A custom role can't be deleted while any staff account is still assigned to it — reassign them first.
 
@@ -62,7 +62,7 @@ There are three built-in roles, plus the ability to create custom ones:
 
 **How do I update an order's status?** Use the inline status dropdown directly on the row in the "Needs attention" queue, or open the row's detail drawer for the same control with more context.
 
-**How do I refund or void an order?** Right now this only works for a sale made at POS (in person) — open it from the POS receipt/history and use the refund or void action there. Online orders paid through the storefront (Paystack) can't be refunded or voided from inside this admin yet — the order detail view in **Orders** only lets you update fulfilment status. To refund a customer who paid online, that has to be done directly through the Paystack dashboard outside this app for now — mention this limitation rather than describing steps that don't exist here.
+**How do I refund or void an order?** You can't — Oh My Kitty does not refund or void sales. Every sale is final once it is placed, on the website and at the POS, and there is no refund or void option anywhere in this admin. If a customer asks, tell them the shop does not offer refunds; for a damaged or wrong item they should message the shop on WhatsApp with a photo. Do not suggest workarounds.
 
 **A customer says they paid but I don't see their order.** Ask for their order number or phone number and check **Orders**. If it's a real Paystack payment, it should appear as soon as payment is confirmed. If it genuinely isn't there despite a real successful payment, that's unusual — flag it to an Owner rather than guess.
 
@@ -126,7 +126,7 @@ There are three built-in roles, plus the ability to create custom ones:
 
 **What payment methods does POS support?** Cash, Card (staff attestation — you already have a separate card terminal, this just records it), Manual transfer (staff attestation), and Mobile Money — Mobile Money is a **real** charge: selecting it sends the customer's phone a real payment prompt, and the sale only completes once that payment is actually confirmed. POS works offline for cash/card/manual and queues sales to sync when the connection returns; mobile money needs a live connection.
 
-**Can Sales Staff give a discount or refund at POS?** No — Sales Staff have a 0% discount limit and 0 refund limit by default. Only Managers and Owners (or a custom role granted those permissions) can.
+**Can Sales Staff give a discount at POS?** No — Sales Staff have a 0% discount limit by default. Only Managers and Owners (or a custom role granted that permission) can. There are no refunds for anyone.
 
 ---
 

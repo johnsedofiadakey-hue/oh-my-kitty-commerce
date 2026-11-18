@@ -322,12 +322,6 @@ export const updatePromotionInputSchema = promotionFieldsSchema
     id: z.string().min(1)
   });
 
-export const posReversalInputSchema = z.object({
-  orderId: z.string().min(1),
-  reason: z.string().min(3),
-  restock: z.boolean().default(true)
-});
-
 export const updateOrderFulfilmentInputSchema = z.object({
   id: z.string().min(1),
   fulfilmentStatus: z.enum([
@@ -428,7 +422,6 @@ export const updateStaffUserInputSchema = staffUserFieldsSchema
 
 const roleLimitsSchema = z.object({
   maxDiscountPercent: z.number().min(0).max(100).optional(),
-  maxRefundAmount: z.number().int().min(0).optional(),
   canOverridePrice: z.boolean().optional()
 });
 
@@ -488,7 +481,6 @@ export type UpdateCustomerInput = z.input<typeof updateCustomerInputSchema>;
 export type CreatePromotionInput = z.input<typeof createPromotionInputSchema>;
 export type UpdatePromotionInput = z.input<typeof updatePromotionInputSchema>;
 export type UpdateOrderFulfilmentInput = z.input<typeof updateOrderFulfilmentInputSchema>;
-export type PosReversalInput = z.input<typeof posReversalInputSchema>;
 export type UpdateContentBlockInput = z.input<typeof updateContentBlockInputSchema>;
 export type CreateMediaAssetInput = z.input<typeof createMediaAssetInputSchema>;
 export type AttachProductImageInput = z.input<typeof attachProductImageInputSchema>;

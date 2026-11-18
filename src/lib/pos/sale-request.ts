@@ -47,7 +47,7 @@ export function parsePosLines(value: unknown): PosSaleLine[] {
  * and merges the computed per-line discount into each item. Promotions
  * flagged requiresManagerApproval can only be applied by an actor whose
  * role already grants pos.price_override (Manager/Owner) — Sales Staff
- * can't self-approve one, mirroring the refund/void approval boundary.
+ * can't self-approve one.
  */
 export async function applyPosPromoCode(
   context: CommerceContext,

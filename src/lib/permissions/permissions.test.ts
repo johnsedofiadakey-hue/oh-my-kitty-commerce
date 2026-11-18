@@ -6,6 +6,7 @@ import {
   getGrantedPermissions,
   getHighestRoleLimit,
   hasPermission,
+  permissions,
   type UserAccess
 } from "@/lib/permissions/permissions";
 
@@ -19,6 +20,18 @@ describe("permissions", () => {
     uid: "staff",
     roleIds: ["role-sales-staff"]
   };
+
+  // The shop's rule is that every sale is final: nobody refunds or voids one,
+  // not even the owner. If a permission for it ever comes back, this fails.
+  it("has no permission to refund or void a sale, for any role", () => {
+    const everyPermission = new Set([
+      ...permissions,
+      ...defaultRoles.flatMap((role) => role.permissions)
+    ]);
+
+    expect([...everyPermission].filter((permission) => /refund|void/i.test(permission))).toEqual([]);
+    expect(defaultRoles.some((role) => role.limits && "maxRefundAmount" in role.limits)).toBe(false);
+  });
 
   it("grants owner full access", () => {
     expect(canAccessAdmin(defaultRoles, owner)).toBe(true);

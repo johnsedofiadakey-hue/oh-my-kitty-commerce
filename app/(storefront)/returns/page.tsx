@@ -6,7 +6,7 @@ import { getContentValue } from "@/lib/storefront/content";
 
 export const metadata: Metadata = {
   title: "Returns & Support",
-  description: "How returns, exchanges, and refunds work at Oh My Kitty.",
+  description: "Our policy on returns, and how to reach us if something is wrong with your order at Oh My Kitty.",
   alternates: { canonical: "/returns" }
 };
 
@@ -17,12 +17,12 @@ function buildReturnSteps(whatsappNumber: string) {
       description: `Message WhatsApp ${whatsappNumber} with your order number and a short note.`
     },
     {
-      title: "We review your case",
-      description: "Unopened, hygiene-sealed items are reviewed for exchange or refund."
+      title: "We look into it",
+      description: "If your order arrived damaged or isn't what you ordered, send us a photo and we'll review it."
     },
     {
-      title: "Exchange or refund confirmed",
-      description: "We confirm next steps and timing directly with you over WhatsApp."
+      title: "We confirm next steps",
+      description: "We let you know what we can do, directly with you over WhatsApp."
     }
   ];
 }
@@ -31,11 +31,11 @@ const RETURN_FAQS = [
   {
     question: "Can I return an opened intimate-care product?",
     answer:
-      "For hygiene reasons, opened intimate-care products generally cannot be returned. Contact WhatsApp to discuss your specific case."
+      "For hygiene reasons, opened intimate-care products cannot be returned."
   },
   {
-    question: "How long do refunds take?",
-    answer: "Once approved, refunds are processed back to your original payment method within a few business days."
+    question: "Do you offer refunds?",
+    answer: "No. All sales are final once an order is placed, so please check your order carefully before you pay."
   },
   {
     question: "What if my order arrived damaged?",
@@ -61,7 +61,7 @@ export default async function ReturnsPage() {
         <h1>Returns and support.</h1>
         <div className="legal-card">
           <section data-section-number="01">
-            <h2>How returns work</h2>
+            <h2>If something is wrong with your order</h2>
             <div className="step-row">
               {buildReturnSteps(whatsappNumber).map((step, index) => (
                 <div className="step-card" key={step.title}>

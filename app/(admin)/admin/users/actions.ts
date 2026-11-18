@@ -19,7 +19,6 @@ import { getAdminAuth } from "@/lib/firebase/server";
 import { hasPermission, type Permission } from "@/lib/permissions/permissions";
 import {
   formOptionalInteger,
-  formOptionalMoneyMinorUnit,
   formString,
   humanizeActionError,
   type AdminActionState
@@ -256,16 +255,14 @@ export async function deleteRoleAction(
 
 function parseRoleLimits(formData: FormData) {
   const maxDiscountPercent = formOptionalInteger(formData, "maxDiscountPercent");
-  const maxRefundAmount = formOptionalMoneyMinorUnit(formData, "maxRefundAmount");
   const canOverridePrice = formData.get("canOverridePrice") === "on";
 
-  if (maxDiscountPercent === undefined && maxRefundAmount === null && !canOverridePrice) {
+  if (maxDiscountPercent === undefined && !canOverridePrice) {
     return undefined;
   }
 
   return {
     maxDiscountPercent,
-    maxRefundAmount: maxRefundAmount ?? undefined,
     canOverridePrice
   };
 }

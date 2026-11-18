@@ -3,7 +3,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { formatMoney, formatPaymentMethod } from "@/lib/commerce/format";
-import { PosReversalForm, type ReversalMode } from "@/components/pos/pos-reversal-panel";
 
 type PosOrderSummary = {
   id: string;
@@ -14,16 +13,6 @@ type PosOrderSummary = {
   customerName: string | null;
   paymentMethod: string | null;
 };
-
-type ReversedAs = "REFUND" | "VOID" | null;
-
-function reversedStatus(order: PosOrderSummary): ReversedAs {
-  if (order.paymentStatus !== "REFUNDED") {
-    return null;
-  }
-
-  return order.status === "CANCELLED" ? "VOID" : "REFUND";
-}
 
 async function fetchOrders(params: { q?: string; shiftId?: string }) {
   const search = new URLSearchParams();
@@ -41,21 +30,17 @@ async function fetchOrders(params: { q?: string; shiftId?: string }) {
 }
 
 // Only reachable by deliberately opening this panel from the POS screen —
-// never rendered next to the live cart — and refund/void only ever appear
-// after opening one specific order, never on a list row.
+// never rendered next to the live cart. It is for looking sales up and
+// reprinting receipts; every sale is final, so there is nothing to undo here.
 export function PosOrdersPanel({
   open,
   onClose,
   shiftId,
-  canRefund,
-  canVoid,
   canViewOrders
 }: {
   open: boolean;
   onClose: () => void;
   shiftId: string | null;
-  canRefund: boolean;
-  canVoid: boolean;
   canViewOrders: boolean;
 }) {
   const [shiftSales, setShiftSales] = useState<PosOrderSummary[]>([]);
@@ -67,7 +52,6 @@ export function PosOrdersPanel({
   const [searchError, setSearchError] = useState("");
   const [searched, setSearched] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PosOrderSummary | null>(null);
-  const [reversalMode, setReversalMode] = useState<ReversalMode | null>(null);
 
   async function loadShiftSales(id: string) {
     setShiftBusy(true);
@@ -93,17 +77,6 @@ export function PosOrdersPanel({
     return null;
   }
 
-  function updateOrderLocally(orderId: string, mode: ReversalMode) {
-    const applyMode = (order: PosOrderSummary): PosOrderSummary =>
-      order.id === orderId
-        ? { ...order, paymentStatus: "REFUNDED", status: mode === "VOID" ? "CANCELLED" : order.status }
-        : order;
-
-    setShiftSales((current) => current.map(applyMode));
-    setSearchResults((current) => current.map(applyMode));
-    setSelectedOrder((current) => (current && current.id === orderId ? applyMode(current) : current));
-  }
-
   async function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!query.trim()) {
@@ -125,7 +98,6 @@ export function PosOrdersPanel({
 
   function closeAndReset() {
     setSelectedOrder(null);
-    setReversalMode(null);
     setQuery("");
     setSearchResults([]);
     setSearched(false);
@@ -144,21 +116,7 @@ export function PosOrdersPanel({
         </div>
 
         {selectedOrder ? (
-          <OrderDetail
-            canRefund={canRefund}
-            canVoid={canVoid}
-            onBack={() => {
-              setSelectedOrder(null);
-              setReversalMode(null);
-            }}
-            onReversed={(mode) => {
-              updateOrderLocally(selectedOrder.id, mode);
-              setReversalMode(null);
-            }}
-            order={selectedOrder}
-            reversalMode={reversalMode}
-            setReversalMode={setReversalMode}
-          />
+          <OrderDetail onBack={() => setSelectedOrder(null)} order={selectedOrder} />
         ) : (
           <>
             <form className="pos-lookup-form" onSubmit={search}>
@@ -213,53 +171,28 @@ function OrderList({
   return (
     <div className="stack-list">
       {title ? <span className="pos-hint">{title}</span> : null}
-      {orders.map((order) => {
-        const reversed = reversedStatus(order);
-        return (
-          <button
-            className="stack-row pos-reversal-row pos-order-row"
-            key={order.id}
-            onClick={() => onSelect(order)}
-            type="button"
-          >
-            <div>
-              <strong>{order.orderNumber}</strong>
-              <span>{order.customerName ?? "Walk-in customer"}</span>
-            </div>
-            {reversed ? (
-              <span className="status danger">{reversed === "REFUND" ? "Refunded" : "Voided"}</span>
-            ) : (
-              <div className="pos-order-row-amount">
-                <span>{formatMoney(order.total)}</span>
-                {order.paymentMethod ? <small>{formatPaymentMethod(order.paymentMethod)}</small> : null}
-              </div>
-            )}
-          </button>
-        );
-      })}
+      {orders.map((order) => (
+        <button
+          className="stack-row pos-reversal-row pos-order-row"
+          key={order.id}
+          onClick={() => onSelect(order)}
+          type="button"
+        >
+          <div>
+            <strong>{order.orderNumber}</strong>
+            <span>{order.customerName ?? "Walk-in customer"}</span>
+          </div>
+          <div className="pos-order-row-amount">
+            <span>{formatMoney(order.total)}</span>
+            {order.paymentMethod ? <small>{formatPaymentMethod(order.paymentMethod)}</small> : null}
+          </div>
+        </button>
+      ))}
     </div>
   );
 }
 
-function OrderDetail({
-  order,
-  onBack,
-  canRefund,
-  canVoid,
-  reversalMode,
-  setReversalMode,
-  onReversed
-}: {
-  order: PosOrderSummary;
-  onBack: () => void;
-  canRefund: boolean;
-  canVoid: boolean;
-  reversalMode: ReversalMode | null;
-  setReversalMode: (mode: ReversalMode | null) => void;
-  onReversed: (mode: ReversalMode) => void;
-}) {
-  const reversed = reversedStatus(order);
-
+function OrderDetail({ order, onBack }: { order: PosOrderSummary; onBack: () => void }) {
   return (
     <div className="pos-order-detail">
       <button className="pos-secondary-button" onClick={onBack} type="button">
@@ -272,38 +205,10 @@ function OrderDetail({
           {formatMoney(order.total)}
           {order.paymentMethod ? ` · ${formatPaymentMethod(order.paymentMethod)}` : ""}
         </span>
-        {reversed ? (
-          <span className="status danger">{reversed === "REFUND" ? "Refunded" : "Voided"}</span>
-        ) : null}
       </div>
       <a className="admin-action ghost small" href={`/receipt/order/${order.id}`} rel="noopener" target="_blank">
         View receipt
       </a>
-
-      {!reversed && reversalMode ? (
-        <PosReversalForm
-          mode={reversalMode}
-          onClose={() => setReversalMode(null)}
-          onDone={() => onReversed(reversalMode)}
-          orderId={order.id}
-          orderNumber={order.orderNumber}
-        />
-      ) : null}
-
-      {!reversed && !reversalMode && (canRefund || canVoid) ? (
-        <div className="pos-reversal-actions">
-          {canRefund ? (
-            <button className="pos-secondary-button" onClick={() => setReversalMode("REFUND")} type="button">
-              Refund
-            </button>
-          ) : null}
-          {canVoid ? (
-            <button className="pos-secondary-button" onClick={() => setReversalMode("VOID")} type="button">
-              Void
-            </button>
-          ) : null}
-        </div>
-      ) : null}
     </div>
   );
 }

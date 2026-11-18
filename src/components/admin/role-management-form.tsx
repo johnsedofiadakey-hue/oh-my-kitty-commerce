@@ -80,17 +80,6 @@ export function RoleManagementForm({ action, role, disabled }: RoleManagementFor
               type="number"
             />
           </label>
-          <label className="admin-field">
-            <span>Max refund GHS at POS (blank = no limit)</span>
-            <input
-              defaultValue={
-                role?.limits?.maxRefundAmount !== undefined
-                  ? (role.limits.maxRefundAmount / 100).toFixed(2)
-                  : undefined
-              }
-              name="maxRefundAmount"
-            />
-          </label>
         </div>
         <label className="admin-field checkbox">
           <input defaultChecked={role?.limits?.canOverridePrice} name="canOverridePrice" type="checkbox" />
